@@ -3,7 +3,7 @@ const dialogFlow = require('apiai-promise');
 
 // Sentry - error reporting
 Sentry.init({
-  dsn: process.env.SENTRY_DSN, environment: process.env.ENV, captureUnhandledRejections: false,
+	dsn: process.env.SENTRY_DSN, environment: process.env.ENV, captureUnhandledRejections: false,
 });
 module.exports.Sentry = Sentry;
 
@@ -11,8 +11,8 @@ module.exports.Sentry = Sentry;
 module.exports.apiai = dialogFlow(process.env.DIALOGFLOW_TOKEN);
 
 module.exports.waitTypingEffect = async (context, waitTime = 2500) => {
-  await context.typingOn();
-  setTimeout(async () => {
-    await context.typingOff();
-  }, waitTime);
+	await context.typingOn();
+	setTimeout(async () => {
+		await context.typingOff();
+	}, waitTime);
 };
