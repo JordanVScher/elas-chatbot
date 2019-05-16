@@ -17,6 +17,7 @@
     "fs-extra": "^7.0.0",
     "get-audio-duration": "0.0.1",
     "grpc": "^1.14.1",
+    "itsa-surveymonkey-promise": "0.0.6",
     "jest": "^24.8.0",
     "messaging-api-messenger": "^0.7.16",
     "nodemon": "^1.18.6",
@@ -26,6 +27,8 @@
     "request": "^2.88.0",
     "request-promise": "^4.2.2",
     "requisition": "^1.7.0",
+    "surveymonkey": "^1.1.0",
+    "util": "^0.12.0",
     "util.promisify": "^1.0.0"
   },
   "devDependencies": {

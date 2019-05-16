@@ -1,6 +1,6 @@
-const MaAPI = require('./mandatoaberto_api');
+const MaAPI = require('./chatbot_api');
 // const opt = require('./util/options');
-const { createIssue } = require('./send_issue');
+const { createIssue } = require('./utils/send_issue');
 const { checkPosition } = require('./utils/dialogFlow');
 const { apiai } = require('./utils/helper');
 const flow = require('./utils/flow');
@@ -15,6 +15,8 @@ module.exports = async (context) => {
 		// let user = await getUser(context)
 		// we reload politicianData on every useful event
 		await context.setState({ politicianData: await MaAPI.getPoliticianData(context.event.rawEvent.recipient.id) });
+		console.log(context.state.politicianData);
+
 		// we update context data at every interaction that's not a comment or a post
 		await MaAPI.postRecipient(context.state.politicianData.user_id, {
 			fb_id: context.session.user.id,
@@ -23,6 +25,7 @@ module.exports = async (context) => {
 			picture: context.session.user.profile_pic,
 			// session: JSON.stringify(context.state),
 		});
+
 		if (context.event.isPostback) {
 			await context.setState({ lastPBpayload: context.event.postback.payload });
 			await context.setState({ dialog: context.state.lastPBpayload });
@@ -34,15 +37,13 @@ module.exports = async (context) => {
 			await MaAPI.logFlowChange(context.session.user.id, context.state.politicianData.user_id,
 				context.event.message.quick_reply.payload, context.event.message.quick_reply.payload);
 		} else if (context.event.isText) {
+			console.log('--------------------------');
+			console.log(`${context.session.user.first_name} ${context.session.user.last_name} digitou ${context.event.message.text}`);
+			console.log('Usa dialogflow?', context.state.politicianData.use_dialogflow);
 			await context.setState({ whatWasTyped: context.event.message.text });
 			if (context.state.politicianData.use_dialogflow === 1) { // check if 'politician' is using dialogFlow
-				if (context.state.whatWasTyped.length <= 255) { // check if message is short enough for apiai
-					await context.setState({ toSend: context.state.whatWasTyped });
-				} else { // cutting chars
-					await context.setState({ toSend: context.state.whatWasTyped.slice(0, 255) });
-				}
-				await context.setState({ apiaiResp: await apiai.textRequest(context.state.toSend, { sessionId: context.session.user.id }) });
-				await context.setState({ resultParameters: context.state.apiaiResp.result.parameters }); // getting the entities
+				await context.setState({ apiaiResp: await apiai.textRequest(await help.formatDialogFlow(context.state.whatWasTyped), { sessionId: context.session.user.id }) });
+				// await context.setState({ resultParameters: context.state.apiaiResp.result.parameters }); // getting the entities
 				await context.setState({ intentName: context.state.apiaiResp.result.metadata.intentName }); // getting the intent
 				await checkPosition(context);
 			} else { // not using dialogFlow
