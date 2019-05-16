@@ -7,11 +7,11 @@ const apiUri = process.env.MANDATOABERTO_API_URL;
 const security_token = process.env.SECURITY_TOKEN_MA;
 
 module.exports = {
-	async getPoliticianData(pageId) {
+	async getChatbotData(pageId) {
 		const res = await request(`${apiUri}/api/chatbot/politician?fb_page_id=${pageId}&security_token=${security_token}`);
-		const politicianData = await res.json();
-		// console.log('politicianData', politicianData);
-		return politicianData;
+		const getChatbotData = await res.json();
+		// console.log('getChatbotData', getChatbotData);
+		return getChatbotData;
 	},
 
 	async getPollData(pageId) {

@@ -12,14 +12,12 @@ try {
 } catch (error) {
 	console.log('Could not authenticate SM', error.message);
 }
-
-
-async function getSurveyList() {
-	api.getSurveyListPromise = await promisify(api.getSurveyList);
-	const result = await api.getSurveyListPromise();
-	if (result.error) { console.log('Erro em getSurveyList', result); Sentry.captureMessage('Erro em getSurveyList'); }
-	console.log('result', result);
-	return result || {};
-}
-
-getSurveyList();
+module.exports = {
+	async getSurveyList() {
+		api.getSurveyListPromise = await promisify(api.getSurveyList);
+		const result = await api.getSurveyListPromise();
+		if (result.error) { console.log('Erro em getSurveyList', result); Sentry.captureMessage('Erro em getSurveyList'); }
+		console.log('result', result);
+		return result || {};
+	},
+};

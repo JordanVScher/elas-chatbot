@@ -9,6 +9,15 @@ module.exports.Sentry = Sentry;
 // Dialogflow
 module.exports.apiai = dialogFlow(process.env.DIALOGFLOW_TOKEN);
 
+module.exports.capQR = (text) => {
+	let s = text;
+	if (s.length > 20) {
+		s = `${s.slice(0, 17)}...`;
+	}
+	return s && s[0].toUpperCase() + s.slice(1);
+};
+
+
 // separates string in the first dot on the second half of the string
 module.exports.separateString = (someString) => {
 	if (someString.trim()[someString.length - 1] !== '.') { // trying to guarantee the last char is a dot so we never use halfLength alone as the divisor
