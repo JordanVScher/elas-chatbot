@@ -79,6 +79,16 @@ async function getSurveyResponseDetails(id, responseId) { // eslint-disable-line
 	return result;
 }
 
+async function getResponseWithAnswers(id, responseId) { // eslint-disable-line
+	let result = {};
+	try {
+		const res = await request(`${url}/surveys/${id}/responses/${responseId}/details`).set(headers);
+		result = await res.json();
+	} catch (error) { console.log('Erro em getResponseWithAnswers', JSON.stringify(result, null, 2)); Sentry.captureMessage('Erro em getResponseWithAnswers'); }
+	console.log(JSON.stringify(result, null, 2));
+	return result;
+}
+
 async function getAvailableWebhooks() { // eslint-disable-line
 	let result = {};
 	try {
@@ -103,5 +113,14 @@ async function postWebhook(name, event_type, object_type, object_ids, subscripti
 }
 
 module.exports = {
-	getSurveys, getSurvey, getSurveyDetails, getSurveyPages, getSurveyPageDetails, getSurveyResponse, getSurveyResponseDetails, getAvailableWebhooks, postWebhook,
+	getSurveys,
+	getSurvey,
+	getSurveyDetails,
+	getSurveyPages,
+	getSurveyPageDetails,
+	getSurveyResponse,
+	getSurveyResponseDetails,
+	getResponseWithAnswers,
+	getAvailableWebhooks,
+	postWebhook,
 };

@@ -2,6 +2,7 @@ const Sentry = require('@sentry/node');
 const dialogFlow = require('apiai-promise');
 const gsjson = require('google-spreadsheet-to-json');
 const accents = require('remove-accents');
+const moment = require('moment');
 
 // Sentry - error reporting
 Sentry.init({	dsn: process.env.SENTRY_DSN, environment: process.env.ENV, captureUnhandledRejections: false });
@@ -9,6 +10,9 @@ module.exports.Sentry = Sentry;
 
 // Dialogflow
 module.exports.apiai = dialogFlow(process.env.DIALOGFLOW_TOKEN);
+
+moment.locale('pt-BR');
+module.exports.moment = moment;
 
 module.exports.capQR = (text) => {
 	let s = text;
