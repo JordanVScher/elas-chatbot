@@ -1,5 +1,6 @@
 const Sentry = require('@sentry/node');
 const dialogFlow = require('apiai-promise');
+const gsjson = require('google-spreadsheet-to-json');
 const accents = require('remove-accents');
 
 // Sentry - error reporting
@@ -17,6 +18,22 @@ module.exports.capQR = (text) => {
 	return s && s[0].toUpperCase() + s.slice(1);
 };
 
+// # Google Spreadsheet
+const privateKey = require('../../private_key.json');
+
+module.exports.reloadSpreadSheet = async () => {
+	const results = await gsjson({
+		spreadsheetId: process.env.SPREADKEY,
+		credentials: privateKey,
+		// hash: 'id',
+	}).then(result => result).catch((err) => {
+		console.log(err.message);
+		console.log(err.stack);
+		Sentry.captureMessage('Erro no carregamento do spreadsheet');
+		return undefined;
+	});
+	return results;
+};
 
 // separates string in the first dot on the second half of the string
 module.exports.separateString = (someString) => {

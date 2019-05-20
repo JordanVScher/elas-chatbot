@@ -3,7 +3,7 @@ require('dotenv').config();
 const { MessengerBot, FileSessionStore, withTyping } = require('bottender');
 const { createServer } = require('bottender/restify');
 const restify = require('restify');
-const sm = require('./sm_help');
+// const sm = require('./sm_help');
 
 const config = require('./bottender.config.js').messenger;
 
@@ -42,7 +42,7 @@ server.post('/webhook', async (req, res) => {
 	// console.log(req.headers);
 	const body = JSON.parse(req.body);
 	if (body && body.filter_type === 'survey' && body.event_type === 'response_completed') {
-		sm.newSurveyResponse(body);
+		// sm.newSurveyResponse(body);
 	}
 	res.status(200);
 	res.send();

@@ -85,4 +85,6 @@ google-secret-key.json
 
 # for random testing
 test.js
-private-key.json
+
+# spreadsheet api key
+private_key.json
