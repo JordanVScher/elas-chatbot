@@ -9,7 +9,7 @@ const headers = {
 	'Content-Type': 'application/json',
 };
 
-async function getSurveys() { // eslint-disable-line
+async function getSurveys() {
 	let result = {};
 	try {
 		const res = await request(`${url}/surveys`).set(headers).query({ per_page: 100, page: 1 });
@@ -19,7 +19,7 @@ async function getSurveys() { // eslint-disable-line
 	return result;
 }
 
-async function getSurvey(id) { // eslint-disable-line
+async function getSurvey(id) {
 	let result = {};
 	try {
 		const res = await request(`${url}/surveys/${id}`).set(headers);
@@ -29,7 +29,7 @@ async function getSurvey(id) { // eslint-disable-line
 	return result;
 }
 
-async function getSurveyDetails(id) { // eslint-disable-line
+async function getSurveyDetails(id) {
 	let result = {};
 	try {
 		const res = await request(`${url}/surveys/${id}/details`).set(headers);
@@ -39,7 +39,7 @@ async function getSurveyDetails(id) { // eslint-disable-line
 	return result;
 }
 
-async function getSurveyPages(id) { // eslint-disable-line
+async function getSurveyPages(id) {
 	let result = {};
 	try {
 		const res = await request(`${url}/surveys/${id}/pages`).set(headers);
@@ -49,7 +49,7 @@ async function getSurveyPages(id) { // eslint-disable-line
 	return result;
 }
 
-async function getSurveyPageDetails(id, pageId) { // eslint-disable-line
+async function getSurveyPageDetails(id, pageId) {
 	let result = {};
 	try {
 		const res = await request(`${url}/surveys/${id}/pages/${pageId}`).set(headers);
@@ -59,7 +59,7 @@ async function getSurveyPageDetails(id, pageId) { // eslint-disable-line
 	return result;
 }
 
-async function getSurveyResponse(id) { // eslint-disable-line
+async function getSurveyResponse(id) {
 	let result = {};
 	try {
 		const res = await request(`${url}/surveys/${id}/responses`).set(headers).query({ per_page: 100 });
@@ -69,7 +69,7 @@ async function getSurveyResponse(id) { // eslint-disable-line
 	return result;
 }
 
-async function getSurveyResponseDetails(id, responseId) { // eslint-disable-line
+async function getSurveyResponseDetails(id, responseId) {
 	let result = {};
 	try {
 		const res = await request(`${url}/surveys/${id}/responses/${responseId}`).set(headers);
@@ -79,7 +79,7 @@ async function getSurveyResponseDetails(id, responseId) { // eslint-disable-line
 	return result;
 }
 
-async function getResponseWithAnswers(id, responseId) { // eslint-disable-line
+async function getResponseWithAnswers(id, responseId) {
 	let result = {};
 	try {
 		const res = await request(`${url}/surveys/${id}/responses/${responseId}/details`).set(headers);
@@ -89,12 +89,22 @@ async function getResponseWithAnswers(id, responseId) { // eslint-disable-line
 	return result;
 }
 
-async function getAvailableWebhooks() { // eslint-disable-line
+async function getAvailableWebhooks() {
 	let result = {};
 	try {
 		const res = await request(`${url}/webhooks`).set(headers);
 		result = await res.json();
 	} catch (error) { console.log('Erro em getAvailableWebhooks', JSON.stringify(result, null, 2)); Sentry.captureMessage('Erro em getAvailableWebhooks'); }
+	console.log(JSON.stringify(result, null, 2));
+	return result;
+}
+
+async function deleteOneWebhook(id) {
+	let result = {};
+	try {
+		const res = await request.delete(`${url}/webhooks/${id}`).set(headers);
+		result = await res.json();
+	} catch (error) { console.log('Erro em deleteOneWebhook', JSON.stringify(result, null, 2)); Sentry.captureMessage('Erro em deleteOneWebhook'); }
 	console.log(JSON.stringify(result, null, 2));
 	return result;
 }
@@ -122,5 +132,6 @@ module.exports = {
 	getSurveyResponseDetails,
 	getResponseWithAnswers,
 	getAvailableWebhooks,
+	deleteOneWebhook,
 	postWebhook,
 };

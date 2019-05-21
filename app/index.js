@@ -1,3 +1,4 @@
+
 require('dotenv').config();
 
 const { MessengerBot, FileSessionStore, withTyping } = require('bottender');
@@ -27,6 +28,8 @@ bot.onEvent(handler);
 
 const server = createServer(bot, { verifyToken: config.verifyToken });
 
+server.use(require('restify-pino-logger')());
+
 server.use(restify.plugins.queryParser());
 server.use(restify.plugins.bodyParser({
 	requestBodyOnGet: true,
@@ -41,15 +44,20 @@ server.head('/webhook', async (req, res) => {
 server.post('/webhook', async (req, res) => {
 	// console.log(req.headers);
 	const body = JSON.parse(req.body);
-	console.log(body);
-
-	console.log(body && body.filter_type === 'survey');
-	console.log(body.event_type === 'response_completed');
-	console.log(body && body.filter_type === 'survey' && body.event_type === 'response_completed');
-
 	if (body && body.filter_type === 'survey' && body.event_type === 'response_completed') {
 		sm.newSurveyResponse(body);
 	}
+	res.status(200);
+	res.send();
+});
+
+server.post('/pagamento', async (req, res) => {
+	res.header('Access-Control-Allow-Origin', 'https://sandbox.pagseguro.uol.com.br');
+	console.log('chegou no pagamento no post');
+
+	// console.log(JSON.parse(req.body));
+	// console.log(JSON.parse(req.params));
+
 	res.status(200);
 	res.send();
 });

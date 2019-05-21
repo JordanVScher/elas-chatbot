@@ -2,14 +2,11 @@ const { sequelize } = require('./server/index.js');
 const { moment } = require('./helper');
 
 if (process.env.TEST !== 'true') {
-	sequelize
-		.authenticate()
-		.then(() => {
-			console.log('Connection has been established successfully.');
-		})
-		.catch((err) => {
-			console.error('Unable to connect to the database:', err);
-		});
+	sequelize.authenticate().then(() => {
+		console.log('PSQL Connection has been established successfully.');
+	}).catch((err) => {
+		console.error('Unable to connect to the database:', err);
+	});
 }
 
 async function upsertUser(FBID, userName) {
@@ -42,5 +39,5 @@ async function upsertUser(FBID, userName) {
 // );
 
 module.exports = {
-	sequelize, upsertUser,
+	upsertUser,
 };
