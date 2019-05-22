@@ -31,6 +31,7 @@
     "request-promise": "^4.2.2",
     "requisition": "^1.7.0",
     "restify": "^8.3.2",
+    "restify-cors-middleware": "^1.1.1",
     "restify-pino-logger": "^3.0.0",
     "sequelize": "^5.8.6",
     "survey-monkey-streams": "^1.0.1",

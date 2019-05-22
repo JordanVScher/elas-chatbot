@@ -26,18 +26,47 @@ async function upsertUser(FBID, userName) {
 	});
 }
 
+async function upsertPagamento(documentoTipo, documentoValor, email, productId, transctionId) {
+	let date = new Date();
+	date = await moment(date).format('YYYY-MM-DD HH:mm:ss');
+
+	await sequelize.query(`
+	INSERT INTO "pagamentos" (documento_tipo, documento_valor, e_mail, id_produto, id_transacao, created_at, updated_at)
+  VALUES ('${documentoTipo}', '${documentoValor}', '${email}', '${productId}', '${transctionId}', '${date}', '${date}')
+  ON CONFLICT (id_transacao)
+  DO UPDATE
+    SET documento_tipo = '${documentoTipo}', documento_valor = '${documentoValor}', e_mail = '${email}', updated_at = '${date}';
+	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
+		console.log(`Added ${email} successfully!`);
+	}).catch((err) => {
+		console.error('Error on upsertUser => ', err);
+	});
+}
+
 // ----------------------------------------------------------
 
 // CREATE TABLE chatbot_users(
-//   id SERIAL PRIMARY KEY,
-//   fb_id BIGINT UNIQUE,
-//   user_name text NOT NULL,
-//   matricula INTEGER,
-//   cpf TEXT,
-//   created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
-//   updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL
+// 	id SERIAL PRIMARY KEY,
+// 	fb_id BIGINT UNIQUE,
+// 	user_name TEXT NOT NULL,
+// 	matricula INTEGER,
+// 	cpf TEXT,
+// 	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+// 	updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL
 // );
 
+// CREATE TABLE pagamentos(
+// 	id SERIAL PRIMARY KEY,
+// 	e_mail text NOT NULL,
+// 	documento_tipo text NOT NULL,
+// 	documento_valor text NOT NULL,
+// 	id_produto INTEGER,
+// 	id_transacao TEXT NOT NULL UNIQUE,
+// 	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+// 	updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL
+// );
+
+
 module.exports = {
-	upsertUser,
+	upsertUser, upsertPagamento,
 };
