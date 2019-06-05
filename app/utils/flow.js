@@ -88,4 +88,14 @@ module.exports = {
 		success: 'Obrigado por sua mensagem',
 		failure: 'Não consegui salvar a mensagem',
 	},
+	eMail: {
+		preCadastro: {
+			assunto: 'Você comprou o elas',
+			texto: 'Olá, vc comprou o curso para a turma<TURMA>. Realize o pré cadastro: <LINK>',
+		},
+		depoisMatricula: {
+			assunto: 'Bem-vindo ao elas',
+			texto: 'Olá, <NOME>. Vc já conheçe a Dona? m.me/287066982237234',
+		},
+	},
 };

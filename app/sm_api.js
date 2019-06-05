@@ -19,6 +19,20 @@ async function getSurveys() {
 	return result;
 }
 
+async function getSurveyIds() {
+	const surveyIds = [];
+	const surveys = await getSurveys();
+	if (!surveys || !surveys.data) {
+		console.log('Error! We dont have any surveys!');
+	} else {
+		surveys.data.forEach(async (element) => {
+			surveyIds.push(element.id);
+		});
+	}
+
+	return surveyIds;
+}
+
 async function getSurvey(id) {
 	let result = {};
 	try {
@@ -95,9 +109,10 @@ async function getAvailableWebhooks() {
 		const res = await request(`${url}/webhooks`).set(headers);
 		result = await res.json();
 	} catch (error) { console.log('Erro em getAvailableWebhooks', JSON.stringify(result, null, 2)); Sentry.captureMessage('Erro em getAvailableWebhooks'); }
-	console.log(JSON.stringify(result, null, 2));
+	console.log('my webhooks', JSON.stringify(result, null, 2));
 	return result;
 }
+
 
 async function deleteOneWebhook(id) {
 	let result = {};
@@ -105,7 +120,7 @@ async function deleteOneWebhook(id) {
 		const res = await request.delete(`${url}/webhooks/${id}`).set(headers);
 		result = await res.json();
 	} catch (error) { console.log('Erro em deleteOneWebhook', JSON.stringify(result, null, 2)); Sentry.captureMessage('Erro em deleteOneWebhook'); }
-	console.log(JSON.stringify(result, null, 2));
+	console.log('Deleted', JSON.stringify(result, null, 2));
 	return result;
 }
 
@@ -118,12 +133,38 @@ async function postWebhook(name, event_type, object_type, object_ids, subscripti
 		result = await res.json();
 		if (!result || result.error) { throw result.error; }
 	} catch (error) { console.log('Erro em postWebhook', JSON.stringify(result, null, 2)); Sentry.captureMessage('Erro em postWebhook'); }
-	console.log(JSON.stringify(result, null, 2));
+	console.log('wewbhook created', JSON.stringify(result, null, 2));
 	return result;
 }
 
+async function deleteAllWebhooks() {
+	const availableWebhooks = await getAvailableWebhooks();
+	if (!availableWebhooks || !availableWebhooks.data || availableWebhooks.length === 0 || availableWebhooks.data.length === 0) {
+		console.log('There are no more webhooks to delete');
+	} else {
+		availableWebhooks.data.forEach(async (element) => {
+			await deleteOneWebhook(element.id);
+		});
+		console.log('Done!');
+	}
+}
+
+async function createNewWebhook(urlHook, surveyIDs, name) {
+	await deleteAllWebhooks();
+
+	if (!urlHook) {
+		console.log('No URL!');
+	} else if (!surveyIDs) {
+		surveyIDs =	await getSurveyIds(); // eslint-disable-line
+	} else {
+		postWebhook(name || 'meu webhook', 'response_completed', 'survey', surveyIDs, `${urlHook}/webhook`);
+	}
+}
+
+
 module.exports = {
 	getSurveys,
+	getSurveyIds,
 	getSurvey,
 	getSurveyDetails,
 	getSurveyPages,
@@ -134,4 +175,6 @@ module.exports = {
 	getAvailableWebhooks,
 	deleteOneWebhook,
 	postWebhook,
+	createNewWebhook,
+	deleteAllWebhooks,
 };

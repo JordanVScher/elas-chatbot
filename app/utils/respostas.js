@@ -32,6 +32,11 @@ const preCadastroMap = [
 		nomeNovo: 'Cargo',
 		entry: 'entry.201149199',
 	},
+	{
+		nomeAnterior: 'Endereço de e-mail',
+		nomeNovo: 'Endereço de e-mail',
+		entry: 'entry.2025650140',
+	},
 ];
 
 /*
@@ -87,10 +92,30 @@ async function gerarNovaUrl(respostas, url) {
 	return newUrl;
 }
 
+async function getName(respostas) {
+	let name = respostas.find(x => x.pergunta.toLowerCase() === 'nome');
+	if (name && name.resposta && name.resposta.length > 0) {
+		name = `, ${name.resposta}.`;
+	} else {
+		name = '. ';
+	}
+	return name;
+}
 
-module.exports = {
-	preCadastroMap, gerarNovaUrl, preparaRespostas,
-};
+async function getMail(respostas) {
+	let mail = respostas.find(x => x.pergunta.toLowerCase() === 'endereço de e-mail');
+	if (mail && mail.resposta && mail.resposta.length > 0) {
+		mail = mail.resposta;
+	} else {
+		mail = '';
+	}
+	return mail;
+}
+
+
+// module.exports = {
+// 	preCadastroMap, gerarNovaUrl, preparaRespostas, getName, getMail,
+// };
 
 /*
 	O que queremos fazer:

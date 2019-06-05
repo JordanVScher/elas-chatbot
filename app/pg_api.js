@@ -4,7 +4,7 @@ require('dotenv').config();
 const PagSeguro = require('pagseguro-nodejs');
 const { promisify } = require('util');
 const { parseString } = require('xml2js');
-// const { reloadSpreadSheet } = require('./utils/helper');
+const { sendMatricula } = require('./utils/sm_help');
 const { Sentry } = require('./utils/helper');
 const db = require('./utils/DB_helper');
 
@@ -19,7 +19,7 @@ const xmlParse = promisify(parseString);
 pagseguro.transactionPromise = promisify(pagseguro.transaction);
 pagseguro.notificationPromise = promisify(pagseguro.notification);
 
-async function createVenda(itemId = 1) {
+async function createVenda(itemId = 1) { // for testing only, creates a link to a fake pagseguro purchase
 	pagseguro.currency('BRL');
 	// pagseguro.reference('foo_id');
 	// pagseguro.redirect('https://123.ngrok.io/pagamento/bar');
@@ -66,16 +66,16 @@ async function createVenda(itemId = 1) {
 	});
 }
 
-async function handleNotification(notification) {
-	await pagseguro.notification(notification.request.parameters.notificationCode, async (success, response) => { // get transaction details based on notificationCode
+// what to do after someone buys one of the products
+async function handlePagamento(notification) {
+	await pagseguro.notification(notification.notificationCode, async (success, response) => { // get transaction details based on notificationCode
 		if (success && !response.error) {
 			try {
 				const answer = await xmlParse(response); console.log('answer', JSON.stringify(answer, null, 2)); // parse xml to json
 				const productID = answer.transaction.items[0].item[0].id[0]; console.log('productID', productID); // productID
-				// const spreadsheet = await reloadSpreadSheet(); console.log('spreadsheet', spreadsheet); // load spreadsheet
-				// const column = await spreadsheet.find(x => x.pagseguroId.toString() === productID); console.log(column); // get same product id (we want to know the "turma")
 				await db.upsertPagamento(answer.transaction.sender[0].documents[0].document[0].type[0], answer.transaction.sender[0].documents[0].document[0].value[0],
-					answer.transaction.sender[0].email[0], productID, answer.transaction.code[0]);
+					answer.transaction.sender[0].email[0], productID, answer.transaction.code[0]); // saves pagamento
+				await sendMatricula(productID, answer.transaction.sender[0].email[0]); // send email
 			} catch (error) {
 				Sentry.captureMessage('Erro em handleNotification');
 			}
@@ -85,26 +85,13 @@ async function handleNotification(notification) {
 	});
 }
 
-
 const mock = {
-	request: {
-		url: 'https://127.0.0.1:4100/pagamento',
-		parameters: {
-			notificationType: 'transaction',
-			notificationCode: '7C0D87D57B8C7B8C7665549CDF97996CE6DE',
-		},
-		headers: {},
-		method: 'POST',
-	},
-	response: {
-		headers: {},
-		body: '',
-		'status-code': '403',
-	},
-	created: '2019-05-22T15:10:17.831-0300',
+	notificationCode: '8066A2-4FB95DB95D9E-4884C70FBF4F-AF104B',
+	notificationType: 'transaction',
 };
 
+// handleNotification(mock);
 
 module.exports = {
-	createVenda, handleNotification,
+	createVenda, handlePagamento,
 };

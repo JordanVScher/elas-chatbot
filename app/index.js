@@ -5,9 +5,8 @@ const { MessengerBot, FileSessionStore, withTyping } = require('bottender');
 const { createServer } = require('bottender/restify');
 const corsMiddleware = require('restify-cors-middleware');
 const restify = require('restify');
-const { newSurveyResponse } = require('./sm_help');
+const { newSurveyResponse } = require('./utils/sm_help');
 const pgAPI = require('./pg_api');
-const handleAnswers = require('./utils/handleRespostas');
 
 const config = require('./bottender.config.js').messenger;
 
@@ -49,11 +48,6 @@ server.use(restify.plugins.bodyParser({
 	jsonBodyParser: true,
 }));
 
-server.head('/webhook', async (req, res) => {
-	res.status(200);
-	res.send();
-});
-
 server.use(
 	(req, res, next) => {
 		res.header('Access-Control-Allow-Origin', '*');
@@ -62,69 +56,58 @@ server.use(
 	},
 );
 
+// confirma webhook setup from survey monkey
+server.head('/webhook', async (req, res) => {
+	res.status(200);
+	res.send();
+});
+
+// receives new event from survey monkey webhook
 server.post('/webhook', async (req, res) => {
-	// console.log(req.headers);
+	console.log('No webhook das respostas');
+
+	res.status(200);
+	res.send();
+
 	const body = JSON.parse(req.body);
 	if (body && body.filter_type === 'survey' && body.event_type === 'response_completed') {
 		newSurveyResponse(body);
 	}
-	res.status(200);
-	res.send();
 });
 
-// stores data from the last request (sometimes the spreadsheet sends multiple requests for the same set o answers)
-const lastSpreadReq = { nome_sheet: '', timestamp: '' };
-
-// when user answers form, theres a request to this endpoint with the new set of answers
-server.post('/spread', async (req, res) => {
-	console.log('entrei aqui');
-	console.log('req.body', req.body);
-	if (req.body.nome_sheet !== lastSpreadReq.nome_sheet || req.body.timestamp !== lastSpreadReq.timestamp) { // check if the new request is just a duplicate of the last one
-		lastSpreadReq.nome_sheet = req.body.nome_sheet;
-		lastSpreadReq.timestamp = req.body.timestamp;
-		handleAnswers.handleNewAnswer(req.body);
-	} else {
-		console.log('Veio repetido mas não fiz nada');
-	}
-	res.status(200);
-	res.send();
-});
-
-
+let lastNotification = '';
+// receives notification from pagseguro -> something happened to one of the products/transaction
 server.post('/pagamento', async (req, res) => {
-	const date = new Date();
-	console.log('chegou no pagamento no post', date);
-
-	console.log(JSON.parse(req.body));
-	console.log(JSON.parse(req.params));
-	await pgAPI.handleNotification(JSON.parse(req.body));
-
-	res.status(200);
-	res.send();
-});
-
-server.get('/pagamento', async (req, res) => {
-	res.header('Access-Control-Allow-Origin', 'https://sandbox.pagseguro.uol.com.br');
-	const date = new Date();
-	console.log('chegou no pagamento no get', date);
-
-	// console.log(JSON.parse(req.body));
-	// console.log(JSON.parse(req.params));
+	console.log('chegou no pagamento no post');
+	// check if new notification is diferent from last notification
+	if (lastNotification.notificationCode !== req.body.notificationCode && lastNotification.notificationType !== req.body.notificationType) {
+		lastNotification = req.body;
+		await pgAPI.handlePagamento(req.body);
+	} else {
+		console.log('veio a mais');
+	}
 
 	res.status(200);
 	res.send();
 });
 
-server.post('/redirecionamento', async (req, res) => {
-	res.header('Access-Control-Allow-Origin', 'https://sandbox.pagseguro.uol.com.br');
-	console.log('chegou no redirecionamento no post');
+// // stores data from the last request (sometimes the spreadsheet sends multiple requests for the same set o answers)
+// const lastSpreadReq = { nome_sheet: '', timestamp: '' };
 
-	// console.log(JSON.parse(req.body));
-	// console.log(JSON.parse(req.params));
-
-	res.status(200);
-	res.send();
-});
+// // when user answers form, theres a request to this endpoint with the new set of answers
+// server.post('/spread', async (req, res) => {
+// 	console.log('entrei aqui');
+// 	console.log('req.body', req.body);
+// 	if (req.body.nome_sheet !== lastSpreadReq.nome_sheet || req.body.timestamp !== lastSpreadReq.timestamp) { // check if the new request is just a duplicate of the last one
+// 		lastSpreadReq.nome_sheet = req.body.nome_sheet;
+// 		lastSpreadReq.timestamp = req.body.timestamp;
+// 		// handleAnswers.handleNewAnswer(req.body);
+// 	} else {
+// 		console.log('Veio repetido mas não fiz nada');
+// 	}
+// 	res.status(200);
+// 	res.send();
+// });
 
 server.listen(process.env.API_PORT, () => {
 	console.log(`Server is running on ${process.env.API_PORT} port...`);

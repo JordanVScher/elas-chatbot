@@ -9,6 +9,33 @@ if (process.env.TEST !== 'true') {
 	});
 }
 
+// CREATE TABLE alunos(
+// 	id SERIAL PRIMARY KEY,
+// 	nome_completo TEXT,
+// 	cpf TEXT,
+// 	turma TEXT,
+// 	email TEXT,
+// 	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+// 	updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL
+// );
+
+async function upsertAluno(nome, cpf, turma, email) {
+	let date = new Date();
+	date = await moment(date).format('YYYY-MM-DD HH:mm:ss');
+
+	await sequelize.query(`
+	INSERT INTO "alunos" (nome_completo, cpf, turma, email, created_at, updated_at)
+  VALUES ('${nome}', '${cpf}', '${turma}', '${email}', '${date}', '${date}')
+	ON CONFLICT (cpf)
+  DO UPDATE
+  	SET nome_completo = '${nome}', turma = '${turma}', email = '${email}', updated_at = '${date}';
+	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
+		console.log(`Added ${nome} successfully!`);
+	}).catch((err) => {
+		console.error('Error on upsertAluno => ', err);
+	});
+}
+
 async function upsertUser(FBID, userName) {
 	let date = new Date();
 	date = await moment(date).format('YYYY-MM-DD HH:mm:ss');
@@ -66,7 +93,16 @@ async function upsertPagamento(documentoTipo, documentoValor, email, productId, 
 // 	updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL
 // );
 
+// CREATE TABLE alunos(
+// 	id SERIAL PRIMARY KEY,
+// 	nome_completo TEXT,
+// 	cpf TEXT UNIQUE,
+// 	turma TEXT,
+// 	email TEXT,
+// 	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+// 	updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL
+// );
 
 module.exports = {
-	upsertUser, upsertPagamento,
+	upsertUser, upsertPagamento, upsertAluno,
 };
