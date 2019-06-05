@@ -48,11 +48,11 @@ async function upsertPagamento(documentoTipo, documentoValor, email, productId, 
 	date = await moment(date).format('YYYY-MM-DD HH:mm:ss');
 
 	await sequelize.query(`
-	INSERT INTO "pagamentos" (documento_tipo, documento_valor, e_mail, id_produto, id_transacao, created_at, updated_at)
+	INSERT INTO "pagamentos" (documento_tipo, documento_valor, email, id_produto, id_transacao, created_at, updated_at)
   VALUES ('${documentoTipo}', '${documentoValor}', '${email}', '${productId}', '${transctionId}', '${date}', '${date}')
   ON CONFLICT (id_transacao)
   DO UPDATE
-    SET documento_tipo = '${documentoTipo}', documento_valor = '${documentoValor}', e_mail = '${email}', updated_at = '${date}';
+    SET documento_tipo = '${documentoTipo}', documento_valor = '${documentoValor}', email = '${email}', updated_at = '${date}';
 	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
 		console.log(`Added ${email} successfully!`);
 	}).catch((err) => {
@@ -74,7 +74,7 @@ async function upsertPagamento(documentoTipo, documentoValor, email, productId, 
 
 // CREATE TABLE pagamentos(
 // 	id SERIAL PRIMARY KEY,
-// 	e_mail text NOT NULL,
+// 	email text NOT NULL,
 // 	documento_tipo text NOT NULL,
 // 	documento_valor text NOT NULL,
 // 	id_produto INTEGER,
