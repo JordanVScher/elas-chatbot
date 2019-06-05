@@ -1,4 +1,4 @@
-const { sequelize } = require('./server/index.js');
+const { sequelize } = require('../server/models/index');
 const { moment } = require('./helper');
 
 if (process.env.TEST !== 'true') {
@@ -8,16 +8,6 @@ if (process.env.TEST !== 'true') {
 		console.error('Unable to connect to the database:', err);
 	});
 }
-
-// CREATE TABLE alunos(
-// 	id SERIAL PRIMARY KEY,
-// 	nome_completo TEXT,
-// 	cpf TEXT,
-// 	turma TEXT,
-// 	email TEXT,
-// 	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
-// 	updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL
-// );
 
 async function upsertAluno(nome, cpf, turma, email) {
 	let date = new Date();
