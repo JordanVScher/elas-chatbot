@@ -162,6 +162,38 @@ async function createNewWebhook(urlHook, surveyIDs, name) {
 }
 
 
+async function getSurveyResponseDetailsBulk(id, page) {
+	let result = {};
+	try {
+		const res = await request(`${url}/surveys/${id}/responses/bulk`).set(headers).query({ per_page: 100, page: page || 1 });
+		result = await res.json();
+	} catch (error) { console.log('Erro em getSurveyResponseDetailsBulk', JSON.stringify(result, null, 2)); Sentry.captureMessage('Erro em getSurveyResponseDetailsBulk'); }
+	// console.log(JSON.stringify(result, null, 2));
+	return result;
+}
+
+
+async function getEveryAnswer(surveyId) {
+	const answers = []; // result array
+	let pageNumber = 1;
+	let totalOverall;
+	let answerPage;
+
+	do {
+		answerPage = await getSurveyResponseDetailsBulk(surveyId, pageNumber); // get the response details
+		totalOverall = answerPage.total; // get the total number o questions
+		pageNumber += 1; // increase the page number
+
+		if (answerPage.data) {
+			answerPage.data.forEach(async (element) => { answers.push(element.pages[0]); }); // add each answer (pages) on data
+		}
+	} while (totalOverall > answers.length); // while theres still answers to get
+	// obs: if an error occurs, totalOverall will become undefined making the while condition false
+
+	return answers;
+}
+
+
 module.exports = {
 	getSurveys,
 	getSurveyIds,
@@ -170,6 +202,8 @@ module.exports = {
 	getSurveyPages,
 	getSurveyPageDetails,
 	getSurveyResponse,
+	getSurveyResponseDetailsBulk,
+	getEveryAnswer,
 	getSurveyResponseDetails,
 	getResponseWithAnswers,
 	getAvailableWebhooks,

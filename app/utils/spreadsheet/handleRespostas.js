@@ -1,6 +1,6 @@
-const help = require('./helper');
+const help = require('../helper');
 const answers = require('./respostas');
-const mailer = require('./mailer');
+const mailer = require('../mailer');
 
 const preCadastroUrl = process.env.FORM_PRECADASTRO;
 
@@ -8,12 +8,13 @@ const preCadastroUrl = process.env.FORM_PRECADASTRO;
     Mock das respostas que vem da planilha do google. Cada chave foi definida lá, o nome das perguntas vem do próprio formulário
     As respostas chegem através do /spread
 */
-const bodyMock = {
-	nome_sheet: 'Pré-Cadastro',
-	timestamp: '2019-05-29T17:27:32.457Z',
-	respostas:
-    [{ pergunta: 'Nome', resposta: 'Jon Arbuckle' }, { pergunta: 'Empresa', resposta: 'Paws, Inc. ' }, { pergunta: 'Cargo', resposta: 'Cartoonist' }, { pergunta: 'Endereço de e-mail', resposta: 'jordan@appcivico.com' }],
-};
+// const bodyMock = {
+// 	nome_sheet: 'Pré-Cadastro',
+// 	timestamp: '2019-05-29T17:27:32.457Z',
+// 	respostas:
+//  [{ pergunta: 'Nome', resposta: 'Jon Arbuckle' }, { pergunta: 'Empresa', resposta: 'Paws, Inc. ' }, { pergunta: 'Cargo', resposta: 'Cartoonist' },
+//  { pergunta: 'Endereço de e-mail', resposta: 'jordan@appcivico.com' }],
+// };
 
 async function handleNewAnswer(body) {
 	const email = {};
@@ -36,6 +37,6 @@ async function handleNewAnswer(body) {
 // handleNewAnswer(bodyMock);
 
 
-// module.exports = {
-// 	handleNewAnswer,
-// };
+module.exports = {
+	handleNewAnswer,
+};

@@ -11,7 +11,6 @@ const basename = path.basename(__filename);
 const config = require('./../config/config.js');
 
 const db = {};
-console.log(config);
 
 let sequelize = '';
 if (process.env.TEST !== 'true') {

@@ -7,24 +7,24 @@ const db = require('./DB_helper');
 
 const preCadastro = process.env.FORM_PRECADASTRO;
 
-const mockEvent = {
-	event_datetime: '2019-06-04T18:26:15.326900+00:00',
-	resources:
-	{
-		respondent_id: '10776014041',
-		recipient_id: '0',
-		user_id: '134607003',
-		collector_id: '234215909',
-		survey_id: '175896322',
-	},
-	name: 'novo webhook',
-	object_id: '10776014041',
-	filter_id: '175896322',
-	event_id: '10014719098',
-	object_type: 'response',
-	filter_type: 'survey',
-	event_type: 'response_completed',
-};
+// const mockEvent = {
+// 	event_datetime: '2019-06-04T18:26:15.326900+00:00',
+// 	resources:
+// 	{
+// 		respondent_id: '10776014041',
+// 		recipient_id: '0',
+// 		user_id: '134607003',
+// 		collector_id: '234215909',
+// 		survey_id: '175896322',
+// 	},
+// 	name: 'novo webhook',
+// 	object_id: '10776014041',
+// 	filter_id: '175896322',
+// 	event_id: '10014719098',
+// 	object_type: 'response',
+// 	filter_type: 'survey',
+// 	event_type: 'response_completed',
+// };
 
 
 // after a payement happens we send an e-mail to the buyer with the matricula/pre-cadastro form
@@ -34,7 +34,7 @@ async function sendMatricula(productID, buyerEmail) {
 		const column = await spreadsheet.find(x => x.pagseguroId.toString() === productID.toString()); console.log('column', column); // get same product id (we want to know the "turma")
 		const newUrl = preCadastro.replace('TURMARESPOSTA', column.turma); // pass turma as a custom_parameter
 		const newText = eMail.preCadastro.texto.replace('<TURMA>', column.turma).replace('<LINK>', newUrl); // prepare mail text
-		await sendTestMail(eMail.preCadastro.assunto, newText, 'jordan@appcivico.com');
+		await sendTestMail(eMail.preCadastro.assunto, newText, process.env.ENV === 'local' ? 'jordan@appcivico.com' : buyerEmail);
 	} catch (error) {
 		console.log('Erro em sendMatricula', error); helper.Sentry.captureMessage('Erro em sendMatricula');
 	}
