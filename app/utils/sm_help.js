@@ -34,7 +34,7 @@ async function sendMatricula(productID, buyerEmail) {
 		const column = await spreadsheet.find(x => x.pagseguroId.toString() === productID.toString()); console.log('column', column); // get same product id (we want to know the "turma")
 		const newUrl = preCadastro.replace('TURMARESPOSTA', column.turma); // pass turma as a custom_parameter
 		const newText = eMail.preCadastro.texto.replace('<TURMA>', column.turma).replace('<LINK>', newUrl); // prepare mail text
-		await sendTestMail(eMail.preCadastro.assunto, newText, process.env.ENV === 'local' ? 'jordan@appcivico.com' : buyerEmail);
+		await sendTestMail(eMail.preCadastro.assunto, newText, buyerEmail);
 	} catch (error) {
 		console.log('Erro em sendMatricula', error); helper.Sentry.captureMessage('Erro em sendMatricula');
 	}
@@ -107,8 +107,10 @@ async function handlePreCadastro(response) {
 	const answers = await getSpecificAnswers(preCadastroMap, response.pages);
 	console.log(answers);
 
+
 	const newText = eMail.depoisMatricula.texto.replace('<NOME>', answers.nome); // prepare mail text
 	await sendTestMail(eMail.depoisMatricula.assunto, newText, answers.email);
+
 	await db.upsertAluno(answers.nome, response.custom_variables.cpf, response.custom_variables.turma, answers.email);
 }
 
@@ -118,7 +120,7 @@ async function newSurveyResponse(event) {
 
 	switch (responses.survey_id) { // which survey was answered?
 	case surveyIDs.preCadastro:
-		await handlePreCadastro(responses.custom_variables);
+		await handlePreCadastro(responses);
 		break;
 
 	default:

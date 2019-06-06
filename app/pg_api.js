@@ -4,7 +4,7 @@ require('dotenv').config();
 const PagSeguro = require('pagseguro-nodejs');
 const { promisify } = require('util');
 const { parseString } = require('xml2js');
-const { sendMatricula } = require('./utils/sm_help');
+const smHelp = require('./utils/sm_help');
 const { Sentry } = require('./utils/helper');
 const db = require('./utils/DB_helper');
 
@@ -75,7 +75,8 @@ async function handlePagamento(notification) {
 				const productID = answer.transaction.items[0].item[0].id[0]; console.log('productID', productID); // productID
 				await db.upsertPagamento(answer.transaction.sender[0].documents[0].document[0].type[0], answer.transaction.sender[0].documents[0].document[0].value[0],
 					answer.transaction.sender[0].email[0], productID, answer.transaction.code[0]); // saves pagamento
-				await sendMatricula(productID, answer.transaction.sender[0].email[0]); // send email
+				// await smHelp.sendMatricula(productID, process.env.ENV === 'local' ? 'jordan@appcivico.com' : answer.transaction.sender[0].email[0]); // send email
+				await smHelp.sendMatricula(productID, 'jordan@appcivico.com'); // send email
 			} catch (error) {
 				Sentry.captureMessage('Erro em handleNotification');
 			}
@@ -85,10 +86,10 @@ async function handlePagamento(notification) {
 	});
 }
 
-const mock = {
-	notificationCode: '8066A2-4FB95DB95D9E-4884C70FBF4F-AF104B',
-	notificationType: 'transaction',
-};
+// const mock = {
+// 	notificationCode: '8066A2-4FB95DB95D9E-4884C70FBF4F-AF104B',
+// 	notificationType: 'transaction',
+// };
 
 // handleNotification(mock);
 

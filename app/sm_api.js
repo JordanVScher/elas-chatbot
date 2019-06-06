@@ -161,7 +161,6 @@ async function createNewWebhook(urlHook, surveyIDs, name) {
 	}
 }
 
-
 async function getSurveyResponseDetailsBulk(id, page) {
 	let result = {};
 	try {

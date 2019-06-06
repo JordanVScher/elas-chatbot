@@ -75,17 +75,18 @@ server.post('/webhook', async (req, res) => {
 	}
 });
 
-let lastNotification = '';
+// let lastNotification = '';
 // receives notification from pagseguro -> something happened to one of the products/transaction
 server.post('/pagamento', async (req, res) => {
 	console.log('chegou no pagamento no post');
 	// check if new notification is diferent from last notification
-	if (lastNotification.notificationCode !== req.body.notificationCode && lastNotification.notificationType !== req.body.notificationType) {
-		lastNotification = req.body;
-		await pgAPI.handlePagamento(req.body);
-	} else {
-		console.log('veio a mais');
-	}
+	await pgAPI.handlePagamento(req.body);
+	// if (lastNotification.notificationCode !== req.body.notificationCode && lastNotification.notificationType !== req.body.notificationType) {
+	// 	lastNotification = req.body;
+	// 	await pgAPI.handlePagamento(req.body);
+	// } else {
+	// 	console.log('veio a mais');
+	// }
 
 	res.status(200);
 	res.send();
