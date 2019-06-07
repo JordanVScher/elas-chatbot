@@ -55,14 +55,20 @@ const preCadastroMap = [
 		questionID: '290701123',
 		paramName: 'telefone',
 	},
+	{
+		questionID: '278631561',
+		paramName: 'primeiroDropdown',
+		dropdown: true,
+	},
 ];
 
+// gets the answer from the survey response object
 async function getAnswer(answers) {
 	let result = '';
 	if (await Array.isArray(answers) && answers.length === 1) {
 		if (answers[0].other_id) { // multiple choice (other + description)
-			const aux = {};	aux[answers[0].other_id] = answers[0].text;
-			result = aux;
+			// const aux = {};	aux[answers[0].other_id] = `<outros>${answers[0].text}`;
+			result = `<outros>${answers[0].text}`; // add <outros> to signal user choosing outros option
 		} else if (answers[0].text) { // text/comment box
 			result = answers[0].text;
 		} else if (answers[0].choice_id) { // multiple choice (regular) / dropdown
@@ -73,6 +79,7 @@ async function getAnswer(answers) {
 	return result;
 }
 
+// uses the map to find the answers on the survey response
 async function getSpecificAnswers(map, responses) {
 	const result = {};
 
@@ -97,6 +104,33 @@ async function getSpecificAnswers(map, responses) {
 	return result;
 }
 
+async function replaceChoiceId(answers, map, surveyID) {
+	const result = answers;
+	const findDropdown = map.filter(x => x.dropdown === true);
+
+	if (findDropdown && findDropdown.length > 0) { // check if we have an answer that needs replacement (choice.id isnt the actual answer)
+		const survey = await smAPI.getSurveyDetails(surveyID); // load survey and separate the questions (load the details noew because we know we will need them)
+		const questionDetails = survey.pages[0].questions;
+
+		await findDropdown.forEach((element) => { // for each map element we should replace
+			if (result[element.paramName] && result[element.paramName].slice(0, 8) !== '<outros>') { // check if the answers array actually has that answer and it's not an "Others" option
+				const findQuestion = questionDetails.find(x => x.id.toString() === element.questionID.toString());
+				// find the answer that has the same choice_id as the answer we have salved
+				const findAnswer = findQuestion.answers.choices.find(x => x.id.toString() === result[element.paramName].toString());
+				result[element.paramName] = findAnswer.text; // replace the choice_id saved with the actual text of the option
+			}
+		});
+	}
+
+	Object.keys(result).forEach((element) => {
+		if (result[element].includes('<outros>')) {
+			result[element] = result[element].replace('<outros>', '');
+		}
+	});
+
+	return result;
+}
+
 async function handlePreCadastro(response) {
 	// custom_variables should only have turma and/or cpf, the rest we have to get from the answers
 	response.custom_variables = {
@@ -104,9 +138,8 @@ async function handlePreCadastro(response) {
 		cpf: '123456789-11',
 	};
 
-	const answers = await getSpecificAnswers(preCadastroMap, response.pages);
-	console.log(answers);
-
+	let answers = await getSpecificAnswers(preCadastroMap, response.pages);
+	answers = await replaceChoiceId(answers, preCadastroMap, response.survey_id);
 
 	const newText = eMail.depoisMatricula.texto.replace('<NOME>', answers.nome); // prepare mail text
 	await sendTestMail(eMail.depoisMatricula.assunto, newText, answers.email);

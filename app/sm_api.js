@@ -180,7 +180,7 @@ async function getEveryAnswer(surveyId) {
 
 	do {
 		answerPage = await getSurveyResponseDetailsBulk(surveyId, pageNumber); // get the response details
-		totalOverall = answerPage.total; // get the total number o questions
+		totalOverall = answerPage.total; // get the total number of questions
 		pageNumber += 1; // increase the page number
 
 		if (answerPage.data) {
