@@ -56,8 +56,56 @@ async function upsertPagamento(documentoTipo, documentoValor, email, productId, 
 	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
 		console.log(`Added ${email} successfully!`);
 	}).catch((err) => {
-		console.error('Error on upsertUser => ', err);
+		console.error('Error on upsertPagamento => ', err);
 	});
+}
+
+async function checkCPF(cpf) {
+	const result = await sequelize.query(`
+	SELECT exists (SELECT 1 FROM alunos WHERE cpf = '${cpf}' LIMIT 1);
+	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
+		console.log(`Checked ${cpf} successfully!`);
+		return results;
+	}).catch((err) => {
+		console.error('Error on checkCPF => ', err);
+	});
+
+	if (result && result[0] && result[0].exists === true) { return true; }
+	return false;
+}
+
+async function linkUserToCPF(FBID, cpf) {
+	let date = new Date();
+	date = await moment(date).format('YYYY-MM-DD HH:mm:ss');
+
+	await sequelize.query(`
+	UPDATE chatbot_users
+		SET cpf = '${cpf}', updated_at = '${date}'
+	WHERE
+   fb_id = '${FBID}';
+	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
+		console.log(`Added ${FBID}'s cpf successfully!`);
+	}).catch((err) => {
+		console.error('Error on linkUserToCPF => ', err);
+	});
+}
+
+async function getUserTurma(FBID) {
+	const result = await sequelize.query(`
+	SELECT ALUNO.turma, ALUNO.nome_completo AS nome
+	FROM alunos ALUNO
+	INNER JOIN chatbot_users BOT_USER ON BOT_USER.cpf = ALUNO.cpf
+	WHERE BOT_USER.fb_id = '${FBID}'
+	ORDER BY BOT_USER.fb_id;
+	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
+		console.log(`Got ${FBID}'s turma successfully!`);
+		return results;
+	}).catch((err) => {
+		console.error('Error on linkUserToCPF => ', err);
+	});
+
+	if (result && result[0] && result[0].turma && result[0].nome) { return result[0];	}
+	return false;
 }
 
 // ----------------------------------------------------------
@@ -94,5 +142,5 @@ async function upsertPagamento(documentoTipo, documentoValor, email, productId, 
 // );
 
 module.exports = {
-	upsertUser, upsertPagamento, upsertAluno,
+	upsertUser, upsertPagamento, upsertAluno, linkUserToCPF, checkCPF, getUserTurma,
 };

@@ -137,17 +137,16 @@ async function replaceChoiceId(answers, map, surveyID) {
 
 async function handlePreCadastro(response) {
 	// custom_variables should only have turma and/or cpf, the rest we have to get from the answers
-	response.custom_variables = {
-		turma: 'turma 10',
-	};
+	response.custom_variables = { turma: 'T7-SP' };
 
 	let answers = await getSpecificAnswers(preCadastroMap, response.pages);
 	answers = await replaceChoiceId(answers, preCadastroMap, response.survey_id);
 
-	const newText = eMail.depoisMatricula.texto.replace('<NOME>', answers.nome); // prepare mail text
-	await sendTestMail(eMail.depoisMatricula.assunto, newText, answers.email);
+	if (answers.cpf) { answers.cpf = await answers.cpf.replace(/[_.,-]/g, '');	}
 
 	await db.upsertAluno(answers.nome, answers.cpf, response.custom_variables.turma, answers.email);
+	const newText = eMail.depoisMatricula.texto.replace('<NOME>', answers.nome); // prepare mail text
+	await sendTestMail(eMail.depoisMatricula.assunto, newText, answers.email);
 }
 
 // what to do with the form that was just answered

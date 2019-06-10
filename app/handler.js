@@ -1,5 +1,6 @@
 const MaAPI = require('./chatbot_api');
-// const opt = require('./util/options');
+// const opt = require('./utils/options');
+const db = require('./utils/DB_helper');
 const { createIssue } = require('./utils/send_issue');
 const { checkPosition } = require('./utils/dialogFlow');
 const { apiai } = require('./utils/helper');
@@ -12,7 +13,7 @@ module.exports = async (context) => {
 	try {
 		// console.log(await MaAPI.getLogAction()); // print possible log actions
 		if (!context.state.dialog || context.state.dialog === '' || (context.event.postback && context.event.postback.payload === 'greetings')) { // because of the message that comes from the comment private-reply
-			await context.resetState(); await context.setState({ dialog: 'greetings' });
+			await context.setState({ dialog: 'greetings' });
 		}
 		await context.setState({ chatbotData: await MaAPI.getChatbotData(context.event.rawEvent.recipient.id) });
 		// we update context data at every interaction that's not a comment or a post
@@ -23,11 +24,12 @@ module.exports = async (context) => {
 			picture: context.session.user.profile_pic,
 			// session: JSON.stringify(context.state),
 		});
+		db.upsertUser(context.session.user.id, `${context.session.user.first_name} ${context.session.user.last_name}`);
 
 		if (context.event.isPostback) {
 			await context.setState({ lastPBpayload: context.event.postback.payload });
 			if (context.state.lastPBpayload === 'teste') {
-				await context.setState({ dialog: 'validCPF' });
+				await context.setState({ dialog: 'jaSouAluna' });
 			} else {
 				await context.setState({ dialog: context.state.lastPBpayload });
 				await MaAPI.logFlowChange(context.session.user.id, context.state.chatbotData.user_id,
@@ -43,7 +45,7 @@ module.exports = async (context) => {
 			if (context.state.dialog === 'jaSouAluna') {
 				await context.sendImage(flow.jaSouAluna.gif1);
 				await dialogs.handleCPF(context);
-			} else if (context.state.dialog === 'invalidCPF') {
+			} else if (['CPFNotFound', 'invalidCPF', 'validCPF'].includes(context.state.dialog)) {
 				await dialogs.handleCPF(context);
 			} else {
 				console.log('--------------------------');
@@ -85,7 +87,20 @@ module.exports = async (context) => {
 			await context.sendText(flow.jaSouAluna.text3);
 			break;
 		case 'validCPF':
-			await context.sendText(flow.jaSouAluna.validCPF.replace('<name>', 'TODO1').replace('<turma>', 'TODO2'), await attach.getQR(flow.jaSouAluna));
+			if (context.state.gotTurma) {
+				await context.setState({ turma: context.state.turma.turma });
+				await context.sendText(flow.jaSouAluna.validCPF.replace('<name>', context.state.gotTurma.nome).replace('<turma>', context.state.turma.replace('turma', '')),
+					await attach.getQR(flow.jaSouAluna));
+			} else {
+				await context.sendText('Não achei sua turma');
+			}
+			break;
+		case 'invalidCPF':
+			await context.sendText(flow.jaSouAluna.invalidCPF1);
+			await context.sendText(flow.jaSouAluna.invalidCPF2);
+			break;
+		case 'CPFNotFound':
+			await context.sendText('Ainda não tenho esse CPF! Digite de novo!');
 			break;
 		case 'confirmaMatricula':
 			await context.sendText(flow.confirmaMatricula.text1);
