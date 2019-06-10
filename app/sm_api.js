@@ -171,7 +171,6 @@ async function getSurveyResponseDetailsBulk(id, page) {
 	return result;
 }
 
-
 async function getEveryAnswer(surveyId) {
 	const answers = []; // result array
 	let pageNumber = 1;
@@ -191,7 +190,6 @@ async function getEveryAnswer(surveyId) {
 
 	return answers;
 }
-
 
 module.exports = {
 	getSurveys,
