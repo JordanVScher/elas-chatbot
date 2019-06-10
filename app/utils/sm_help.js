@@ -60,6 +60,10 @@ const preCadastroMap = [
 		paramName: 'primeiroDropdown',
 		dropdown: true,
 	},
+	{
+		questionID: '293441051',
+		paramName: 'cpf',
+	},
 ];
 
 // gets the answer from the survey response object
@@ -135,7 +139,6 @@ async function handlePreCadastro(response) {
 	// custom_variables should only have turma and/or cpf, the rest we have to get from the answers
 	response.custom_variables = {
 		turma: 'turma 10',
-		cpf: '123456789-11',
 	};
 
 	let answers = await getSpecificAnswers(preCadastroMap, response.pages);
@@ -144,7 +147,7 @@ async function handlePreCadastro(response) {
 	const newText = eMail.depoisMatricula.texto.replace('<NOME>', answers.nome); // prepare mail text
 	await sendTestMail(eMail.depoisMatricula.assunto, newText, answers.email);
 
-	await db.upsertAluno(answers.nome, response.custom_variables.cpf, response.custom_variables.turma, answers.email);
+	await db.upsertAluno(answers.nome, answers.cpf, response.custom_variables.turma, answers.email);
 }
 
 // what to do with the form that was just answered
@@ -155,7 +158,6 @@ async function newSurveyResponse(event) {
 	case surveyIDs.preCadastro:
 		await handlePreCadastro(responses);
 		break;
-
 	default:
 		break;
 	}
