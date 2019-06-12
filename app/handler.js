@@ -29,7 +29,8 @@ module.exports = async (context) => {
 		if (context.event.isPostback) {
 			await context.setState({ lastPBpayload: context.event.postback.payload });
 			if (context.state.lastPBpayload === 'teste') {
-				await context.setState({ dialog: 'jaSouAluna' });
+				await context.setState({ dialog: 'confirmaMatricula' });
+				// await context.setState({ dialog: 'sendFirst' });
 			} else {
 				await context.setState({ dialog: context.state.lastPBpayload });
 				await MaAPI.logFlowChange(context.session.user.id, context.state.chatbotData.user_id,
@@ -88,7 +89,7 @@ module.exports = async (context) => {
 			break;
 		case 'validCPF':
 			if (context.state.gotTurma) {
-				await context.setState({ turma: context.state.turma.turma });
+				await context.setState({ turma: context.state.gotTurma.turma });
 				await context.sendText(flow.jaSouAluna.validCPF.replace('<name>', context.state.gotTurma.nome).replace('<turma>', context.state.turma.replace('turma', '')),
 					await attach.getQR(flow.jaSouAluna));
 			} else {
@@ -103,8 +104,13 @@ module.exports = async (context) => {
 			await context.sendText('Ainda não tenho esse CPF! Digite de novo!');
 			break;
 		case 'confirmaMatricula':
+			await context.setState({ agendaData: await dialogs.getAgenda(context) });
 			await context.sendText(flow.confirmaMatricula.text1);
-			await context.sendText(flow.confirmaMatricula.text2, await attach.getQR(flow.confirmaMatricula));
+			console.log(await attach.getQR(flow.confirmaMatricula));
+
+
+			await context.sendText(await dialogs.buildAgendaMsg(context.state.agendaData), await attach.getQR(flow.confirmaMatricula));
+			// await context.sendText(flow.confirmaMatricula.text2, await attach.getQR(flow.confirmaMatricula));
 			break;
 		case 'erradoMatricula':
 			await context.sendText(flow.erradoMatricula.text1, await attach.getQR(flow.erradoMatricula));
@@ -115,6 +121,18 @@ module.exports = async (context) => {
 			await context.sendText(flow.talkToElas.text3);
 			await context.sendText(flow.talkToElas.text4);
 			await attach.sendShare(context, flow.shareElas);
+			break;
+		case 'sendFirst':
+			await context.sendText(flow.sendFirst.text1);
+			await context.sendText(flow.sendFirst.text2);
+			await attach.cardLinkNoImage(context, flow.sendFirst.cardTitle, process.env.FORM_PRECADASTRO.replace('TURMARESPOSTA', context.state.turma));
+			await context.sendText(flow.sendFirst.text3);
+			await context.sendText(flow.sendFirst.text4, await attach.getQR(flow.sendFirst));
+			break;
+		case 'avaliadores1':
+			await context.sendText(flow.avaliadores1.text1);
+			await context.sendText(flow.avaliadores1.text2);
+			await attach.cardLinkNoImage(context, flow.avaliadores1.cardTitle, process.env.FORM_AVALIADORES.replace('TURMARESPOSTA', context.state.turma));
 			break;
 		case 'fim':
 			await context.sendText('fim');

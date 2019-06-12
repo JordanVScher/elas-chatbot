@@ -8,7 +8,6 @@ async function buildButton(url, title) { return [{ type: 'web_url', url, title }
 
 // sends one card with an image and link
 module.exports.sendCardWithLink = async function sendCardWithLink(context, cardData, url, text) {
-	if (!text || text === '') { text = 'Veja o resultado dos nossos esforços!'; } // eslint-disable-line no-param-reassign
 	await context.sendAttachment({
 		type: 'template',
 		payload: {
@@ -27,6 +26,13 @@ module.exports.sendCardWithLink = async function sendCardWithLink(context, cardD
 				},
 			],
 		},
+	});
+};
+
+module.exports.cardLinkNoImage = async (context, title, url) => {
+	await context.sendAttachment({
+		type: 'template',
+		payload: { template_type: 'generic', elements: [{ title, subtitle: ' ', buttons: [{ type: 'web_url', url, title }] }] },
 	});
 };
 
@@ -67,10 +73,10 @@ module.exports.getQR = async (opt) => {
 	const elements = [];
 	const firstArray = opt.menuOptions;
 
-	firstArray.forEach((element, index) => {
+	firstArray.forEach(async (element, index) => {
 		elements.push({
 			content_type: 'text',
-			title: capQR(element),
+			title: await capQR(element),
 			payload: opt.menuPostback[index],
 		});
 	});

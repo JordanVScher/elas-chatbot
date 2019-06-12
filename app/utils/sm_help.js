@@ -30,7 +30,7 @@ const preCadastro = process.env.FORM_PRECADASTRO;
 // after a payement happens we send an e-mail to the buyer with the matricula/pre-cadastro form
 async function sendMatricula(productID, buyerEmail) {
 	try {
-		const spreadsheet = await helper.reloadSpreadSheet(); // console.log('spreadsheet', spreadsheet); // load spreadsheet
+		const spreadsheet = await helper.reloadSpreadSheet(1, 6); // console.log('spreadsheet', spreadsheet); // load spreadsheet
 		const column = await spreadsheet.find(x => x.pagseguroId.toString() === productID.toString()); console.log('column', column); // get same product id (we want to know the "turma")
 		const newUrl = preCadastro.replace('TURMARESPOSTA', column.turma); // pass turma as a custom_parameter
 		const newText = eMail.preCadastro.texto.replace('<TURMA>', column.turma).replace('<LINK>', newUrl); // prepare mail text
@@ -40,7 +40,7 @@ async function sendMatricula(productID, buyerEmail) {
 	}
 }
 
-// sendMatricula(1, 'jordan@appcivico.com');
+// sendMatricula(2, 'jordan@appcivico.com');
 
 const preCadastroMap = [
 	{

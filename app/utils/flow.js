@@ -22,10 +22,10 @@ module.exports = {
 	},
 	confirmaMatricula: {
 		text1: 'Já tenho as informações da sua próxima aula:',
-		text2: '📝 Você está no módulo {módulo} de 3\n🗓️ Acontecerá no sábado dia {dia} e no domingo dia {dia}\n⏰ Das {horas1} às {horas2} '
-		+ '\n🏠 Será no {local}. Endereço: {endereço}',
+		// text2: '📝 Você está no módulo {módulo} de 3\n🗓️ Acontecerá no sábado dia {dia} e no domingo dia {dia}\n⏰ Das {horas1} às {horas2} '
+		// + '\n🏠 Será no {local}. Endereço: {endereço}',
 		menuOptions: ['Entendi'],
-		menuPostback: ['fim'],
+		menuPostback: ['sendFirst'],
 	},
 	erradoMatricula: {
 		text1: '😳 Sem problemas. Você pode digitar seu CPF novamente ou entrar em contato com ELAS para ver o que houve.',
@@ -37,6 +37,22 @@ module.exports = {
 		text2: '📞 Telefones:  (11) 3587-1263 / 3587-1322\n🏠 Endereço: Alameda Santos, 200. Bela Vista, São Paulo - SP',
 		text3: 'Quando resolver com ELAS venha conversar comigo novamente. No menu há os serviços que você pode acessar 🤗',
 		text4: 'Até lá, que tal compartilhar ELAS para suas amigas?',
+	},
+	sendFirst: {
+		text1: 'Queremos conhecer um pouco mais sobre você  😉 Clique no link abaixo e preencha o formulário.',
+		text2: 'É muito importante preencher todas as perguntas. O nosso objetivo é poder te conhecer melhor para oferecer o conteúdo que vá direto ao encontro das suas necessidades. Entender melhor o seu perfil e suas expectativas será importante também para avaliar o resultado final no seu desenvolvimento.',
+		cardTitle: 'Atividade 1',
+		text3: '⚠️ Agora, um passo importante! ⚠️\nEscolha seus avaliadores, pessoas do seu convívio que podem avaliar o seu comportamento. '
+		+ 'Escolha as pessoas cuja relação seja importante e estratégica para o seu desenvolvimento e crescimento.',
+		text4: 'Eles responderão um questionário sobre você, um agora antes do curso e outro no fim. Clique no link abaixo para preencher esses dados',
+		menuOptions: ['Já sei! Continuar'],
+		menuPostback: ['avaliadores1'],
+	},
+	avaliadores1: {
+		text1: 'Beleza 😀\n*Ah, é legal avisá-los sobre!',
+		text2: 'Clique no link abaixo e preencha o formulário',
+		cardTitle: 'Avaliadores',
+
 	},
 	shareElas: {
 		siteTitle: 'Compartilhar',
@@ -62,7 +78,7 @@ module.exports = {
 				url: 'https://programaelas.com.br/imersao-influencia/',
 			},
 			{
-				text: 'Workshop: Exercendo seu poder de Influência e Autoridade:\nO Workshop “Exercendo o Seu Poder de Influência e Autoridade” é uma vivência de 2h30 focada em despertar a consciência de como podemos nos comunicar melhor e gerar mais influência no ambiente de trabalho e em outros contextos de vida.O objetivo é gerar um desconforto positivo para que cada participante possa aplicar imediatamente o que vai aprender e já obter resultados diferentes no seu dia- a - dia.',
+				text: 'Workshop: Exercendo seu poder de Influência e Autoridade:\nO Workshop “Exercendo o Seu Poder de Influência e Autoridade” é uma vivência de 2h30 focada em despertar a consciência de como podemos nos comunicar melhor e gerar mais influência no ambiente de trabalho e em outros contextos de vida.O objetivo é gerar um desconforto positivo para que cada participante possa aplicar imediatamente o que vai aprender e já obter resultados diferentes no seu dia-a-dia.',
 				url: 'https://programaelas.com.br/workshop-influencia-e-autoridade/',
 			},
 			{
