@@ -1,38 +1,18 @@
 const helper = require('./helper');
 const smAPI = require('../sm_api');
 const { sendTestMail } = require('./mailer');
-const surveyIDs = require('./sm_surveys');
 const { eMail } = require('./flow');
 const db = require('./DB_helper');
 
-const preCadastro = process.env.FORM_PRECADASTRO;
-
-// const mockEvent = {
-// 	event_datetime: '2019-06-04T18:26:15.326900+00:00',
-// 	resources:
-// 	{
-// 		respondent_id: '10776014041',
-// 		recipient_id: '0',
-// 		user_id: '134607003',
-// 		collector_id: '234215909',
-// 		survey_id: '175896322',
-// 	},
-// 	name: 'novo webhook',
-// 	object_id: '10776014041',
-// 	filter_id: '175896322',
-// 	event_id: '10014719098',
-// 	object_type: 'response',
-// 	filter_type: 'survey',
-// 	event_type: 'response_completed',
-// };
-
+const surveysInfo = require('./sm_surveys');
+const surveysMaps = require('./sm_maps');
 
 // after a payement happens we send an e-mail to the buyer with the matricula/pre-cadastro form
 async function sendMatricula(productID, buyerEmail) {
 	try {
 		const spreadsheet = await helper.reloadSpreadSheet(1, 6); // console.log('spreadsheet', spreadsheet); // load spreadsheet
 		const column = await spreadsheet.find(x => x.pagseguroId.toString() === productID.toString()); console.log('column', column); // get same product id (we want to know the "turma")
-		const newUrl = preCadastro.replace('TURMARESPOSTA', column.turma); // pass turma as a custom_parameter
+		const newUrl = surveysInfo.atividade1.link.replace('TURMARESPOSTA', column.turma); // pass turma as a custom_parameter
 		const newText = eMail.preCadastro.texto.replace('<TURMA>', column.turma).replace('<LINK>', newUrl); // prepare mail text
 		await sendTestMail(eMail.preCadastro.assunto, newText, buyerEmail);
 	} catch (error) {
@@ -40,31 +20,6 @@ async function sendMatricula(productID, buyerEmail) {
 	}
 }
 
-// sendMatricula(2, 'jordan@appcivico.com');
-
-const preCadastroMap = [
-	{
-		questionID: '278631055',
-		paramName: 'nome',
-	},
-	{
-		questionID: '289947676',
-		paramName: 'email',
-	},
-	{
-		questionID: '290701123',
-		paramName: 'telefone',
-	},
-	{
-		questionID: '278631561',
-		paramName: 'primeiroDropdown',
-		dropdown: true,
-	},
-	{
-		questionID: '293441051',
-		paramName: 'cpf',
-	},
-];
 
 // gets the answer from the survey response object
 async function getAnswer(answers) {
@@ -139,11 +94,11 @@ async function handlePreCadastro(response) {
 	// custom_variables should only have turma and/or cpf, the rest we have to get from the answers
 	response.custom_variables = { turma: 'T7-SP' };
 
-	let answers = await getSpecificAnswers(preCadastroMap, response.pages);
-	answers = await replaceChoiceId(answers, preCadastroMap, response.survey_id);
+	let answers = await getSpecificAnswers(surveysMaps.atividade1, response.pages);
+	answers = await replaceChoiceId(answers, surveysMaps.atividade1, response.survey_id);
 
 	if (answers.cpf) { answers.cpf = await answers.cpf.replace(/[_.,-]/g, '');	}
-
+	// console.log('answers', answers);
 	await db.upsertAluno(answers.nome, answers.cpf, response.custom_variables.turma, answers.email);
 	const newText = eMail.depoisMatricula.texto.replace('<NOME>', answers.nome); // prepare mail text
 	await sendTestMail(eMail.depoisMatricula.assunto, newText, answers.email);
@@ -152,17 +107,14 @@ async function handlePreCadastro(response) {
 // what to do with the form that was just answered
 async function newSurveyResponse(event) {
 	const responses = await smAPI.getResponseWithAnswers(event.filter_id, event.object_id); console.log('responses', JSON.stringify(responses)); // get details of the event
-
 	switch (responses.survey_id) { // which survey was answered?
-	case surveyIDs.preCadastro:
+	case surveysInfo.atividade1.id:
 		await handlePreCadastro(responses);
 		break;
 	default:
 		break;
 	}
 }
-
-// handlePreCadastro(responses);
 
 module.exports = {
 	sendMatricula, newSurveyResponse,

@@ -89,5 +89,6 @@ test2.js
 *.png
 *.svg
 
+/exemplo_de_respostas/*
 # spreadsheet api key
 private_key.json
