@@ -49,7 +49,7 @@ async function getSurveyDetails(id) {
 		const res = await request(`${url}/surveys/${id}/details`).set(headers);
 		result = await res.json();
 	} catch (error) { console.log('Erro em getSurveyDetails', JSON.stringify(result, null, 2)); Sentry.captureMessage('Erro em getSurveyDetails');	}
-	console.log(JSON.stringify(result, null, 2));
+	// console.log('getSurveyDetails', JSON.stringify(result, null, 2));
 	return result;
 }
 
@@ -103,6 +103,37 @@ async function getResponseWithAnswers(id, responseId) {
 	return result;
 }
 
+
+async function getSurveyResponseDetailsBulk(id, page) {
+	let result = {};
+	try {
+		const res = await request(`${url}/surveys/${id}/responses/bulk`).set(headers).query({ per_page: 100, page: page || 1 });
+		result = await res.json();
+	} catch (error) { console.log('Erro em getSurveyResponseDetailsBulk', JSON.stringify(result, null, 2)); Sentry.captureMessage('Erro em getSurveyResponseDetailsBulk'); }
+	// console.log(JSON.stringify(result, null, 2));
+	return result;
+}
+
+async function getEveryAnswer(surveyId) {
+	const answers = []; // result array
+	let pageNumber = 1;
+	let totalOverall;
+	let answerPage;
+
+	do {
+		answerPage = await getSurveyResponseDetailsBulk(surveyId, pageNumber); // get the response details
+		totalOverall = answerPage.total; // get the total number of questions
+		pageNumber += 1; // increase the page number
+
+		if (answerPage.data) {
+			answerPage.data.forEach(async (element) => { answers.push(element.pages[0]); }); // add each answer (pages) on data
+		}
+	} while (totalOverall > answers.length); // while theres still answers to get
+	// obs: if an error occurs, totalOverall will become undefined making the while condition false
+
+	return answers;
+}
+
 async function getAvailableWebhooks() {
 	let result = {};
 	try {
@@ -112,7 +143,6 @@ async function getAvailableWebhooks() {
 	console.log('my webhooks', JSON.stringify(result, null, 2));
 	return result;
 }
-
 
 async function deleteOneWebhook(id) {
 	let result = {};
@@ -161,35 +191,6 @@ async function createNewWebhook(urlHook, surveyIDs, name) {
 	}
 }
 
-async function getSurveyResponseDetailsBulk(id, page) {
-	let result = {};
-	try {
-		const res = await request(`${url}/surveys/${id}/responses/bulk`).set(headers).query({ per_page: 100, page: page || 1 });
-		result = await res.json();
-	} catch (error) { console.log('Erro em getSurveyResponseDetailsBulk', JSON.stringify(result, null, 2)); Sentry.captureMessage('Erro em getSurveyResponseDetailsBulk'); }
-	// console.log(JSON.stringify(result, null, 2));
-	return result;
-}
-
-async function getEveryAnswer(surveyId) {
-	const answers = []; // result array
-	let pageNumber = 1;
-	let totalOverall;
-	let answerPage;
-
-	do {
-		answerPage = await getSurveyResponseDetailsBulk(surveyId, pageNumber); // get the response details
-		totalOverall = answerPage.total; // get the total number of questions
-		pageNumber += 1; // increase the page number
-
-		if (answerPage.data) {
-			answerPage.data.forEach(async (element) => { answers.push(element.pages[0]); }); // add each answer (pages) on data
-		}
-	} while (totalOverall > answers.length); // while theres still answers to get
-	// obs: if an error occurs, totalOverall will become undefined making the while condition false
-
-	return answers;
-}
 
 module.exports = {
 	getSurveys,
