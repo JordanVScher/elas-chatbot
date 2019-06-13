@@ -127,6 +127,16 @@ async function replaceChoiceId(answers, map, surveyID) {
 	return result;
 }
 
+async function handleAtividade1(response) {
+	response.custom_variables = { turma: 'T7-SP', cpf: '12345678911' };
+
+	const newUserID = await db.getAlunoId(response.custom_variables.cpf);
+	console.log('asjdhasjdhjashdjas', newUserID);
+
+	if (newUserID) {
+		await db.updateAtividade1(newUserID, true);
+	}
+}
 
 async function handlePreCadastro(response) {
 	// custom_variables should only have turma and/or cpf, the rest we have to get from the answers
@@ -155,122 +165,13 @@ async function newSurveyResponse(event) {
 		await handlePreCadastro(responses);
 		break;
 	case surveysInfo.atividade1.id:
+		await handleAtividade1(responses);
 		break;
 	default:
 		break;
 	}
 }
 
-const mock = {
-	total_time: 30,
-	href: 'https://api.surveymonkey.com/v3/surveys/179374831/responses/10793899087',
-	custom_variables: {},
-	ip_address: '201.0.206.53',
-	id: '10793899087',
-	logic_path: {},
-	date_modified: '2019-06-12T21:13:59+00:00',
-	response_status: 'completed',
-	custom_value: '',
-	analyze_url: 'https://www.surveymonkey.com/analyze/browse/fyjBhnHPiucmNbYV_2BMqK4W7ghAr3JnGmpqGTYR7HtcY_3D?respondent_id=10793899087',
-	pages: [
-		{
-			id: '80239087',
-			questions: [
-				{
-					id: '295014491',
-					answers: [
-						{
-							text: 'jordan',
-							row_id: '1970468009',
-						},
-						{
-							text: 'aaaaa',
-							row_id: '1970468010',
-						},
-						{
-							text: 'cccccc',
-							row_id: '1970468011',
-						},
-						{
-							text: 'jordan@appcivico.com',
-							row_id: '1970468012',
-						},
-						{
-							text: 'asdasd',
-							row_id: '1970468013',
-						},
-					],
-				},
-				{
-					id: '295014494',
-					answers: [
-						{
-							choice_id: '1970468037',
-						},
-					],
-				},
-				{
-					id: '295014492',
-					answers: [
-						{
-							col_id: '1970468020',
-							choice_id: '1970468024',
-							row_id: '1970468034',
-						},
-						{
-							col_id: '1970468020',
-							choice_id: '1970468026',
-							row_id: '1970468035',
-						},
-						{
-							col_id: '1970468020',
-							choice_id: '1970468024',
-							row_id: '1970468017',
-						},
-					],
-				},
-				{
-					id: '295014493',
-					answers: [
-						{
-							text: 'Quero essa',
-						},
-					],
-				},
-				{
-					id: '295014495',
-					answers: [
-						{
-							choice_id: '1970468048',
-						},
-					],
-				},
-			],
-		},
-	],
-	page_path: [],
-	recipient_id: '',
-	collector_id: '237487256',
-	date_created: '2019-06-12T21:13:29+00:00',
-	survey_id: '179374831',
-	collection_mode: 'default',
-	edit_url: 'https://www.surveymonkey.com/r/?sm=MaBiqL2yANgPLuUM3urZX_2BHLvH1cNLj7gfR6ZlY9iYaW3xRcQKk3ItdOvzU0BSX8',
-	metadata: {
-		respondent: {
-			user_agent: {
-				type: 'number',
-				value: 8980151,
-			},
-			language: {
-				type: 'string',
-				value: 'pt_BR',
-			},
-		},
-	},
-};
-
-
-handlePreCadastro(mock);
 
 module.exports = {
 	sendMatricula, newSurveyResponse,

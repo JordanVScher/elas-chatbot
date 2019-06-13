@@ -22,9 +22,22 @@ async function upsertAluno(nome, cpf, turma, email) {
 		RETURNING id;
 	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
 		console.log(`Added ${nome} successfully!`);
-		return results[0].id ? results[0].id : false;
+		return results && results[0] && results[0].id ? results[0].id : false;
 	}).catch((err) => {
 		console.error('Error on upsertAluno => ', err);
+	});
+
+	return id;
+}
+
+async function getAlunoId(cpf) {
+	const id = await sequelize.query(`
+	SELECT id FROM alunos WHERE cpf = '${cpf}' LIMIT 1;
+	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
+		console.log(`Got ${cpf}'s id successfully!`);
+		return results && results[0] && results[0].id ? results[0].id : false;
+	}).catch((err) => {
+		console.error('Error on getAlunoId => ', err);
 	});
 
 	return id;
@@ -44,6 +57,22 @@ async function upsertPreCadastro(userID, response) {
 		console.log(`Added ${userID}'s precadastro successfully!`);
 	}).catch((err) => {
 		console.error('Error on upsertPreCadastro => ', err);
+	});
+}
+async function updateAtividade1(userID, answered) {
+	let date = new Date();
+	date = await moment(date).format('YYYY-MM-DD HH:mm:ss');
+
+	await sequelize.query(`
+	INSERT INTO "alunos_respostas" (aluno_id, atividade_1, created_at, updated_at)
+	VALUES ('${userID}', '${answered}', '${date}', '${date}')
+	ON CONFLICT (aluno_id)
+  DO UPDATE
+		SET aluno_id = '${userID}', atividade_1 = '${answered}', updated_at = '${date}';;
+	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
+		console.log(`Added ${userID}'s atividade_1 successfully!`);
+	}).catch((err) => {
+		console.error('Error on updateAtividade1 => ', err);
 	});
 }
 
@@ -163,5 +192,5 @@ async function getUserTurma(FBID) {
 // );
 
 module.exports = {
-	upsertUser, upsertPagamento, upsertAluno, linkUserToCPF, checkCPF, getUserTurma, upsertPreCadastro,
+	upsertUser, upsertPagamento, upsertAluno, linkUserToCPF, checkCPF, getUserTurma, upsertPreCadastro, updateAtividade1, getAlunoId,
 };
