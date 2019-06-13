@@ -11,6 +11,7 @@ module.exports = {
 			aluno_id: {
 				type: Sequelize.INTEGER,
 				allowNull: false,
+				unique: true,
 			},
 			pre: {
 				type: Sequelize.JSON,
@@ -46,9 +47,8 @@ module.exports = {
 				defaultValue: false,
 			},
 			atividade_indicacao: {
-				type: Sequelize.BOOLEAN,
+				type: Sequelize.JSON,
 				allowNull: true,
-				defaultValue: false,
 			},
 			atividade_avaliador: {
 				type: Sequelize.BOOLEAN,

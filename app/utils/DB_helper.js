@@ -13,16 +13,37 @@ async function upsertAluno(nome, cpf, turma, email) {
 	let date = new Date();
 	date = await moment(date).format('YYYY-MM-DD HH:mm:ss');
 
-	await sequelize.query(`
+	const id = await sequelize.query(`
 	INSERT INTO "alunos" (nome_completo, cpf, turma, email, created_at, updated_at)
   VALUES ('${nome}', '${cpf}', '${turma}', '${email}', '${date}', '${date}')
 	ON CONFLICT (cpf)
   DO UPDATE
-  	SET nome_completo = '${nome}', turma = '${turma}', email = '${email}', updated_at = '${date}';
+		SET nome_completo = '${nome}', turma = '${turma}', email = '${email}', updated_at = '${date}'
+		RETURNING id;
 	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
 		console.log(`Added ${nome} successfully!`);
+		return results[0].id ? results[0].id : false;
 	}).catch((err) => {
 		console.error('Error on upsertAluno => ', err);
+	});
+
+	return id;
+}
+
+async function upsertPreCadastro(userID, response) {
+	let date = new Date();
+	date = await moment(date).format('YYYY-MM-DD HH:mm:ss');
+
+	await sequelize.query(`
+	INSERT INTO "alunos_respostas" (aluno_id, pre, created_at, updated_at)
+	VALUES ('${userID}', '${response}', '${date}', '${date}')
+	ON CONFLICT (aluno_id)
+  DO UPDATE
+		SET aluno_id = '${userID}', pre = '${response}', updated_at = '${date}';;
+	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
+		console.log(`Added ${userID}'s precadastro successfully!`);
+	}).catch((err) => {
+		console.error('Error on upsertPreCadastro => ', err);
 	});
 }
 
@@ -142,5 +163,5 @@ async function getUserTurma(FBID) {
 // );
 
 module.exports = {
-	upsertUser, upsertPagamento, upsertAluno, linkUserToCPF, checkCPF, getUserTurma,
+	upsertUser, upsertPagamento, upsertAluno, linkUserToCPF, checkCPF, getUserTurma, upsertPreCadastro,
 };
