@@ -191,7 +191,6 @@ async function createNewWebhook(urlHook, surveyIDs, name) {
 	}
 }
 
-
 module.exports = {
 	getSurveys,
 	getSurveyIds,

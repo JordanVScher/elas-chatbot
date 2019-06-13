@@ -59,20 +59,20 @@ async function upsertPreCadastro(userID, response) {
 		console.error('Error on upsertPreCadastro => ', err);
 	});
 }
-async function updateAtividade1(userID, answered) {
+async function updateAtividade(userID, column, answered) {
 	let date = new Date();
 	date = await moment(date).format('YYYY-MM-DD HH:mm:ss');
 
 	await sequelize.query(`
-	INSERT INTO "alunos_respostas" (aluno_id, atividade_1, created_at, updated_at)
+	INSERT INTO "alunos_respostas" (aluno_id, ${column}, created_at, updated_at)
 	VALUES ('${userID}', '${answered}', '${date}', '${date}')
 	ON CONFLICT (aluno_id)
   DO UPDATE
-		SET aluno_id = '${userID}', atividade_1 = '${answered}', updated_at = '${date}';;
+		SET aluno_id = '${userID}', ${column} = '${answered}', updated_at = '${date}';;
 	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
-		console.log(`Added ${userID}'s atividade_1 successfully!`);
+		console.log(`Added ${userID}'s ${column} successfully!`);
 	}).catch((err) => {
-		console.error('Error on updateAtividade1 => ', err);
+		console.error('Error on updateAtividade => ', err);
 	});
 }
 
@@ -192,5 +192,5 @@ async function getUserTurma(FBID) {
 // );
 
 module.exports = {
-	upsertUser, upsertPagamento, upsertAluno, linkUserToCPF, checkCPF, getUserTurma, upsertPreCadastro, updateAtividade1, getAlunoId,
+	upsertUser, upsertPagamento, upsertAluno, linkUserToCPF, checkCPF, getUserTurma, upsertPreCadastro, updateAtividade, getAlunoId,
 };

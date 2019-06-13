@@ -127,16 +127,14 @@ async function replaceChoiceId(answers, map, surveyID) {
 	return result;
 }
 
-async function handleAtividade1(response) {
+async function handleAtividade(response, column) {
 	response.custom_variables = { turma: 'T7-SP', cpf: '12345678911' };
-
 	const newUserID = await db.getAlunoId(response.custom_variables.cpf);
-	console.log('asjdhasjdhjashdjas', newUserID);
-
 	if (newUserID) {
-		await db.updateAtividade1(newUserID, true);
+		await db.updateAtividade(newUserID, column, true);
 	}
 }
+
 
 async function handlePreCadastro(response) {
 	// custom_variables should only have turma and/or cpf, the rest we have to get from the answers
@@ -165,7 +163,19 @@ async function newSurveyResponse(event) {
 		await handlePreCadastro(responses);
 		break;
 	case surveysInfo.atividade1.id:
-		await handleAtividade1(responses);
+		await handleAtividade(responses, 'atividade_1');
+		break;
+	case surveysInfo.atividade2.id:
+		await handleAtividade(responses, 'atividade_2');
+		break;
+	case surveysInfo.module1.id:
+		await handleAtividade(responses, 'atividade_modulo1');
+		break;
+	case surveysInfo.module2.id:
+		await handleAtividade(responses, 'atividade_modulo2');
+		break;
+	case surveysInfo.module3.id:
+		await handleAtividade(responses, 'atividade_modulo3');
 		break;
 	default:
 		break;
