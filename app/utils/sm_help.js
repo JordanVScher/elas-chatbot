@@ -171,6 +171,8 @@ async function separateAnswer(respostas, elementos) {
 		index += 1;
 	});
 
+	if (Object.keys(aux)) { result.push(aux); }
+
 	return result;
 }
 
@@ -213,6 +215,19 @@ async function handleIndicacao(response) {
 	}
 
 	await sendMailToIndicados(indicacaoIds, aluna);
+
+	/* saving familiares */
+	answers = '';
+	response.pages.forEach(async (element) => { // look for the question with the e-mails (the map has only this question id)
+		answers = element.questions.find(x => x.id === surveysMaps.indicacao360[1].questionID) || [];
+	});
+
+	const familiar = await separateAnswer(answers.answers, ['nome', 'relacao', 'email', 'tele']) || [];
+	for (let i = 0; i < familiar.length; i++) {
+		if (familiar[i].email) {
+			await db.insertFamiliar(aluna.id, familiar[i]);
+		}
+	}
 }
 
 

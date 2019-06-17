@@ -1,7 +1,7 @@
 
 module.exports = {
 	up(queryInterface, Sequelize) {
-		return queryInterface.createTable('indicacao_avaliadores', {
+		return queryInterface.createTable('indicacao_familiares', {
 			id: {
 				allowNull: false,
 				autoIncrement: true,
@@ -13,6 +13,10 @@ module.exports = {
 				allowNull: false,
 			},
 			nome: {
+				type: Sequelize.STRING,
+				allowNull: true,
+			},
+			relacao_com_aluna: {
 				type: Sequelize.STRING,
 				allowNull: true,
 			},
@@ -35,6 +39,6 @@ module.exports = {
 		});
 	},
 	down(queryInterface) {
-		return queryInterface.dropTable('indicacao_avaliadores');
+		return queryInterface.dropTable('indicacao_familiares');
 	},
 };

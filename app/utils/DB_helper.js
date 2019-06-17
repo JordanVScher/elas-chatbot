@@ -36,13 +36,31 @@ async function insertIndicacao(alunaID, userData) {
 
 	const id = await sequelize.query(`
 	INSERT INTO "indicacao_avaliadores" (aluno_id, nome, email, telefone, created_at, updated_at)
-	  VALUES ('${alunaID}', '${userData.nome}', '${userData.email}', '${userData.telefone}', '${date}', '${date}')
+	  VALUES ('${alunaID}', '${userData.nome}', '${userData.email}', '${userData.tele}', '${date}', '${date}')
 	RETURNING id, email;
 	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
 		console.log(`Added ${userData.email} successfully!`);
 		return results && results[0] ? results[0] : false;
 	}).catch((err) => {
 		console.error('Error on insertIndicacao => ', err);
+	});
+
+	return id;
+}
+
+async function insertFamiliar(alunaID, userData) {
+	let date = new Date();
+	date = await moment(date).format('YYYY-MM-DD HH:mm:ss');
+
+	const id = await sequelize.query(`
+	INSERT INTO "indicacao_familiares" (aluno_id, nome, relacao_com_aluna, email, telefone, created_at, updated_at)
+	  VALUES ('${alunaID}', '${userData.nome}', '${userData.relacao}', '${userData.email}', '${userData.tele}', '${date}', '${date}')
+	RETURNING id, email;
+	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
+		console.log(`Added ${userData.email} successfully!`);
+		return results && results[0] ? results[0] : false;
+	}).catch((err) => {
+		console.error('Error on insertFamiliar => ', err);
 	});
 
 	return id;
@@ -176,39 +194,6 @@ async function getUserTurma(FBID) {
 	return false;
 }
 
-// ----------------------------------------------------------
-
-// CREATE TABLE chatbot_users(
-// 	id SERIAL PRIMARY KEY,
-// 	fb_id BIGINT UNIQUE,
-// 	user_name TEXT NOT NULL,
-// 	matricula INTEGER,
-// 	cpf TEXT,
-// 	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
-// 	updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL
-// );
-
-// CREATE TABLE pagamentos(
-// 	id SERIAL PRIMARY KEY,
-// 	email text NOT NULL,
-// 	documento_tipo text NOT NULL,
-// 	documento_valor text NOT NULL,
-// 	id_produto INTEGER,
-// 	id_transacao TEXT NOT NULL UNIQUE,
-// 	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
-// 	updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL
-// );
-
-// CREATE TABLE alunos(
-// 	id SERIAL PRIMARY KEY,
-// 	nome_completo TEXT,
-// 	cpf TEXT UNIQUE,
-// 	turma TEXT,
-// 	email TEXT,
-// 	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
-// 	updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL
-// );
-
 module.exports = {
 	upsertUser,
 	upsertPagamento,
@@ -219,5 +204,6 @@ module.exports = {
 	upsertPreCadastro,
 	updateAtividade,
 	insertIndicacao,
+	insertFamiliar,
 	getAluno,
 };
