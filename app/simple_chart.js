@@ -94,7 +94,7 @@ const chartCallback = (ChartJS) => {
 async function buildChart(conf, name) {
 	const canvasRenderService = new CanvasRenderService(width, height, chartCallback);
 	const image = await canvasRenderService.renderToBuffer(conf);
-	fs.writeFile(`${name}.png`, image, (res) => { console.log(`Chart '${name}':`, res); });
+	fs.writeFile(`./graficos/${name}.png`, image, (res) => { console.log(`Chart '${name}':`, res); });
 }
 
 module.exports.createChart = async (labels, data, id, title) => {

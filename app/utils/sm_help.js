@@ -3,9 +3,28 @@ const smAPI = require('../sm_api');
 const { sendTestMail } = require('./mailer');
 const { eMail } = require('./flow');
 const db = require('./DB_helper');
+const chart = require('../simple_chart');
 
 const surveysInfo = require('./sm_surveys');
 const surveysMaps = require('./sm_maps');
+
+
+async function buildAlunoChart(cpf) {
+	const aluna = await db.getAlunoRespostas(cpf);
+	const data = {};
+
+	if (aluna && aluna.pre && aluna.pos) {
+		surveysMaps.posAvaliacao.forEach(async (element) => { // this map contains only the necessary answers
+			if (aluna.pre[element.paramName] && aluna.pos[element.paramName]) { // build obj with param_name and the number variation
+				data[element.paramName] = helper.getPercentageChange(aluna.pre[element.paramName], aluna.pos[element.paramName]);
+			}
+		});
+	}
+
+	if (data && Object.keys(data) && Object.keys(data).length > 0) {
+		await chart.createChart(Object.keys(data), Object.values(data), cpf, `Resultado auto-avaliação ${aluna.nome}`);
+	}
+}
 
 
 // after a payement happens we send an e-mail to the buyer with the matricula/pre-cadastro form
@@ -280,5 +299,5 @@ async function newSurveyResponse(event) {
 }
 
 module.exports = {
-	sendMatricula, newSurveyResponse,
+	sendMatricula, newSurveyResponse, buildAlunoChart,
 };

@@ -91,6 +91,13 @@ async function formatDialogFlow(text) {
 	return result.trim();
 }
 
+function getPercentageChange(oldNumber, newNumber) {
+	const decreaseValue = oldNumber - newNumber;
+	// const result = ((decreaseValue / oldNumber) * 100) * -1; // invert progression, if the number went up show a positive percentage
+	const result = Math.abs((decreaseValue / oldNumber) * 100); // check
+	return parseFloat(result.toFixed(2), 10);
+}
+
 module.exports = {
 	apiai: dialogFlow(process.env.DIALOGFLOW_TOKEN),
 	Sentry,
@@ -103,4 +110,5 @@ module.exports = {
 	reloadSpreadSheet,
 	formatDate,
 	toTitleCase,
+	getPercentageChange,
 };

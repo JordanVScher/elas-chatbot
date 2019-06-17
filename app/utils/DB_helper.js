@@ -79,6 +79,27 @@ async function getAluno(cpf) {
 	return id;
 }
 
+async function getAlunoRespostas(cpf) {
+	const aluna = await sequelize.query(`
+	SELECT
+			ALUNOS.id id,
+			ALUNOS.nome_completo nome,
+			RESPOSTAS.pre pre,
+			RESPOSTAS.pos pos
+	FROM
+			alunos ALUNOS
+	INNER JOIN alunos_respostas RESPOSTAS ON ALUNOS.id = RESPOSTAS.aluno_id
+	WHERE ALUNOS.cpf = '${cpf}' ;
+`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
+		console.log(`Got ${cpf}'s id successfully!`);
+		return results && results[0] ? results[0] : false;
+	}).catch((err) => {
+		console.error('Error on getAlunoRespostas => ', err);
+	});
+
+	return aluna;
+}
+
 async function upsertPrePos(userID, response, column) {
 	// column can be either pre or pos
 	let date = new Date();
@@ -208,4 +229,5 @@ module.exports = {
 	insertIndicacao,
 	insertFamiliar,
 	getAluno,
+	getAlunoRespostas,
 };
