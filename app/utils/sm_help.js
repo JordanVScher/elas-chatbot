@@ -149,7 +149,7 @@ async function handlePreCadastro(response) {
 	/* db */
 	const newUserID = await db.upsertAluno(answers.nome, answers.cpf, answers.turma, answers.email);
 	if (newUserID) {
-		await db.upsertPreCadastro(newUserID, JSON.stringify(answers));
+		await db.upsertPrePos(newUserID, JSON.stringify(answers), 'pre');
 	}
 	/* e-mail */
 	const newText = eMail.depoisMatricula.texto.replace('<NOME>', answers.nome); // prepare mail text
@@ -230,6 +230,18 @@ async function handleIndicacao(response) {
 	}
 }
 
+async function handlePosAvaliacao(response) {
+	response.custom_variables = { turma: 'T7-SP', cpf: '12345678911' };
+
+	let answers = await getSpecificAnswers(surveysMaps.posAvaliacao, response.pages);
+	answers = await replaceChoiceId(answers, surveysMaps.posAvaliacao, response.survey_id);
+	answers = await addCustomParametersToAnswer(answers, response.custom_variables);
+	/* db */
+	const aluna = await db.getAluno(response.custom_variables.cpf);
+	if (aluna) {
+		await db.upsertPrePos(aluna.id, JSON.stringify(answers), 'pos');
+	}
+}
 
 // what to do with the form that was just answered
 async function newSurveyResponse(event) {
@@ -237,6 +249,9 @@ async function newSurveyResponse(event) {
 	switch (responses.survey_id) { // which survey was answered?
 	case surveysInfo.preCadastro.id:
 		await handlePreCadastro(responses);
+		break;
+	case surveysInfo.posAvaliacao.id:
+		await handlePosAvaliacao(responses);
 		break;
 	case surveysInfo.atividade1.id:
 		await handleAtividade(responses, 'atividade_1');
@@ -263,7 +278,6 @@ async function newSurveyResponse(event) {
 		break;
 	}
 }
-
 
 module.exports = {
 	sendMatricula, newSurveyResponse,

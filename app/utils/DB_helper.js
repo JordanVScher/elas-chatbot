@@ -79,22 +79,24 @@ async function getAluno(cpf) {
 	return id;
 }
 
-async function upsertPreCadastro(userID, response) {
+async function upsertPrePos(userID, response, column) {
+	// column can be either pre or pos
 	let date = new Date();
 	date = await moment(date).format('YYYY-MM-DD HH:mm:ss');
 
 	await sequelize.query(`
-	INSERT INTO "alunos_respostas" (aluno_id, pre, created_at, updated_at)
+	INSERT INTO "alunos_respostas" (aluno_id, ${column}, created_at, updated_at)
 	VALUES ('${userID}', '${response}', '${date}', '${date}')
 	ON CONFLICT (aluno_id)
   DO UPDATE
-		SET aluno_id = '${userID}', pre = '${response}', updated_at = '${date}';;
+		SET aluno_id = '${userID}', ${column} = '${response}', updated_at = '${date}';;
 	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
-		console.log(`Added ${userID}'s precadastro successfully!`);
+		console.log(`Added ${userID}'s ${column} successfully!`);
 	}).catch((err) => {
 		console.error('Error on upsertPreCadastro => ', err);
 	});
 }
+
 async function updateAtividade(userID, column, answered) {
 	let date = new Date();
 	date = await moment(date).format('YYYY-MM-DD HH:mm:ss');
@@ -201,7 +203,7 @@ module.exports = {
 	linkUserToCPF,
 	checkCPF,
 	getUserTurma,
-	upsertPreCadastro,
+	upsertPrePos,
 	updateAtividade,
 	insertIndicacao,
 	insertFamiliar,
