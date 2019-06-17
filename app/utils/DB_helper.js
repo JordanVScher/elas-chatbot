@@ -91,13 +91,27 @@ async function getAlunoRespostas(cpf) {
 	INNER JOIN alunos_respostas RESPOSTAS ON ALUNOS.id = RESPOSTAS.aluno_id
 	WHERE ALUNOS.cpf = '${cpf}' ;
 `).spread((results, metadata) => { // eslint-disable-line no-unused-vars
-		console.log(`Got ${cpf}'s id successfully!`);
+		console.log(`Got ${cpf}'s respostas successfully!`);
 		return results && results[0] ? results[0] : false;
 	}).catch((err) => {
 		console.error('Error on getAlunoRespostas => ', err);
 	});
 
 	return aluna;
+}
+
+async function getIndicadoRespostas(indicadoID) {
+	const indicado = await sequelize.query(`
+	SELECT pre, pos	FROM indicados_respostas
+	WHERE indicado_id = '${indicadoID}' ;
+`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
+		console.log(`Got ${indicadoID}'s respostas successfully!`);
+		return results && results[0] ? results[0] : false;
+	}).catch((err) => {
+		console.error('Error on getIndicadoRespostas => ', err);
+	});
+
+	return indicado;
 }
 
 async function upsertPrePos(userID, response, column) {
@@ -111,6 +125,24 @@ async function upsertPrePos(userID, response, column) {
 	ON CONFLICT (aluno_id)
   DO UPDATE
 		SET aluno_id = '${userID}', ${column} = '${response}', updated_at = '${date}';;
+	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
+		console.log(`Added ${userID}'s ${column} successfully!`);
+	}).catch((err) => {
+		console.error('Error on upsertPreCadastro => ', err);
+	});
+}
+
+async function upsertPrePos360(userID, response, column) {
+	// column can be either pre or pos
+	let date = new Date();
+	date = await moment(date).format('YYYY-MM-DD HH:mm:ss');
+
+	await sequelize.query(`
+	INSERT INTO "indicados_respostas" (indicado_id, ${column}, created_at, updated_at)
+	VALUES ('${userID}', '${response}', '${date}', '${date}')
+	ON CONFLICT (indicado_id)
+  DO UPDATE
+		SET indicado_id = '${userID}', ${column} = '${response}', updated_at = '${date}';;
 	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
 		console.log(`Added ${userID}'s ${column} successfully!`);
 	}).catch((err) => {
@@ -225,9 +257,12 @@ module.exports = {
 	checkCPF,
 	getUserTurma,
 	upsertPrePos,
+	upsertPrePos360,
 	updateAtividade,
 	insertIndicacao,
 	insertFamiliar,
 	getAluno,
 	getAlunoRespostas,
+	getIndicadoRespostas,
+
 };

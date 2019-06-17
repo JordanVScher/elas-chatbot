@@ -7,16 +7,33 @@ const chart = require('../simple_chart');
 
 const surveysInfo = require('./sm_surveys');
 const surveysMaps = require('./sm_maps');
+const chartsMaps = require('./charts_maps');
 
+async function buildIndicadoChart(id) {
+	const indicado = await db.getIndicadoRespostas(id);
+	const data = {};
+	if (indicado && indicado.pre && indicado.pos) {
+		chartsMaps.avaliacao360.forEach(async (element) => { // this map contains only the necessary answers
+			// build obj with param_name and the number variation
+			if (parseFloat(indicado.pre[element.paramName]) && parseFloat(indicado.pos[element.paramName])) {
+				data[element.questionName] = helper.getPercentageChange(parseInt(indicado.pre[element.paramName], 10), parseInt(indicado.pos[element.paramName], 10));
+			}
+		});
+	}
+
+	if (data && Object.keys(data) && Object.keys(data).length > 0) {
+		await chart.createChart(Object.keys(data), Object.values(data), id, 'Resultado avaliador');
+	}
+}
 
 async function buildAlunoChart(cpf) {
 	const aluna = await db.getAlunoRespostas(cpf);
 	const data = {};
 
 	if (aluna && aluna.pre && aluna.pos) {
-		surveysMaps.posAvaliacao.forEach(async (element) => { // this map contains only the necessary answers
+		chartsMaps.autoAvaliacao.forEach(async (element) => { // this map contains only the necessary answers
 			if (aluna.pre[element.paramName] && aluna.pos[element.paramName]) { // build obj with param_name and the number variation
-				data[element.paramName] = helper.getPercentageChange(aluna.pre[element.paramName], aluna.pos[element.paramName]);
+				data[element.questionName] = helper.getPercentageChange(aluna.pre[element.paramName], aluna.pos[element.paramName]);
 			}
 		});
 	}
@@ -26,6 +43,8 @@ async function buildAlunoChart(cpf) {
 	}
 }
 
+// buildAlunoChart(12345678911);
+// buildIndicadoChart(1);
 
 // after a payement happens we send an e-mail to the buyer with the matricula/pre-cadastro form
 async function sendMatricula(productID, buyerEmail) {
@@ -197,8 +216,6 @@ async function separateAnswer(respostas, elementos) {
 
 async function sendMailToIndicados(indicados, aluna) {
 	const text = `Olá. Você foi indicado por ${aluna.nome} para a avaliação. Responda abaixo:\n `;
-	console.log(indicados);
-
 	for (let i = 0; i < indicados.length; i++) {
 		const newLink = `${surveysInfo.avaliador360.link.replace('IDRESPOSTA', indicados[i].id)}&type=pre`;
 		await sendTestMail(`${aluna.nome} te indicou!`, text + newLink, indicados[i].email);
@@ -262,6 +279,19 @@ async function handlePosAvaliacao(response) {
 	}
 }
 
+async function handleAvaliador(response) {
+	response.custom_variables = { id: '1', type: 'pos' };
+
+	let answers = await getSpecificAnswers(surveysMaps.avaliacao360, response.pages);
+	answers = await replaceChoiceId(answers, surveysMaps.avaliacao360, response.survey_id);
+	answers = await addCustomParametersToAnswer(answers, response.custom_variables);
+	if (response.custom_variables.type === 'pre') {
+		await db.upsertPrePos360(answers.id, JSON.stringify(answers), 'pre');
+	} else if (response.custom_variables.type === 'pos') {
+		await db.upsertPrePos360(answers.id, JSON.stringify(answers), 'pos');
+	}
+}
+
 // what to do with the form that was just answered
 async function newSurveyResponse(event) {
 	const responses = await smAPI.getResponseWithAnswers(event.filter_id, event.object_id); console.log('responses', JSON.stringify(responses, null, 2)); // get details of the event
@@ -291,7 +321,7 @@ async function newSurveyResponse(event) {
 		await handleIndicacao(responses);
 		break;
 	case surveysInfo.avaliador360.id:
-		await handleAtividade(responses, 'atividade_avaliador');
+		await handleAvaliador(responses);
 		break;
 	default:
 		break;
@@ -299,5 +329,5 @@ async function newSurveyResponse(event) {
 }
 
 module.exports = {
-	sendMatricula, newSurveyResponse, buildAlunoChart,
+	sendMatricula, newSurveyResponse, buildAlunoChart, buildIndicadoChart,
 };
