@@ -37,10 +37,10 @@ async function insertIndicacao(alunaID, userData) {
 	const id = await sequelize.query(`
 	INSERT INTO "indicacao_avaliadores" (aluno_id, nome, email, telefone, created_at, updated_at)
 	  VALUES ('${alunaID}', '${userData.nome}', '${userData.email}', '${userData.telefone}', '${date}', '${date}')
-	RETURNING id;
+	RETURNING id, email;
 	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
 		console.log(`Added ${userData.email} successfully!`);
-		return results && results[0] && results[0].id ? results[0].id : false;
+		return results && results[0] ? results[0] : false;
 	}).catch((err) => {
 		console.error('Error on insertIndicacao => ', err);
 	});
@@ -48,14 +48,14 @@ async function insertIndicacao(alunaID, userData) {
 	return id;
 }
 
-async function getAlunoId(cpf) {
+async function getAluno(cpf) {
 	const id = await sequelize.query(`
-	SELECT id FROM alunos WHERE cpf = '${cpf}' LIMIT 1;
+	SELECT id, nome_completo as nome FROM alunos WHERE cpf = '${cpf}' LIMIT 1;
 	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
 		console.log(`Got ${cpf}'s id successfully!`);
-		return results && results[0] && results[0].id ? results[0].id : false;
+		return results && results[0] ? results[0] : false;
 	}).catch((err) => {
-		console.error('Error on getAlunoId => ', err);
+		console.error('Error on getAluno => ', err);
 	});
 
 	return id;
@@ -219,5 +219,5 @@ module.exports = {
 	upsertPreCadastro,
 	updateAtividade,
 	insertIndicacao,
-	getAlunoId,
+	getAluno,
 };

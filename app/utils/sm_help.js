@@ -7,6 +7,7 @@ const db = require('./DB_helper');
 const surveysInfo = require('./sm_surveys');
 const surveysMaps = require('./sm_maps');
 
+
 // after a payement happens we send an e-mail to the buyer with the matricula/pre-cadastro form
 async function sendMatricula(productID, buyerEmail) {
 	try {
@@ -129,9 +130,9 @@ async function replaceChoiceId(answers, map, surveyID) {
 
 async function handleAtividade(response, column) {
 	response.custom_variables = { turma: 'T7-SP', cpf: '12345678911' };
-	const newUserID = await db.getAlunoId(response.custom_variables.cpf);
-	if (newUserID) {
-		await db.updateAtividade(newUserID, column, true);
+	const aluno = await db.getAluno(response.custom_variables.cpf);
+	if (aluno) {
+		await db.updateAtividade(aluno.id, column, true);
 	}
 }
 
@@ -173,6 +174,16 @@ async function separateAnswer(respostas, elementos) {
 	return result;
 }
 
+async function sendMailToIndicados(indicados, aluna) {
+	const text = `Olá. Você foi indicado por ${aluna.nome} para a avaliação. Responda abaixo:\n `;
+	console.log(indicados);
+
+	for (let i = 0; i < indicados.length; i++) {
+		const newLink = `${surveysInfo.avaliador360.link.replace('IDRESPOSTA', indicados[i].id)}&type=pre`;
+		await sendTestMail(`${aluna.nome} te indicou!`, text + newLink, indicados[i].email);
+	}
+}
+
 async function handleIndicacao(response) {
 	// console.log('responses', JSON.stringify(response, null, 2));
 	response.custom_variables = { turma: 'T7-SP', cpf: '12345678911' };
@@ -185,24 +196,25 @@ async function handleIndicacao(response) {
 	const indicacao = await separateAnswer(answers.answers, ['nome', 'email', 'tele']) || [];
 
 	// saving the answer with the user
-	const alunaID = await db.getAlunoId(response.custom_variables.cpf);
-	if (alunaID) {
-		await db.updateAtividade(alunaID, 'atividade_indicacao', JSON.stringify(answers.answers));
+	const aluna = await db.getAluno(response.custom_variables.cpf);
+	if (aluna && aluna.id) {
+		await db.updateAtividade(aluna.id, 'atividade_indicacao', JSON.stringify(answers.answers));
 	}
 
 	// saving each avaliador, if theres an e-mail
 	const indicacaoIds = [];
 	for (let i = 0; i < indicacao.length; i++) {
 		if (indicacao[i].email) {
-			const newAvaliadorId = await db.insertIndicacao(alunaID, indicacao[i]);
-			if (newAvaliadorId) { // saving the ids to create the link to send in the e-mail
-				indicacaoIds.push(newAvaliadorId);
+			const newAvaliador = await db.insertIndicacao(aluna.id, indicacao[i]);
+			if (newAvaliador) { // saving the ids to create the link to send in the e-mail
+				indicacaoIds.push(newAvaliador);
 			}
 		}
 	}
 
-	// todo send e-mail
+	await sendMailToIndicados(indicacaoIds, aluna);
 }
+
 
 // what to do with the form that was just answered
 async function newSurveyResponse(event) {

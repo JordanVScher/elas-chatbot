@@ -1,6 +1,7 @@
 module.exports = {
 	indicacao360: [
 		{ questionID: '296230132', paramName: 'indicacoes' },
+		{ questionID: '297309330', paramName: 'familiar' },
 	],
 	preCadastro: [
 		{ questionID: '1970468009', paramName: 'nome' },
