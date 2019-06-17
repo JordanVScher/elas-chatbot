@@ -155,6 +155,55 @@ async function handlePreCadastro(response) {
 	await sendTestMail(eMail.depoisMatricula.assunto, newText, answers.email);
 }
 
+async function separateAnswer(respostas, elementos) {
+	// separate the array of answers into and array of objects with the desired elements
+	const result = [];
+	let index = 0;
+	let aux = {};
+	respostas.forEach(async (element) => {
+		if (index && index % elementos.length === 0) {
+			result.push(aux);
+			aux = {};
+		}
+		// use the keys of the aux obj to find the new key for the aux
+		aux[elementos[Object.keys(aux).length]] = element.text || '';
+		index += 1;
+	});
+
+	return result;
+}
+
+async function handleIndicacao(response) {
+	// console.log('responses', JSON.stringify(response, null, 2));
+	response.custom_variables = { turma: 'T7-SP', cpf: '12345678911' };
+
+	let answers = '';
+	response.pages.forEach(async (element) => { // look for the question with the e-mails (the map has only this question id)
+		answers = element.questions.find(x => x.id === surveysMaps.indicacao360[0].questionID) || [];
+	});
+
+	const indicacao = await separateAnswer(answers.answers, ['nome', 'email', 'tele']) || [];
+
+	// saving the answer with the user
+	const alunaID = await db.getAlunoId(response.custom_variables.cpf);
+	if (alunaID) {
+		await db.updateAtividade(alunaID, 'atividade_indicacao', JSON.stringify(answers.answers));
+	}
+
+	// saving each avaliador, if theres an e-mail
+	const indicacaoIds = [];
+	for (let i = 0; i < indicacao.length; i++) {
+		if (indicacao[i].email) {
+			const newAvaliadorId = await db.insertIndicacao(alunaID, indicacao[i]);
+			if (newAvaliadorId) { // saving the ids to create the link to send in the e-mail
+				indicacaoIds.push(newAvaliadorId);
+			}
+		}
+	}
+
+	// todo send e-mail
+}
+
 // what to do with the form that was just answered
 async function newSurveyResponse(event) {
 	const responses = await smAPI.getResponseWithAnswers(event.filter_id, event.object_id); console.log('responses', JSON.stringify(responses, null, 2)); // get details of the event
@@ -176,6 +225,12 @@ async function newSurveyResponse(event) {
 		break;
 	case surveysInfo.module3.id:
 		await handleAtividade(responses, 'atividade_modulo3');
+		break;
+	case surveysInfo.indicacao360.id:
+		await handleIndicacao(responses);
+		break;
+	case surveysInfo.avaliador360.id:
+		await handleAtividade(responses, 'atividade_avaliador');
 		break;
 	default:
 		break;

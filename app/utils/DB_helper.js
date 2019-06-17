@@ -30,6 +30,24 @@ async function upsertAluno(nome, cpf, turma, email) {
 	return id;
 }
 
+async function insertIndicacao(alunaID, userData) {
+	let date = new Date();
+	date = await moment(date).format('YYYY-MM-DD HH:mm:ss');
+
+	const id = await sequelize.query(`
+	INSERT INTO "indicacao_avaliadores" (aluno_id, nome, email, telefone, created_at, updated_at)
+	  VALUES ('${alunaID}', '${userData.nome}', '${userData.email}', '${userData.telefone}', '${date}', '${date}')
+	RETURNING id;
+	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
+		console.log(`Added ${userData.email} successfully!`);
+		return results && results[0] && results[0].id ? results[0].id : false;
+	}).catch((err) => {
+		console.error('Error on insertIndicacao => ', err);
+	});
+
+	return id;
+}
+
 async function getAlunoId(cpf) {
 	const id = await sequelize.query(`
 	SELECT id FROM alunos WHERE cpf = '${cpf}' LIMIT 1;
@@ -192,5 +210,14 @@ async function getUserTurma(FBID) {
 // );
 
 module.exports = {
-	upsertUser, upsertPagamento, upsertAluno, linkUserToCPF, checkCPF, getUserTurma, upsertPreCadastro, updateAtividade, getAlunoId,
+	upsertUser,
+	upsertPagamento,
+	upsertAluno,
+	linkUserToCPF,
+	checkCPF,
+	getUserTurma,
+	upsertPreCadastro,
+	updateAtividade,
+	insertIndicacao,
+	getAlunoId,
 };
