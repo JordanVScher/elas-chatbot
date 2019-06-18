@@ -279,17 +279,14 @@ async function handlePosAvaliacao(response) {
 	}
 }
 
-async function handleAvaliador(response) {
-	response.custom_variables = { id: '1', type: 'pos' };
+async function handleAvaliador(response, column, map) {
+	response.custom_variables = { id: '1' };
 
-	let answers = await getSpecificAnswers(surveysMaps.avaliacao360, response.pages);
-	answers = await replaceChoiceId(answers, surveysMaps.avaliacao360, response.survey_id);
+	let answers = await getSpecificAnswers(map, response.pages);
+	answers = await replaceChoiceId(answers, map, response.survey_id);
 	answers = await addCustomParametersToAnswer(answers, response.custom_variables);
-	if (response.custom_variables.type === 'pre') {
-		await db.upsertPrePos360(answers.id, JSON.stringify(answers), 'pre');
-	} else if (response.custom_variables.type === 'pos') {
-		await db.upsertPrePos360(answers.id, JSON.stringify(answers), 'pos');
-	}
+
+	await db.upsertPrePos360(answers.id, JSON.stringify(answers), column);
 }
 
 // what to do with the form that was just answered
@@ -320,8 +317,11 @@ async function newSurveyResponse(event) {
 	case surveysInfo.indicacao360.id:
 		await handleIndicacao(responses);
 		break;
-	case surveysInfo.avaliador360.id:
-		await handleAvaliador(responses);
+	case surveysInfo.avaliador360pre.id:
+		await handleAvaliador(responses, 'pre', surveysMaps.avaliacao360Pre);
+		break;
+	case surveysInfo.avaliador360pos.id:
+		await handleAvaliador(responses, 'pos', surveysMaps.avaliacao360Pos);
 		break;
 	default:
 		break;

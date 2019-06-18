@@ -163,7 +163,7 @@ async function postWebhook(name, event_type, object_type, object_ids, subscripti
 		result = await res.json();
 		if (!result || result.error) { throw result.error; }
 	} catch (error) { console.log('Erro em postWebhook', JSON.stringify(result, null, 2)); Sentry.captureMessage('Erro em postWebhook'); }
-	console.log('wewbhook created', JSON.stringify(result, null, 2));
+	console.log('webhook created', JSON.stringify(result, null, 2));
 	return result;
 }
 
@@ -179,7 +179,7 @@ async function deleteAllWebhooks() {
 	}
 }
 
-async function createNewWebhook(urlHook, surveyIDs, name) {
+async function createNewWebhook(urlHook, surveyIDs) {
 	await deleteAllWebhooks();
 
 	if (!urlHook) {
@@ -187,7 +187,9 @@ async function createNewWebhook(urlHook, surveyIDs, name) {
 	} else if (!surveyIDs) {
 		surveyIDs =	await getSurveyIds(); // eslint-disable-line
 	} else {
-		postWebhook(name || 'meu webhook', 'response_completed', 'survey', surveyIDs, `${urlHook}/webhook`);
+		postWebhook('webhook_local', 'response_completed', 'survey', surveyIDs, `${urlHook}/webhook`);
+		postWebhook('webhook_dev', 'response_completed', 'survey', surveyIDs, `${process.env.LINK_DEV}/webhook`);
+		postWebhook('webhook_homol', 'response_completed', 'survey', surveyIDs, `${process.env.LINK_HOMOL}/webhook`);
 	}
 }
 
