@@ -62,17 +62,21 @@ server.head('/webhook', async (req, res) => {
 	res.send();
 });
 
+server.get('/webhook', async (req, res) => {
+	res.status(200);
+	res.send();
+});
+
 // receives new event from survey monkey webhook
 server.post('/webhook', async (req, res) => {
 	console.log('No webhook das respostas');
-
-	res.status(200);
-	res.send();
 
 	const body = JSON.parse(req.body);
 	if (body && body.filter_type === 'survey' && body.event_type === 'response_completed') {
 		newSurveyResponse(body);
 	}
+	res.status(200);
+	res.send();
 });
 
 // let lastNotification = '';
