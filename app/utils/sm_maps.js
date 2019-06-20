@@ -42,7 +42,7 @@ module.exports = {
 		{ questionID: '1989369460', paramName: 'tempo_se_conhecem' },
 		{ questionID: '1989369461', paramName: 'quanto_relaciona' },
 		{ questionID: '298216284', paramName: 'relacao_pessoa' },
-		{ questionID: '298216285', paramName: 'avalias1', dropdown: '298216285' }, // drobdown same as question id => multiple_choice
+		{ questionID: '298216285', paramName: 'avalias1', dropdown: '298216285' }, // dropdown same as question id => multiple_choice
 		{ questionID: '298216294', paramName: 'exemplo1' },
 		{ questionID: '298216295', paramName: 'melhora1' },
 		{ questionID: '298216286', paramName: 'avalias2', dropdown: '298216286' },

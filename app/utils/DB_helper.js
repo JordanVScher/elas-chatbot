@@ -100,13 +100,19 @@ async function getAlunoRespostas(cpf) {
 	return aluna;
 }
 
-async function getIndicadoRespostas(indicadoID) {
+async function getIndicadoRespostas(cpf) {
 	const indicado = await sequelize.query(`
-	SELECT pre, pos	FROM indicados_respostas
-	WHERE indicado_id = '${indicadoID}' ;
+	SELECT
+			INDICADOS.id,
+			RESPOSTAS.pre pre,
+			RESPOSTAS.pos pos
+	FROM
+			alunos ALUNOS INNER JOIN indicacao_avaliadores INDICADOS ON ALUNOS.id = INDICADOS.aluno_id
+			INNER JOIN indicados_respostas RESPOSTAS ON RESPOSTAS.indicado_id = INDICADOS.id
+	WHERE ALUNOS.cpf = '${cpf}' ;
 `).spread((results, metadata) => { // eslint-disable-line no-unused-vars
-		console.log(`Got ${indicadoID}'s respostas successfully!`);
-		return results && results[0] ? results[0] : false;
+		console.log(`Got ${cpf}'s respostas successfully!`);
+		return results || false;
 	}).catch((err) => {
 		console.error('Error on getIndicadoRespostas => ', err);
 	});

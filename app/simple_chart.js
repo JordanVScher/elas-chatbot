@@ -102,7 +102,7 @@ module.exports.createChart = async (labels, data, id, title) => {
 
 	const finalData = {};
 	labels.forEach((element, index) => {
-		if (data[index]) { finalData[element] = data[index]; }
+		if (data[index] || data[index].toString() === '0') { finalData[element] = data[index]; }
 	});
 
 	conf.data.labels = Object.keys(finalData);

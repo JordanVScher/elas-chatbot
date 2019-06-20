@@ -9,27 +9,48 @@ const surveysInfo = require('./sm_surveys');
 const surveysMaps = require('./sm_maps');
 const chartsMaps = require('./charts_maps');
 
-async function buildIndicadoChart(id) {
-	const indicado = await db.getIndicadoRespostas(id);
-	const data = {};
-	if (indicado && indicado.pre && indicado.pos) {
-		chartsMaps.avaliacao360.forEach(async (element) => { // this map contains only the necessary answers
-			// build obj with param_name and the number variation
-			if (parseFloat(indicado.pre[element.paramName]) && parseFloat(indicado.pos[element.paramName])) {
-				data[element.questionName] = helper.getPercentageChange(parseInt(indicado.pre[element.paramName], 10), parseInt(indicado.pos[element.paramName], 10));
-			}
+
+async function separateIndicadosData(cpf) {
+	const indicado = await db.getIndicadoRespostas(cpf);
+	let newMap = chartsMaps.avaliacao360Pre;
+	const commomKeys = ['avalias', 'exemplo', 'melhora'];
+	const size = newMap.length / commomKeys.length;
+	const data = []; // contains only the answers from pre
+
+	for (let i = 1; i <= size; i++) {
+		const aux = {};
+		aux.titlePre = newMap.find(x => x.paramName === `${commomKeys[0]}${i}`); aux.titlePre = `Q${i}. ${aux.titlePre.questionName}`;
+		commomKeys.forEach((element) => {
+			aux[`${element}Pre`] = indicado.reduce((prev, cur) => `${prev} ${cur.pre && cur.pre[`${element}${i}`] ? `--${cur.pre[`${element}${i}`]}` : ''}`, '');
 		});
+		data.push(aux);
 	}
 
-	if (data && Object.keys(data) && Object.keys(data).length > 0) {
-		await chart.createChart(Object.keys(data), Object.values(data), id, 'Resultado avaliador');
+	const result = []; // mixes pre and pos
+	newMap = chartsMaps.avaliador360pos;
+	commomKeys.pop(); // pos doesnt have "melhora"
+	const posKeys = ['houve_evolucao', 'onde_evolucao'];
+
+	for (let i = 1; i <= size; i++) {
+		const aux = data[i - 1]; // getting aux from the previous array
+		aux.titlePos = newMap.find(x => x.paramName === `${commomKeys[0]}${i}`); aux.titlePos = `Q${i}. ${aux.titlePos.questionName}`;
+		commomKeys.forEach((element) => { // eslint-disable-line
+			aux[`${element}Pos`] = indicado.reduce((prev, cur) => `${prev} ${cur.pos && cur.pos[`${element}${i}`] ? `--${cur.pos[`${element}${i}`]}` : ''}`, '');
+		});
+		commomKeys.forEach((element) => { // eslint-disable-line
+			aux.houveEvolucao = indicado.reduce((prev, cur) => `${prev} ${cur.pos && cur.pos[posKeys[0]] ? `--${cur.pos[posKeys[0]]}` : ''}`, '');
+			aux.ondeEvolucao = indicado.reduce((prev, cur) => `${prev} ${cur.pos && cur.pos[posKeys[1]] ? `--${cur.pos[posKeys[1]]}` : ''}`, '');
+		});
+
+		result.push(aux);
 	}
+
+	return result;
 }
 
 async function buildAlunoChart(cpf) {
 	const aluna = await db.getAlunoRespostas(cpf);
 	const data = {};
-
 	if (aluna && aluna.pre && aluna.pos) {
 		chartsMaps.autoAvaliacao.forEach(async (element) => { // this map contains only the necessary answers
 			if (aluna.pre[element.paramName] && aluna.pos[element.paramName]) { // build obj with param_name and the number variation
@@ -38,20 +59,22 @@ async function buildAlunoChart(cpf) {
 		});
 	}
 
+	console.log(data);
+
 	if (data && Object.keys(data) && Object.keys(data).length > 0) {
 		await chart.createChart(Object.keys(data), Object.values(data), cpf, `Resultado auto-avaliação ${aluna.nome}`);
 	}
 }
 
 // buildAlunoChart(12345678911);
-// buildIndicadoChart(1);
+// separateIndicadosData('12345678911');
 
 // after a payement happens we send an e-mail to the buyer with the matricula/pre-cadastro form
 async function sendMatricula(productID, buyerEmail) {
 	try {
 		const spreadsheet = await helper.reloadSpreadSheet(1, 6); // console.log('spreadsheet', spreadsheet); // load spreadsheet
 		const column = await spreadsheet.find(x => x.pagseguroId.toString() === productID.toString()); console.log('column', column); // get same product id (we want to know the "turma")
-		const newUrl = surveysInfo.atividade1.link.replace('TURMARESPOSTA', column.turma); // pass turma as a custom_parameter
+		const newUrl = surveysInfo.preCadastro.link.replace('TURMARESPOSTA', column.turma); // pass turma as a custom_parameter
 		const newText = eMail.preCadastro.texto.replace('<TURMA>', column.turma).replace('<LINK>', newUrl); // prepare mail text
 		await sendTestMail(eMail.preCadastro.assunto, newText, buyerEmail);
 	} catch (error) {
@@ -217,7 +240,7 @@ async function separateAnswer(respostas, elementos) {
 async function sendMailToIndicados(indicados, aluna) {
 	const text = `Olá. Você foi indicado por ${aluna.nome} para a avaliação. Responda abaixo:\n `;
 	for (let i = 0; i < indicados.length; i++) {
-		const newLink = `${surveysInfo.avaliador360.link.replace('IDRESPOSTA', indicados[i].id)}&type=pre`;
+		const newLink = `${surveysInfo.avaliador360pre.link.replace('IDRESPOSTA', indicados[i].id)}`;
 		await sendTestMail(`${aluna.nome} te indicou!`, text + newLink, indicados[i].email);
 	}
 }
@@ -328,6 +351,9 @@ async function newSurveyResponse(event) {
 	}
 }
 
+// handleAvaliador(mock, 'pos', surveysMaps.avaliacao360Pos);
+
+
 module.exports = {
-	sendMatricula, newSurveyResponse, buildAlunoChart, buildIndicadoChart,
+	sendMatricula, newSurveyResponse, buildAlunoChart, separateIndicadosData,
 };
