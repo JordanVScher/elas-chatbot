@@ -69,14 +69,14 @@ async function buildAlunoChart(cpf) {
 // buildAlunoChart(12345678911);
 // separateIndicadosData('12345678911');
 
-// after a payement happens we send an e-mail to the buyer with the matricula/pre-cadastro form
+// after a payement happens we send an e-mail to the buyer with the matricula/atividade 1 form
 async function sendMatricula(productID, buyerEmail) {
 	try {
 		const spreadsheet = await helper.reloadSpreadSheet(1, 6); // console.log('spreadsheet', spreadsheet); // load spreadsheet
 		const column = await spreadsheet.find(x => x.pagseguroId.toString() === productID.toString()); console.log('column', column); // get same product id (we want to know the "turma")
-		const newUrl = surveysInfo.preCadastro.link.replace('TURMARESPOSTA', column.turma); // pass turma as a custom_parameter
-		const newText = eMail.preCadastro.texto.replace('<TURMA>', column.turma).replace('<LINK>', newUrl); // prepare mail text
-		await sendTestMail(eMail.preCadastro.assunto, newText, buyerEmail);
+		const newUrl = surveysInfo.atividade1.link.replace('TURMARESPOSTA', column.turma); // pass turma as a custom_parameter
+		const newText = eMail.atividade1.texto.replace('<TURMA>', column.turma).replace('<LINK>', newUrl); // prepare mail text
+		await sendTestMail(eMail.atividade1.assunto, newText, buyerEmail);
 	} catch (error) {
 		console.log('Erro em sendMatricula', error); helper.Sentry.captureMessage('Erro em sendMatricula');
 	}
@@ -197,6 +197,23 @@ async function handleAtividade(response, column) {
 	}
 }
 
+async function handleAtividadeOne(response) {
+	response.custom_variables = { turma: 'T7-SP' };
+	let answers = await getSpecificAnswers(surveysMaps.atividade1, response.pages);
+	answers = await replaceChoiceId(answers, surveysMaps.atividade1, response.survey_id);
+	answers = await addCustomParametersToAnswer(answers, response.custom_variables);
+	if (answers.cpf) { answers.cpf = await answers.cpf.replace(/[_.,-]/g, ''); }
+
+	const newUserID = await db.upsertAluno(answers.nome, answers.cpf, answers.turma, answers.email);
+	if (newUserID) {
+		await db.upsertPrePos(newUserID, JSON.stringify(answers), 'pre');
+	}
+
+	/* e-mail */
+	const newText = eMail.depoisMatricula.texto.replace('<NOME>', answers.nome); // prepare mail text
+	await sendTestMail(eMail.depoisMatricula.assunto, newText, answers.email);
+}
+
 
 async function handlePreCadastro(response) {
 	// custom_variables should only have turma and/or cpf, the rest we have to get from the answers
@@ -228,7 +245,7 @@ async function separateAnswer(respostas, elementos) {
 			aux = {};
 		}
 		// use the keys of the aux obj to find the new key for the aux
-		aux[elementos[Object.keys(aux).length]] = element.text || '';
+		aux[elementos[Object.keys(aux).length]] = element.text || '<IGNORE>';
 		index += 1;
 	});
 
@@ -246,13 +263,17 @@ async function sendMailToIndicados(indicados, aluna) {
 }
 
 async function handleIndicacao(response) {
+	// TODO fix this function
 	// console.log('responses', JSON.stringify(response, null, 2));
 	response.custom_variables = { turma: 'T7-SP', cpf: '12345678911' };
+	// const answers = await getSpecificAnswers(surveysMaps.indicacao360Normal, response.pages);
+	// console.log(answers);
 
 	let answers = '';
 	response.pages.forEach(async (element) => { // look for the question with the e-mails (the map has only this question id)
 		answers = element.questions.find(x => x.id === surveysMaps.indicacao360[0].questionID) || [];
 	});
+
 
 	const indicacao = await separateAnswer(answers.answers, ['nome', 'email', 'tele']) || [];
 
@@ -266,14 +287,12 @@ async function handleIndicacao(response) {
 	const indicacaoIds = [];
 	for (let i = 0; i < indicacao.length; i++) {
 		if (indicacao[i].email) {
-			const newAvaliador = await db.insertIndicacao(aluna.id, indicacao[i]);
+			const newAvaliador = await db.insertIndicacao(aluna.id, indicacao[i], false);
 			if (newAvaliador) { // saving the ids to create the link to send in the e-mail
 				indicacaoIds.push(newAvaliador);
 			}
 		}
 	}
-
-	await sendMailToIndicados(indicacaoIds, aluna);
 
 	/* saving familiares */
 	answers = '';
@@ -284,9 +303,16 @@ async function handleIndicacao(response) {
 	const familiar = await separateAnswer(answers.answers, ['nome', 'relacao', 'email', 'tele']) || [];
 	for (let i = 0; i < familiar.length; i++) {
 		if (familiar[i].email) {
-			await db.insertFamiliar(aluna.id, familiar[i]);
+			const newAvaliador = await db.insertIndicacao(aluna.id, familiar[i], true);
+			if (newAvaliador) { // saving the ids to create the link to send in the e-mail
+				indicacaoIds.push(newAvaliador);
+			}
 		}
 	}
+
+	console.log('indicacaoIds', indicacaoIds);
+
+	await sendMailToIndicados(indicacaoIds, aluna);
 }
 
 async function handlePosAvaliacao(response) {
@@ -323,7 +349,7 @@ async function newSurveyResponse(event) {
 		await handlePosAvaliacao(responses);
 		break;
 	case surveysInfo.atividade1.id:
-		await handleAtividade(responses, 'atividade_1');
+		await handleAtividadeOne(responses);
 		break;
 	case surveysInfo.atividade2.id:
 		await handleAtividade(responses, 'atividade_2');
@@ -355,5 +381,5 @@ async function newSurveyResponse(event) {
 
 
 module.exports = {
-	sendMatricula, newSurveyResponse, buildAlunoChart, separateIndicadosData,
+	sendMatricula, newSurveyResponse, buildAlunoChart, separateIndicadosData, sendMailToIndicados,
 };

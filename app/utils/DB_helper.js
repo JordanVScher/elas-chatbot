@@ -30,13 +30,15 @@ async function upsertAluno(nome, cpf, turma, email) {
 	return id;
 }
 
-async function insertIndicacao(alunaID, userData) {
+async function insertIndicacao(alunaID, userData, familiar) {
 	let date = new Date();
 	date = await moment(date).format('YYYY-MM-DD HH:mm:ss');
 
 	const id = await sequelize.query(`
-	INSERT INTO "indicacao_avaliadores" (aluno_id, nome, email, telefone, created_at, updated_at)
-	  VALUES ('${alunaID}', '${userData.nome}', '${userData.email}', '${userData.tele}', '${date}', '${date}')
+	INSERT INTO "indicacao_avaliadores" (aluno_id, nome, email, telefone, 
+		familiar, relacao_com_aluna, created_at, updated_at)
+	  VALUES ('${alunaID}', '${userData.nome || ''}', '${userData.email}', '${userData.tele || ''}', 
+	  '${familiar}', '${userData.relacao || ''}','${date}', '${date}')
 	RETURNING id, email;
 	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
 		console.log(`Added ${userData.email} successfully!`);

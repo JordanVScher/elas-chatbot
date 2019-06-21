@@ -29,8 +29,13 @@ async function sendTestMail(subject, text, to) {
 		text,
 	};
 
-	const info = await transporter.sendMail(options);
-	console.log(`'${subject}' para ${to}:`, info.messageId);
+	try {
+		const info = await transporter.sendMail(options);
+		console.log(`'${subject}' para ${to}:`, info.messageId);
+	} catch (error) {
+		console.log('Could not send mail to ', to);
+		console.log('Error => ', error);
+	}
 }
 
 
