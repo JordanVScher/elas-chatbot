@@ -51,15 +51,14 @@ async function separateIndicadosData(cpf) {
 async function buildAlunoChart(cpf) {
 	const aluna = await db.getAlunoRespostas(cpf);
 	const data = {};
+
 	if (aluna && aluna.pre && aluna.pos) {
-		chartsMaps.autoAvaliacao.forEach(async (element) => { // this map contains only the necessary answers
+		chartsMaps.sondagem.forEach(async (element) => { // this map contains only the necessary answers
 			if (aluna.pre[element.paramName] && aluna.pos[element.paramName]) { // build obj with param_name and the number variation
 				data[element.questionName] = helper.getPercentageChange(aluna.pre[element.paramName], aluna.pos[element.paramName]);
 			}
 		});
 	}
-
-	console.log(data);
 
 	if (data && Object.keys(data) && Object.keys(data).length > 0) {
 		await chart.createChart(Object.keys(data), Object.values(data), cpf, `Resultado auto-avaliação ${aluna.nome}`);
@@ -214,26 +213,6 @@ async function handleAtividadeOne(response) {
 	await sendTestMail(eMail.depoisMatricula.assunto, newText, answers.email);
 }
 
-
-async function handlePreCadastro(response) {
-	// custom_variables should only have turma and/or cpf, the rest we have to get from the answers
-	response.custom_variables = { turma: 'T7-SP', cpf: '12345678911' };
-	/* getting answer */
-	let answers = await getSpecificAnswers(surveysMaps.preCadastro, response.pages);
-	answers = await replaceChoiceId(answers, surveysMaps.preCadastro, response.survey_id);
-	answers = await addCustomParametersToAnswer(answers, response.custom_variables);
-	if (answers.cpf) { answers.cpf = await answers.cpf.replace(/[_.,-]/g, '');	}
-	console.log('answers', answers);
-	/* db */
-	const newUserID = await db.upsertAluno(answers.nome, answers.cpf, answers.turma, answers.email);
-	if (newUserID) {
-		await db.upsertPrePos(newUserID, JSON.stringify(answers), 'pre');
-	}
-	/* e-mail */
-	const newText = eMail.depoisMatricula.texto.replace('<NOME>', answers.nome); // prepare mail text
-	await sendTestMail(eMail.depoisMatricula.assunto, newText, answers.email);
-}
-
 async function separateAnswer(respostas, elementos) {
 	// separate the array of answers into and array of objects with the desired elements
 	const result = [];
@@ -315,16 +294,17 @@ async function handleIndicacao(response) {
 	await sendMailToIndicados(indicacaoIds, aluna);
 }
 
-async function handlePosAvaliacao(response) {
+async function handleSondagem(response, column, map) {
 	response.custom_variables = { turma: 'T7-SP', cpf: '12345678911' };
 
-	let answers = await getSpecificAnswers(surveysMaps.posAvaliacao, response.pages);
-	answers = await replaceChoiceId(answers, surveysMaps.posAvaliacao, response.survey_id);
+	let answers = await getSpecificAnswers(map, response.pages);
+	answers = await replaceChoiceId(answers, map, response.survey_id);
 	answers = await addCustomParametersToAnswer(answers, response.custom_variables);
 	/* db */
+
 	const aluna = await db.getAluno(response.custom_variables.cpf);
 	if (aluna) {
-		await db.upsertPrePos(aluna.id, JSON.stringify(answers), 'pos');
+		await db.upsertPrePos(aluna.id, JSON.stringify(answers), column);
 	}
 }
 
@@ -334,7 +314,6 @@ async function handleAvaliador(response, column, map) {
 	let answers = await getSpecificAnswers(map, response.pages);
 	answers = await replaceChoiceId(answers, map, response.survey_id);
 	answers = await addCustomParametersToAnswer(answers, response.custom_variables);
-
 	await db.upsertPrePos360(answers.id, JSON.stringify(answers), column);
 }
 
@@ -342,11 +321,11 @@ async function handleAvaliador(response, column, map) {
 async function newSurveyResponse(event) {
 	const responses = await smAPI.getResponseWithAnswers(event.filter_id, event.object_id); console.log('responses', JSON.stringify(responses, null, 2)); // get details of the event
 	switch (responses.survey_id) { // which survey was answered?
-	case surveysInfo.preCadastro.id:
-		await handlePreCadastro(responses);
+	case surveysInfo.sondagemPre.id:
+		await handleSondagem(responses, 'pre', surveysMaps.sondagemPre);
 		break;
-	case surveysInfo.posAvaliacao.id:
-		await handlePosAvaliacao(responses);
+	case surveysInfo.sondagemPos.id:
+		await handleSondagem(responses, 'pos', surveysMaps.sondagemPos);
 		break;
 	case surveysInfo.atividade1.id:
 		await handleAtividadeOne(responses);
@@ -376,9 +355,6 @@ async function newSurveyResponse(event) {
 		break;
 	}
 }
-
-// handleAvaliador(mock, 'pos', surveysMaps.avaliacao360Pos);
-
 
 module.exports = {
 	sendMatricula, newSurveyResponse, buildAlunoChart, separateIndicadosData, sendMailToIndicados,
