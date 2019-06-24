@@ -220,7 +220,9 @@ async function replaceChoiceId(answers, map, surveyID) {
 }
 
 async function handleAtividade(response, column) {
-	response.custom_variables = { turma: 'T7-SP', cpf: '12345678911' };
+	// response.custom_variables = { turma: 'T7-SP', cpf: '12345678911' };
+	console.log('custom_variables', response.custom_variables);
+
 	const aluno = await db.getAluno(response.custom_variables.cpf);
 	if (aluno) {
 		await db.updateAtividade(aluno.id, column, true);
@@ -228,7 +230,9 @@ async function handleAtividade(response, column) {
 }
 
 async function handleAtividadeOne(response) {
-	response.custom_variables = { turma: 'T7-SP' };
+	// response.custom_variables = { turma: 'T7-SP' };
+	console.log('custom_variables', response.custom_variables);
+
 	let answers = await getSpecificAnswers(surveysMaps.atividade1, response.pages);
 	answers = await replaceChoiceId(answers, surveysMaps.atividade1, response.survey_id);
 	answers = await addCustomParametersToAnswer(answers, response.custom_variables);
@@ -273,7 +277,8 @@ async function separateAnswer(respostas, elementos) {
 // }
 
 async function handleIndicacao(response) {
-	response.custom_variables = { turma: 'T7-SP', cpf: '12345678911' };
+	// response.custom_variables = { turma: 'T7-SP', cpf: '12345678911' };
+	console.log('custom_variables', response.custom_variables);
 
 	const baseAnswers = await formatAnswers(response.pages[0].questions);
 	const aluna = await db.getAluno(response.custom_variables.cpf);
@@ -312,7 +317,8 @@ async function handleIndicacao(response) {
 }
 
 async function handleSondagem(response, column, map) {
-	response.custom_variables = { turma: 'T7-SP', cpf: '12345678911' };
+	// response.custom_variables = { turma: 'T7-SP', cpf: '12345678911' };
+	console.log('custom_variables', response.custom_variables);
 
 	let answers = await getSpecificAnswers(map, response.pages);
 	answers = await replaceChoiceId(answers, map, response.survey_id);
@@ -326,12 +332,13 @@ async function handleSondagem(response, column, map) {
 }
 
 async function handleAvaliador(response, column, map) {
-	response.custom_variables = { id: '1' };
+	// response.custom_variables = { indicaid: '1' };
+	console.log('custom_variables', response.custom_variables);
 
 	let answers = await getSpecificAnswers(map, response.pages);
 	answers = await replaceChoiceId(answers, map, response.survey_id);
 	answers = await addCustomParametersToAnswer(answers, response.custom_variables);
-	await db.upsertPrePos360(answers.id, JSON.stringify(answers), column);
+	await db.upsertPrePos360(answers.indicaid, JSON.stringify(answers), column);
 }
 
 // what to do with the form that was just answered

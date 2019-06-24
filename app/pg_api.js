@@ -5,7 +5,7 @@ const PagSeguro = require('pagseguro-nodejs');
 const { promisify } = require('util');
 const { parseString } = require('xml2js');
 const smHelp = require('./utils/sm_help');
-const mailer = require('./utils/mailer');
+// const mailer = require('./utils/mailer');
 const { Sentry } = require('./utils/helper');
 const db = require('./utils/DB_helper');
 
