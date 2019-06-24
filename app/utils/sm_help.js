@@ -224,7 +224,7 @@ async function separateAnswer(respostas, elementos) {
 			aux = {};
 		}
 		// use the keys of the aux obj to find the new key for the aux
-		aux[elementos[Object.keys(aux).length]] = element.text || '<IGNORE>';
+		aux[elementos[Object.keys(aux).length]] = element;
 		index += 1;
 	});
 
@@ -233,65 +233,51 @@ async function separateAnswer(respostas, elementos) {
 	return result;
 }
 
-async function sendMailToIndicados(indicados, aluna) {
-	const text = `Olá. Você foi indicado por ${aluna.nome} para a avaliação. Responda abaixo:\n `;
-	for (let i = 0; i < indicados.length; i++) {
-		const newLink = `${surveysInfo.avaliador360pre.link.replace('IDRESPOSTA', indicados[i].id)}`;
-		await sendTestMail(`${aluna.nome} te indicou!`, text + newLink, indicados[i].email);
-	}
-}
+// async function sendMailToIndicados(indicados, aluna) {
+// 	const text = `Olá. Você foi indicado por ${aluna.nome} para a avaliação. Responda abaixo:\n `;
+// 	for (let i = 0; i < indicados.length; i++) {
+// 		const newLink = `${surveysInfo.avaliador360pre.link.replace('IDRESPOSTA', indicados[i].id)}`;
+// 		await sendTestMail(`${aluna.nome} te indicou!`, text + newLink, indicados[i].email);
+// 	}
+// }
 
 async function handleIndicacao(response) {
-	// TODO fix this function
-	// console.log('responses', JSON.stringify(response, null, 2));
 	response.custom_variables = { turma: 'T7-SP', cpf: '12345678911' };
-	// const answers = await getSpecificAnswers(surveysMaps.indicacao360Normal, response.pages);
-	// console.log(answers);
 
-	let answers = '';
-	response.pages.forEach(async (element) => { // look for the question with the e-mails (the map has only this question id)
-		answers = element.questions.find(x => x.id === surveysMaps.indicacao360[0].questionID) || [];
-	});
-
-
-	const indicacao = await separateAnswer(answers.answers, ['nome', 'email', 'tele']) || [];
-
-	// saving the answer with the user
+	const baseAnswers = await formatAnswers(response.pages[0].questions);
 	const aluna = await db.getAluno(response.custom_variables.cpf);
-	if (aluna && aluna.id) {
-		await db.updateAtividade(aluna.id, 'atividade_indicacao', JSON.stringify(answers.answers));
-	}
 
-	// saving each avaliador, if theres an e-mail
-	const indicacaoIds = [];
-	for (let i = 0; i < indicacao.length; i++) {
-		if (indicacao[i].email) {
-			const newAvaliador = await db.insertIndicacao(aluna.id, indicacao[i], false);
-			if (newAvaliador) { // saving the ids to create the link to send in the e-mail
-				indicacaoIds.push(newAvaliador);
-			}
-		}
-	}
-
-	/* saving familiares */
-	answers = '';
-	response.pages.forEach(async (element) => { // look for the question with the e-mails (the map has only this question id)
-		answers = element.questions.find(x => x.id === surveysMaps.indicacao360[1].questionID) || [];
+	let indicados = {}; // could just as well be an array with the answers
+	await surveysMaps.indicacao360.forEach(async (element) => { // getting the answers for the indicados
+		const aux = baseAnswers.find(x => x.id === element.questionID);
+		indicados[element.paramName] = aux && aux.text ? aux.text : '';
 	});
 
-	const familiar = await separateAnswer(answers.answers, ['nome', 'relacao', 'email', 'tele']) || [];
-	for (let i = 0; i < familiar.length; i++) {
-		if (familiar[i].email) {
-			const newAvaliador = await db.insertIndicacao(aluna.id, familiar[i], true);
-			if (newAvaliador) { // saving the ids to create the link to send in the e-mail
-				indicacaoIds.push(newAvaliador);
-			}
-		}
+	// formating the answers
+	const indicacao = await separateAnswer(Object.values(indicados), ['nome', 'email', 'tele']) || [];
+	// saving each avaliador, if theres an e-mail
+	for (let i = 0; i < indicacao.length; i++) {
+		if (indicacao[i].email) { await db.insertIndicacao(aluna.id, indicacao[i], false); }
 	}
 
-	console.log('indicacaoIds', indicacaoIds);
+	// getting the answers for the familiares
+	indicados = {}; // cleaning up
+	await surveysMaps.indicacao360_familiares.forEach(async (element) => {
+		const aux = baseAnswers.find(x => x.id === element.questionID);
+		indicados[element.paramName] = aux && aux.text ? aux.text : '';
+	});
 
-	await sendMailToIndicados(indicacaoIds, aluna);
+	// saving each familair, if theres an e-mail
+	const familiar = await separateAnswer(Object.values(indicados), ['nome', 'relacao', 'email', 'tele']) || [];
+	for (let i = 0; i < familiar.length; i++) {
+		if (familiar[i].email) { await db.insertIndicacao(aluna.id, familiar[i], true);	}
+	}
+
+	// joining indicados and saving answer
+	let answers = indicacao.concat(familiar);
+	answers = await addCustomParametersToAnswer(answers, response.custom_variables);
+
+	await db.updateAtividade(aluna.id, 'atividade_indicacao', JSON.stringify(answers));
 }
 
 async function handleSondagem(response, column, map) {
@@ -357,5 +343,5 @@ async function newSurveyResponse(event) {
 }
 
 module.exports = {
-	sendMatricula, newSurveyResponse, buildAlunoChart, separateIndicadosData, sendMailToIndicados,
+	sendMatricula, newSurveyResponse, buildAlunoChart, separateIndicadosData,
 };
