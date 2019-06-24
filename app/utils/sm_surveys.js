@@ -25,7 +25,7 @@ module.exports = {
 	},
 	module3: {
 		link: process.env.MODULO3_LINK,
-		id: process.env.MODULO3_LINK,
+		id: process.env.MODULO3_ID,
 	},
 	indicacao360: {
 		link: process.env.INDICACAO360_LINK,

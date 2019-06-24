@@ -87,11 +87,11 @@ async function handlePagamento(notification) {
 }
 
 // const mock = {
-// 	notificationCode: '8066A2-4FB95DB95D9E-4884C70FBF4F-AF104B',
+// 	notificationCode: '718264-C46A096A0932-0DD41B8F8995-FDA5A0',
 // 	notificationType: 'transaction',
 // };
 
-// handleNotification(mock);
+// handlePagamento(mock);
 
 module.exports = {
 	createVenda, handlePagamento,

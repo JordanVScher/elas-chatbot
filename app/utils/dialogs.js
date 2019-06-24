@@ -50,7 +50,7 @@ module.exports.getAgenda = async (context) => {
 module.exports.buildAgendaMsg = async (data) => {
 	let msg = '';
 	if (data.currentModule) { msg += `📝 Você está no módulo ${data.currentModule} de 3\n`; }
-	if (data.newDate) { msg += `🗓️  Acontecerá ${data.newDateDay} dia ${await help.formatDate(data.newDate)} e ${data.nextDateDay} dia ${help.formatDate(data.nextDate)}\n`; }
+	if (data.newDate) { msg += `🗓️ Acontecerá ${data.newDateDay} dia ${await help.formatDate(data.newDate)} e ${data.nextDateDay} dia ${help.formatDate(data.nextDate)}\n`; }
 	if (data.local) { msg += `🏠 Local: ${await help.toTitleCase(data.local)}`; }
 
 	return msg;
