@@ -5,6 +5,7 @@ const PagSeguro = require('pagseguro-nodejs');
 const { promisify } = require('util');
 const { parseString } = require('xml2js');
 const smHelp = require('./utils/sm_help');
+const mailer = require('./utils/mailer');
 const { Sentry } = require('./utils/helper');
 const db = require('./utils/DB_helper');
 
@@ -68,22 +69,28 @@ async function createVenda(itemId = 1) { // for testing only, creates a link to 
 
 // what to do after someone buys one of the products
 async function handlePagamento(notification) {
-	await pagseguro.transaction(notification.notificationCode, async (success, response) => { // get transaction details based on notificationCode
-		// await pagseguro.notification(notification.notificationCode, async (success, response) => { // get transaction details based on notificationCode
+	console.log('notification', notification);
+
+	await pagseguro.notification(notification.notificationCode, async (success, response) => { // get transaction details based on notificationCode
+		console.log('response', response);
+
 		if (success && !response.error) {
 			try {
 				const answer = await xmlParse(response); console.log('answer', JSON.stringify(answer, null, 2)); // parse xml to json
 				const productID = answer.transaction.items[0].item[0].id[0]; console.log('productID', productID); // productID
-				// await db.upsertPagamento(answer.transaction.sender[0].documents[0].document[0].type[0], answer.transaction.sender[0].documents[0].document[0].value[0],
-				// 	answer.transaction.sender[0].email[0], productID, answer.transaction.code[0]); // saves pagamento
-				await db.upsertPagamento('cpf', '123123123',
-					answer.transaction.sender[0].email[0], productID, answer.transaction.code[0]); // saves pagamento
+				if (answer.transaction.status && answer.transaction.status.toString() === '3') {
+					// await db.upsertPagamento(answer.transaction.sender[0].documents[0].document[0].type[0], answer.transaction.sender[0].documents[0].document[0].value[0],
+					// 	answer.transaction.sender[0].email[0], productID, answer.transaction.code[0]); // saves pagamento
+					await db.upsertPagamento('cpf', '99988877755',
+						answer.transaction.sender[0].email[0], productID, answer.transaction.code[0]); // saves pagamento
 
-				await smHelp.sendMatricula(productID, process.env.ENV === 'local' ? 'jordanvscher@hotmail.com' : answer.transaction.sender[0].email[0]); // send email
-				// await smHelp.sendMatricula(productID, 'jordan@appcivico.com'); // send email
+					await smHelp.sendMatricula(productID, process.env.ENV === 'local' ? 'jordanvscher@hotmail.com' : answer.transaction.sender[0].email[0]); // send email
+					// await smHelp.sendMatricula(productID, 'jordan@appcivico.com'); // send email
+				} else {
+					console.log(`Status: ${answer.transaction.status}.\nQuem comprou: ${answer.transaction.sender[0].email[0]}`);
+				}
 			} catch (error) {
 				console.log(error);
-
 				Sentry.captureMessage('Erro em handleNotification');
 			}
 		} else {
