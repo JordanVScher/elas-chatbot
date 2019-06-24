@@ -1,3 +1,4 @@
+const fs = require('fs');
 const helper = require('./helper');
 const smAPI = require('../sm_api');
 const { sendTestMail } = require('./mailer');
@@ -5,10 +6,28 @@ const { eMail } = require('./flow');
 const db = require('./DB_helper');
 const chart = require('../simple_chart');
 
+
 const surveysInfo = require('./sm_surveys');
 const surveysMaps = require('./sm_maps');
 const chartsMaps = require('./charts_maps');
 
+
+async function buildAlunoChart(cpf) {
+	const aluna = await db.getAlunoRespostas(cpf);
+	const data = {};
+
+	if (aluna && aluna.pre && aluna.pos) {
+		chartsMaps.sondagem.forEach(async (element) => { // this map contains only the necessary answers
+			if (aluna.pre[element.paramName] && aluna.pos[element.paramName]) { // build obj with param_name and the number variation
+				data[element.questionName] = helper.getPercentageChange(aluna.pre[element.paramName], aluna.pos[element.paramName]);
+			}
+		});
+	}
+
+	if (data && Object.keys(data) && Object.keys(data).length > 0) {
+		await chart.createChart(Object.keys(data), Object.values(data), cpf, `Resultado auto-avaliação ${aluna.nome}`);
+	}
+}
 
 async function separateIndicadosData(cpf) {
 	const indicado = await db.getIndicadoRespostas(cpf);
@@ -48,25 +67,38 @@ async function separateIndicadosData(cpf) {
 	return result;
 }
 
-async function buildAlunoChart(cpf) {
-	const aluna = await db.getAlunoRespostas(cpf);
-	const data = {};
+async function buildIndicadoChart(cpf) {
+	const data = await separateIndicadosData(cpf);
+	console.log(data);
 
-	if (aluna && aluna.pre && aluna.pos) {
-		chartsMaps.sondagem.forEach(async (element) => { // this map contains only the necessary answers
-			if (aluna.pre[element.paramName] && aluna.pos[element.paramName]) { // build obj with param_name and the number variation
-				data[element.questionName] = helper.getPercentageChange(aluna.pre[element.paramName], aluna.pos[element.paramName]);
-			}
-		});
-	}
 
-	if (data && Object.keys(data) && Object.keys(data).length > 0) {
-		await chart.createChart(Object.keys(data), Object.values(data), cpf, `Resultado auto-avaliação ${aluna.nome}`);
-	}
+	const styleDiv = 'font-size:10pt;margin-left:1.5em;margin-right:1.5em;margin-bottom:0.5em;margin-top:2.0em';
+	let html = `<p style="${styleDiv}"><h1>Resultados</h1></p>`;
+	html += `<table style="width:100% border:1px solid black " border=1>
+ 	<tr> <th>Questão Pré</th> <th>Avaliação Pré</th> <th>Exemplo Pré</th> <th>Oportunidade Pré</th> `;
+	data.forEach((element) => {
+		html += `<tr> <td>${element.titlePre}</td> <td>${element.avaliasPre}</td> 
+				<td>${element.exemploPre}</td> <td>${element.melhoraPre}</td> </tr>`;
+	});
+	html += '</table><br><br>';
+	html += `<table style="width:100% border:1px solid black " border=1>
+ 	<tr> <th>Questão Pós</th> <th>Avaliação Pós</th>`;
+	data.forEach((element) => {
+		html += `<tr> <td>${element.titlePos}</td> <td>${element.avaliasPos}</td> </tr>`;
+	});
+	html += '</table>';
+
+	html += `<p style="${styleDiv}"><h5>Houve evolução?</h5></p> <div> ${data[0].houveEvolucao} </div>`;
+	html += `<p style="${styleDiv}"><h5>Onde houve evolução?</h5></p> <div> ${data[0].ondeEvolucao} </div>`;
+
+	helper.pdf.create(html).toStream((err, stream) => {
+		stream.pipe(fs.createWriteStream(`./${cpf}_360Results.pdf`));
+		console.log('Success!', `./${cpf}_360Results.pdf`, 'was created!');
+	});
 }
 
 // buildAlunoChart(12345678911);
-// separateIndicadosData('12345678911');
+// buildIndicadoChart('12345678911');
 
 // after a payement happens we send an e-mail to the buyer with the matricula/atividade 1 form
 async function sendMatricula(productID, buyerEmail) {
@@ -295,7 +327,7 @@ async function handleSondagem(response, column, map) {
 }
 
 async function handleAvaliador(response, column, map) {
-	response.custom_variables = { id: '1' };
+	response.custom_variables = { id: '2' };
 
 	let answers = await getSpecificAnswers(map, response.pages);
 	answers = await replaceChoiceId(answers, map, response.survey_id);
@@ -343,5 +375,5 @@ async function newSurveyResponse(event) {
 }
 
 module.exports = {
-	sendMatricula, newSurveyResponse, buildAlunoChart, separateIndicadosData,
+	sendMatricula, newSurveyResponse, buildAlunoChart, separateIndicadosData, buildIndicadoChart,
 };

@@ -3,6 +3,7 @@ const dialogFlow = require('apiai-promise');
 const gsjson = require('google-spreadsheet-to-json');
 const accents = require('remove-accents');
 const moment = require('moment');
+const pdf = require('html-pdf');
 
 // Sentry - error reporting
 Sentry.init({	dsn: process.env.SENTRY_DSN, environment: process.env.ENV, captureUnhandledRejections: false });
@@ -111,4 +112,5 @@ module.exports = {
 	formatDate,
 	toTitleCase,
 	getPercentageChange,
+	pdf,
 };

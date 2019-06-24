@@ -23,6 +23,7 @@
     "get-audio-duration": "0.0.1",
     "google-spreadsheet-to-json": "^1.0.0",
     "grpc": "^1.14.1",
+    "html-pdf": "^2.2.0",
     "jest": "^24.8.0",
     "messaging-api-messenger": "^0.7.16",
     "moment": "^2.24.0",
