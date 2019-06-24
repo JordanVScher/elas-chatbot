@@ -5,11 +5,31 @@ const accents = require('remove-accents');
 const moment = require('moment');
 const pdf = require('html-pdf');
 
+moment.locale('pt-BR');
 // Sentry - error reporting
 Sentry.init({	dsn: process.env.SENTRY_DSN, environment: process.env.ENV, captureUnhandledRejections: false });
 
+async function getJsDateFromExcel(excelDate) {
+	if (!Number(excelDate)) {
+		throw new Error('wrong input format');
+	}
 
-moment.locale('pt-BR');
+	const secondsInDay = 24 * 60 * 60;
+	const missingLeapYearDay = secondsInDay * 1000;
+	const delta = excelDate - (25567 + 2);
+	const parsed = delta * missingLeapYearDay;
+	const date = new Date(parsed);
+
+	if (Object.prototype.toString.call(date) === '[object Date]') {
+		if (isNaN(date.getTime())) { // eslint-disable-line
+			throw new Error('wrong excel date input');
+		} else {
+			return date;
+		}
+	}
+
+	return date;
+}
 
 async function capQR(text) {
 	let s = text;
@@ -65,6 +85,30 @@ async function reloadSpreadSheet(worksheet, headerStart) {
 	return results;
 }
 
+
+// format excel dates to regular dates
+async function getFormatedSpreadsheet() {
+	const result = [];
+	const spreadsheet = await reloadSpreadSheet(1, 6); // console.log('spreadsheet', spreadsheet); // load spreadsheet
+
+	for (let i = 0; i < spreadsheet.length; i++) {
+		const obj = spreadsheet[i];
+		const aux = {};
+		// eslint-disable-next-line no-loop-func
+		await Object.keys(obj).forEach(async (key) => {
+			const value = obj[key] ? obj[key].toString() : '';
+			if (value.length === 5 && typeof obj[key] !== 'string') { // date is 5 digit long, originally its not a string
+				aux[key] = await getJsDateFromExcel(obj[key]);
+			} else {
+				aux[key] = obj[key];
+			}
+		});
+		result.push(aux);
+	}
+
+	return result;
+}
+
 // separates string in the first dot on the second half of the string
 async function separateString(someString) {
 	if (someString.trim()[someString.length - 1] !== '.') { // trying to guarantee the last char is a dot so we never use halfLength alone as the divisor
@@ -99,6 +143,7 @@ function getPercentageChange(oldNumber, newNumber) {
 	return parseFloat(result.toFixed(2), 10);
 }
 
+
 module.exports = {
 	apiai: dialogFlow(process.env.DIALOGFLOW_TOKEN),
 	Sentry,
@@ -109,8 +154,10 @@ module.exports = {
 	weekDayName,
 	weekDayNameLong,
 	reloadSpreadSheet,
+	getFormatedSpreadsheet,
 	formatDate,
 	toTitleCase,
 	getPercentageChange,
 	pdf,
+	getJsDateFromExcel,
 };

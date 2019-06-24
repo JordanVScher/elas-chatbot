@@ -14,27 +14,7 @@ module.exports.handleCPF = async (context) => {
 		await context.setState({ dialog: 'validCPF' });
 	}
 };
-async function getJsDateFromExcel(excelDate) {
-	if (!Number(excelDate)) {
-		throw new Error('wrong input format');
-	}
 
-	const secondsInDay = 24 * 60 * 60;
-	const missingLeapYearDay = secondsInDay * 1000;
-	const delta = excelDate - (25567 + 2);
-	const parsed = delta * missingLeapYearDay;
-	const date = new Date(parsed);
-
-	if (Object.prototype.toString.call(date) === '[object Date]') {
-		if (isNaN(date.getTime())) { // eslint-disable-line
-			throw new Error('wrong excel date input');
-		} else {
-			return date;
-		}
-	}
-
-	return date;
-}
 
 module.exports.getAgenda = async (context) => {
 	const result = {};
@@ -47,7 +27,7 @@ module.exports.getAgenda = async (context) => {
 
 		for (let i = 1; i <= 3; i++) { // loop through all 3 modules we have
 			let newDate = onTheTurma[`módulo${i}`]; // get date for the start of each module
-			newDate = newDate ? await getJsDateFromExcel(newDate) : ''; // convert excel date if we have a date
+			newDate = newDate ? await help.getJsDateFromExcel(newDate) : ''; // convert excel date if we have a date
 			if (newDate) {
 				if (await moment(newDate).format('YYYY-MM-DD') >= await moment(today).format('YYYY-MM-DD')) { // check if the date for this module is after today or today
 					result.currentModule = i; // we loop through the modules so this index is the same number as the module

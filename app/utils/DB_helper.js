@@ -257,6 +257,42 @@ async function getUserTurma(FBID) {
 	return false;
 }
 
+async function getAlunasFromTurma(turma) {
+	const result = await sequelize.query(`
+	SELECT * FROM alunos
+	WHERE turma = '${turma}'
+	ORDER BY id;
+	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
+		console.log(`Got ${turma} successfully!`);
+		return results;
+	}).catch((err) => {
+		console.error('Error on getAlunasFromTurma => ', err);
+	});
+
+	return result || false;
+}
+
+async function getAlunasFromTurmas(turmas) {
+	const result = [];
+
+	for (let i = 0; i < turmas.length; i++) {
+		const element = turmas[i];
+		if (element.turma) {
+			const aux = await getAlunasFromTurma(element.turma);
+			aux.forEach((element2) => {
+				const extendedAluna = element2;
+				extendedAluna.mod1 = element['módulo1'];
+				extendedAluna.mod2 = element['módulo2'];
+				extendedAluna.mod3 = element['módulo3'];
+				extendedAluna.local = element.local;
+				result.push(extendedAluna);
+			});
+		}
+	}
+
+	return result || [];
+}
+
 module.exports = {
 	upsertUser,
 	upsertPagamento,
@@ -272,5 +308,6 @@ module.exports = {
 	getAluno,
 	getAlunoRespostas,
 	getIndicadoRespostas,
-
+	getAlunasFromTurma,
+	getAlunasFromTurmas,
 };
