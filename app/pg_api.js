@@ -75,8 +75,8 @@ async function handlePagamento(notification) {
 				const productID = answer.transaction.items[0].item[0].id[0]; console.log('productID', productID); // productID
 				await db.upsertPagamento(answer.transaction.sender[0].documents[0].document[0].type[0], answer.transaction.sender[0].documents[0].document[0].value[0],
 					answer.transaction.sender[0].email[0], productID, answer.transaction.code[0]); // saves pagamento
-				// await smHelp.sendMatricula(productID, process.env.ENV === 'local' ? 'jordan@appcivico.com' : answer.transaction.sender[0].email[0]); // send email
-				await smHelp.sendMatricula(productID, 'jordan@appcivico.com'); // send email
+				await smHelp.sendMatricula(productID, process.env.ENV === 'local' ? 'jordanvscher@hotmail.com' : answer.transaction.sender[0].email[0]); // send email
+				// await smHelp.sendMatricula(productID, 'jordan@appcivico.com'); // send email
 			} catch (error) {
 				Sentry.captureMessage('Erro em handleNotification');
 			}

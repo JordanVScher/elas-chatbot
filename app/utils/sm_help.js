@@ -31,6 +31,7 @@ async function buildAlunoChart(cpf) {
 
 async function separateIndicadosData(cpf) {
 	const indicado = await db.getIndicadoRespostas(cpf);
+
 	let newMap = chartsMaps.avaliacao360Pre;
 	const commomKeys = ['avalias', 'exemplo', 'melhora'];
 	const size = newMap.length / commomKeys.length;
@@ -69,8 +70,6 @@ async function separateIndicadosData(cpf) {
 
 async function buildIndicadoChart(cpf) {
 	const data = await separateIndicadosData(cpf);
-	console.log(data);
-
 
 	const styleDiv = 'font-size:10pt;margin-left:1.5em;margin-right:1.5em;margin-bottom:0.5em;margin-top:2.0em';
 	let html = `<p style="${styleDiv}"><h1>Resultados</h1></p>`;
@@ -98,7 +97,7 @@ async function buildIndicadoChart(cpf) {
 }
 
 // buildAlunoChart(12345678911);
-// buildIndicadoChart('12345678911');
+buildIndicadoChart('12345678911');
 
 // after a payement happens we send an e-mail to the buyer with the matricula/atividade 1 form
 async function sendMatricula(productID, buyerEmail) {
@@ -327,7 +326,7 @@ async function handleSondagem(response, column, map) {
 }
 
 async function handleAvaliador(response, column, map) {
-	response.custom_variables = { id: '2' };
+	response.custom_variables = { id: '1' };
 
 	let answers = await getSpecificAnswers(map, response.pages);
 	answers = await replaceChoiceId(answers, map, response.survey_id);
