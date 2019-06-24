@@ -97,7 +97,7 @@ async function buildIndicadoChart(cpf) {
 }
 
 // buildAlunoChart(12345678911);
-buildIndicadoChart('12345678911');
+// buildIndicadoChart('12345678911');
 
 // after a payement happens we send an e-mail to the buyer with the matricula/atividade 1 form
 async function sendMatricula(productID, buyerEmail) {
