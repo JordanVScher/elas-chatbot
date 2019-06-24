@@ -335,8 +335,6 @@ async function handleAvaliador(response, column, map) {
 	await db.upsertPrePos360(answers.id, JSON.stringify(answers), column);
 }
 
-console.log(surveysInfo);
-
 // what to do with the form that was just answered
 async function newSurveyResponse(event) {
 	const responses = await smAPI.getResponseWithAnswers(event.filter_id, event.object_id); console.log('responses', JSON.stringify(responses, null, 2)); // get details of the event
