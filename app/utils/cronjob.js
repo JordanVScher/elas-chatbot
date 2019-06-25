@@ -1,8 +1,9 @@
 const { CronJob } = require('cron');
 const help = require('./helper');
 const db = require('./DB_helper');
-// const mailer = require('./mailer');
+const mailer = require('./mailer');
 const emails = require('./emails');
+const broadcast = require('./broadcast');
 
 // for each turma get the alunas in them
 async function getAlunasFromTurmas(turmas) {
@@ -22,7 +23,6 @@ async function getAlunasFromTurmas(turmas) {
 			});
 		}
 	}
-
 	return result || [];
 }
 
@@ -60,8 +60,6 @@ async function getIndicadosFromAlunas(alunas, familiar) {
 	// for each turma get the alunas in them
 	for (let i = 0; i < alunas.length; i++) {
 		const element = alunas[i];
-		console.log(element);
-
 		if (element.id) {
 			const aux = await db.getIndicadoFromAluna(element.id, familiar);
 			aux.forEach((element2) => {
@@ -128,6 +126,10 @@ async function handleAlunaMail(spreadsheet, today, days, paramName, mail, replac
 		let text = await replaceDataText(mail.text, replaceMap);
 		text = await replaceCustomParameters(text, element.turma, element.cpf, '');
 		console.log('-------------------\nto', element.email, '\n', text);
+		await mailer.sendTestMail(mail.subject, text, element.email);
+		if (element.fb_id) { // if aluna is linked with messenger we send a message to the bot
+			await broadcast.sendBroadcastAluna(element.fb_id, mail.subject);
+		}
 	});
 }
 
@@ -143,37 +145,36 @@ async function handleIndicadoMail(spreadsheet, today, days, paramName, mail, fam
 		let text = await replaceDataText(mail.text, replaceMap);
 		text = await replaceCustomParameters(text, '', '', element.id);
 		console.log('-------------------\nto', element.email, '\n', text);
+		await mailer.sendTestMail(mail.subject, text, element.email);
 	});
 }
 
 // async function test() {
-// const spreadsheet = await help.getFormatedSpreadsheet();
-// const d = new Date(Date.now());	const today = help.moment(d);
-// await handleAlunaMail(spreadsheet, today, 19, 'módulo1', emails.mail1, [{ mask: 'GRUPOWHATS', data: process.env.GRUPOWHATSAP }]);
-// await handleAlunaMail(spreadsheet, today, 19, 'módulo1', emails.mail2, [
-// 	{ mask: 'ATIVIDADE1', data: process.env.ATIVIDADE1_LINK },
-// 	{ mask: 'INDICACAO360', data: process.env.INDICACAO360_LINK },
-// 	{ mask: 'ATIVIDADE2', data: process.env.ATIVIDADE2_LINK },
-// 	{ mask: 'DISC_LINK', data: process.env.DISC_LINK1 },
-// ]);
-// await handleIndicadoMail(spreadsheet, today, 10, 'módulo1', emails.mail3, false, [{ mask: 'AVALIADORPRE', data: process.env.AVALIADOR360PRE_LINK }]);
-// await handleAlunaMail(spreadsheet, today, 10, 'módulo1', emails.mail4, [{ mask: 'AVALIADORPRE', data: process.env.AVALIADOR360PRE_LINK }]);
-// await handleAlunaMail(spreadsheet, today, -5, 'módulo1', emails.mail5, [{ mask: 'AVALIACAO1', data: process.env.MODULO1_LINK }]);
-// await handleAlunaMail(spreadsheet, today, 12, 'módulo2', emails.mail6, []);
-// await handleAlunaMail(spreadsheet, today, -5, 'módulo2', emails.mail7, []);
-// await handleAlunaMail(spreadsheet, today, -5, 'módulo2', emails.mail8, [{ mask: 'AVALIACAO2', data: process.env.MODULO2_LINK }]);
-// await handleAlunaMail(spreadsheet, today, 12, 'módulo3', emails.mail9, [
-// 	{ mask: 'SONDAGEMPOS', data: process.env.SONDAGEM_POS_LINK },
-// 	{ mask: 'DISC_LINK', data: process.env.DISC_LINK2 },
-// ]);
-// await handleIndicadoMail(spreadsheet, today, 12, 'módulo3', emails.mail10, false, [{ mask: 'AVALIADORPOS', data: process.env.AVALIADOR360POS_LINK }]);
-// await handleAlunaMail(spreadsheet, today, 12, 'módulo3', emails.mail11, [{ mask: 'AVALIADORPOS', data: process.env.AVALIADOR360POS_LINK }]);
-// await handleIndicadoMail(spreadsheet, today, 12, 'módulo3', emails.mail12, true, [{ mask: 'NUMBERWHATSAP', data: process.env.NUMBERWHATSAP }]);
-// await handleAlunaMail(spreadsheet, today, -5, 'módulo3', emails.mail13, [{ mask: 'AVALIACAO3', data: process.env.MODULO3_LINK }]);
+// 	const spreadsheet = await help.getFormatedSpreadsheet();
+// 	const d = new Date(Date.now());	const today = help.moment(d);
+// 	await handleAlunaMail(spreadsheet, today, 19, 'módulo1', emails.mail1, [{ mask: 'GRUPOWHATS', data: process.env.GRUPOWHATSAP }]);
+// 	await handleAlunaMail(spreadsheet, today, 19, 'módulo1', emails.mail2, [
+// 		{ mask: 'ATIVIDADE1', data: process.env.ATIVIDADE1_LINK },
+// 		{ mask: 'INDICACAO360', data: process.env.INDICACAO360_LINK },
+// 		{ mask: 'ATIVIDADE2', data: process.env.ATIVIDADE2_LINK },
+// 		{ mask: 'DISC_LINK', data: process.env.DISC_LINK1 },
+// 	]);
+// 	await handleIndicadoMail(spreadsheet, today, 10, 'módulo1', emails.mail3, false, [{ mask: 'AVALIADORPRE', data: process.env.AVALIADOR360PRE_LINK }]);
+// 	await handleAlunaMail(spreadsheet, today, 10, 'módulo1', emails.mail4, [{ mask: 'AVALIADORPRE', data: process.env.AVALIADOR360PRE_LINK }]);
+// 	await handleAlunaMail(spreadsheet, today, -5, 'módulo1', emails.mail5, [{ mask: 'AVALIACAO1', data: process.env.MODULO1_LINK }]);
+// 	await handleAlunaMail(spreadsheet, today, 12, 'módulo2', emails.mail6, []);
+// 	await handleAlunaMail(spreadsheet, today, -5, 'módulo2', emails.mail7, []);
+// 	await handleAlunaMail(spreadsheet, today, -5, 'módulo2', emails.mail8, [{ mask: 'AVALIACAO2', data: process.env.MODULO2_LINK }]);
+// 	await handleAlunaMail(spreadsheet, today, 12, 'módulo3', emails.mail9, [
+// 		{ mask: 'SONDAGEMPOS', data: process.env.SONDAGEM_POS_LINK },
+// 		{ mask: 'DISC_LINK', data: process.env.DISC_LINK2 },
+// 	]);
+// 	await handleIndicadoMail(spreadsheet, today, 12, 'módulo3', emails.mail10, false, [{ mask: 'AVALIADORPOS', data: process.env.AVALIADOR360POS_LINK }]);
+// 	await handleAlunaMail(spreadsheet, today, 12, 'módulo3', emails.mail11, [{ mask: 'AVALIADORPOS', data: process.env.AVALIADOR360POS_LINK }]);
+// 	await handleIndicadoMail(spreadsheet, today, 12, 'módulo3', emails.mail12, true, [{ mask: 'NUMBERWHATSAP', data: process.env.NUMBERWHATSAP }]);
+// 	await handleAlunaMail(spreadsheet, today, -5, 'módulo3', emails.mail13, [{ mask: 'AVALIACAO3', data: process.env.MODULO3_LINK }]);
 // }
 
-
-// test();
 
 const FirstTimer = new CronJob(
 	'00 00 8 * * 1-6', async () => { // 8h except on sundays

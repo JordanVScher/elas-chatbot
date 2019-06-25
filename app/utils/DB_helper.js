@@ -278,9 +278,11 @@ async function getUserTurma(FBID) {
 
 async function getAlunasFromTurma(turma) {
 	const result = await sequelize.query(`
-	SELECT * FROM alunos
-	WHERE turma = '${turma}'
-	ORDER BY id;
+	SELECT ALUNO.id, ALUNO.cpf, ALUNO.turma, ALUNO.nome_completo, ALUNO.email, BOT_USER.fb_id
+	FROM alunos ALUNO
+	LEFT JOIN chatbot_users BOT_USER ON BOT_USER.cpf = ALUNO.cpf
+	WHERE ALUNO.turma = '${turma}'
+	ORDER BY BOT_USER.fb_id;
 	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
 		console.log(`Got ${turma} successfully!`);
 		return results;

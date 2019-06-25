@@ -110,7 +110,7 @@ Será uma jornada intensa e gostaria de contar com a sua ajuda.
 Participarei de uma avaliação 360 e escolhi você para ser um dos meus avaliadores,
 Será uma avaliação que levará entre 15 e 25 minutos, basta clicar no link abaixo e preencher. Tudo bem?
 
-<AVALIADORPRE>
+<AVALIADORPREREVER>
 
 Agradeço muito você preencher (2 dias antes do início do móulo 1)!
 
@@ -259,7 +259,7 @@ No (último dia do módulo 3) concluirei minha formação no Programa ELAS, e um
 
 Para acessá-la, basta clicar no link abaixo: 
 
-<AVALIADORPOS>
+<AVALIADORPOSREVER>
 
 Você precisa preencher até (7 dias antes do início do Módulo 3), para que eu possa ter acesso aos meus resultados.
 
