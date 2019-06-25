@@ -80,40 +80,14 @@ server.post('/webhook', async (req, res) => {
 	res.send();
 });
 
-// let lastNotification = '';
-// receives notification from pagseguro -> something happened to one of the products/transaction
+
 server.post('/pagamento', async (req, res) => {
 	console.log('chegou no pagamento no post');
-	// check if new notification is diferent from last notification
 	await pgAPI.handlePagamento(req.body);
-	// if (lastNotification.notificationCode !== req.body.notificationCode && lastNotification.notificationType !== req.body.notificationType) {
-	// 	lastNotification = req.body;
-	// 	await pgAPI.handlePagamento(req.body);
-	// } else {
-	// 	console.log('veio a mais');
-	// }
-
 	res.status(200);
 	res.send();
 });
 
-// // stores data from the last request (sometimes the spreadsheet sends multiple requests for the same set o answers)
-// const lastSpreadReq = { nome_sheet: '', timestamp: '' };
-
-// // when user answers form, theres a request to this endpoint with the new set of answers
-// server.post('/spread', async (req, res) => {
-// 	console.log('entrei aqui');
-// 	console.log('req.body', req.body);
-// 	if (req.body.nome_sheet !== lastSpreadReq.nome_sheet || req.body.timestamp !== lastSpreadReq.timestamp) { // check if the new request is just a duplicate of the last one
-// 		lastSpreadReq.nome_sheet = req.body.nome_sheet;
-// 		lastSpreadReq.timestamp = req.body.timestamp;
-// 		// handleAnswers.handleNewAnswer(req.body);
-// 	} else {
-// 		console.log('Veio repetido mas não fiz nada');
-// 	}
-// 	res.status(200);
-// 	res.send();
-// });
 
 server.listen(process.env.API_PORT, () => {
 	console.log(`Server is running on ${process.env.API_PORT} port...`);

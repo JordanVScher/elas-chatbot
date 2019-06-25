@@ -122,6 +122,25 @@ async function getIndicadoRespostas(cpf) {
 	return indicado;
 }
 
+async function getIndicadoFromAluna(AlunaID, familiar) {
+	let queryComplement = '';
+	if (familiar === true) {
+		queryComplement = 'AND familiar = \'true\'';
+	}
+
+	const indicado = await sequelize.query(`
+	SELECT * from indicacao_avaliadores
+	WHERE aluno_id = '${AlunaID}' ${queryComplement};
+`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
+		console.log(`Got ${AlunaID}'s indicados successfully!`);
+		return results || false;
+	}).catch((err) => {
+		console.error('Error on getIndicadoFromAluna => ', err);
+	});
+
+	return indicado;
+}
+
 async function upsertPrePos(userID, response, column) {
 	// column can be either pre or pos
 	let date = new Date();
@@ -272,26 +291,6 @@ async function getAlunasFromTurma(turma) {
 	return result || false;
 }
 
-async function getAlunasFromTurmas(turmas) {
-	const result = [];
-
-	for (let i = 0; i < turmas.length; i++) {
-		const element = turmas[i];
-		if (element.turma) {
-			const aux = await getAlunasFromTurma(element.turma);
-			aux.forEach((element2) => {
-				const extendedAluna = element2;
-				extendedAluna.mod1 = element['módulo1'];
-				extendedAluna.mod2 = element['módulo2'];
-				extendedAluna.mod3 = element['módulo3'];
-				extendedAluna.local = element.local;
-				result.push(extendedAluna);
-			});
-		}
-	}
-
-	return result || [];
-}
 
 module.exports = {
 	upsertUser,
@@ -309,5 +308,5 @@ module.exports = {
 	getAlunoRespostas,
 	getIndicadoRespostas,
 	getAlunasFromTurma,
-	getAlunasFromTurmas,
+	getIndicadoFromAluna,
 };
