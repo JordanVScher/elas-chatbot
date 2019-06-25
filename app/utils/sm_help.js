@@ -12,7 +12,7 @@ const surveysMaps = require('./sm_maps');
 const chartsMaps = require('./charts_maps');
 
 
-async function buildAlunoChart(cpf) {
+async function buildAlunoChart(cpf, mail) {
 	const aluna = await db.getAlunoRespostas(cpf);
 	const data = {};
 
@@ -25,7 +25,7 @@ async function buildAlunoChart(cpf) {
 	}
 
 	if (data && Object.keys(data) && Object.keys(data).length > 0) {
-		await chart.createChart(Object.keys(data), Object.values(data), cpf, `Resultado auto-avaliação ${aluna.nome}`);
+		await chart.createChart(Object.keys(data), Object.values(data), cpf, `Resultado auto-avaliação ${aluna.nome}`, mail);
 	}
 }
 
@@ -70,6 +70,7 @@ async function separateIndicadosData(cpf) {
 
 async function buildIndicadoChart(cpf) {
 	const data = await separateIndicadosData(cpf);
+	const fileName = `./${cpf}_360Results.pdf`;
 
 	const styleDiv = 'font-size:10pt;margin-left:1.5em;margin-right:1.5em;margin-bottom:0.5em;margin-top:2.0em';
 	let html = `<p style="${styleDiv}"><h1>Resultados</h1></p>`;
@@ -91,8 +92,8 @@ async function buildIndicadoChart(cpf) {
 	html += `<p style="${styleDiv}"><h5>Onde houve evolução?</h5></p> <div> ${data[0].ondeEvolucao} </div>`;
 
 	helper.pdf.create(html).toStream((err, stream) => {
-		stream.pipe(fs.createWriteStream(`./${cpf}_360Results.pdf`));
-		console.log('Success!', `./${cpf}_360Results.pdf`, 'was created!');
+		stream.pipe(fs.createWriteStream(fileName));
+		console.log('Success!', fileName, 'was created!');
 	});
 }
 
@@ -328,6 +329,11 @@ async function handleSondagem(response, column, map) {
 	const aluna = await db.getAluno(response.custom_variables.cpf);
 	if (aluna) {
 		await db.upsertPrePos(aluna.id, JSON.stringify(answers), column);
+	}
+
+	// build and send graph
+	if (column === 'pos') {
+		await buildAlunoChart(aluna.cpf, aluna.email);
 	}
 }
 

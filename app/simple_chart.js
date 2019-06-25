@@ -3,6 +3,7 @@
 const fs = require('fs');
 const { CanvasRenderService } = require('chartjs-node-canvas');
 const { createCanvas } = require('canvas');
+const mailer = require('./utils/mailer');
 
 const colors = {
 	darkBlue: '#172244',
@@ -90,14 +91,18 @@ const chartCallback = (ChartJS) => {
 	});
 };
 
-
-async function buildChart(conf, name) {
+async function buildChart(conf, name, email) {
 	const canvasRenderService = new CanvasRenderService(width, height, chartCallback);
 	const image = await canvasRenderService.renderToBuffer(conf);
-	fs.writeFile(`./graficos/${name}.png`, image, (res) => { console.log(`Chart '${name}':`, res); });
+	fs.writeFile(`./graficos/${name}.png`, image, async (res) => {
+		console.log(`Chart '${name}':`, res);
+		if (!res) {
+			await mailer.sendMailAttach('Seu gráfico', 'Gráfico do aluno no anexo', email, 'Seus_resultados.png', `${process.cwd()}/graficos/${name}.png`);
+		}
+	});
 }
 
-module.exports.createChart = async (labels, data, id, title) => {
+module.exports.createChart = async (labels, data, id, title, email) => {
 	const conf = configuration;
 
 	const finalData = {};
@@ -113,7 +118,7 @@ module.exports.createChart = async (labels, data, id, title) => {
 		conf.options.title.text = title;
 	}
 
-	await buildChart(conf, id);
+	await buildChart(conf, id, email);
 };
 
 // const labels = [

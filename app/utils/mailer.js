@@ -1,11 +1,12 @@
 require('dotenv').config();
 
+const { unlink } = require('fs');
 const nodemailer = require('nodemailer');
-const { Sentry } = require('./helper');
+// const { Sentry } = require('./helper');
 
 const user = process.env.SENDER_EMAIL;
 const pass = process.env.SENDER_PASSWORD;
-const sendTo = process.env.EMAIL_TO_RECEIVE;
+// const sendTo = process.env.EMAIL_TO_RECEIVE;
 const service = process.env.SERVICE;
 
 
@@ -38,7 +39,36 @@ async function sendTestMail(subject, text, to) {
 	}
 }
 
+async function sendMailAttach(subject, text, to, filename, content) {
+	const options = {
+		from: user,
+		to,
+		subject,
+		text,
+		attachments: [
+			{
+				filename,
+				content,
+			},
+		],
+	};
+
+	try {
+		const info = await transporter.sendMail(options);
+		console.log(`'${subject}' para ${to}:`, info.messageId);
+		setTimeout((filePath) => {
+			unlink(filePath, (err) => {
+				if (err) console.log(err);
+				console.log('File deleted!');
+			});
+		}, 60000, content);
+	} catch (error) {
+		console.log('Could not sendMailAttach to ', to);
+		console.log('Error => ', error);
+	}
+}
+
 
 module.exports = {
-	sendTestMail,
+	sendTestMail, sendMailAttach,
 };
