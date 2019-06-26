@@ -105,9 +105,9 @@ async function sendMatricula(productID, buyerEmail) {
 	try {
 		const spreadsheet = await helper.reloadSpreadSheet(1, 6); // console.log('spreadsheet', spreadsheet); // load spreadsheet
 		const column = await spreadsheet.find(x => x.pagseguroId.toString() === productID.toString()); console.log('column', column); // get same product id (we want to know the "turma")
-		const newUrl = surveysInfo.atividade1.link.replace('TURMARESPOSTA', column.turma); // pass turma as a custom_parameter
 		let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Matricula.html`, 'utf-8');
-		html = await html.replace(/<link_atividade>/g, newUrl);
+		html = await html.replace(/<link_atividade>/g, surveysInfo.atividade1.link); // add link to mail template
+		html = await html.replace(/TURMARESPOSTA/g, column.turma); // update the turma
 		await mailer.sendHTMLMail(eMail.atividade1.assunto, buyerEmail, html);
 	} catch (error) {
 		console.log('Erro em sendMatricula', error); helper.Sentry.captureMessage('Erro em sendMatricula');
