@@ -110,8 +110,8 @@ module.exports = {
 			texto: 'mail_template/ELAS_Matricula.html',
 		},
 		depoisMatricula: {
-			assunto: 'Bem-vindo ao elas',
-			texto: 'Olá, <NOME>. Vc já conheçe a Dona? m.me/287066982237234',
+			assunto: 'Matrícula Confirmada. Conheça a Donna! - Programa ELAS',
+			texto: 'mail_template/ELAS_Apresentar_Donna.html',
 		},
 	},
 };

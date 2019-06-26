@@ -232,22 +232,28 @@ async function handleAtividade(response, column) {
 }
 
 async function handleAtividadeOne(response) {
-	// response.custom_variables = { turma: 'T7-SP' };
-	console.log('custom_variables', response.custom_variables);
+	try {
+		// response.custom_variables = { turma: 'T7-SP' };
+		console.log('custom_variables', response.custom_variables);
 
-	let answers = await getSpecificAnswers(surveysMaps.atividade1, response.pages);
-	answers = await replaceChoiceId(answers, surveysMaps.atividade1, response.survey_id);
-	answers = await addCustomParametersToAnswer(answers, response.custom_variables);
-	if (answers.cpf) { answers.cpf = await answers.cpf.replace(/[_.,-]/g, ''); }
+		let answers = await getSpecificAnswers(surveysMaps.atividade1, response.pages);
+		answers = await replaceChoiceId(answers, surveysMaps.atividade1, response.survey_id);
+		answers = await addCustomParametersToAnswer(answers, response.custom_variables);
+		if (answers.cpf) { answers.cpf = await answers.cpf.replace(/[_.,-]/g, ''); }
 
-	const newUserID = await db.upsertAluno(answers.nome, answers.cpf, answers.turma, answers.email);
-	if (newUserID) {
-		await db.updateAtividade(newUserID, 'atividade_1', true);
+		const newUserID = await db.upsertAluno(answers.nome, answers.cpf, answers.turma, answers.email);
+		if (newUserID) {
+			await db.updateAtividade(newUserID, 'atividade_1', true);
+		}
+
+		/* e-mail */
+		let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Apresentar_Donna.html`, 'utf-8');
+		html = await html.replace('[nome]', answers.nome); // add nome to mail template
+		html = await html.replace(/<link_donna>/g, process.env.LINK_DONNA); // add chatbot link to mail template
+		await mailer.sendHTMLMail(eMail.depoisMatricula.assunto, answers.email, html);
+	} catch (error) {
+		console.log('Erro em handleAtividadeOne', error); helper.Sentry.captureMessage('Erro em handleAtividadeOne');
 	}
-
-	/* e-mail */
-	const newText = eMail.depoisMatricula.texto.replace('<NOME>', answers.nome); // prepare mail text
-	await mailer.sendTestMail(eMail.depoisMatricula.assunto, newText, answers.email);
 }
 
 async function separateAnswer(respostas, elementos) {
