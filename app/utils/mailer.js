@@ -49,7 +49,7 @@ async function sendMailAttach(subject, text, to, filename, content) {
 		attachments: [
 			{
 				filename,
-				content,
+				content: createReadStream(content),
 			},
 		],
 	};

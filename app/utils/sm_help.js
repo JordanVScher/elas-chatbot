@@ -68,9 +68,10 @@ async function separateIndicadosData(cpf) {
 	return result;
 }
 
-async function buildIndicadoChart(cpf) {
+async function buildIndicadoChart(cpf, email) {
 	const data = await separateIndicadosData(cpf);
-	const fileName = `./${cpf}_360Results.pdf`;
+
+	const fileName = `${cpf}_360Results.pdf`;
 
 	const styleDiv = 'font-size:10pt;margin-left:1.5em;margin-right:1.5em;margin-bottom:0.5em;margin-top:2.0em';
 	let html = `<p style="${styleDiv}"><h1>Resultados</h1></p>`;
@@ -91,14 +92,17 @@ async function buildIndicadoChart(cpf) {
 	html += `<p style="${styleDiv}"><h5>Houve evolução?</h5></p> <div> ${data[0].houveEvolucao} </div>`;
 	html += `<p style="${styleDiv}"><h5>Onde houve evolução?</h5></p> <div> ${data[0].ondeEvolucao} </div>`;
 
-	helper.pdf.create(html).toStream((err, stream) => {
-		stream.pipe(fs.createWriteStream(fileName));
-		console.log('Success!', fileName, 'was created!');
+	helper.pdf.create(html).toStream(async (err, stream) => {
+		const st = stream.pipe(fs.createWriteStream(fileName));
+		st.on('finish', async (res) => {
+			console.log(`PDF '${fileName}':`, res);
+			if (!res) {
+				await mailer.sendMailAttach('Seu pdf', 'Pdf do seus indicadores no anexo.\nSe vier vazio seus indicados não responderam', email, 'resultado_indicadores.pdf', `${process.cwd()}/${fileName}`);
+			}
+		});
 	});
 }
 
-// buildAlunoChart(12345678911);
-// buildIndicadoChart('12345678911');
 
 // after a payement happens we send an e-mail to the buyer with the matricula/atividade 1 form
 async function sendMatricula(productID, buyerEmail) {
@@ -353,6 +357,7 @@ async function handleAvaliador(response, column, map) {
 	answers = await addCustomParametersToAnswer(answers, response.custom_variables);
 	await db.upsertPrePos360(answers.indicaid, JSON.stringify(answers), column);
 }
+
 
 // what to do with the form that was just answered
 async function newSurveyResponse(event) {

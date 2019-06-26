@@ -11,7 +11,7 @@ const colors = {
 };
 
 const width = 1500;
-const height = 900;
+const height = 3000;
 
 const canvas = createCanvas(width, height);
 const ctxBar = canvas.getContext('2d');

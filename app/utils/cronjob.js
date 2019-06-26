@@ -5,6 +5,7 @@ const db = require('./DB_helper');
 const mailer = require('./mailer');
 const emails = require('./emails');
 const broadcast = require('./broadcast');
+const { separateIndicadosData } = require('./sm_help');
 
 // for each turma get the alunas in them
 async function getAlunasFromTurmas(turmas) {
@@ -41,9 +42,9 @@ async function getAlunasFromModule(spreadsheet, today, days, paramName) {
 	modulex.forEach((element) => {
 		const modxDate = help.moment(element[paramName]); // get when that module starts
 		const diff = modxDate.diff(today, 'days');
-		if (diff === days) { // find the turma(s) that matches the criteria
-			getTurmas.push(element);
-		}
+		// if (diff === days) { // find the turma(s) that matches the criteria
+		getTurmas.push(element);
+		// }
 	});
 
 	const alunas = await getAlunasFromTurmas(getTurmas);
@@ -170,36 +171,47 @@ async function handleIndicadoMail(spreadsheet, today, days, paramName, mail, fam
 	}
 }
 
-// async function test() {
-// 	const spreadsheet = await help.getFormatedSpreadsheet();
-// 	const d = new Date(Date.now());	const today = help.moment(d);
-// await handleAlunaMail(spreadsheet, today, 19, 'módulo1', emails.mail1, [
-// 	{ mask: 'GRUPOWHATS', data: process.env.GRUPOWHATSAP },
-// 	{ mask: 'LINKDONNA', data: process.env.LINK_DONNA },
-// ]);
-// await handleAlunaMail(spreadsheet, today, 19, 'módulo1', emails.mail2, [
-// 	{ mask: 'SONDAGEMPRE', data: process.env.SONDAGEM_PRE_LINK },
-// 	{ mask: 'INDICACAO360', data: process.env.INDICACAO360_LINK },
-// 	{ mask: 'DISC_LINK', data: process.env.DISC_LINK1 },
-// 	{ mask: 'LINKDONNA', data: process.env.LINK_DONNA },
-// ]);
-// await handleIndicadoMail(spreadsheet, today, 10, 'módulo1', emails.mail3, false, [{ mask: 'AVALIADORPRE', data: process.env.AVALIADOR360PRE_LINK }]);
-// await handleAlunaMail(spreadsheet, today, 10, 'módulo1', emails.mail4, [{ mask: 'AVALIADORPRE', data: process.env.AVALIADOR360PRE_LINK }]);
-// await handleAlunaMail(spreadsheet, today, -5, 'módulo1', emails.mail5, [{ mask: 'AVALIACAO1', data: process.env.MODULO1_LINK }]);
-// await handleAlunaMail(spreadsheet, today, 12, 'módulo2', emails.mail6, [{ mask: 'LINKDONNA', data: process.env.LINK_DONNA }]);
-// await handleAlunaMail(spreadsheet, today, -5, 'módulo2', emails.mail7, [{ mask: 'EMAILMENTORIA', data: process.env.EMAILMENTORIA }]);
-// await handleAlunaMail(spreadsheet, today, -5, 'módulo2', emails.mail8, [{ mask: 'AVALIACAO2', data: process.env.MODULO2_LINK }]);
-// await handleAlunaMail(spreadsheet, today, 12, 'módulo3', emails.mail9, [
-// 	{ mask: 'SONDAGEMPOS', data: process.env.SONDAGEM_POS_LINK },
-// 	{ mask: 'DISC_LINK', data: process.env.DISC_LINK2 },
-// ]);
-// await handleIndicadoMail(spreadsheet, today, 12, 'módulo3', emails.mail10, false, [{ mask: 'AVALIADORPOS', data: process.env.AVALIADOR360POS_LINK }]);
-// await handleAlunaMail(spreadsheet, today, 12, 'módulo3', emails.mail11, [{ mask: 'AVALIADORPOS', data: process.env.AVALIADOR360POS_LINK }]);
-// await handleIndicadoMail(spreadsheet, today, 12, 'módulo3', emails.mail12, true, [{ mask: 'NUMBERWHATSAP', data: process.env.NUMBERWHATSAP }]);
-// await handleAlunaMail(spreadsheet, today, -5, 'módulo3', emails.mail13, [{ mask: 'AVALIACAO3', data: process.env.MODULO3_LINK }]);
-// }
+async function sendPDF(spreadsheet, today, days, paramName) {
+	const alunas = await getAlunasFromModule(spreadsheet, today, days, paramName);
+	alunas.forEach(async (element) => {
+		console.log(element);
 
-// test();
+		await separateIndicadosData(element.cpf, element.email);
+	});
+}
+
+async function test() {
+	const spreadsheet = await help.getFormatedSpreadsheet();
+	const d = new Date(Date.now());	const today = help.moment(d);
+
+	// await handleAlunaMail(spreadsheet, today, 19, 'módulo1', emails.mail1, [
+	// 	{ mask: 'GRUPOWHATS', data: process.env.GRUPOWHATSAP },
+	// 	{ mask: 'LINKDONNA', data: process.env.LINK_DONNA },
+	// ]);
+	// await handleAlunaMail(spreadsheet, today, 19, 'módulo1', emails.mail2, [
+	// 	{ mask: 'SONDAGEMPRE', data: process.env.SONDAGEM_PRE_LINK },
+	// 	{ mask: 'INDICACAO360', data: process.env.INDICACAO360_LINK },
+	// 	{ mask: 'DISC_LINK', data: process.env.DISC_LINK1 },
+	// 	{ mask: 'LINKDONNA', data: process.env.LINK_DONNA },
+	// ]);
+	// await handleIndicadoMail(spreadsheet, today, 10, 'módulo1', emails.mail3, false, [{ mask: 'AVALIADORPRE', data: process.env.AVALIADOR360PRE_LINK }]);
+	// await handleAlunaMail(spreadsheet, today, 10, 'módulo1', emails.mail4, [{ mask: 'AVALIADORPRE', data: process.env.AVALIADOR360PRE_LINK }]);
+	// await handleAlunaMail(spreadsheet, today, -5, 'módulo1', emails.mail5, [{ mask: 'AVALIACAO1', data: process.env.MODULO1_LINK }]);
+	// await handleAlunaMail(spreadsheet, today, 12, 'módulo2', emails.mail6, [{ mask: 'LINKDONNA', data: process.env.LINK_DONNA }]);
+	// await handleAlunaMail(spreadsheet, today, -5, 'módulo2', emails.mail7, [{ mask: 'EMAILMENTORIA', data: process.env.EMAILMENTORIA }]);
+	// await handleAlunaMail(spreadsheet, today, -5, 'módulo2', emails.mail8, [{ mask: 'AVALIACAO2', data: process.env.MODULO2_LINK }]);
+	// await handleAlunaMail(spreadsheet, today, 12, 'módulo3', emails.mail9, [
+	// 	{ mask: 'SONDAGEMPOS', data: process.env.SONDAGEM_POS_LINK },
+	// 	{ mask: 'DISC_LINK', data: process.env.DISC_LINK2 },
+	// ]);
+	// await handleIndicadoMail(spreadsheet, today, 12, 'módulo3', emails.mail10, false, [{ mask: 'AVALIADORPOS', data: process.env.AVALIADOR360POS_LINK }]);
+	// await handleAlunaMail(spreadsheet, today, 12, 'módulo3', emails.mail11, [{ mask: 'AVALIADORPOS', data: process.env.AVALIADOR360POS_LINK }]);
+	// await handleIndicadoMail(spreadsheet, today, 12, 'módulo3', emails.mail12, true, [{ mask: 'NUMBERWHATSAP', data: process.env.NUMBERWHATSAP }]);
+	// await handleAlunaMail(spreadsheet, today, -5, 'módulo3', emails.mail13, [{ mask: 'AVALIACAO3', data: process.env.MODULO3_LINK }]);
+	// await sendPDF(spreadsheet, today, 19, 'módulo1');
+}
+
+test();
 
 const FirstTimer = new CronJob(
 	'00 00 8 * * 1-6', async () => { // 8h except on sundays
@@ -217,5 +229,5 @@ const FirstTimer = new CronJob(
 
 
 module.exports = {
-	FirstTimer, handleIndicadoMail, handleAlunaMail,
+	FirstTimer, handleIndicadoMail, handleAlunaMail, sendPDF,
 };
