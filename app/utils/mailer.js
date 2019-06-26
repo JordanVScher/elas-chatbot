@@ -1,6 +1,7 @@
 require('dotenv').config();
 
 const { unlink } = require('fs');
+const { createReadStream } = require('fs');
 const nodemailer = require('nodemailer');
 // const { Sentry } = require('./helper');
 
@@ -68,13 +69,23 @@ async function sendMailAttach(subject, text, to, filename, content) {
 	}
 }
 
-async function sendHTMLMail(subject, to, html) {
+async function sendHTMLMail(subject, to, html, anexo) {
 	const options = {
 		from: user,
 		to,
 		subject,
 		html,
 	};
+
+	if (anexo) {
+		options.attachments = [
+			{
+				filename: `${anexo}.pdf`,
+				content: createReadStream(`${process.cwd()}/${anexo}.pdf`),
+				contentType: 'application/pdf',
+			},
+		];
+	}
 
 	try {
 		const info = await transporter.sendMail(options);
