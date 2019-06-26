@@ -68,7 +68,23 @@ async function sendMailAttach(subject, text, to, filename, content) {
 	}
 }
 
+async function sendHTMLMail(subject, to, html) {
+	const options = {
+		from: user,
+		to,
+		subject,
+		html,
+	};
+
+	try {
+		const info = await transporter.sendMail(options);
+		console.log(`'${subject}' para ${to}:`, info.messageId);
+	} catch (error) {
+		console.log('Could not send mail to ', to);
+		console.log('Error => ', error);
+	}
+}
 
 module.exports = {
-	sendTestMail, sendMailAttach,
+	sendTestMail, sendMailAttach, sendHTMLMail,
 };

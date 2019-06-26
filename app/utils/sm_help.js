@@ -1,7 +1,7 @@
 const fs = require('fs');
 const helper = require('./helper');
 const smAPI = require('../sm_api');
-const { sendTestMail } = require('./mailer');
+const mailer = require('./mailer');
 const { eMail } = require('./flow');
 const db = require('./DB_helper');
 const chart = require('../simple_chart');
@@ -106,8 +106,9 @@ async function sendMatricula(productID, buyerEmail) {
 		const spreadsheet = await helper.reloadSpreadSheet(1, 6); // console.log('spreadsheet', spreadsheet); // load spreadsheet
 		const column = await spreadsheet.find(x => x.pagseguroId.toString() === productID.toString()); console.log('column', column); // get same product id (we want to know the "turma")
 		const newUrl = surveysInfo.atividade1.link.replace('TURMARESPOSTA', column.turma); // pass turma as a custom_parameter
-		const newText = eMail.atividade1.texto.replace('<TURMA>', column.turma).replace('<LINK>', newUrl); // prepare mail text
-		await sendTestMail(eMail.atividade1.assunto, newText, buyerEmail);
+		let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Matricula.html`, 'utf-8');
+		html = await html.replace(/<link_atividade>/g, newUrl);
+		await mailer.sendHTMLMail(eMail.atividade1.assunto, buyerEmail, html);
 	} catch (error) {
 		console.log('Erro em sendMatricula', error); helper.Sentry.captureMessage('Erro em sendMatricula');
 	}
@@ -246,7 +247,7 @@ async function handleAtividadeOne(response) {
 
 	/* e-mail */
 	const newText = eMail.depoisMatricula.texto.replace('<NOME>', answers.nome); // prepare mail text
-	await sendTestMail(eMail.depoisMatricula.assunto, newText, answers.email);
+	await mailer.sendTestMail(eMail.depoisMatricula.assunto, newText, answers.email);
 }
 
 async function separateAnswer(respostas, elementos) {

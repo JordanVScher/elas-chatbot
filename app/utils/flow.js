@@ -106,8 +106,8 @@ module.exports = {
 	},
 	eMail: {
 		atividade1: {
-			assunto: 'Você comprou o elas',
-			texto: 'Olá, vc comprou o curso para a turma<TURMA>. Realize o pré cadastro: <LINK>',
+			assunto: 'Obrigada por sua compra! - Programa ELAS',
+			texto: 'mail_template/ELAS_Matricula.html',
 		},
 		depoisMatricula: {
 			assunto: 'Bem-vindo ao elas',
