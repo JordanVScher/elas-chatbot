@@ -41,7 +41,7 @@
     "restify": "^8.3.2",
     "restify-cors-middleware": "^1.1.1",
     "restify-pino-logger": "^3.0.0",
-    "sequelize": "^5.8.6",
+    "sequelize": "^6.0.0",
     "sequelize-cli": "^5.4.0",
     "survey-monkey-streams": "^1.0.1",
     "util": "^0.12.0",

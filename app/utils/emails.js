@@ -4,15 +4,15 @@ module.exports = {
 		text: `Olá, [NOMEUM],
 
 Está chegando o grande dia, né?
-No final de semana do dia [INICIOMODULO1] iniciaremos uma grande jornada de aprendizado. Está preparada? Esperamos que você esteja animada, porque nós estamos muito ;-)
+No final de semana do [MODULO1] iniciaremos uma grande jornada de aprendizado. Está preparada? Esperamos que você esteja animada, porque nós estamos muito ;-)
 
 Todos os módulos serão realizados no
 LOCAL - [LOCAL]
 
 Nos dias:
-[MODULO1]
-[MODULO2]
-[MODULO3]
+[FDSMOD1]
+[FDSMOD2]
+[FDSMOD3]
 
 Importante chegar pontualmente!
 
@@ -114,14 +114,14 @@ Será uma avaliação que levará entre 15 e 25 minutos, basta clicar no link ab
 
 [AVALIADORPRE]
 
-Agradeço muito você preencher [MOD1_2DIAS]!
+Agradeço muito você preencher até [MOD1_2DIAS]!
 
 Muito obrigada desde já!!
 Abraços,
 
 ------------------------------------------------------------------------------------------------------
 
-*|PRIMEIRO_NOME|*,
+[NOMEUM],
 
 Nós também enviaremos por e-mail esse link para eles, mas um reforço seu nos ajudará muito!!
 
@@ -182,7 +182,7 @@ No domingo, [MOD3_LASTDAY], faremos nossa formatura e para isso cada aluna terá
 Regras para apresentação:
 A apresentação pode ser feita da forma como vocês desejarem, não há formato ou conteúdo fechado. Traga a sua verdade e fale com o seu coração. Este é um momento especial de compartilhamento com as suas colegas de turma.
 
-Caso vocês duas optem por fazer uma apresentação que utilize algum conteúdo de mídia (música, fotos, slides), envie via email, [MOD3_2DIAS], no email: [EMAILMENTORIA]. Também é bom trazer uma cópia no pen drive para garantir.
+Caso vocês duas optem por fazer uma apresentação que utilize algum conteúdo de mídia (música, fotos, slides), envie via email, até [MOD3_2DIAS], no email: [EMAILMENTORIA]. Também é bom trazer uma cópia no pen drive para garantir.
 
 A apresentação deve levar em conta a sua história e trazer de forma objetiva exemplos concretos do seu aprendizado aplicados na vida prática. 
 
@@ -193,7 +193,7 @@ Abraços,
 Equipe ELAS`,
 	},
 	mail8: {
-		subject: ' Como foi o módulo 1 para você? Conte para a gente! - Programa ELAS',
+		subject: 'Como foi o módulo 2 para você? Conte para a gente! - Programa ELAS',
 		text: `Olá, [NOMEUM],
 Conforme falamos em sala, segue o link para que você avalie a sua experiência no 2° módulo. Seu feedback é imprescindível para que possamos melhorar constantemente. E lembre-se sempre: Confie no processo!!!!
 
@@ -270,7 +270,7 @@ Segue um modelo para você:
 --------------------------------------------------------------------------------------------
 Olá _,
 
-No (último dia do módulo 3) concluirei minha formação no Programa ELAS, e um modo importante de entender e avaliar o meu progresso é contando com a sua colaboração novamente.
+No [MOD3_LASTDAY] concluirei minha formação no Programa ELAS, e um modo importante de entender e avaliar o meu progresso é contando com a sua colaboração novamente.
 
 Para acessá-la, basta clicar no link abaixo: 
 

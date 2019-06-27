@@ -66,6 +66,10 @@ async function getIndicadosFromAlunas(alunas, familiar) {
 			aux.forEach((element2) => {
 				const extendedIndicado = element2; // add more information for each aluna
 				extendedIndicado.nomeAluna = element.nome_completo;
+				extendedIndicado.mod1 = element.mod1;
+				extendedIndicado.mod2 = element.mod2;
+				extendedIndicado.mod3 = element.mod3;
+				extendedIndicado.local = element.local;
 				result.push(extendedIndicado);
 			});
 		}
@@ -116,6 +120,61 @@ async function replaceCustomParameters(original, turma, alunaCPF, indicadoID) {
 
 	return text;
 }
+/*
+	fillMasks: checks which data is empty so that we can fill with dynamic data.
+	Add objs with key mask and no data to replaceMap, used in the mail handlers below.
+*/
+async function fillMasks(replaceMap, alunaData) {
+	const result = replaceMap;
+
+	for (let i = 0; i < replaceMap.length; i++) {
+		const element = replaceMap[i];
+		if (element.mask && !element.data) { // check which value is expected to be filled now
+			let newData = '';
+			switch (element.mask) {
+			case 'MODULO1':
+				newData = await help.formatModulo1(alunaData.mod1);
+				break;
+			case 'LOCAL':
+				newData = alunaData.local;
+				break;
+			case 'FDSMOD1':
+				newData = await help.formatFdsMod(alunaData.mod1);
+				break;
+			case 'FDSMOD2':
+				newData = await help.formatFdsMod(alunaData.mod2);
+				break;
+			case 'FDSMOD3':
+				newData = await help.formatFdsMod(alunaData.mod3);
+				break;
+			case 'TURMA':
+				newData = alunaData.turma;
+				break;
+			case 'MOD1_15DIAS':
+				newData = await help.formatDiasMod(alunaData.mod1, -15);
+				break;
+			case 'MOD1_2DIAS':
+				newData = await help.formatDiasMod(alunaData.mod1, -2);
+				break;
+			case 'MOD3_LASTDAY':
+				newData = await help.formatDiasMod(alunaData.mod3, 1);
+				break;
+			case 'MOD3_2DIAS':
+				newData = await help.formatDiasMod(alunaData.mod3, -2);
+				break;
+			case 'MOD3_7DIAS':
+				newData = await help.formatDiasMod(alunaData.mod3, -7);
+				break;
+			default:
+				break;
+			}
+
+			result[i].data = newData;
+		}
+	}
+
+	return result;
+}
 
 /* Get alunas, their data and send the e-mails. Check getAlunasFromModule.
 	mail: obj with the original text, subject and attachment
@@ -126,7 +185,9 @@ async function handleAlunaMail(spreadsheet, today, days, paramName, mail, replac
 		const alunas = await getAlunasFromModule(spreadsheet, today, days, paramName);
 		alunas.forEach(async (element) => { // here we can format the e-mails
 			replaceMap.push({ mask: 'NOMEUM', data: element.nome_completo });
-			let text = await replaceDataText(mail.text, replaceMap);
+			const newMap = await fillMasks(replaceMap, element);
+
+			let text = await replaceDataText(mail.text, newMap);
 			text = await replaceCustomParameters(text, element.turma, element.cpf, '');
 
 			// console.log('-------------------\nto', element.email, '\n', text);
@@ -156,15 +217,16 @@ async function handleIndicadoMail(spreadsheet, today, days, paramName, mail, fam
 		indicados.forEach(async (element) => { // here we can format the e-mails
 			const newSubject = mail.subject.replace('[NOMEUM]', element.nomeAluna);
 			replaceMap.push({ mask: 'NOMEUM', data: element.nomeAluna });
+			const newMap = await fillMasks(replaceMap, element);
 
-			let text = await replaceDataText(mail.text, replaceMap);
+			let text = await replaceDataText(mail.text, newMap);
 			text = await replaceCustomParameters(text, '', '', element.id);
 			// console.log('-------------------\nto', element.email, '\n', text);
 
 			let html = await readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
 			html = await html.replace('[CONTEUDO_MAIL]', text); // add nome to mail template
 
-			await mailer.sendHTMLMail(newSubject, 'jordan@appcivico.com', html, mail.anexo);
+			await mailer.sendHTMLMail(newSubject, element.email, html, mail.anexo);
 		});
 	} catch (error) {
 		console.log('Erro em handleIndicadoMail', error); // helper.Sentry.captureMessage('Erro em handleAtividadeOne');
@@ -174,8 +236,6 @@ async function handleIndicadoMail(spreadsheet, today, days, paramName, mail, fam
 async function sendPDF(spreadsheet, today, days, paramName) {
 	const alunas = await getAlunasFromModule(spreadsheet, today, days, paramName);
 	alunas.forEach(async (element) => {
-		console.log(element);
-
 		await separateIndicadosData(element.cpf, element.email);
 	});
 }
@@ -187,26 +247,55 @@ async function test() {
 	// await handleAlunaMail(spreadsheet, today, 19, 'módulo1', emails.mail1, [
 	// 	{ mask: 'GRUPOWHATS', data: process.env.GRUPOWHATSAP },
 	// 	{ mask: 'LINKDONNA', data: process.env.LINK_DONNA },
+	// 	{ mask: 'MODULO1', data: '' },
+	// 	{ mask: 'LOCAL', data: '' },
+	// 	{ mask: 'FDSMOD1', data: '' },
+	// 	{ mask: 'FDSMOD2', data: '' },
+	// 	{ mask: 'FDSMOD3', data: '' },
 	// ]);
 	// await handleAlunaMail(spreadsheet, today, 19, 'módulo1', emails.mail2, [
 	// 	{ mask: 'SONDAGEMPRE', data: process.env.SONDAGEM_PRE_LINK },
 	// 	{ mask: 'INDICACAO360', data: process.env.INDICACAO360_LINK },
 	// 	{ mask: 'DISC_LINK', data: process.env.DISC_LINK1 },
 	// 	{ mask: 'LINKDONNA', data: process.env.LINK_DONNA },
+	// 	{ mask: 'TURMA', data: '' },
+	// 	{ mask: 'MOD1_15DIAS', data: '' },
+	// 	{ mask: 'MOD1_2DIAS', data: '' },
 	// ]);
-	// await handleIndicadoMail(spreadsheet, today, 10, 'módulo1', emails.mail3, false, [{ mask: 'AVALIADORPRE', data: process.env.AVALIADOR360PRE_LINK }]);
-	// await handleAlunaMail(spreadsheet, today, 10, 'módulo1', emails.mail4, [{ mask: 'AVALIADORPRE', data: process.env.AVALIADOR360PRE_LINK }]);
+	// await handleIndicadoMail(spreadsheet, today, 10, 'módulo1', emails.mail3, false, [
+	// 	{ mask: 'AVALIADORPRE', data: process.env.AVALIADOR360PRE_LINK },
+	// 	{ mask: 'MOD1_2DIAS', data: '' },
+	// ]);
+	// await handleAlunaMail(spreadsheet, today, 10, 'módulo1', emails.mail4, [
+	// 	{ mask: 'AVALIADORPRE', data: process.env.AVALIADOR360PRE_LINK },
+	// 	{ mask: 'MOD1_2DIAS', data: '' },
+	// ]);
 	// await handleAlunaMail(spreadsheet, today, -5, 'módulo1', emails.mail5, [{ mask: 'AVALIACAO1', data: process.env.MODULO1_LINK }]);
 	// await handleAlunaMail(spreadsheet, today, 12, 'módulo2', emails.mail6, [{ mask: 'LINKDONNA', data: process.env.LINK_DONNA }]);
-	// await handleAlunaMail(spreadsheet, today, -5, 'módulo2', emails.mail7, [{ mask: 'EMAILMENTORIA', data: process.env.EMAILMENTORIA }]);
+	// await handleAlunaMail(spreadsheet, today, -5, 'módulo2', emails.mail7, [
+	// 	{ mask: 'EMAILMENTORIA', data: process.env.EMAILMENTORIA },
+	// 	{ mask: 'MOD3_LASTDAY', data: '' },
+	// 	{ mask: 'MOD3_2DIAS', data: '' },
+	// ]);
 	// await handleAlunaMail(spreadsheet, today, -5, 'módulo2', emails.mail8, [{ mask: 'AVALIACAO2', data: process.env.MODULO2_LINK }]);
 	// await handleAlunaMail(spreadsheet, today, 12, 'módulo3', emails.mail9, [
 	// 	{ mask: 'SONDAGEMPOS', data: process.env.SONDAGEM_POS_LINK },
 	// 	{ mask: 'DISC_LINK', data: process.env.DISC_LINK2 },
+	// 	{ mask: 'TURMA', data: '' },
+	// 	{ mask: 'MOD3_7DIAS', data: '' },
 	// ]);
-	// await handleIndicadoMail(spreadsheet, today, 12, 'módulo3', emails.mail10, false, [{ mask: 'AVALIADORPOS', data: process.env.AVALIADOR360POS_LINK }]);
-	// await handleAlunaMail(spreadsheet, today, 12, 'módulo3', emails.mail11, [{ mask: 'AVALIADORPOS', data: process.env.AVALIADOR360POS_LINK }]);
-	// await handleIndicadoMail(spreadsheet, today, 12, 'módulo3', emails.mail12, true, [{ mask: 'NUMBERWHATSAP', data: process.env.NUMBERWHATSAP }]);
+	// await handleIndicadoMail(spreadsheet, today, 12, 'módulo3', emails.mail10, false, [
+	// 	{ mask: 'AVALIADORPOS', data: process.env.AVALIADOR360POS_LINK },
+	// 	{ mask: 'MOD3_7DIAS', data: '' }]);
+	// await handleAlunaMail(spreadsheet, today, 12, 'módulo3', emails.mail11, [
+	// 	{ mask: 'AVALIADORPOS', data: process.env.AVALIADOR360POS_LINK },
+	// 	{ mask: 'MOD3_LASTDAY', data: '' },
+	// 	{ mask: 'MOD3_7DIAS', data: '' },
+	// ]);
+	// await handleIndicadoMail(spreadsheet, today, 12, 'módulo3', emails.mail12, true, [
+	// 	{ mask: 'NUMBERWHATSAP', data: process.env.NUMBERWHATSAP },
+	// 	{ mask: 'MOD3_LASTDAY', data: '' },
+	// ]);
 	// await handleAlunaMail(spreadsheet, today, -5, 'módulo3', emails.mail13, [{ mask: 'AVALIACAO3', data: process.env.MODULO3_LINK }]);
 	// await sendPDF(spreadsheet, today, 19, 'módulo1');
 }

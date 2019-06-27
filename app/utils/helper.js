@@ -62,6 +62,30 @@ function formatDate(date) {
 }
 
 
+async function formatModulo1(date) {
+	return `dia ${moment(date).utcOffset('+0000').format('DD')} de ${moment(date).utcOffset('+0000').format('MMMM')}`;
+}
+
+async function formatFdsMod(date) {
+	const primeiraAula = date;
+	const segundaAula = moment(primeiraAula, 'DD-MM-YYYY').add(1, 'days');
+	const primeiroDia = moment(primeiraAula).utcOffset('+0000').format('DD');
+	const segundoDia = moment(segundaAula).utcOffset('+0000').format('DD');
+	const primeiroMes = moment(primeiraAula).utcOffset('+0000').format('MMMM');
+	const segundoMes = moment(segundaAula).utcOffset('+0000').format('MMMM');
+	if (primeiroMes === segundoMes) { // check if month is the same, no need to list two different months
+		return `${primeiroDia} e ${segundoDia} de ${primeiroMes}`;
+	}
+
+	return `dias ${primeiroDia} de ${primeiroMes} e ${segundoDia} de ${segundoMes}`;
+}
+
+async function formatDiasMod(date, days) {
+	const newDate = moment(date, 'DD-MM-YYYY').add(days, 'days');
+	return `dia ${moment(newDate).utcOffset('+0000').format('DD')} de ${moment(newDate).utcOffset('+0000').format('MMMM')}`;
+}
+
+
 // # Google Spreadsheet
 const privateKey = require('../../private_key.json');
 
@@ -160,4 +184,7 @@ module.exports = {
 	getPercentageChange,
 	pdf,
 	getJsDateFromExcel,
+	formatModulo1,
+	formatFdsMod,
+	formatDiasMod,
 };
