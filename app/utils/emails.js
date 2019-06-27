@@ -28,8 +28,21 @@ Para fazer parte clique no link abaixo:
 Fique atenta ao seu email, você receberá na sequência algumas pré-atividades para serem feitas. Lembrando também, caso ainda não conheça, você pode acompanhar essas notificações pela Donna, nossa asistente virtual. Clique Aqui [LINKDONNA]
 
 Beijos,
-Equipe ELAS
-`,
+Equipe ELAS`,
+		chatbotText: `Olá, [NOMEUM],
+Está chegando o grande dia, né? No final de semana do dia (início do Módulo 1) 
+
+Todos os módulos serão realizados no
+LOCAL - [LOCAL]
+
+Nos dias: [FDSMOD1]; [FDSMOD2]; [FDSMOD3]
+
+Importante chegar pontualmente! Procure ir com roupas confortáveis para aproveitar melhor o dia que será intenso. Iniciaremos o dia com um café da manhã reforçado. O almoço e estacionamento não estão inclusos 😘
+
+Vou te mandar por aqui também as atividades necessárias em cada módulo!`,
+		chatbotButton: [
+			{ content_type: 'text', title: 'Entendi', payload: 'Atividade2' },
+		],
 	},
 	mail2: {
 		subject: 'Atividades Pré-Treinamento - PROGRAMA ELAS',
@@ -128,6 +141,11 @@ Nós também enviaremos por e-mail esse link para eles, mas um reforço seu nos 
 Qualquer dúvida estamos a disposição,
 Abraços,
 Equipe ELAS`,
+		chatbotText: `Oi, [NOMEUM]! 
+Nós enviamos para os seus indicados o link para o preenchimento do questionário.Mas sabe uma coisa que ajuda também? Você falar com eles pedindo o preenchimento. Que tal? 😃`,
+		chatbotButton: [
+			{ content_type: 'text', title: 'Ok', payload: 'mainMenu' },
+		],
 	},
 	mail5: {
 		subject: 'Como foi o módulo 1 para você? Conte para a gente! - Programa ELAS',
@@ -142,11 +160,14 @@ E nunca se esqueça: confie no processo!!!!!
 
 Beijos,
 Equipe ELAS`,
+		chatbotText: 'Olá, [NOMEUM]! E aí, como foi seu primeiro módulo? Espero que tenha aprendido muito! Para que nós saibamos como tornar sua experiência ainda melhor, você pode clicar no link abaixo e dar seu feedback sobre esse módulo?\n[AVALIACAO1]',
+		chatbotButton: [
+			{ content_type: 'text', title: 'Ok', payload: 'mainMenu' },
+		],
 	},
 	mail6: {
 		subject: 'Leitura Prévia Módulo 2 -  Programa ELAS',
 		text: `Olá, [NOMEUM]!
-
 
 Está chegando o 2° módulo!!! Como o tempo passa rápido não é? Você está preparada? 
 
@@ -172,6 +193,12 @@ Beijos,
 Equipe ELAS`,
 		anexo: 'domine_suas_historias',
 		anexoLink: process.env.ANEXO_MAIL06,
+		chatbotText: `Oi, [NOMEUM]!!
+\nEstá chegando o 2° módulo!!! Como o tempo passa rápido não é ? Você está preparada ? Estou aqui para te passar as atividades do módulo 2. Vamos lá ?
+\n1 - Você deve pensar em um cenário onde existiu uma situação desconfortável para você(que aparentemente está mal resolvida) seja porque a conversa não foi do jeito que você queria, ou porque não existiu uma conversa que deveria ter acontecido.Ou seja, traga uma situação que você ficou um pouco desconfortável.`,
+		chatbotButton: [
+			{ content_type: 'text', title: 'Ok', payload: 'mail6pt2' },
+		],
 	},
 	mail7: {
 		subject: 'Apresentação Final de Curso - Programa ELAS',
@@ -191,18 +218,41 @@ Será no domingo iniciando na parte da manhã!
 
 Abraços,
 Equipe ELAS`,
+		chatbotText: `Donna, de novo! 🤗
+No seu último dia do módulo 3, [MOD3_LASTDAY], faremos nossa formatura 🥰. Então fique atenta do que você deve fazer:
+
+1- Forme uma dupla
+2- Façam uma apresentação de impacto de no máximo 5 min
+3- A apresentação deve levar em conta a sua história e trazer de forma objetiva exemplos concretos do seu aprendizado aplicados na vida prática. 
+
+Regras? A apresentação pode ser feita da forma como vocês desejarem. Este é um momento especial de compartilhamento com as suas colegas de turma.
+
+Importante: Caso vocês duas optem por fazer uma apresentação que utilize algum conteúdo de mídia (música, fotos, slides), envie o arquivo / conteúdo via e-mail, até [MOD3_2DIAS], para: [EMAILMENTORIA]. Também é bom trazer uma cópia no pen drive para garantir.
+
+Combinado? Até lá 🤩`,
+		chatbotButton: [
+			{ content_type: 'text', title: 'Ok', payload: 'mainMenu' },
+		],
 	},
 	mail8: {
 		subject: 'Como foi o módulo 2 para você? Conte para a gente! - Programa ELAS',
 		text: `Olá, [NOMEUM],
 Conforme falamos em sala, segue o link para que você avalie a sua experiência no 2° módulo. Seu feedback é imprescindível para que possamos melhorar constantemente. E lembre-se sempre: Confie no processo!!!!
-
+		
 Basta clicar no link abaixo: 
-
+		
 [AVALIACAO2]
-
+		
 Beijos,
 Equipe ELAS`,
+		chatbotText: `Olá, [NOMEUM]! E aí, como foi seu segundo módulo? Estou contente de te ver até aqui! 
+
+Para que nós saibamos como tornar sua experiência ainda melhor, você pode clicar no link abaixo e dar seu feedback sobre esse módulo?  
+
+[AVALIACAO2]`,
+		chatbotButton: [
+			{ content_type: 'text', title: 'Ok', payload: 'mainMenu' },
+		],
 	},
 	mail9: {
 		subject: '[Atividades Prévias para o Último Módulo] - Programa ELAS',
@@ -234,6 +284,27 @@ Beijos,
 Equipe ELAS`,
 		anexo: 'ebook_autoridade_como_lider',
 		anexoLink: process.env.ANEXO_MAIL09,
+		chatbotText: 'Está chegando a formatura do Programa ELAS!! Para fecharmos com chave de ouro, vamos para as atividades que devem ser feitas até [MOD3_7DIAS] 😉',
+		chatbotCard: [
+			{
+				title: 'ATIVIDADE 1 - SONDAGEM DE FOCO',
+				subtitle: 'Preencha novamente para avaliarmos a mudança percebida por você.',
+				image_url: 'https://gallery.mailchimp.com/926cb477483bcd8122304bc56/images/c8cc8280-7c73-4caf-a07c-2a84bdd4bb93.jpg',
+				url: process.env.SONDAGEM_POS_LINK,
+			},
+			{
+				title: 'ATIVIDADE 2 - INVENTÁRIO COMPORTAMENTAL',
+				subtitle: 'Houve mudanças? Refaça o DISC!',
+				image_url: 'https://gallery.mailchimp.com/926cb477483bcd8122304bc56/images/9f6a19c4-571b-429f-b628-8ef4cedda1a9.jpg',
+				url: process.env.DISC_LINK2,
+			},
+			{
+				title: 'ATIVIDADE 3 - LEITURA',
+				subtitle: 'Leia e avalie como ele poderia ser implantado no seu dia-a-dia, anote as dúvidas',
+				image_url: 'https://gallery.mailchimp.com/926cb477483bcd8122304bc56/images/fde11d8c-e516-4fa8-8536-474d20ab99d3.jpg',
+				url: process.env.ANEXO_MAIL09,
+			},
+		],
 	},
 	mail10: {
 		subject: ' [ VOCÊ ESTÁ SENDO CONVIDADO(A) PARA AVALIAR A [NOMEUM] NOVAMENTE! ]',
@@ -289,6 +360,13 @@ Nós também enviaremos por e-mail esse link para eles, mas um reforço de você
 Qualquer dúvida estamos a disposição,
 Abraços,
 Equipe ELAS`,
+		chatbotText: `Olá!!
+Está chegando o dia de conclusão do Programa ELAS!! E como atividade, temos o fechamento da avaliação 360, ou seja ela deverá ser preenchida novamente pelos seus avaliadores 
+
+Já enviamos para os mesmos o link para o preenchimento do questionário. Mas sabe né, você falar com eles pedindo o preenchimento ajuda bastante 😉`,
+		chatbotButton: [
+			{ content_type: 'text', title: 'Ok', payload: 'mainMenu' },
+		],
 	},
 	mail12: {
 		subject: 'Homenagem especial feita por você para [NOMEUM]',
@@ -310,6 +388,22 @@ Vania Teofilo
 Equipe ELAS`,
 	},
 	mail13: {
+		subject: 'Sua evolução e feedback - Programa ELAS',
+		text: `Olá, [NOMEUM]!!
+
+Estamos na reta final! Você preencheu a Sondagem de Foco no início e no fim do curso, assim como seus indicados fizeram uma avaliação 360 sobre você. Agora é hora de ver seu gráfico de mudanças e os feedback dos seus avaliadores. 
+
+Em anexo está seu gráfico da Sondagem de Foco com seu antes e depois e o PDF com todo o feedback dos seus avaliadores. Boa leitura!
+
+Qualquer dúvida estamos a disposição,
+Abraços,
+Equipe ELAS
+`,
+		chatbotText: `Oi, [NOMEUM]!\nVocê preencheu a Sondagem de Foco no início e no fim do curso, assim como seus indicados fizeram uma avaliação 360 sobre você.
+Veja seu gráfico da Sondagem de Foco com seu antes e depois e o PDF com todo o feedback dos seus avaliadores. Boa leitura!`,
+		files: true,
+	},
+	mail14: {
 		subject: '[ COMO FOI O PROGRAMA ELAS PARA VOCÊ? ] - Programa ELAS',
 		text: `Olá, [NOMEUM],
 
@@ -320,5 +414,11 @@ Para avaliar o 3° módulo, clique aqui:
 
 Beijos,
 Equipe ELAS`,
+		chatbotText: `Olá, [NOMEUM]! Acabooou!! Que demais! Parabéns por ter chegado até aqui, aposto que foi enriquecedor! 
+
+Para que nós saibamos como tornar a experiência ainda melhor para nossas alunas, você pode clicar no link abaixo e dar seu feedback sobre o último módulo?  
+
+[AVALIACAO3]
+`,
 	},
 };

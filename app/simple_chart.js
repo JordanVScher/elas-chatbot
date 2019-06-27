@@ -91,18 +91,13 @@ const chartCallback = (ChartJS) => {
 	});
 };
 
-async function buildChart(conf, name, email) {
+async function buildChart(conf) {
 	const canvasRenderService = new CanvasRenderService(width, height, chartCallback);
 	const image = await canvasRenderService.renderToBuffer(conf);
-	fs.writeFile(`./graficos/${name}.png`, image, async (res) => {
-		console.log(`Chart '${name}':`, res);
-		if (!res) {
-			await mailer.sendMailAttach('Seu gráfico', 'Gráfico do aluno no anexo', email, 'Seus_resultados.png', `${process.cwd()}/graficos/${name}.png`);
-		}
-	});
+	return image;
 }
 
-module.exports.createChart = async (labels, data, id, title, email) => {
+module.exports.createChart = async (labels, data, id, title) => {
 	const conf = configuration;
 
 	const finalData = {};
@@ -118,7 +113,8 @@ module.exports.createChart = async (labels, data, id, title, email) => {
 		conf.options.title.text = title;
 	}
 
-	await buildChart(conf, id, email);
+	const result = await buildChart(conf, id);
+	return result;
 };
 
 // const labels = [

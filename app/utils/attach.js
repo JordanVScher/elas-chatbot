@@ -58,6 +58,35 @@ module.exports.sendCardWithout = async function sendCardWithLink(context, cardDa
 	});
 };
 
+module.exports.sendAtividade2Cards = async (context, cards, cpf) => {
+	const elements = [];
+
+	cards.forEach(async (element) => {
+		elements.push({
+			title: element.title,
+			subtitle: element.subtitle,
+			image_url: element.image_url,
+			default_action: {
+				type: 'web_url',
+				url: element.url.replace('CPFRESPOSTA', cpf),
+				// messenger_extensions: 'false',
+				// webview_height_ratio: 'full',
+			},
+			buttons: [
+				{ type: 'web_url', url: element.url.replace('CPFRESPOSTA', cpf), title: 'Fazer Atividade' }],
+		});
+	});
+
+
+	await context.sendAttachment({
+		type: 'template',
+		payload: {
+			template_type: 'generic',
+			elements,
+		},
+	});
+};
+
 module.exports.sendSequenceMsgs = async (context, msgs, buttonTitle) => {
 	for (let i = 0; i < msgs.length; i++) {
 		if (msgs[i] && msgs[i].text && msgs[i].url) {

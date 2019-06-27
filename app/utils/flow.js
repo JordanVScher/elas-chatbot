@@ -114,4 +114,42 @@ module.exports = {
 			texto: 'mail_template/ELAS_Apresentar_Donna.html',
 		},
 	},
+	Atividade2: {
+		text1: 'Para garantir a melhor experiência possível, é importante que você complete as 3 atividades prévias até [MOD1_15DIAS], ok? Abaixo seguem essas atividades:',
+		text2: 'A atividade 3, você receberá no [MOD1_2DIAS]. Imprima e leve para receber uma devolutiva no primeiro módulo 😉\n\nMãos à obra e prepare-se para uma grande jornada!!',
+		menuOptions: ['Ok'],
+		menuPostback: ['mainMenu'],
+		cards: [
+			{
+				title: 'ATIVIDADE 1 - RELAÇÃO DE AVALIADORES',
+				subtitle: 'Como as pessoas te avaliam? Indique no mín. 4 pessoas do seu convívio.',
+				image_url: 'https://gallery.mailchimp.com/926cb477483bcd8122304bc56/images/8619ef7a-f963-415b-a14d-491382fc11fc.jpg',
+				url: process.env.INDICACAO360_LINK,
+			},
+			{
+				title: 'ATIVIDADE 2 - SONDAGEM DE FOCO',
+				subtitle: 'Sobre a sua evolução pessoal, algo que mediremos no final do programa.',
+				image_url: 'https://gallery.mailchimp.com/926cb477483bcd8122304bc56/images/c8cc8280-7c73-4caf-a07c-2a84bdd4bb93.jpg',
+				url: process.env.SONDAGEM_PRE_LINK,
+			},
+			{
+				title: 'ATIVIDADE 3 - INVENTÁRIO COMPORTAMENTAL',
+				subtitle: '"Descobrir" o seu potencial e suas habilidades.Preencha em um momento calmo.',
+				image_url: 'https://gallery.mailchimp.com/926cb477483bcd8122304bc56/images/9f6a19c4-571b-429f-b628-8ef4cedda1a9.jpg',
+				url: process.env.DISC_LINK1,
+			},
+		],
+	},
+	mail6pt2: {
+		text1: `Escolha uma situação, que numa escala de desconforto de 1 a 10, tenha uma nota média  3 ou 4. É importante pensar nesta escala e se assegurar que neste cenário você tenha ficado um pouco desconfortável. Evite situações traumáticas onde o seu emocional ficou abalado.
+	\nEssa cena pode ter acontecido com um chefe, um colega de trabalho, alguém mais íntimo, enfim. Você deve descrever a história exata que te promoveu o desconforto e porque essa situação não foi bem resolvida da forma que você almejava. Simplesmente descreva a história em um papel. Você deverá trazê-la em sala de aula para discutirmos no Módulo 2.
+	\nAgora vamos para a segunda parte da atividade, beleza?`,
+		menuOptions: ['Vamos!'],
+		menuPostback: ['mail6pt3'],
+	},
+	mail6pt3: {
+		text1: 'Após escrever a história, você deve ler o texto. Clique no link abaixo e leia atentamente, faça suas observações e leve-as para a sala de aula. \n<LINK_ANEXO>',
+		menuOptions: ['Ok'],
+		menuPostback: ['mainMenu'],
+	},
 };

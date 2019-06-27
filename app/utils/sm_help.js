@@ -1,3 +1,4 @@
+const { promisify } = require('util');
 const fs = require('fs');
 const helper = require('./helper');
 const smAPI = require('../sm_api');
@@ -6,13 +7,12 @@ const { eMail } = require('./flow');
 const db = require('./DB_helper');
 const chart = require('../simple_chart');
 
-
 const surveysInfo = require('./sm_surveys');
 const surveysMaps = require('./sm_maps');
 const chartsMaps = require('./charts_maps');
 
 
-async function buildAlunoChart(cpf, mail) {
+async function buildAlunoChart(cpf) {
 	const aluna = await db.getAlunoRespostas(cpf);
 	const data = {};
 
@@ -25,8 +25,11 @@ async function buildAlunoChart(cpf, mail) {
 	}
 
 	if (data && Object.keys(data) && Object.keys(data).length > 0) {
-		await chart.createChart(Object.keys(data), Object.values(data), cpf, `Resultado auto-avaliação ${aluna.nome}`, mail);
+		const result = await chart.createChart(Object.keys(data), Object.values(data), cpf, `Resultado auto-avaliação ${aluna.nome}`);
+		return result;
 	}
+
+	return [];
 }
 
 async function separateIndicadosData(cpf) {
@@ -68,10 +71,8 @@ async function separateIndicadosData(cpf) {
 	return result;
 }
 
-async function buildIndicadoChart(cpf, email) {
+async function buildIndicadoChart(cpf) {
 	const data = await separateIndicadosData(cpf);
-
-	const fileName = `${cpf}_360Results.pdf`;
 
 	const styleDiv = 'font-size:10pt;margin-left:1.5em;margin-right:1.5em;margin-bottom:0.5em;margin-top:2.0em';
 	let html = `<p style="${styleDiv}"><h1>Resultados</h1></p>`;
@@ -82,7 +83,7 @@ async function buildIndicadoChart(cpf, email) {
 				<td>${element.exemploPre}</td> <td>${element.melhoraPre}</td> </tr>`;
 	});
 	html += '</table><br><br>';
-	html += `<table style="width:100% border:1px solid black " border=1>
+	html += `<table style="width:100% border:1px solid black" border=1>
  	<tr> <th>Questão Pós</th> <th>Avaliação Pós</th>`;
 	data.forEach((element) => {
 		html += `<tr> <td>${element.titlePos}</td> <td>${element.avaliasPos}</td> </tr>`;
@@ -92,15 +93,10 @@ async function buildIndicadoChart(cpf, email) {
 	html += `<p style="${styleDiv}"><h5>Houve evolução?</h5></p> <div> ${data[0].houveEvolucao} </div>`;
 	html += `<p style="${styleDiv}"><h5>Onde houve evolução?</h5></p> <div> ${data[0].ondeEvolucao} </div>`;
 
-	helper.pdf.create(html).toStream(async (err, stream) => {
-		const st = stream.pipe(fs.createWriteStream(fileName));
-		st.on('finish', async (res) => {
-			console.log(`PDF '${fileName}':`, res);
-			if (!res) {
-				await mailer.sendMailAttach('Seu pdf', 'Pdf do seus indicadores no anexo.\nSe vier vazio seus indicados não responderam', email, 'resultado_indicadores.pdf', `${process.cwd()}/${fileName}`);
-			}
-		});
-	});
+	const createPDFAsync = promisify(helper.pdf.create);
+	const result = await createPDFAsync(html).then(tmp => tmp).catch(err => console.log(err));
+
+	return result;
 }
 
 
@@ -343,9 +339,9 @@ async function handleSondagem(response, column, map) {
 	}
 
 	// build and send graph
-	if (column === 'pos') {
-		await buildAlunoChart(aluna.cpf, aluna.email);
-	}
+	// if (column === 'pos') {
+	// 	await buildAlunoChart(aluna.cpf, aluna.email);
+	// }
 }
 
 async function handleAvaliador(response, column, map) {

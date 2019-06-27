@@ -5,7 +5,8 @@ const db = require('./DB_helper');
 const mailer = require('./mailer');
 const emails = require('./emails');
 const broadcast = require('./broadcast');
-const { separateIndicadosData } = require('./sm_help');
+const { buildIndicadoChart } = require('./sm_help');
+const { buildAlunoChart } = require('./sm_help');
 
 // for each turma get the alunas in them
 async function getAlunasFromTurmas(turmas) {
@@ -176,6 +177,22 @@ async function fillMasks(replaceMap, alunaData) {
 	return result;
 }
 
+
+async function sendRelatorios(mail, aluna, html) {
+	const pdf = { filename: `${aluna.cpf}_360Results.pdf` };
+	const { filename } = await buildIndicadoChart(aluna.cpf); // actually path
+	pdf.content = filename;
+
+	const png = { filename: `${aluna.cpf}_sondagem.png` };
+	png.content = await buildAlunoChart(aluna.cpf); // actually buffer
+
+	await mailer.sendHTMLFile(mail.subject, aluna.email, html, pdf, png); // send both attachments to e-mail
+	const newText = mail.chatbotText.replace('[NOMEUM]', aluna.nome_completo);
+	if (await broadcast.sendBroadcastAluna(aluna.fb_id, newText, mail.chatbotButton) === true) { // check if first message was sent successfully
+		await broadcast.sendFiles(aluna.fb_id, pdf, png);
+	}
+}
+
 /* Get alunas, their data and send the e-mails. Check getAlunasFromModule.
 	mail: obj with the original text, subject and attachment
 	replaceMap: map with data to replace on the text
@@ -183,21 +200,28 @@ async function fillMasks(replaceMap, alunaData) {
 async function handleAlunaMail(spreadsheet, today, days, paramName, mail, replaceMap = []) {
 	try {
 		const alunas = await getAlunasFromModule(spreadsheet, today, days, paramName);
+
 		alunas.forEach(async (element) => { // here we can format the e-mails
 			replaceMap.push({ mask: 'NOMEUM', data: element.nome_completo });
 			const newMap = await fillMasks(replaceMap, element);
 
-			let text = await replaceDataText(mail.text, newMap);
+			let text = await replaceDataText(mail.text, newMap); // build e-mail text
 			text = await replaceCustomParameters(text, element.turma, element.cpf, '');
-
-			// console.log('-------------------\nto', element.email, '\n', text);
 
 			let html = await readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
 			html = await html.replace('[CONTEUDO_MAIL]', text); // add nome to mail template
+			if (mail.files !== true) {
+				await mailer.sendHTMLMail(mail.subject, element.email, html, mail.anexo);
 
-			await mailer.sendHTMLMail(mail.subject, element.email, html, mail.anexo);
-			if (element.fb_id) { // if aluna is linked with messenger we send a message to the bot
-				await broadcast.sendBroadcastAluna(element.fb_id, mail.subject);
+				if (element.fb_id && mail.chatbotText) { // if aluna is linked with messenger we send a message to the bot
+					let newText = await replaceDataText(mail.chatbotText, newMap); // build chatbot text
+					newText = await replaceCustomParameters(newText, element.turma, element.cpf, '');
+
+					await broadcast.sendBroadcastAluna(element.fb_id, newText, mail.chatbotButton);
+					if (mail.chatbotCard) { await broadcast.sendCardAluna(element.fb_id, mail.chatbotCard, element.cpf); }
+				}
+			} else { // for case mail 13
+				await sendRelatorios(mail, element, html);
 			}
 		});
 	} catch (error) {
@@ -231,13 +255,6 @@ async function handleIndicadoMail(spreadsheet, today, days, paramName, mail, fam
 	} catch (error) {
 		console.log('Erro em handleIndicadoMail', error); // helper.Sentry.captureMessage('Erro em handleAtividadeOne');
 	}
-}
-
-async function sendPDF(spreadsheet, today, days, paramName) {
-	const alunas = await getAlunasFromModule(spreadsheet, today, days, paramName);
-	alunas.forEach(async (element) => {
-		await separateIndicadosData(element.cpf, element.email);
-	});
 }
 
 async function test() {
@@ -296,8 +313,8 @@ async function test() {
 	// 	{ mask: 'NUMBERWHATSAP', data: process.env.NUMBERWHATSAP },
 	// 	{ mask: 'MOD3_LASTDAY', data: '' },
 	// ]);
-	// await handleAlunaMail(spreadsheet, today, -5, 'módulo3', emails.mail13, [{ mask: 'AVALIACAO3', data: process.env.MODULO3_LINK }]);
-	// await sendPDF(spreadsheet, today, 19, 'módulo1');
+	// await handleAlunaMail(spreadsheet, today, 1, 'módulo3', emails.mail13, [{ mask: 'AVALIACAO3', data: process.env.MODULO3_LINK }]);
+	// await handleAlunaMail(spreadsheet, today, -5, 'módulo3', emails.mail14, [{ mask: 'AVALIACAO3', data: process.env.MODULO3_LINK }]);
 }
 
 test();
@@ -318,5 +335,5 @@ const FirstTimer = new CronJob(
 
 
 module.exports = {
-	FirstTimer, handleIndicadoMail, handleAlunaMail, sendPDF,
+	FirstTimer, handleIndicadoMail, handleAlunaMail,
 };

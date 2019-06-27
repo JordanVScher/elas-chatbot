@@ -40,35 +40,6 @@ async function sendTestMail(subject, text, to) {
 	}
 }
 
-async function sendMailAttach(subject, text, to, filename, content) {
-	const options = {
-		from: user,
-		to,
-		subject,
-		text,
-		attachments: [
-			{
-				filename,
-				content: createReadStream(content),
-			},
-		],
-	};
-
-	try {
-		const info = await transporter.sendMail(options);
-		console.log(`'${subject}' para ${to}:`, info.messageId);
-		setTimeout((filePath) => {
-			unlink(filePath, (err) => {
-				if (err) console.log(err);
-				console.log('File deleted!');
-			});
-		}, 60000, content);
-	} catch (error) {
-		console.log('Could not sendMailAttach to ', to);
-		console.log('Error => ', error);
-	}
-}
-
 async function sendHTMLMail(subject, to, html, anexo) {
 	const options = {
 		from: user,
@@ -95,7 +66,40 @@ async function sendHTMLMail(subject, to, html, anexo) {
 		console.log('Error => ', error);
 	}
 }
+async function sendHTMLFile(subject, to, html, pdf, png) {
+	const options = {
+		from: user,
+		to,
+		subject,
+		html,
+		attachments: [],
+	};
+
+	if (pdf && pdf.filename && pdf.content) {
+		options.attachments.push({
+			filename: pdf.filename,
+			content: createReadStream(pdf.content),
+			contentType: 'application/pdf',
+		});
+	}
+
+	if (png && png.filename && png.content) {
+		options.attachments.push({
+			filename: png.filename,
+			content: png.content,
+			contentType: 'image/png',
+		});
+	}
+
+	try {
+		const info = await transporter.sendMail(options);
+		console.log(`'${subject}' para ${to}:`, info.messageId, `with ${options.attachments.length} attachments`);
+	} catch (error) {
+		console.log('Could not send mail to ', to);
+		console.log('Error => ', error);
+	}
+}
 
 module.exports = {
-	sendTestMail, sendMailAttach, sendHTMLMail,
+	sendTestMail, sendHTMLMail, sendHTMLFile,
 };

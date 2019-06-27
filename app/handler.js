@@ -29,7 +29,7 @@ module.exports = async (context) => {
 		if (context.event.isPostback) {
 			await context.setState({ lastPBpayload: context.event.postback.payload });
 			if (context.state.lastPBpayload === 'teste') {
-				await context.setState({ dialog: 'confirmaMatricula' });
+				await context.setState({ dialog: 'Atividade2' });
 				// await context.setState({ dialog: 'sendFirst' });
 			} else {
 				await context.setState({ dialog: context.state.lastPBpayload });
@@ -68,6 +68,9 @@ module.exports = async (context) => {
 			await context.sendText(flow.greetings.text1.replace('<first_name>', context.session.user.first_name));
 			await context.sendText(flow.greetings.text2);
 			await context.sendText(flow.greetings.text3, await attach.getQR(flow.greetings));
+			break;
+		case 'mainMenu':
+			await context.sendText('O que deseja fazer?', await attach.getQR(flow.greetings));
 			break;
 		case 'sobreElas':
 			await context.sendText(flow.sobreElas.text1);
@@ -133,6 +136,23 @@ module.exports = async (context) => {
 			await context.sendText(flow.avaliadores1.text1);
 			await context.sendText(flow.avaliadores1.text2);
 			await attach.cardLinkNoImage(context, flow.avaliadores1.cardTitle, process.env.FORM_AVALIADORES.replace('TURMARESPOSTA', context.state.turma));
+			break;
+		case 'Atividade2':
+			await context.setState({ spreadsheet: await help.getFormatedSpreadsheet() });
+			await context.setState({ ourTurma: await context.state.spreadsheet.find(x => x.turma === context.state.turma) });
+			await context.setState({ mod1Date: context.state.ourTurma['módulo1'] });
+
+			await context.sendText(flow.Atividade2.text1.replace('[MOD1_15DIAS]', await help.formatDiasMod(context.state.mod1Date, -15)));
+			await attach.sendAtividade2Cards(context, flow.Atividade2.cards, context.state.cpf);
+			await context.sendText(flow.Atividade2.text2.replace('[MOD1_2DIAS]', await help.formatDiasMod(context.state.mod1Date, -2)), await attach.getQR(flow.Atividade2));
+
+			await context.setState({ spreadsheet: '', ourTurma: '', mod1Date: '' });
+			break;
+		case 'mail6pt2':
+			await context.sendText(flow.mail6pt2.text1, await attach.getQR(flow.mail6pt2));
+			break;
+		case 'mail6pt3':
+			await context.sendText(flow.mail6pt3.text1.replace('<LINK_ANEXO>', process.env.ANEXO_MAIL06), await attach.getQR(flow.mail6pt3));
 			break;
 		case 'fim':
 			await context.sendText('fim');
