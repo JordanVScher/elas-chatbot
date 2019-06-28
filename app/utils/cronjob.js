@@ -286,38 +286,38 @@ async function test() {
 		{ mask: 'AVALIADORPRE', data: process.env.AVALIADOR360PRE_LINK },
 		{ mask: 'MOD1_2DIAS', data: '' },
 	]);
-	await handleAlunaMail(spreadsheet, today, 2 + mod1Days, 'módulo1 + mod1Days', emails.mail4, [ // 10
+	await handleAlunaMail(spreadsheet, today, 1 + mod1Days, 'módulo1 + mod1Days', emails.mail4, [ // 10
 		{ mask: 'AVALIADORPRE', data: process.env.AVALIADOR360PRE_LINK },
 		{ mask: 'MOD1_2DIAS', data: '' },
 	]);
-	await handleAlunaMail(spreadsheet, today, 3 + mod1Days, 'módulo1', emails.mail5, [{ mask: 'AVALIACAO1', data: process.env.MODULO1_LINK }]); // -5
-	await handleAlunaMail(spreadsheet, today, 4 + mod2Days, 'módulo2', emails.mail6, [{ mask: 'LINKDONNA', data: process.env.LINK_DONNA }]); // 12
-	await handleAlunaMail(spreadsheet, today, 5 + mod2Days, 'módulo2', emails.mail7, [ // -5
+	await handleAlunaMail(spreadsheet, today, 2 + mod1Days, 'módulo1', emails.mail5, [{ mask: 'AVALIACAO1', data: process.env.MODULO1_LINK }]); // -5
+	await handleAlunaMail(spreadsheet, today, 3 + mod2Days, 'módulo2', emails.mail6, [{ mask: 'LINKDONNA', data: process.env.LINK_DONNA }]); // 12
+	await handleAlunaMail(spreadsheet, today, 4 + mod2Days, 'módulo2', emails.mail7, [ // -5
 		{ mask: 'EMAILMENTORIA', data: process.env.EMAILMENTORIA },
 		{ mask: 'MOD3_LASTDAY', data: '' },
 		{ mask: 'MOD3_2DIAS', data: '' },
 	]);
-	await handleAlunaMail(spreadsheet, today, 6 + mod2Days, 'módulo2', emails.mail8, [{ mask: 'AVALIACAO2', data: process.env.MODULO2_LINK }]); // -5
-	await handleAlunaMail(spreadsheet, today, 7 + mod3Days, 'módulo3', emails.mail9, [ // 12
+	await handleAlunaMail(spreadsheet, today, 5 + mod2Days, 'módulo2', emails.mail8, [{ mask: 'AVALIACAO2', data: process.env.MODULO2_LINK }]); // -5
+	await handleAlunaMail(spreadsheet, today, 6 + mod3Days, 'módulo3', emails.mail9, [ // 12
 		{ mask: 'SONDAGEMPOS', data: process.env.SONDAGEM_POS_LINK },
 		{ mask: 'DISC_LINK', data: process.env.DISC_LINK2 },
 		{ mask: 'TURMA', data: '' },
 		{ mask: 'MOD3_7DIAS', data: '' },
 	]);
-	await handleIndicadoMail(spreadsheet, today, 8 + mod3Days, 'módulo3', emails.mail10, false, [ // 12
+	await handleIndicadoMail(spreadsheet, today, 7 + mod3Days, 'módulo3', emails.mail10, false, [ // 12
 		{ mask: 'AVALIADORPOS', data: process.env.AVALIADOR360POS_LINK },
 		{ mask: 'MOD3_7DIAS', data: '' }]);
-	await handleAlunaMail(spreadsheet, today, 9 + mod3Days, 'módulo3', emails.mail11, [ // 12
+	await handleAlunaMail(spreadsheet, today, 8 + mod3Days, 'módulo3', emails.mail11, [ // 12
 		{ mask: 'AVALIADORPOS', data: process.env.AVALIADOR360POS_LINK },
 		{ mask: 'MOD3_LASTDAY', data: '' },
 		{ mask: 'MOD3_7DIAS', data: '' },
 	]);
-	await handleIndicadoMail(spreadsheet, today, 10 + mod3Days, 'módulo3', emails.mail12, true, [ // 12
+	await handleIndicadoMail(spreadsheet, today, 8 + mod3Days, 'módulo3', emails.mail12, true, [ // 12
 		{ mask: 'NUMBERWHATSAP', data: process.env.NUMBERWHATSAP },
 		{ mask: 'MOD3_LASTDAY', data: '' },
 	]);
-	await handleAlunaMail(spreadsheet, today, 11 + mod3Days, 'módulo3', emails.mail13, [{ mask: 'AVALIACAO3', data: process.env.MODULO3_LINK }]); // 1
-	await handleAlunaMail(spreadsheet, today, 12 + mod3Days, 'módulo3', emails.mail14, [{ mask: 'AVALIACAO3', data: process.env.MODULO3_LINK }]); // -5
+	await handleAlunaMail(spreadsheet, today, 9 + mod3Days, 'módulo3', emails.mail13, [{ mask: 'AVALIACAO3', data: process.env.MODULO3_LINK }]); // 1
+	await handleAlunaMail(spreadsheet, today, 10 + mod3Days, 'módulo3', emails.mail14, [{ mask: 'AVALIACAO3', data: process.env.MODULO3_LINK }]); // -5
 }
 
 
