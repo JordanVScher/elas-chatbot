@@ -1,6 +1,5 @@
 require('dotenv').config();
 
-const { unlink } = require('fs');
 const { createReadStream } = require('fs');
 const nodemailer = require('nodemailer');
 // const { Sentry } = require('./helper');

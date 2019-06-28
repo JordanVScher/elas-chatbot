@@ -128,14 +128,14 @@ module.exports = async (context) => {
 		case 'sendFirst':
 			await context.sendText(flow.sendFirst.text1);
 			await context.sendText(flow.sendFirst.text2);
-			await attach.cardLinkNoImage(context, flow.sendFirst.cardTitle, process.env.FORM_PRECADASTRO.replace('TURMARESPOSTA', context.state.turma));
+			await attach.cardLinkNoImage(context, flow.sendFirst.cardTitle, process.env.ATIVIDADE1_LINK.replace('TURMARESPOSTA', context.state.turma));
 			await context.sendText(flow.sendFirst.text3);
 			await context.sendText(flow.sendFirst.text4, await attach.getQR(flow.sendFirst));
 			break;
 		case 'avaliadores1':
 			await context.sendText(flow.avaliadores1.text1);
 			await context.sendText(flow.avaliadores1.text2);
-			await attach.cardLinkNoImage(context, flow.avaliadores1.cardTitle, process.env.FORM_AVALIADORES.replace('TURMARESPOSTA', context.state.turma));
+			await attach.cardLinkNoImage(context, flow.avaliadores1.cardTitle, process.env.INDICACAO360_LINK.replace('TURMARESPOSTA', context.state.turma));
 			break;
 		case 'Atividade2':
 			await context.setState({ spreadsheet: await help.getFormatedSpreadsheet() });

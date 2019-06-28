@@ -29,7 +29,7 @@ async function buildAlunoChart(cpf) {
 		return result;
 	}
 
-	return [];
+	return false;
 }
 
 async function separateIndicadosData(cpf) {

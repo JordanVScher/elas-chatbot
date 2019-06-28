@@ -181,7 +181,7 @@ async function fillMasks(replaceMap, alunaData) {
 async function sendRelatorios(mail, aluna, html) {
 	const pdf = { filename: `${aluna.cpf}_360Results.pdf` };
 	const { filename } = await buildIndicadoChart(aluna.cpf); // actually path
-	pdf.content = filename;
+	pdf.content = filename || false;
 
 	const png = { filename: `${aluna.cpf}_sondagem.png` };
 	png.content = await buildAlunoChart(aluna.cpf); // actually buffer
