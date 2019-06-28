@@ -215,16 +215,35 @@ async function upsertPagamento(documentoTipo, documentoValor, email, productId, 
 	let date = new Date();
 	date = await moment(date).format('YYYY-MM-DD HH:mm:ss');
 
-	await sequelize.query(`
+	const result = await sequelize.query(`
 	INSERT INTO "pagamentos" (documento_tipo, documento_valor, email, id_produto, id_transacao, created_at, updated_at)
   VALUES ('${documentoTipo}', '${documentoValor}', '${email}', '${productId}', '${transctionId}', '${date}', '${date}')
   ON CONFLICT (id_transacao)
   DO UPDATE
-    SET documento_tipo = '${documentoTipo}', documento_valor = '${documentoValor}', email = '${email}', updated_at = '${date}';
+		SET documento_tipo = '${documentoTipo}', documento_valor = '${documentoValor}', email = '${email}', updated_at = '${date}'
+	RETURNING id;
 	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
 		console.log(`Added ${email} successfully!`);
+		return results && results[0] ? results[0] : false;
 	}).catch((err) => {
 		console.error('Error on upsertPagamento => ', err);
+	});
+
+	return result;
+}
+async function updateAlunoOnPagamento(pagamentoId, alunoId) {
+	let date = new Date();
+	date = await moment(date).format('YYYY-MM-DD HH:mm:ss');
+
+	await sequelize.query(`
+	UPDATE pagamentos
+		SET aluno_id = '${alunoId}', updated_at = '${date}'
+	WHERE
+   id = '${pagamentoId}';
+	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
+		console.log(`Updated pagamento ${pagamentoId} successfully!`);
+	}).catch((err) => {
+		console.error('Error on updateAlunoOnPagamento => ', err);
 	});
 }
 
@@ -311,4 +330,5 @@ module.exports = {
 	getIndicadoRespostas,
 	getAlunasFromTurma,
 	getIndicadoFromAluna,
+	updateAlunoOnPagamento,
 };

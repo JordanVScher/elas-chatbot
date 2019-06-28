@@ -101,13 +101,14 @@ async function buildIndicadoChart(cpf) {
 
 
 // after a payement happens we send an e-mail to the buyer with the matricula/atividade 1 form
-async function sendMatricula(productID, buyerEmail) {
+async function sendMatricula(productID, pagamentoID, buyerEmail) {
 	try {
 		const spreadsheet = await helper.reloadSpreadSheet(1, 6); // console.log('spreadsheet', spreadsheet); // load spreadsheet
 		const column = await spreadsheet.find(x => x.pagseguroId.toString() === productID.toString()); console.log('column', column); // get same product id (we want to know the "turma")
 		let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Matricula.html`, 'utf-8');
 		html = await html.replace(/<link_atividade>/g, surveysInfo.atividade1.link); // add link to mail template
 		html = await html.replace(/TURMARESPOSTA/g, column.turma); // update the turma
+		html = await html.replace(/PSIDRESPOSTA/g, pagamentoID); // update the turma
 		await mailer.sendHTMLMail(eMail.atividade1.assunto, buyerEmail, html);
 	} catch (error) {
 		console.log('Erro em sendMatricula', error); helper.Sentry.captureMessage('Erro em sendMatricula');
@@ -244,6 +245,7 @@ async function handleAtividadeOne(response) {
 		const newUserID = await db.upsertAluno(answers.nome, answers.cpf, answers.turma, answers.email);
 		if (newUserID) {
 			await db.updateAtividade(newUserID, 'atividade_1', true);
+			await db.updateAlunoOnPagamento(answers.pgid, newUserID);
 		}
 
 		/* e-mail */

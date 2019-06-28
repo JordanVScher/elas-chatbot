@@ -67,6 +67,7 @@ async function createVenda(itemId = 1) { // for testing only, creates a link to 
 	});
 }
 
+
 // what to do after someone buys one of the products
 async function handlePagamento(notification) {
 	console.log('notification', notification);
@@ -81,11 +82,10 @@ async function handlePagamento(notification) {
 				if (answer.transaction.status && answer.transaction.status.toString() === '3') {
 					// await db.upsertPagamento(answer.transaction.sender[0].documents[0].document[0].type[0], answer.transaction.sender[0].documents[0].document[0].value[0],
 					// 	answer.transaction.sender[0].email[0], productID, answer.transaction.code[0]); // saves pagamento
-					await db.upsertPagamento('cpf', '99988877755',
+					const pagamentoId = await db.upsertPagamento('cpf', '0',
 						answer.transaction.sender[0].email[0], productID, answer.transaction.code[0]); // saves pagamento
 
-					await smHelp.sendMatricula(productID, process.env.ENV === 'local' ? 'jordanvscher@hotmail.com' : answer.transaction.sender[0].email[0]); // send email
-					// await smHelp.sendMatricula(productID, 'jordan@appcivico.com'); // send email
+					await smHelp.sendMatricula(productID, pagamentoId.id, process.env.ENV === 'local' ? 'jordan@appcivico.com' : answer.transaction.sender[0].email[0]); // send email
 				} else {
 					console.log(`Status: ${answer.transaction.status}.\nQuem comprou: ${answer.transaction.sender[0].email[0]}`);
 				}
@@ -98,6 +98,14 @@ async function handlePagamento(notification) {
 		}
 	});
 }
+
+
+// const mock = {
+// 	notificationCode: 'A8B88B-E1ABDCABDC33-D6643ECF9FEF-A7957F',
+// 	notificationType: 'transaction',
+// };
+
+// handlePagamento(mock);
 
 
 module.exports = {
