@@ -1,6 +1,20 @@
 const db = require('./DB_helper');
 const help = require('./helper');
-const { moment } = require('./helper');
+const attach = require('./attach');
+const flow = require('./flow');
+
+module.exports.sendMainMenu = async (context, txtMsg) => {
+	const text = txtMsg || flow.mainMenu.defaultText;
+	let opt = [];
+
+	if (context.state.matricula === true) {
+		opt = await attach.getQR(flow.mainMenu);
+	} else {
+		opt = await attach.getQR(flow.greetings);
+	}
+
+	await context.sendText(text, opt);
+};
 
 module.exports.handleCPF = async (context) => {
 	const cpf = context.state.whatWasTyped.replace(/[_.,-]/g, '');
@@ -29,7 +43,7 @@ module.exports.getAgenda = async (context) => {
 			let newDate = onTheTurma[`módulo${i}`]; // get date for the start of each module
 			newDate = newDate ? await help.getJsDateFromExcel(newDate) : ''; // convert excel date if we have a date
 			if (newDate) {
-				if (await moment(newDate).format('YYYY-MM-DD') >= await moment(today).format('YYYY-MM-DD')) { // check if the date for this module is after today or today
+				if (await help.moment(newDate).format('YYYY-MM-DD') >= await help.moment(today).format('YYYY-MM-DD')) { // check if the date for this module is after today or today
 					result.currentModule = i; // we loop through the modules so this index is the same number as the module
 					i = 4; // we have the date already, leave the loop
 					// getting the day the module starts

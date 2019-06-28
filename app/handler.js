@@ -4,8 +4,8 @@ const db = require('./utils/DB_helper');
 const { createIssue } = require('./utils/send_issue');
 const { checkPosition } = require('./utils/dialogFlow');
 const { apiai } = require('./utils/helper');
-const attach = require('./utils/attach');
 const dialogs = require('./utils/dialogs');
+const attach = require('./utils/attach');
 const flow = require('./utils/flow');
 const help = require('./utils/helper');
 
@@ -29,7 +29,7 @@ module.exports = async (context) => {
 		if (context.event.isPostback) {
 			await context.setState({ lastPBpayload: context.event.postback.payload });
 			if (context.state.lastPBpayload === 'teste') {
-				await context.setState({ dialog: 'Atividade2' });
+				await context.setState({ dialog: 'afterConfirma' });
 				// await context.setState({ dialog: 'sendFirst' });
 			} else {
 				await context.setState({ dialog: context.state.lastPBpayload });
@@ -70,7 +70,7 @@ module.exports = async (context) => {
 			await context.sendText(flow.greetings.text3, await attach.getQR(flow.greetings));
 			break;
 		case 'mainMenu':
-			await context.sendText('O que deseja fazer?', await attach.getQR(flow.greetings));
+			await dialogs.sendMainMenu(context);
 			break;
 		case 'sobreElas':
 			await context.sendText(flow.sobreElas.text1);
@@ -107,14 +107,16 @@ module.exports = async (context) => {
 			await context.sendText('Ainda não tenho esse CPF! Digite de novo!');
 			break;
 		case 'confirmaMatricula':
-			await context.setState({ agendaData: await dialogs.getAgenda(context) });
+			await context.setState({ agendaData: await dialogs.getAgenda(context), matricula: true });
 			await context.sendText(flow.confirmaMatricula.text1);
-			console.log(await attach.getQR(flow.confirmaMatricula));
-
-
 			await context.sendText(await dialogs.buildAgendaMsg(context.state.agendaData), await attach.getQR(flow.confirmaMatricula));
 			// await context.sendText(flow.confirmaMatricula.text2, await attach.getQR(flow.confirmaMatricula));
 			break;
+		case 'afterConfirma':
+			await context.sendText(flow.confirmaMatricula.after1);
+			await dialogs.sendMainMenu(context);
+			break;
+			// case 'sendFirst':
 		case 'erradoMatricula':
 			await context.sendText(flow.erradoMatricula.text1, await attach.getQR(flow.erradoMatricula));
 			break;
@@ -125,18 +127,17 @@ module.exports = async (context) => {
 			await context.sendText(flow.talkToElas.text4);
 			await attach.sendShare(context, flow.shareElas);
 			break;
-		case 'sendFirst':
-			await context.sendText(flow.sendFirst.text1);
-			await context.sendText(flow.sendFirst.text2);
-			await attach.cardLinkNoImage(context, flow.sendFirst.cardTitle, process.env.ATIVIDADE1_LINK.replace('TURMARESPOSTA', context.state.turma));
-			await context.sendText(flow.sendFirst.text3);
-			await context.sendText(flow.sendFirst.text4, await attach.getQR(flow.sendFirst));
-			break;
-		case 'avaliadores1':
-			await context.sendText(flow.avaliadores1.text1);
-			await context.sendText(flow.avaliadores1.text2);
-			await attach.cardLinkNoImage(context, flow.avaliadores1.cardTitle, process.env.INDICACAO360_LINK.replace('TURMARESPOSTA', context.state.turma));
-			break;
+		// 	await context.sendText(flow.sendFirst.text1);
+		// 	await context.sendText(flow.sendFirst.text2);
+		// 	await attach.cardLinkNoImage(context, flow.sendFirst.cardTitle, process.env.ATIVIDADE1_LINK.replace('TURMARESPOSTA', context.state.turma));
+		// 	await context.sendText(flow.sendFirst.text3);
+		// 	await context.sendText(flow.sendFirst.text4, await attach.getQR(flow.sendFirst));
+		// 	break;
+		// case 'avaliadores1':
+		// 	await context.sendText(flow.avaliadores1.text1);
+		// 	await context.sendText(flow.avaliadores1.text2);
+		// 	await attach.cardLinkNoImage(context, flow.avaliadores1.cardTitle, process.env.INDICACAO360_LINK.replace('TURMARESPOSTA', context.state.turma));
+		// 	break;
 		case 'Atividade2':
 			await context.setState({ spreadsheet: await help.getFormatedSpreadsheet() });
 			await context.setState({ ourTurma: await context.state.spreadsheet.find(x => x.turma === context.state.turma) });

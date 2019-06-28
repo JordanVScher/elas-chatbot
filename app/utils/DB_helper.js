@@ -288,7 +288,7 @@ async function getUserTurma(FBID) {
 		console.log(`Got ${FBID}'s turma successfully!`);
 		return results;
 	}).catch((err) => {
-		console.error('Error on linkUserToCPF => ', err);
+		console.error('Error on getUserTurma => ', err);
 	});
 
 	if (result && result[0] && result[0].turma && result[0].nome) { return result[0];	}

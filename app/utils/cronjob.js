@@ -330,7 +330,7 @@ const FirstTimer = new CronJob(
 	}),
 	true, /* Starts the job right now (no need for MissionTimer.start()) */
 	'America/Sao_Paulo', false,
-	true, // runOnInit = true useful only for tests
+	false, // runOnInit = true useful only for tests
 );
 
 
