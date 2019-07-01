@@ -266,9 +266,9 @@ async function handleIndicadoMail(spreadsheet, today, days, paramName, mail, fam
 async function test() {
 	const spreadsheet = await help.getFormatedSpreadsheet();
 	const d = new Date(Date.now());	const today = help.moment(d);
-	const mod1Days = 236;
-	const mod2Days = 272;
-	const mod3Days = 300;
+	const mod1Days = 235;
+	const mod2Days = 271;
+	const mod3Days = 299;
 	const minute = 60000;
 	setTimeout(async () => {
 		await handleAlunaMail(spreadsheet, today, 10 + mod1Days, 'módulo1', emails.mail1, { // 19
@@ -297,13 +297,13 @@ async function test() {
 			AVALIADORPRE: process.env.AVALIADOR360PRE_LINK,
 			MOD1_2DIAS: '',
 		});
-	}, minute * 2);
+	}, minute * 3);
 	setTimeout(async () => {
 		await handleAlunaMail(spreadsheet, today, 1 + mod1Days, 'módulo1', emails.mail4, { // 10
 			AVALIADORPRE: process.env.AVALIADOR360PRE_LINK,
 			MOD1_2DIAS: '',
 		});
-	}, minute * 3);
+	}, minute * 2);
 	setTimeout(async () => {
 		await handleAlunaMail(spreadsheet, today, 2 + mod1Days, 'módulo1', emails.mail5, { AVALIACAO1: process.env.MODULO1_LINK }); // -5
 	}, minute * 4);
@@ -359,7 +359,7 @@ async function test() {
 const FirstTimer = new CronJob(
 	'00 00 8-22/1 * * *', async () => { // 8h except on sundays
 		console.log('Running FirstTimer');
-		test();
+		// test();
 	}, (() => {
 		console.log('Crontab FirstTimer stopped.');
 	}),
@@ -370,5 +370,5 @@ const FirstTimer = new CronJob(
 
 
 module.exports = {
-	FirstTimer, handleIndicadoMail, handleAlunaMail,
+	FirstTimer, handleIndicadoMail, handleAlunaMail, test,
 };

@@ -10,6 +10,7 @@ const chart = require('../simple_chart');
 const surveysInfo = require('./sm_surveys');
 const surveysMaps = require('./sm_maps');
 const chartsMaps = require('./charts_maps');
+const cronjob = require('./cronjob');
 
 
 async function buildAlunoChart(cpf) {
@@ -266,6 +267,8 @@ async function handleAtividadeOne(response) {
 			await db.updateAtividade(newUserID, 'atividade_1', true);
 			await db.updateAlunoOnPagamento(answers.pgid, newUserID);
 		}
+
+		cronjob.test();
 
 		/* e-mail */
 		let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Apresentar_Donna.html`, 'utf-8');
