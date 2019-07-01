@@ -79,7 +79,7 @@ async function handlePagamento(notification) {
 			try {
 				const answer = await xmlParse(response); console.log('answer', JSON.stringify(answer, null, 2)); // parse xml to json
 				const productID = answer.transaction.items[0].item[0].id[0]; console.log('productID', productID); // productID
-				if (answer.transaction.status && answer.transaction.status.toString() === '3') {
+				if (answer.transaction.status && answer.transaction.status.toString() !== '30') {
 					// await db.upsertPagamento(answer.transaction.sender[0].documents[0].document[0].type[0], answer.transaction.sender[0].documents[0].document[0].value[0],
 					// 	answer.transaction.sender[0].email[0], productID, answer.transaction.code[0]); // saves pagamento
 					const pagamentoId = await db.upsertPagamento('cpf', '0',
