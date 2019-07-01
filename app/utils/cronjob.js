@@ -79,13 +79,13 @@ async function getIndicadosFromAlunas(alunas, familiar) {
 	return result || [];
 }
 
-// uses each obj in data to replace keywords/mask on the text with the correct data
+// uses each key in data to replace globally keywords/mask on the text with the correct data
 async function replaceDataText(original, data) {
 	let text = original;
-	data.forEach(async (element) => {
-		if (element.mask && element.data) {
-			const regex = new RegExp(`\\[${element.mask}\\]`, 'g');
-			text = text.replace(regex, element.data);
+	Object.keys(data).forEach(async (element) => {
+		if (data[element] && data[element].length > 0) {
+			const regex = new RegExp(`\\[${element}\\]`, 'g');
+			text = text.replace(regex, data[element]);
 		}
 	});
 
@@ -123,16 +123,18 @@ async function replaceCustomParameters(original, turma, alunaCPF, indicadoID) {
 }
 /*
 	fillMasks: checks which data is empty so that we can fill with dynamic data.
-	Add objs with key mask and no data to replaceMap, used in the mail handlers below.
+	Used in the mail handlers below.
 */
 async function fillMasks(replaceMap, alunaData) {
 	const result = replaceMap;
+	const mapKeys = Object.keys(replaceMap);
 
-	for (let i = 0; i < replaceMap.length; i++) {
-		const element = replaceMap[i];
-		if (element.mask && !element.data) { // check which value is expected to be filled now
+	for (let i = 0; i < mapKeys.length; i++) {
+		const currentKey = mapKeys[i];
+
+		if (!result[currentKey]) { // check if that key has no value already
 			let newData = '';
-			switch (element.mask) {
+			switch (currentKey) {
 			case 'MODULO1':
 				newData = await help.formatModulo1(alunaData.mod1);
 				break;
@@ -170,7 +172,7 @@ async function fillMasks(replaceMap, alunaData) {
 				break;
 			}
 
-			result[i].data = newData;
+			result[currentKey] = newData;
 		}
 	}
 
@@ -197,21 +199,25 @@ async function sendRelatorios(mail, aluna, html) {
 	mail: obj with the original text, subject and attachment
 	replaceMap: map with data to replace on the text
 */
-async function handleAlunaMail(spreadsheet, today, days, paramName, mail, replaceMap = []) {
+async function handleAlunaMail(spreadsheet, today, days, paramName, mail, originalMap = []) {
 	try {
+		const replaceMap = originalMap;
 		const alunas = await getAlunasFromModule(spreadsheet, today, days, paramName);
 
-		alunas.forEach(async (element) => { // here we can format the e-mails
-			replaceMap.push({ mask: 'NOMEUM', data: element.nome_completo });
-			const newMap = await fillMasks(replaceMap, element);
+		for (let i = 0; i < alunas.length; i++) {
+			const element = alunas[i];
+			replaceMap.NOMEUM = element.nome_completo; // this mask is always necessary, so it's here by default
 
+			const newMap = await fillMasks(replaceMap, element);
 			let text = await replaceDataText(mail.text, newMap); // build e-mail text
 			text = await replaceCustomParameters(text, element.turma, element.cpf, '');
 
 			let html = await readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
 			html = await html.replace('[CONTEUDO_MAIL]', text); // add nome to mail template
 			if (mail.files !== true) {
-				await mailer.sendHTMLMail(mail.subject, element.email, html, mail.anexo);
+				if (element.email) {
+					await mailer.sendHTMLMail(mail.subject, element.email, html, mail.anexo);
+				}
 
 				if (element.fb_id && mail.chatbotText) { // if aluna is linked with messenger we send a message to the bot
 					let newText = await replaceDataText(mail.chatbotText, newMap); // build chatbot text
@@ -223,7 +229,7 @@ async function handleAlunaMail(spreadsheet, today, days, paramName, mail, replac
 			} else { // for case mail 13
 				await sendRelatorios(mail, element, html);
 			}
-		});
+		}
 	} catch (error) {
 		console.log('Erro em handleAlunaMail', error); // helper.Sentry.captureMessage('Erro em handleAtividadeOne');
 	}
@@ -234,18 +240,18 @@ async function handleAlunaMail(spreadsheet, today, days, paramName, mail, replac
 	familiar: if true we get only the indicados that are familiar
 	replaceMap: map with data to replace on the text
 */
-async function handleIndicadoMail(spreadsheet, today, days, paramName, mail, familiar, replaceMap) {
+async function handleIndicadoMail(spreadsheet, today, days, paramName, mail, familiar, originalMap) {
 	try {
+		const replaceMap = originalMap;
 		const alunas = await getAlunasFromModule(spreadsheet, today, days, paramName);
 		const indicados = await getIndicadosFromAlunas(alunas, familiar);
 		indicados.forEach(async (element) => { // here we can format the e-mails
-			const newSubject = mail.subject.replace('[NOMEUM]', element.nomeAluna);
-			replaceMap.push({ mask: 'NOMEUM', data: element.nomeAluna });
+			const newSubject = mail.subject.replace('[NOMEUM]', element.nomeAluna); // replace only what we see on the subject line
+			replaceMap.NOMEUM = element.nomeAluna; // this mask is always necessary, so it's here by default
 			const newMap = await fillMasks(replaceMap, element);
 
 			let text = await replaceDataText(mail.text, newMap);
 			text = await replaceCustomParameters(text, '', '', element.id);
-			// console.log('-------------------\nto', element.email, '\n', text);
 
 			let html = await readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
 			html = await html.replace('[CONTEUDO_MAIL]', text); // add nome to mail template
@@ -260,64 +266,66 @@ async function handleIndicadoMail(spreadsheet, today, days, paramName, mail, fam
 async function test() {
 	const spreadsheet = await help.getFormatedSpreadsheet();
 	const d = new Date(Date.now());	const today = help.moment(d);
-	const mod1Days = 239;
-	const mod2Days = 275;
-	const mod3Days = 303;
+	const mod1Days = 236;
+	const mod2Days = 272;
+	const mod3Days = 300;
 
-	await handleAlunaMail(spreadsheet, today, 0 + mod1Days, 'módulo1', emails.mail1, [ // 19
-		{ mask: 'GRUPOWHATS', data: process.env.GRUPOWHATSAP },
-		{ mask: 'LINKDONNA', data: process.env.LINK_DONNA },
-		{ mask: 'MODULO1', data: '' },
-		{ mask: 'LOCAL', data: '' },
-		{ mask: 'FDSMOD1', data: '' },
-		{ mask: 'FDSMOD2', data: '' },
-		{ mask: 'FDSMOD3', data: '' },
-	]);
-	await handleAlunaMail(spreadsheet, today, 0 + mod1Days, 'módulo1', emails.mail2, [ // 19
-		{ mask: 'SONDAGEMPRE', data: process.env.SONDAGEM_PRE_LINK },
-		{ mask: 'INDICACAO360', data: process.env.INDICACAO360_LINK },
-		{ mask: 'DISC_LINK', data: process.env.DISC_LINK1 },
-		{ mask: 'LINKDONNA', data: process.env.LINK_DONNA },
-		{ mask: 'TURMA', data: '' },
-		{ mask: 'MOD1_15DIAS', data: '' },
-		{ mask: 'MOD1_2DIAS', data: '' },
-	]);
-	await handleIndicadoMail(spreadsheet, today, 1 + mod1Days, 'módulo1', emails.mail3, false, [ // 10
-		{ mask: 'AVALIADORPRE', data: process.env.AVALIADOR360PRE_LINK },
-		{ mask: 'MOD1_2DIAS', data: '' },
-	]);
-	await handleAlunaMail(spreadsheet, today, 1 + mod1Days, 'módulo1 + mod1Days', emails.mail4, [ // 10
-		{ mask: 'AVALIADORPRE', data: process.env.AVALIADOR360PRE_LINK },
-		{ mask: 'MOD1_2DIAS', data: '' },
-	]);
-	await handleAlunaMail(spreadsheet, today, 2 + mod1Days, 'módulo1', emails.mail5, [{ mask: 'AVALIACAO1', data: process.env.MODULO1_LINK }]); // -5
-	await handleAlunaMail(spreadsheet, today, 3 + mod2Days, 'módulo2', emails.mail6, [{ mask: 'LINKDONNA', data: process.env.LINK_DONNA }]); // 12
-	await handleAlunaMail(spreadsheet, today, 4 + mod2Days, 'módulo2', emails.mail7, [ // -5
-		{ mask: 'EMAILMENTORIA', data: process.env.EMAILMENTORIA },
-		{ mask: 'MOD3_LASTDAY', data: '' },
-		{ mask: 'MOD3_2DIAS', data: '' },
-	]);
-	await handleAlunaMail(spreadsheet, today, 5 + mod2Days, 'módulo2', emails.mail8, [{ mask: 'AVALIACAO2', data: process.env.MODULO2_LINK }]); // -5
-	await handleAlunaMail(spreadsheet, today, 6 + mod3Days, 'módulo3', emails.mail9, [ // 12
-		{ mask: 'SONDAGEMPOS', data: process.env.SONDAGEM_POS_LINK },
-		{ mask: 'DISC_LINK', data: process.env.DISC_LINK2 },
-		{ mask: 'TURMA', data: '' },
-		{ mask: 'MOD3_7DIAS', data: '' },
-	]);
-	await handleIndicadoMail(spreadsheet, today, 7 + mod3Days, 'módulo3', emails.mail10, false, [ // 12
-		{ mask: 'AVALIADORPOS', data: process.env.AVALIADOR360POS_LINK },
-		{ mask: 'MOD3_7DIAS', data: '' }]);
-	await handleAlunaMail(spreadsheet, today, 8 + mod3Days, 'módulo3', emails.mail11, [ // 12
-		{ mask: 'AVALIADORPOS', data: process.env.AVALIADOR360POS_LINK },
-		{ mask: 'MOD3_LASTDAY', data: '' },
-		{ mask: 'MOD3_7DIAS', data: '' },
-	]);
-	await handleIndicadoMail(spreadsheet, today, 8 + mod3Days, 'módulo3', emails.mail12, true, [ // 12
-		{ mask: 'NUMBERWHATSAP', data: process.env.NUMBERWHATSAP },
-		{ mask: 'MOD3_LASTDAY', data: '' },
-	]);
-	await handleAlunaMail(spreadsheet, today, 9 + mod3Days, 'módulo3', emails.mail13, [{ mask: 'AVALIACAO3', data: process.env.MODULO3_LINK }]); // 1
-	await handleAlunaMail(spreadsheet, today, 10 + mod3Days, 'módulo3', emails.mail14, [{ mask: 'AVALIACAO3', data: process.env.MODULO3_LINK }]); // -5
+
+	await handleAlunaMail(spreadsheet, today, 10 + mod1Days, 'módulo1', emails.mail1, { // 19
+		GRUPOWHATS: process.env.GRUPOWHATSAP,
+		LINKDONNA: process.env.LINK_DONNA,
+		MODULO1: '',
+		LOCAL: '',
+		FDSMOD1: '',
+		FDSMOD2: '',
+		FDSMOD3: '',
+	});
+	await handleAlunaMail(spreadsheet, today, 10 + mod1Days, 'módulo1', emails.mail2, { // 19
+		SONDAGEMPRE: process.env.SONDAGEM_PRE_LINK,
+		INDICACAO360: process.env.INDICACAO360_LINK,
+		DISC_LINK: process.env.DISC_LINK1,
+		LINKDONNA: process.env.LINK_DONNA,
+		TURMA: '',
+		MOD1_15DIAS: '',
+		MOD1_2DIAS: '',
+	});
+	await handleIndicadoMail(spreadsheet, today, 1 + mod1Days, 'módulo1', emails.mail3, false, { // 10
+		AVALIADORPRE: process.env.AVALIADOR360PRE_LINK,
+		MOD1_2DIAS: '',
+	});
+	await handleAlunaMail(spreadsheet, today, 1 + mod1Days, 'módulo1', emails.mail4, { // 10
+		AVALIADORPRE: process.env.AVALIADOR360PRE_LINK,
+		MOD1_2DIAS: '',
+	});
+	await handleAlunaMail(spreadsheet, today, 2 + mod1Days, 'módulo1', emails.mail5, { AVALIACAO1: process.env.MODULO1_LINK }); // -5
+	await handleAlunaMail(spreadsheet, today, 3 + mod2Days, 'módulo2', emails.mail6, { LINKDONNA: process.env.LINK_DONNA }); // 12
+	await handleAlunaMail(spreadsheet, today, 4 + mod2Days, 'módulo2', emails.mail7, { // -5
+		EMAILMENTORIA: process.env.EMAILMENTORIA,
+		MOD3_LASTDAY: '',
+		MOD3_2DIAS: '',
+	});
+	await handleAlunaMail(spreadsheet, today, 5 + mod2Days, 'módulo2', emails.mail8, { AVALIACAO2: process.env.MODULO2_LINK }); // -5
+	await handleAlunaMail(spreadsheet, today, 6 + mod3Days, 'módulo3', emails.mail9, { // 12
+		SONDAGEMPOS: process.env.SONDAGEM_POS_LINK,
+		DISC_LINK: process.env.DISC_LINK2,
+		TURMA: '',
+		MOD3_7DIAS: '',
+	});
+	await handleIndicadoMail(spreadsheet, today, 7 + mod3Days, 'módulo3', emails.mail10, false, { // 12
+		AVALIADORPOS: process.env.AVALIADOR360POS_LINK,
+		MOD3_7DIAS: '',
+	});
+	await handleAlunaMail(spreadsheet, today, 8 + mod3Days, 'módulo3', emails.mail11, { // 12
+		MOD3_7DIAS: '',
+		AVALIADORPOS: process.env.AVALIADOR360POS_LINK,
+		MOD3_LASTDAY: '',
+	});
+	await handleIndicadoMail(spreadsheet, today, 8 + mod3Days, 'módulo3', emails.mail12, true, { // 12
+		NUMBERWHATSAP: process.env.NUMBERWHATSAP,
+		MOD3_LASTDAY: '',
+	});
+	await handleAlunaMail(spreadsheet, today, 9 + mod3Days, 'módulo3', emails.mail13, { AVALIACAO3: process.env.MODULO3_LINK }); // 1
+	await handleAlunaMail(spreadsheet, today, 10 + mod3Days, 'módulo3', emails.mail14, { AVALIACAO3: process.env.MODULO3_LINK }); // -5
 }
 
 

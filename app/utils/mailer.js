@@ -4,19 +4,21 @@ const { createReadStream } = require('fs');
 const nodemailer = require('nodemailer');
 // const { Sentry } = require('./helper');
 
-const user = process.env.SENDER_EMAIL;
-const pass = process.env.SENDER_PASSWORD;
-// const sendTo = process.env.EMAIL_TO_RECEIVE;
-const service = process.env.SERVICE;
-
+const user = process.env.MAIL_USER;
+const pass = process.env.MAIL_PASS;
+const host = process.env.MAIL_HOST;
+const port = process.env.MAIL_PORT;
+const service = process.env.MAIL_SERVICE;
+const from = process.env.MAIL_FROM;
 
 const transporter = nodemailer.createTransport({
 	service,
-	// host: process.env.SMTP_SERVER,
-	// port: process.env.SMTP_PORT,
+	host,
+	port,
 	auth: {
 		user,
 		pass,
+		secure: true, // use SSL
 	},
 	tls: { rejectUnauthorized: false },
 	debug: true,
@@ -24,10 +26,7 @@ const transporter = nodemailer.createTransport({
 
 async function sendTestMail(subject, text, to) {
 	const options = {
-		from: user,
-		to,
-		subject,
-		text,
+		from, to, subject, text,
 	};
 
 	try {
@@ -41,10 +40,7 @@ async function sendTestMail(subject, text, to) {
 
 async function sendHTMLMail(subject, to, html, anexo) {
 	const options = {
-		from: user,
-		to,
-		subject,
-		html,
+		from, to, subject, html,
 	};
 
 	if (anexo) {
@@ -67,11 +63,7 @@ async function sendHTMLMail(subject, to, html, anexo) {
 }
 async function sendHTMLFile(subject, to, html, pdf, png) {
 	const options = {
-		from: user,
-		to,
-		subject,
-		html,
-		attachments: [],
+		from, to, subject, html, attachments: [],
 	};
 
 	if (pdf && pdf.filename && pdf.content) {
