@@ -43,9 +43,9 @@ async function getAlunasFromModule(spreadsheet, today, days, paramName) {
 	modulex.forEach((element) => {
 		const modxDate = help.moment(element[paramName]); // get when that module starts
 		const diff = modxDate.diff(today, 'days');
-		if (diff === days) { // find the turma(s) that matches the criteria
-			getTurmas.push(element);
-		}
+		// if (diff === days) { // find the turma(s) that matches the criteria
+		getTurmas.push(element);
+		// }
 	});
 
 	const alunas = await getAlunasFromTurmas(getTurmas);
@@ -269,63 +269,90 @@ async function test() {
 	const mod1Days = 236;
 	const mod2Days = 272;
 	const mod3Days = 300;
-
-
-	await handleAlunaMail(spreadsheet, today, 10 + mod1Days, 'módulo1', emails.mail1, { // 19
-		GRUPOWHATS: process.env.GRUPOWHATSAP,
-		LINKDONNA: process.env.LINK_DONNA,
-		MODULO1: '',
-		LOCAL: '',
-		FDSMOD1: '',
-		FDSMOD2: '',
-		FDSMOD3: '',
-	});
-	await handleAlunaMail(spreadsheet, today, 10 + mod1Days, 'módulo1', emails.mail2, { // 19
-		SONDAGEMPRE: process.env.SONDAGEM_PRE_LINK,
-		INDICACAO360: process.env.INDICACAO360_LINK,
-		DISC_LINK: process.env.DISC_LINK1,
-		LINKDONNA: process.env.LINK_DONNA,
-		TURMA: '',
-		MOD1_15DIAS: '',
-		MOD1_2DIAS: '',
-	});
-	await handleIndicadoMail(spreadsheet, today, 1 + mod1Days, 'módulo1', emails.mail3, false, { // 10
-		AVALIADORPRE: process.env.AVALIADOR360PRE_LINK,
-		MOD1_2DIAS: '',
-	});
-	await handleAlunaMail(spreadsheet, today, 1 + mod1Days, 'módulo1', emails.mail4, { // 10
-		AVALIADORPRE: process.env.AVALIADOR360PRE_LINK,
-		MOD1_2DIAS: '',
-	});
-	await handleAlunaMail(spreadsheet, today, 2 + mod1Days, 'módulo1', emails.mail5, { AVALIACAO1: process.env.MODULO1_LINK }); // -5
-	await handleAlunaMail(spreadsheet, today, 3 + mod2Days, 'módulo2', emails.mail6, { LINKDONNA: process.env.LINK_DONNA }); // 12
-	await handleAlunaMail(spreadsheet, today, 4 + mod2Days, 'módulo2', emails.mail7, { // -5
-		EMAILMENTORIA: process.env.EMAILMENTORIA,
-		MOD3_LASTDAY: '',
-		MOD3_2DIAS: '',
-	});
-	await handleAlunaMail(spreadsheet, today, 5 + mod2Days, 'módulo2', emails.mail8, { AVALIACAO2: process.env.MODULO2_LINK }); // -5
-	await handleAlunaMail(spreadsheet, today, 6 + mod3Days, 'módulo3', emails.mail9, { // 12
-		SONDAGEMPOS: process.env.SONDAGEM_POS_LINK,
-		DISC_LINK: process.env.DISC_LINK2,
-		TURMA: '',
-		MOD3_7DIAS: '',
-	});
-	await handleIndicadoMail(spreadsheet, today, 7 + mod3Days, 'módulo3', emails.mail10, false, { // 12
-		AVALIADORPOS: process.env.AVALIADOR360POS_LINK,
-		MOD3_7DIAS: '',
-	});
-	await handleAlunaMail(spreadsheet, today, 8 + mod3Days, 'módulo3', emails.mail11, { // 12
-		MOD3_7DIAS: '',
-		AVALIADORPOS: process.env.AVALIADOR360POS_LINK,
-		MOD3_LASTDAY: '',
-	});
-	await handleIndicadoMail(spreadsheet, today, 8 + mod3Days, 'módulo3', emails.mail12, true, { // 12
-		NUMBERWHATSAP: process.env.NUMBERWHATSAP,
-		MOD3_LASTDAY: '',
-	});
-	await handleAlunaMail(spreadsheet, today, 9 + mod3Days, 'módulo3', emails.mail13, { AVALIACAO3: process.env.MODULO3_LINK }); // 1
-	await handleAlunaMail(spreadsheet, today, 10 + mod3Days, 'módulo3', emails.mail14, { AVALIACAO3: process.env.MODULO3_LINK }); // -5
+	const minute = 60000;
+	setTimeout(async () => {
+		await handleAlunaMail(spreadsheet, today, 10 + mod1Days, 'módulo1', emails.mail1, { // 19
+			GRUPOWHATS: process.env.GRUPOWHATSAP,
+			LINKDONNA: process.env.LINK_DONNA,
+			MODULO1: '',
+			LOCAL: '',
+			FDSMOD1: '',
+			FDSMOD2: '',
+			FDSMOD3: '',
+		});
+	}, minute * 0);
+	setTimeout(async () => {
+		await handleAlunaMail(spreadsheet, today, 10 + mod1Days, 'módulo1', emails.mail2, { // 19
+			SONDAGEMPRE: process.env.SONDAGEM_PRE_LINK,
+			INDICACAO360: process.env.INDICACAO360_LINK,
+			DISC_LINK: process.env.DISC_LINK1,
+			LINKDONNA: process.env.LINK_DONNA,
+			TURMA: '',
+			MOD1_15DIAS: '',
+			MOD1_2DIAS: '',
+		});
+	}, minute * 1);
+	setTimeout(async () => {
+		await handleIndicadoMail(spreadsheet, today, 1 + mod1Days, 'módulo1', emails.mail3, false, { // 10
+			AVALIADORPRE: process.env.AVALIADOR360PRE_LINK,
+			MOD1_2DIAS: '',
+		});
+	}, minute * 2);
+	setTimeout(async () => {
+		await handleAlunaMail(spreadsheet, today, 1 + mod1Days, 'módulo1', emails.mail4, { // 10
+			AVALIADORPRE: process.env.AVALIADOR360PRE_LINK,
+			MOD1_2DIAS: '',
+		});
+	}, minute * 3);
+	setTimeout(async () => {
+		await handleAlunaMail(spreadsheet, today, 2 + mod1Days, 'módulo1', emails.mail5, { AVALIACAO1: process.env.MODULO1_LINK }); // -5
+	}, minute * 4);
+	setTimeout(async () => {
+		await handleAlunaMail(spreadsheet, today, 3 + mod2Days, 'módulo2', emails.mail6, { LINKDONNA: process.env.LINK_DONNA }); // 12
+	}, minute * 5);
+	setTimeout(async () => {
+		await handleAlunaMail(spreadsheet, today, 4 + mod2Days, 'módulo2', emails.mail7, { // -5
+			EMAILMENTORIA: process.env.EMAILMENTORIA,
+			MOD3_LASTDAY: '',
+			MOD3_2DIAS: '',
+		});
+	}, minute * 6);
+	setTimeout(async () => {
+		await handleAlunaMail(spreadsheet, today, 5 + mod2Days, 'módulo2', emails.mail8, { AVALIACAO2: process.env.MODULO2_LINK }); // -5
+	}, minute * 7);
+	setTimeout(async () => {
+		await handleAlunaMail(spreadsheet, today, 6 + mod3Days, 'módulo3', emails.mail9, { // 12
+			SONDAGEMPOS: process.env.SONDAGEM_POS_LINK,
+			DISC_LINK: process.env.DISC_LINK2,
+			TURMA: '',
+			MOD3_7DIAS: '',
+		});
+	}, minute * 8);
+	setTimeout(async () => {
+		await handleIndicadoMail(spreadsheet, today, 7 + mod3Days, 'módulo3', emails.mail10, false, { // 12
+			AVALIADORPOS: process.env.AVALIADOR360POS_LINK,
+			MOD3_7DIAS: '',
+		});
+	}, minute * 9);
+	setTimeout(async () => {
+		await handleAlunaMail(spreadsheet, today, 8 + mod3Days, 'módulo3', emails.mail11, { // 12
+			MOD3_7DIAS: '',
+			AVALIADORPOS: process.env.AVALIADOR360POS_LINK,
+			MOD3_LASTDAY: '',
+		});
+	}, minute * 10);
+	setTimeout(async () => {
+		await handleIndicadoMail(spreadsheet, today, 8 + mod3Days, 'módulo3', emails.mail12, true, { // 12
+			NUMBERWHATSAP: process.env.NUMBERWHATSAP,
+			MOD3_LASTDAY: '',
+		});
+	}, minute * 11);
+	setTimeout(async () => {
+		await handleAlunaMail(spreadsheet, today, 9 + mod3Days, 'módulo3', emails.mail13, { AVALIACAO3: process.env.MODULO3_LINK }); // 1
+	}, minute * 12);
+	setTimeout(async () => {
+		await handleAlunaMail(spreadsheet, today, 10 + mod3Days, 'módulo3', emails.mail14, { AVALIACAO3: process.env.MODULO3_LINK }); // -5
+	}, minute * 13);
 }
 
 
@@ -341,7 +368,7 @@ const FirstTimer = new CronJob(
 	false, // runOnInit = true useful only for tests
 );
 
-
+test();
 module.exports = {
 	FirstTimer, handleIndicadoMail, handleAlunaMail,
 };
