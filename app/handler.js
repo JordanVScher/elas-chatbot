@@ -124,8 +124,8 @@ module.exports = async (context) => {
 			await context.sendText(flow.talkToElas.text1);
 			await context.sendText(flow.talkToElas.text2);
 			await context.sendText(flow.talkToElas.text3);
-			await context.sendText(flow.talkToElas.text4);
-			await attach.sendShare(context, flow.shareElas);
+			// await context.sendText(flow.talkToElas.text4);
+			// await attach.sendShare(context, flow.shareElas);
 			break;
 		// 	await context.sendText(flow.sendFirst.text1);
 		// 	await context.sendText(flow.sendFirst.text2);
