@@ -162,8 +162,7 @@ async function formatDialogFlow(text) {
 
 function getPercentageChange(oldNumber, newNumber) {
 	const decreaseValue = oldNumber - newNumber;
-	// const result = ((decreaseValue / oldNumber) * 100) * -1; // invert progression, if the number went up show a positive percentage
-	const result = Math.abs((decreaseValue / oldNumber) * 100); // check
+	const result = ((decreaseValue / oldNumber) * 100) * -1; // invert progression, if the number went up show a positive percentage
 	return parseFloat(result.toFixed(2), 10);
 }
 

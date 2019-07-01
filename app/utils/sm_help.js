@@ -71,32 +71,51 @@ async function separateIndicadosData(cpf) {
 	return result;
 }
 
+// check if the generated pdf wont be created empty
+async function checkIfDataExists(data) {
+	let check = false;
+
+	for (let i = 0; i < data.length; i++) {
+		const element = data[i];
+
+		if (element.avaliasPre || element.exemploPre || element.melhoraPre || element.avaliasPos || data[0].houveEvolucao || data[0].ondeEvolucao) {
+			check = true;	i = data.length;
+		}
+	}
+
+	return check;
+}
+
 async function buildIndicadoChart(cpf) {
 	const data = await separateIndicadosData(cpf);
 
-	const styleDiv = 'font-size:10pt;margin-left:1.5em;margin-right:1.5em;margin-bottom:0.5em;margin-top:2.0em';
-	let html = `<p style="${styleDiv}"><h1>Resultados</h1></p>`;
-	html += `<table style="width:100% border:1px solid black " border=1>
- 	<tr> <th>Questão Pré</th> <th>Avaliação Pré</th> <th>Exemplo Pré</th> <th>Oportunidade Pré</th> `;
-	data.forEach((element) => {
-		html += `<tr> <td>${element.titlePre}</td> <td>${element.avaliasPre}</td> 
-				<td>${element.exemploPre}</td> <td>${element.melhoraPre}</td> </tr>`;
-	});
-	html += '</table><br><br>';
-	html += `<table style="width:100% border:1px solid black" border=1>
- 	<tr> <th>Questão Pós</th> <th>Avaliação Pós</th>`;
-	data.forEach((element) => {
-		html += `<tr> <td>${element.titlePos}</td> <td>${element.avaliasPos}</td> </tr>`;
-	});
-	html += '</table>';
+	if (await checkIfDataExists(data) === true) {
+		const styleDiv = 'font-size:10pt;margin-left:1.5em;margin-right:1.5em;margin-bottom:0.5em;margin-top:2.0em';
+		let html = `<p style="${styleDiv}"><h1>Resultados</h1></p>`;
+		html += `<table style="width:100% border:1px solid black " border=1>
+		<tr> <th>Questão Pré</th> <th>Avaliação Pré</th> <th>Exemplo Pré</th> <th>Oportunidade Pré</th> `;
+		data.forEach((element) => {
+			html += `<tr> <td>${element.titlePre}</td> 
+			<td>${element.avaliasPre}</td> <td>${element.exemploPre}</td> <td>${element.melhoraPre}</td> </tr>`;
+		});
+		html += '</table><br><br>';
+		html += `<table style="width:100% border:1px solid black" border=1>
+		<tr> <th>Questão Pós</th> <th>Avaliação Pós</th>`;
+		data.forEach((element) => {
+			html += `<tr> <td>${element.titlePos}</td> <td>${element.avaliasPos}</td> </tr>`;
+		});
+		html += '</table>';
 
-	html += `<p style="${styleDiv}"><h5>Houve evolução?</h5></p> <div> ${data[0].houveEvolucao} </div>`;
-	html += `<p style="${styleDiv}"><h5>Onde houve evolução?</h5></p> <div> ${data[0].ondeEvolucao} </div>`;
+		html += `<p style="${styleDiv}"><h5>Houve evolução?</h5></p> <div> ${data[0].houveEvolucao} </div>`;
+		html += `<p style="${styleDiv}"><h5>Onde houve evolução?</h5></p> <div> ${data[0].ondeEvolucao} </div>`;
 
-	const createPDFAsync = promisify(helper.pdf.create);
-	const result = await createPDFAsync(html).then(tmp => tmp).catch(err => console.log(err));
 
-	return result;
+		const createPDFAsync = promisify(helper.pdf.create);
+		const result = await createPDFAsync(html).then(tmp => tmp).catch(err => console.log(err));
+
+		return result;
+	}
+	return [];
 }
 
 

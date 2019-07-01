@@ -368,7 +368,7 @@ const FirstTimer = new CronJob(
 	false, // runOnInit = true useful only for tests
 );
 
-test();
+
 module.exports = {
 	FirstTimer, handleIndicadoMail, handleAlunaMail,
 };

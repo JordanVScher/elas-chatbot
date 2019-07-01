@@ -1,9 +1,9 @@
 /* eslint no-param-reassign: 0 */ // --> OFF
 
-const fs = require('fs');
+// const fs = require('fs');
 const { CanvasRenderService } = require('chartjs-node-canvas');
 const { createCanvas } = require('canvas');
-const mailer = require('./utils/mailer');
+// const mailer = require('./utils/mailer');
 
 const colors = {
 	darkBlue: '#172244',
@@ -82,9 +82,13 @@ const chartCallback = (ChartJS) => {
 			chartInstance.data.datasets.forEach((dataset) => {
 				for (let i = 0; i < dataset.data.length; i++) {
 					ctx.fillStyle = 'black'; // label color
+					let positionChange = 8;
+					if (dataset.data[i] < 0) {
+						positionChange = 45;
+					}
 					const view = dataset._meta['0'].data[i]._view; // view.x -> end of each bar
 					const valueLabel = `${dataset.data[i].toString().replace('.', ',')}%`; // format number to appear as percentage text
-					ctx.fillText(valueLabel, view.x + 8, view.y + 8);
+					ctx.fillText(valueLabel, view.x + positionChange, view.y + 8);
 				}
 			});
 		},

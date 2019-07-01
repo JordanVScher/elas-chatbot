@@ -107,6 +107,7 @@ module.exports = async (context) => {
 			await context.sendText('Ainda não tenho esse CPF! Digite de novo!');
 			break;
 		case 'confirmaMatricula':
+			await db.linkUserToCPF(context.session.user.id, context.state.cpf);
 			await context.setState({ agendaData: await dialogs.getAgenda(context), matricula: true });
 			await context.sendText(flow.confirmaMatricula.text1);
 			await context.sendText(await dialogs.buildAgendaMsg(context.state.agendaData), await attach.getQR(flow.confirmaMatricula));
