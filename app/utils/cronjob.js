@@ -5,8 +5,7 @@ const db = require('./DB_helper');
 const mailer = require('./mailer');
 const emails = require('./emails');
 const broadcast = require('./broadcast');
-const { buildIndicadoChart } = require('./sm_help');
-const { buildAlunoChart } = require('./sm_help');
+const charts = require('./charts');
 
 // for each turma get the alunas in them
 async function getAlunasFromTurmas(turmas) {
@@ -182,11 +181,11 @@ async function fillMasks(replaceMap, alunaData) {
 
 async function sendRelatorios(mail, aluna, html) {
 	const pdf = { filename: `${aluna.cpf}_360Results.pdf` };
-	const { filename } = await buildIndicadoChart(aluna.cpf); // actually path
+	const { filename } = await charts.buildIndicadoChart(aluna.cpf); // actually path
 	pdf.content = filename || false;
 
 	const png = { filename: `${aluna.cpf}_sondagem.png` };
-	png.content = await buildAlunoChart(aluna.cpf); // actually buffer
+	png.content = await charts.buildAlunoChart(aluna.cpf); // actually buffer
 
 	await mailer.sendHTMLFile(mail.subject, aluna.email, html, pdf, png); // send both attachments to e-mail
 	const newText = mail.chatbotText.replace('[NOMEUM]', aluna.nome_completo);
@@ -269,7 +268,7 @@ async function test() {
 	const mod1Days = 235;
 	const mod2Days = 271;
 	const mod3Days = 299;
-	const minute = 60000;
+	const minute = 60000 * 5;
 	setTimeout(async () => {
 		await handleAlunaMail(spreadsheet, today, 10 + mod1Days, 'módulo1', emails.mail1, { // 19
 			GRUPOWHATS: process.env.GRUPOWHATSAP,
@@ -297,13 +296,13 @@ async function test() {
 			AVALIADORPRE: process.env.AVALIADOR360PRE_LINK,
 			MOD1_2DIAS: '',
 		});
-	}, minute * 3);
+	}, minute * 2);
 	setTimeout(async () => {
 		await handleAlunaMail(spreadsheet, today, 1 + mod1Days, 'módulo1', emails.mail4, { // 10
 			AVALIADORPRE: process.env.AVALIADOR360PRE_LINK,
 			MOD1_2DIAS: '',
 		});
-	}, minute * 2);
+	}, minute * 3);
 	setTimeout(async () => {
 		await handleAlunaMail(spreadsheet, today, 2 + mod1Days, 'módulo1', emails.mail5, { AVALIACAO1: process.env.MODULO1_LINK }); // -5
 	}, minute * 4);
