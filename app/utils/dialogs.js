@@ -23,6 +23,7 @@ module.exports.handleCPF = async (context) => {
 	} else if (await db.checkCPF(cpf) === false) { // check if this cpf exists
 		await context.setState({ dialog: 'CPFNotFound' });
 	} else {
+		await db.linkUserToCPF(context.session.user.id, context.state.cpf);
 		await context.setState({ cpf, gotTurma: await db.getUserTurma(context.session.user.id) });
 		await context.setState({ dialog: 'validCPF' });
 	}
