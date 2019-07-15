@@ -439,4 +439,17 @@ Nós estamos ansiosas para te ver, até lá!!
 			{ content_type: 'text', title: 'Ok', payload: 'mainMenu' },
 		],
 	},
+	warning1h: {
+		subject: '[ LEMBRETE ] - Programa ELAS',
+		text: '',
+		chatbotText: `Ludmila mandou dizer que é hooooje!! Bora se animar para mais um dia ELAAAAS? 
+
+Te esperamos hein!! 
+https://www.youtube.com/watch?v=y6Sxv-sUYtM
+
+`,
+		chatbotButton: [
+			{ content_type: 'text', title: 'Ok', payload: 'mainMenu' },
+		],
+	},
 };

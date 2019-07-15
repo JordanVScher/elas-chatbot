@@ -378,9 +378,9 @@ const FirstTimer = new CronJob(
 	false, // runOnInit = true useful only for tests
 );
 
-async function getAlunas24h(spreadsheet, today, hour) {
+async function getAlunasNotiication(spreadsheet, today, hour) {
 	const getTurmas = [];
-	const hourDiff = hour || 24;
+	const hourDiff = -hour;
 	const datahoras = ['datahora1', 'datahora2', 'datahora3'];
 	const modulex = await spreadsheet.filter(x => x[datahoras[0]] || x[datahoras[1]] || x[datahoras[2]]); // get turmas that have this param name (ex: módulo1)
 
@@ -389,7 +389,7 @@ async function getAlunas24h(spreadsheet, today, hour) {
 			if (turma[coluna]) {
 				const modxDate = help.moment(turma[coluna]); // get when that module starts
 				const currentHourDiff = modxDate.diff(today, 'hours');
-				if (currentHourDiff === (hourDiff * -1)) { // check if now is exactly 'hourDiff' before modxDate
+				if (currentHourDiff === hourDiff) { // check if now is exactly 'hourDiff' before modxDate
 					getTurmas.push({
 						turma: turma.turma, moduloAvisar: index + 1, local: turma.local, dataHora: turma[coluna],
 					});
@@ -397,14 +397,13 @@ async function getAlunas24h(spreadsheet, today, hour) {
 			}
 		});
 	});
-
 	const alunas = await getAlunasFromTurmas(getTurmas);
 	return alunas || [];
 }
 
-async function handle24hNotification(spreadsheet, today, hourDiff, mail, originalMap = []) {
+async function handleNotification(spreadsheet, today, hourDiff, mail, originalMap = []) {
 	const replaceMap = originalMap;
-	const alunas = await getAlunas24h(spreadsheet, today, hourDiff);
+	const alunas = await getAlunasNotiication(spreadsheet, today, hourDiff);
 	const alunasOnFB = alunas.filter(x => x.fb_id);
 	for (let i = 0; i < alunasOnFB.length; i++) {
 		const element = alunasOnFB[i];
@@ -412,6 +411,8 @@ async function handle24hNotification(spreadsheet, today, hourDiff, mail, origina
 		const newMap = await fillMasks(replaceMap, element);
 		const text = await replaceDataText(mail.chatbotText, newMap); // build e-mail text
 		// text = await replaceCustomParameters(text, element.turma, element.cpf, '');
+		console.log(text);
+
 		await broadcast.sendBroadcastAluna(element.fb_id, text, mail.chatbotButton);
 	}
 }
@@ -419,13 +420,15 @@ async function handle24hNotification(spreadsheet, today, hourDiff, mail, origina
 async function test2() {
 	const spreadsheet = await help.getFormatedSpreadsheet();
 	const d = new Date(Date.now());	d.setHours(d.getHours() - 3); const today = help.moment(d);
+	console.log(d);
 
-	await handle24hNotification(spreadsheet, today, 24, emails.warning24h, {
+	await handleNotification(spreadsheet, today, 24, emails.warning24h, {
 		MODULOAVISAR: '', LOCAL: '', DATAHORA: '', ATIVIDADESCOMPLETAS: '',
 	});
+	// await handleNotification(spreadsheet, today, 1, emails.warning1h, {});
 }
 
-// test2();
+test2();
 module.exports = {
 	FirstTimer, handleIndicadoMail, handleAlunaMail, test,
 };
