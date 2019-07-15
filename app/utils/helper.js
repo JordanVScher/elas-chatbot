@@ -52,6 +52,11 @@ const weekDayNameLong = {
 	0: 'Domingo', 1: 'Segunda-Feira', 2: 'Terça-Feira', 3: 'Quarta-Feira', 4: 'Quinta-Feira', 5: 'Sexta-Feira', 6: 'Sábado', 7: 'Domingo',
 };
 
+// ATIVIDADESCOMPLETAS
+const atividadesCompletas = {
+	1: 'Atividades 1, 2 e 3', 2: 'Atividades 4, 5 e 6', 3: 'Atividades 7, 8 e 9',
+};
+
 
 function formatDate(date) {
 	let day = date.getDate() + 1; // different timezone from spreadsheet
@@ -64,6 +69,10 @@ function formatDate(date) {
 
 async function formatModulo1(date) {
 	return `dia ${moment(date).utcOffset('+0000').format('DD')} de ${moment(date).utcOffset('+0000').format('MMMM')}`;
+}
+async function formatModuloHora(date) {
+	return `dia ${moment(date).utcOffset('+0000').format('DD')} de ${moment(date).utcOffset('+0000').format('MMMM')} as `
+	+ `${moment(date).utcOffset('+0000').format('HH:mm')}`;
 }
 
 async function formatFdsMod(date) {
@@ -120,9 +129,15 @@ async function getFormatedSpreadsheet() {
 		const aux = {};
 		// eslint-disable-next-line no-loop-func
 		await Object.keys(obj).forEach(async (key) => {
-			const value = obj[key] ? obj[key].toString() : '';
-			if (value.length === 5 && typeof obj[key] !== 'string') { // date is 5 digit long, originally its not a string
+			if (key.slice(0, 6) === 'módulo') { // date is 5 digit long, originally its not a string
 				aux[key] = await getJsDateFromExcel(obj[key]);
+				const whichModule = key.replace('módulo', '');
+				let newDatahora = obj[key] + aux[`horárioMódulo${whichModule}`];
+				newDatahora = await getJsDateFromExcel(newDatahora);
+				if (newDatahora.getMilliseconds() === 999) {
+					newDatahora.setMilliseconds(newDatahora.getMilliseconds() + 1);
+				}
+				aux[`datahora${whichModule}`] = newDatahora;
 			} else {
 				aux[key] = obj[key];
 			}
@@ -132,6 +147,7 @@ async function getFormatedSpreadsheet() {
 
 	return result;
 }
+
 
 // separates string in the first dot on the second half of the string
 async function separateString(someString) {
@@ -184,6 +200,8 @@ module.exports = {
 	pdf,
 	getJsDateFromExcel,
 	formatModulo1,
+	formatModuloHora,
 	formatFdsMod,
 	formatDiasMod,
+	atividadesCompletas,
 };

@@ -17,10 +17,12 @@ async function getAlunasFromTurmas(turmas) {
 			const aux = await db.getAlunasFromTurma(element.turma);
 			aux.forEach((element2) => {
 				const extendedAluna = element2; // add more information for each aluna
-				extendedAluna.mod1 = element['módulo1'];
-				extendedAluna.mod2 = element['módulo2'];
-				extendedAluna.mod3 = element['módulo3'];
-				extendedAluna.local = element.local;
+				if (element['módulo1']) { extendedAluna.mod1 = element['módulo1']; }
+				if (element['módulo2']) { extendedAluna.mod2 = element['módulo2']; }
+				if (element['módulo3']) { extendedAluna.mod3 = element['módulo3']; }
+				if (element.local) { extendedAluna.local = element.local; }
+				if (element.moduloAvisar) { extendedAluna.moduloAvisar = element.moduloAvisar; }
+				if (element.dataHora) { extendedAluna.dataHora = element.dataHora; }
 				result.push(extendedAluna);
 			});
 		}
@@ -167,6 +169,15 @@ async function fillMasks(replaceMap, alunaData) {
 			case 'MOD3_7DIAS':
 				newData = await help.formatDiasMod(alunaData.mod3, -7);
 				break;
+			case 'MODULOAVISAR':
+				newData = alunaData.moduloAvisar ? alunaData.moduloAvisar.toString() : 'novo';
+				break;
+			case 'DATAHORA':
+				newData = await help.formatModuloHora(alunaData.dataHora);
+				break;
+			case 'ATIVIDADESCOMPLETAS':
+				newData = help.atividadesCompletas[alunaData.moduloAvisar];
+				break;
 			default:
 				break;
 			}
@@ -262,6 +273,7 @@ async function handleIndicadoMail(spreadsheet, today, days, paramName, mail, fam
 	}
 }
 
+
 async function test() {
 	const spreadsheet = await help.getFormatedSpreadsheet();
 	const d = new Date(Date.now());	const today = help.moment(d);
@@ -354,7 +366,6 @@ async function test() {
 	}, minute * 13);
 }
 
-
 const FirstTimer = new CronJob(
 	'00 00 8-22/1 * * *', async () => { // 8h except on sundays
 		console.log('Running FirstTimer');
@@ -367,7 +378,54 @@ const FirstTimer = new CronJob(
 	false, // runOnInit = true useful only for tests
 );
 
+async function getAlunas24h(spreadsheet, today, hour) {
+	const getTurmas = [];
+	const hourDiff = hour || 24;
+	const datahoras = ['datahora1', 'datahora2', 'datahora3'];
+	const modulex = await spreadsheet.filter(x => x[datahoras[0]] || x[datahoras[1]] || x[datahoras[2]]); // get turmas that have this param name (ex: módulo1)
 
+	modulex.forEach((turma) => {
+		datahoras.forEach((coluna, index) => {
+			if (turma[coluna]) {
+				const modxDate = help.moment(turma[coluna]); // get when that module starts
+				const currentHourDiff = modxDate.diff(today, 'hours');
+				if (currentHourDiff === (hourDiff * -1)) { // check if now is exactly 'hourDiff' before modxDate
+					getTurmas.push({
+						turma: turma.turma, moduloAvisar: index + 1, local: turma.local, dataHora: turma[coluna],
+					});
+				}
+			}
+		});
+	});
+
+	const alunas = await getAlunasFromTurmas(getTurmas);
+	return alunas || [];
+}
+
+async function handle24hNotification(spreadsheet, today, hourDiff, mail, originalMap = []) {
+	const replaceMap = originalMap;
+	const alunas = await getAlunas24h(spreadsheet, today, hourDiff);
+	const alunasOnFB = alunas.filter(x => x.fb_id);
+	for (let i = 0; i < alunasOnFB.length; i++) {
+		const element = alunasOnFB[i];
+		replaceMap.NOMEUM = element.nome_completo; // this mask is always necessary, so it's here by default
+		const newMap = await fillMasks(replaceMap, element);
+		const text = await replaceDataText(mail.chatbotText, newMap); // build e-mail text
+		// text = await replaceCustomParameters(text, element.turma, element.cpf, '');
+		await broadcast.sendBroadcastAluna(element.fb_id, text, mail.chatbotButton);
+	}
+}
+
+async function test2() {
+	const spreadsheet = await help.getFormatedSpreadsheet();
+	const d = new Date(Date.now());	d.setHours(d.getHours() - 3); const today = help.moment(d);
+
+	await handle24hNotification(spreadsheet, today, 24, emails.warning24h, {
+		MODULOAVISAR: '', LOCAL: '', DATAHORA: '', ATIVIDADESCOMPLETAS: '',
+	});
+}
+
+// test2();
 module.exports = {
 	FirstTimer, handleIndicadoMail, handleAlunaMail, test,
 };

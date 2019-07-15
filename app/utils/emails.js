@@ -421,4 +421,22 @@ Para que nós saibamos como tornar a experiência ainda melhor para nossas aluna
 [AVALIACAO3]
 `,
 	},
+	warning24h: {
+		subject: '[ LEMBRETE ] - Programa ELAS',
+		text: '',
+		chatbotText: `[NOMEUM], amanhã começa o Módulo [MODULOAVISAR]! Passando para te lembrar 😉
+As atividades, estão ok? E a animação, lá em cima?
+
+Local: [LOCAL]
+Data: [DATAHORA]
+
+As atividades que devem estar 100% para amanhã são:
+[ATIVIDADESCOMPLETAS]
+
+Nós estamos ansiosas para te ver, até lá!!
+`,
+		chatbotButton: [
+			{ content_type: 'text', title: 'Ok', payload: 'mainMenu' },
+		],
+	},
 };
