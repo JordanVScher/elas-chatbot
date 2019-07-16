@@ -122,14 +122,23 @@ async function getIndicadoRespostas(cpf) {
 	return indicado;
 }
 
-async function getIndicadoFromAluna(AlunaID, familiar) {
+// 3 booleans, each refine the search.
+// familiar = select only indicados that are familiar
+// preEmpty = if true, select only users that have answered pre already
+// posEmpty = if true, select only users that have answered pos already
+// if preEmpty or posEmpty are null, ignore this refinement
+async function getIndicadoFromAluna(AlunaID, familiar, pre, pos) {
 	let queryComplement = '';
-	if (familiar === true) {
-		queryComplement = 'AND familiar = \'true\'';
-	}
+	if (familiar === true) { queryComplement += 'AND INDICADOS.familiar = \'true\' ';	}
+	if (pre === true) { queryComplement += 'AND RESPOSTAS.pre IS NOT NULL '; } else if (pre === false) { queryComplement += 'AND RESPOSTAS.pre IS NULL ';	}
+	if (pos === true) { queryComplement += 'AND RESPOSTAS.pos IS NOT NULL '; } else if (pos === false) { queryComplement += 'AND RESPOSTAS.pos IS NULL '; }
+
+	console.log(`SELECT * FROM indicacao_avaliadores INDICADOS INNER JOIN indicados_respostas RESPOSTAS ON INDICADOS.id = RESPOSTAS.indicado_id
+	WHERE INDICADOS.aluno_id = '${AlunaID}' ${queryComplement};`);
 
 	const indicado = await sequelize.query(`
-	SELECT * from indicacao_avaliadores
+	SELECT * FROM 
+	indicacao_avaliadores INDICADOS INNER JOIN indicados_respostas RESPOSTAS ON INDICADOS.id = RESPOSTAS.indicado_id
 	WHERE aluno_id = '${AlunaID}' ${queryComplement};
 `).spread((results, metadata) => { // eslint-disable-line no-unused-vars
 		console.log(`Got ${AlunaID}'s indicados successfully!`);
@@ -138,7 +147,7 @@ async function getIndicadoFromAluna(AlunaID, familiar) {
 		console.error('Error on getIndicadoFromAluna => ', err);
 	});
 
-	return indicado;
+	return indicado || [];
 }
 
 async function upsertPrePos(userID, response, column) {

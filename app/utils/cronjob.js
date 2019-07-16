@@ -58,20 +58,20 @@ async function getAlunasFromModule(spreadsheet, today, days, paramName) {
 	alunas: array with alunas data
 	familiar: if true we get only the indicados that are familiar
 */
-async function getIndicadosFromAlunas(alunas, familiar) {
+async function getIndicadosFromAlunas(alunas, familiar, pre, pos) {
 	const result = [];
 	// for each turma get the alunas in them
 	for (let i = 0; i < alunas.length; i++) {
 		const element = alunas[i];
 		if (element.id) {
-			const aux = await db.getIndicadoFromAluna(element.id, familiar);
+			const aux = await db.getIndicadoFromAluna(element.id, familiar, pre, pos);
 			aux.forEach((element2) => {
 				const extendedIndicado = element2; // add more information for each aluna
-				extendedIndicado.nomeAluna = element.nome_completo;
-				extendedIndicado.mod1 = element.mod1;
-				extendedIndicado.mod2 = element.mod2;
-				extendedIndicado.mod3 = element.mod3;
-				extendedIndicado.local = element.local;
+				if (element.nome_completo) { extendedIndicado.nomeAluna = element.nome_completo; }
+				if (element.mod1) { extendedIndicado.mod1 = element.mod1; }
+				if (element.mod2) { extendedIndicado.mod1 = element.mod2; }
+				if (element.mod3) { extendedIndicado.mod1 = element.mod3; }
+				if (element.local) { extendedIndicado.mod1 = element.local; }
 				result.push(extendedIndicado);
 			});
 		}
@@ -250,11 +250,11 @@ async function handleAlunaMail(spreadsheet, today, days, paramName, mail, origin
 	familiar: if true we get only the indicados that are familiar
 	replaceMap: map with data to replace on the text
 */
-async function handleIndicadoMail(spreadsheet, today, days, paramName, mail, familiar, originalMap) {
+async function handleIndicadoMail(spreadsheet, today, days, paramName, mail, familiar, pre, pos, originalMap) {
 	try {
 		const replaceMap = originalMap;
 		const alunas = await getAlunasFromModule(spreadsheet, today, days, paramName);
-		const indicados = await getIndicadosFromAlunas(alunas, familiar);
+		const indicados = await getIndicadosFromAlunas(alunas, familiar, pre, pos);
 		indicados.forEach(async (element) => { // here we can format the e-mails
 			const newSubject = mail.subject.replace('[NOMEUM]', element.nomeAluna); // replace only what we see on the subject line
 			replaceMap.NOMEUM = element.nomeAluna; // this mask is always necessary, so it's here by default
@@ -304,7 +304,7 @@ async function test() {
 		});
 	}, minute * 1);
 	setTimeout(async () => {
-		await handleIndicadoMail(spreadsheet, today, 1 + mod1Days, 'módulo1', emails.mail3, false, { // 10
+		await handleIndicadoMail(spreadsheet, today, 1 + mod1Days, 'módulo1', emails.mail3, false, null, null, { // 10
 			AVALIADORPRE: process.env.AVALIADOR360PRE_LINK,
 			MOD1_2DIAS: '',
 		});
@@ -340,7 +340,7 @@ async function test() {
 		});
 	}, minute * 8);
 	setTimeout(async () => {
-		await handleIndicadoMail(spreadsheet, today, 7 + mod3Days, 'módulo3', emails.mail10, false, { // 12
+		await handleIndicadoMail(spreadsheet, today, 7 + mod3Days, 'módulo3', emails.mail10, false, true, null, { // 12
 			AVALIADORPOS: process.env.AVALIADOR360POS_LINK,
 			MOD3_7DIAS: '',
 		});
@@ -353,7 +353,7 @@ async function test() {
 		});
 	}, minute * 10);
 	setTimeout(async () => {
-		await handleIndicadoMail(spreadsheet, today, 8 + mod3Days, 'módulo3', emails.mail12, true, { // 12
+		await handleIndicadoMail(spreadsheet, today, 8 + mod3Days, 'módulo3', emails.mail12, true, null, null, { // 12
 			NUMBERWHATSAP: process.env.NUMBERWHATSAP,
 			MOD3_LASTDAY: '',
 		});
@@ -380,14 +380,16 @@ const FirstTimer = new CronJob(
 
 async function getAlunasNotiication(spreadsheet, today, hour) {
 	const getTurmas = [];
-	const hourDiff = -hour;
+	const hourDiff = hour >= 0 ? hour - 1 : hour + 1;
 	const datahoras = ['datahora1', 'datahora2', 'datahora3'];
 	const modulex = await spreadsheet.filter(x => x[datahoras[0]] || x[datahoras[1]] || x[datahoras[2]]); // get turmas that have this param name (ex: módulo1)
 
 	modulex.forEach((turma) => {
 		datahoras.forEach((coluna, index) => {
 			if (turma[coluna]) {
-				const modxDate = help.moment(turma[coluna]); // get when that module starts
+				const auxDate = new Date(turma[coluna]);
+				auxDate.setMinutes(0); auxDate.setSeconds(0); auxDate.setMilliseconds(0);
+				const modxDate = help.moment(auxDate); // get when that module starts
 				const currentHourDiff = modxDate.diff(today, 'hours');
 				if (currentHourDiff === hourDiff) { // check if now is exactly 'hourDiff' before modxDate
 					getTurmas.push({
@@ -411,8 +413,6 @@ async function handleNotification(spreadsheet, today, hourDiff, mail, originalMa
 		const newMap = await fillMasks(replaceMap, element);
 		const text = await replaceDataText(mail.chatbotText, newMap); // build e-mail text
 		// text = await replaceCustomParameters(text, element.turma, element.cpf, '');
-		console.log(text);
-
 		await broadcast.sendBroadcastAluna(element.fb_id, text, mail.chatbotButton);
 	}
 }
@@ -420,15 +420,22 @@ async function handleNotification(spreadsheet, today, hourDiff, mail, originalMa
 async function test2() {
 	const spreadsheet = await help.getFormatedSpreadsheet();
 	const d = new Date(Date.now());	d.setHours(d.getHours() - 3); const today = help.moment(d);
-	console.log(d);
 
-	await handleNotification(spreadsheet, today, 24, emails.warning24h, {
-		MODULOAVISAR: '', LOCAL: '', DATAHORA: '', ATIVIDADESCOMPLETAS: '',
-	});
 	// await handleNotification(spreadsheet, today, 1, emails.warning1h, {});
+	// await handleNotification(spreadsheet, today, -24, emails.warning1h, {});
+	// await handleNotification(spreadsheet, today, 24, emails.warning24h, {
+	// 	MODULOAVISAR: '', LOCAL: '', DATAHORA: '', ATIVIDADESCOMPLETAS: '',
+	// });
+	// await handleIndicadoMail(spreadsheet, today, 6, 'módulo1', emails.mail3, false, false, null, {
+	// 	AVALIADORPRE: process.env.AVALIADOR360PRE_LINK,
+	// 	MOD1_2DIAS: '',
+	// });
+	// await handleIndicadoMail(spreadsheet, today, 3, 'módulo3', emails.mail10, false, true, false, { // 12
+	// 	AVALIADORPOS: process.env.AVALIADOR360POS_LINK,
+	// 	MOD3_7DIAS: '',
+	// });
 }
 
-test2();
 module.exports = {
 	FirstTimer, handleIndicadoMail, handleAlunaMail, test,
 };
