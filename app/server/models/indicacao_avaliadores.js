@@ -1,13 +1,13 @@
 module.exports = (sequelize, DataTypes) => {
 	const model = sequelize.define(
-		'notification_queue', {
+		'indicacao_avaliadores', {
 			id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-			notification_type: DataTypes.INTEGER,
 			aluno_id: DataTypes.INTEGER,
-			indicado_id: DataTypes.INTEGER,
-			when_to_send: DataTypes.DATE,
-			sent_at: DataTypes.DATE,
-			error: DataTypes.JSON,
+			nome: DataTypes.STRING,
+			email: DataTypes.STRING,
+			telefone: DataTypes.STRING,
+			familiar: DataTypes.BOOLEAN,
+			relacao_com_aluna: DataTypes.STRING,
 			createdAt: { type: DataTypes.DATE, field: 'created_at' },
 			updatedAt: { type: DataTypes.DATE, field: 'updated_at' },
 		},

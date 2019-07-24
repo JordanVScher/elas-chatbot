@@ -27,11 +27,11 @@ module.exports = {
 				onUpdate: 'cascade',
 				onDelete: 'cascade',
 			},
-			indicacao_avaliadores: {
+			indicado_id: {
 				allowNull: true,
 				type: Sequelize.INTEGER,
 				references: {
-					model: 'notification_types',
+					model: 'indicacao_avaliadores',
 					key: 'id',
 				},
 				onUpdate: 'cascade',
