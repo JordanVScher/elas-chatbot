@@ -14,6 +14,17 @@ const notificationRulesAluna = [
 	{ notification_type: 11, modulo: 3, timeChange: [{ qtd: -12, type: 'days' }] },
 	{	notification_type: 13, modulo: 3, timeChange: [{ qtd: -1, type: 'days' }] },
 	{ notification_type: 14, modulo: 3, timeChange: [{ qtd: 5, type: 'days' }] },
+	// Receive notification 24h before every class
+	{ notification_type: 15, modulo: 1, timeChange: [{ qtd: -24, type: 'hours' }] },
+	{ notification_type: 15, modulo: 2, timeChange: [{ qtd: -24, type: 'hours' }] },
+	{ notification_type: 15, modulo: 3, timeChange: [{ qtd: -24, type: 'hours' }] },
+	// Receive notification 1h before every class, on saturday (-1h) and sunday (saturday + 23h)
+	{ notification_type: 16, modulo: 1, timeChange: [{ qtd: -1, type: 'hours' }] },
+	{ notification_type: 16, modulo: 2, timeChange: [{ qtd: -1, type: 'hours' }] },
+	{ notification_type: 16, modulo: 3, timeChange: [{ qtd: -1, type: 'hours' }] },
+	{ notification_type: 16, modulo: 1, timeChange: [{ qtd: 23, type: 'hours' }] },
+	{ notification_type: 16, modulo: 2, timeChange: [{ qtd: 23, type: 'hours' }] },
+	{ notification_type: 16, modulo: 3, timeChange: [{ qtd: 23, type: 'hours' }] },
 ];
 
 const notificationRulesIndicado = [
@@ -86,7 +97,7 @@ async function addNewNotificationIndicados(alunaId, alunaTurma) {
 }
 
 module.exports = {
-	addNewNotificationAlunas,
+	addNewNotificationAlunas, addNewNotificationIndicados,
 };
 
-addNewNotificationIndicados(120, 'T7-SP');
+// addNewNotificationAlunas(120, 'T7-SP');
