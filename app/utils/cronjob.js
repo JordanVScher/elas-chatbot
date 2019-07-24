@@ -2,6 +2,7 @@ const { CronJob } = require('cron');
 const { readFileSync } = require('fs');
 const help = require('./helper');
 const db = require('./DB_helper');
+const notificationQueue = require('../server/models').notification_queue;
 const mailer = require('./mailer');
 const emails = require('./emails');
 const broadcast = require('./broadcast');
