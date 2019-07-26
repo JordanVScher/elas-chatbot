@@ -6,6 +6,7 @@ const aluno = require('../server/models').alunos;
 const help = require('./helper');
 const mailer = require('./mailer');
 const charts = require('./charts');
+const broadcast = require('./broadcast');
 
 const parametersRules = {
 	// notification_id: map
@@ -261,10 +262,10 @@ async function checkShouldSend(recipient, notification) {
 }
 
 async function buildAttachment(type, cpf) {
-	const result = [];
+	const result = { mail: [], chatbot: {} };
 
 	if (type.attachment_name) {
-		result.push({
+		result.mail.push({
 			filename: `${type.attachment_name}.pdf`,
 			content: createReadStream(`${process.cwd()}/${type.attachment_name}.pdf`),
 			contentType: 'application/pdf',
@@ -277,24 +278,29 @@ async function buildAttachment(type, cpf) {
 		pdf.content = filename || false;
 
 		if (pdf && pdf.content) {
-			result.push({
+			result.mail.push({
 				filename: pdf.filename,
 				content: createReadStream(pdf.content),
 				contentType: 'application/pdf',
 			});
+
+			result.chatbot.pdf = pdf;
 		}
 
 		const png = { filename: `${cpf}_sondagem.png` };
 		png.content = await charts.buildAlunoChart(cpf); // actually buffer
 
 		if (png && png.content) {
-			result.push({
+			result.mail.push({
 				filename: png.filename,
 				content: png.content,
 				contentType: 'image/png',
 			});
+
+			result.chatbot.png = png;
 		}
 	}
+
 
 	return result;
 }
@@ -327,14 +333,20 @@ async function sendNotificationFromQueue() {
 
 		if (await checkShouldSend(recipient, notification)) {
 			const currentType = types.find(x => x.id === notification.notification_type); // get the correct kind of notification
-
 			const map = parametersRules[currentType.id]; // get the respective map
 			const newText = await replaceParameters(currentType, await fillMasks(map, recipient), recipient);
-
+			const attachment = await buildAttachment(currentType, recipient.cpf);
 			const error = {};
 			if (newText.email_text) { // if there's an email to send, send it
-				const mailError = await mailer.sendHTMLMail(newText.email_subject, recipient.email, newText.email_text, await buildAttachment(currentType, recipient.cpf));
+				const mailError = await mailer.sendHTMLMail(newText.email_subject, recipient.email, newText.email_text, attachment.mail);
 				if (mailError) { error.mailError = mailError.toString(); } // save the error, if it happens
+			}
+
+			if (recipient['chatbot.fb_id'] && newText.chatbot_text) { // if aluna is linked with messenger we send a message to the bot
+				let chatbotError = await broadcast.sendBroadcastAluna(recipient['chatbot.fb_id'], newText.chatbot_text, newText.chatbot_quick_reply);
+				if (!chatbotError && newText.chatbot_cards) { chatbotError = await broadcast.sendCardAluna(recipient['chatbot.fb_id'], newText.chatbot_cards, recipient.cpf); }
+				if (!chatbotError && [attachment.chatbot.pdf || attachment.chatbot.png]) { chatbotError = await broadcast.sendFiles(recipient['chatbot.fb_id'], attachment.chatbot.pdf, attachment.chatbot.png); }
+				if (chatbotError) { error.chatbotError = chatbotError.toString(); } // save the error, if it happens
 			}
 
 			if (!error.mailError && !error.chatbotError) { // if there wasn't any errors, we can update the queue succesfully

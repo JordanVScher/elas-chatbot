@@ -12,33 +12,27 @@ const client = MessengerClient.connect({
 
 async function sendBroadcastAluna(USER_ID, textMsg, buttons) {
 	if (USER_ID) {
+		const newButtons = JSON.parse(buttons);
 		let quickReply = [];
-		if (buttons && buttons.length > 0) {
-			quickReply = { quick_replies: buttons };
-		}
+		if (newButtons && newButtons.length > 0) { quickReply = { quick_replies: newButtons }; }
 
-
-		const response = await client.sendText(USER_ID, textMsg, quickReply).then(resp => true).catch((error) => { // eslint-disable-line no-unused-vars
-			console.log(error.stack); // error stack trace
-			// console.log(error); // formatted error message
-			// console.log(error.config); // axios request config
-			// console.log(error.request); // HTTP request
-			// console.log(error.response); // HTTP response
-			return false;
+		const error = await client.sendText(USER_ID, textMsg, quickReply).then(resp => false).catch((err) => { // eslint-disable-line no-unused-vars
+			if (err.stack) { console.log(err.stack); return err.stack; }
+			console.log(err); return err;
 		});
 
-
-		if (response) { console.log(`Broadcast sent to ${USER_ID}`);	}
-		return response;
+		if (!error) { console.log(`Broadcast sent to ${USER_ID}`);	}
+		return error;
 	}
 
-	return false;
+	return 'error: no USER_ID';
 }
 
 async function sendCardAluna(USER_ID, cards, cpf) {
 	if (USER_ID) {
 		const elements = [];
-		cards.forEach(async (element) => {
+		const newCards = JSON.parse(cards);
+		newCards.forEach(async (element) => {
 			elements.push({
 				title: element.title,
 				subtitle: element.subtitle,
@@ -54,43 +48,49 @@ async function sendCardAluna(USER_ID, cards, cpf) {
 			});
 		});
 
-		const response = await client.sendAttachment(USER_ID, {
+		const error = await client.sendAttachment(USER_ID, {
 			type: 'template',
 			payload: {
 				template_type: 'generic',
 				elements,
 			},
-		}).then(resp => true).catch((error) => { // eslint-disable-line no-unused-vars
-			console.log(error.stack); // error stack trace
-			return false;
+		}).then(resp => false).catch((err) => { // eslint-disable-line no-unused-vars
+			if (err.stack) { console.log(err.stack); return err.stack; }
+			console.log(err); return err;
 		});
 
-		if (response) { console.log(`Broadcast sent to ${USER_ID}`); }
-		return response;
+		if (!error) { console.log(`Card Broadcast sent to ${USER_ID}`); }
+		return error;
 	}
 
-	return false;
+	return 'error: no USER_ID';
 }
 
 async function sendFiles(USER_ID, pdf, png) {
 	if (USER_ID) {
+		const error = {};
 		if (pdf) {
-			const resPdf = await client.sendFile(USER_ID, createReadStream(pdf.content), { filename: pdf.filename })
-				.then(resp => true).catch((error) => { // eslint-disable-line no-unused-vars
-					console.log(error.stack); // error stack trace
-					return false;
+			error.pdf = await client.sendFile(USER_ID, createReadStream(pdf.content), { filename: pdf.filename })
+				.then(resp => false).catch((err) => { // eslint-disable-line no-unused-vars
+					if (err.stack) { console.log(err.stack); return err.stack; }
+					console.log(err); return err;
 				});
-			console.log('resPdf', resPdf);
+			if (!error.pdf) { console.log('sent resPdf');	}
 		}
 		if (png) {
-			const resPng = await client.sendFile(USER_ID, png.content, { filename: png.filename })
-				.then(resp => true).catch((error) => { // eslint-disable-line no-unused-vars
-					console.log(error.stack); // error stack trace
-					return false;
+			error.png = await client.sendFile(USER_ID + 3432, png.content, { filename: png.filename })
+				.then(resp => false).catch((err) => { // eslint-disable-line no-unused-vars
+					if (err.stack) { console.log(err.stack); return err.stack; }
+					console.log(err); return err;
 				});
-			console.log('resPng', resPng);
+			if (!error.png) { console.log('sent resPng'); }
 		}
+
+		if (error.pdf || error.png) { return JSON.stringify(error); }
+		return false;
 	}
+
+	return 'error: no USER_ID';
 }
 
 
