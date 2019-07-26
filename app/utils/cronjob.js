@@ -6,6 +6,7 @@ const mailer = require('./mailer');
 const emails = require('./emails');
 const broadcast = require('./broadcast');
 const charts = require('./charts');
+const teste = require('./sendNotificationQueue');
 
 // for each turma get the alunas in them
 async function getAlunasFromTurmas(turmas) {

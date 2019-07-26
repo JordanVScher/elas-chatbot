@@ -2,6 +2,7 @@ require('dotenv').config();
 
 const { createReadStream } = require('fs');
 const nodemailer = require('nodemailer');
+const { readFileSync } = require('fs');
 // const { Sentry } = require('./helper');
 
 const user = process.env.MAIL_USER;
@@ -38,9 +39,12 @@ async function sendTestMail(subject, text, to) {
 	}
 }
 
-async function sendHTMLMail(subject, to, html, anexo) {
+async function sendHTMLMail(subject, to, text, anexo) {
+	let html = await readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
+	html = await html.replace('[CONTEUDO_MAIL]', text); // add nome to mail template
+
 	const options = {
-		from, to, subject, html,
+		from, to, subject: subject ? subject.toUpperCase() : '<Programa Elas>', html,
 	};
 
 	if (anexo) {
@@ -56,9 +60,10 @@ async function sendHTMLMail(subject, to, html, anexo) {
 	try {
 		const info = await transporter.sendMail(options);
 		console.log(`'${subject}' para ${to}:`, info.messageId);
+		return false;
 	} catch (error) {
-		console.log('Could not send mail to ', to);
-		console.log('Error => ', error);
+		console.log('Could not send mail to ', to, 'Error => ', error);
+		return error;
 	}
 }
 async function sendHTMLFile(subject, to, html, pdf, png) {
