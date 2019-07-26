@@ -78,7 +78,7 @@ async function sendFiles(USER_ID, pdf, png) {
 			if (!error.pdf) { console.log('sent resPdf');	}
 		}
 		if (png) {
-			error.png = await client.sendFile(USER_ID + 3432, png.content, { filename: png.filename })
+			error.png = await client.sendFile(USER_ID, png.content, { filename: png.filename })
 				.then(resp => false).catch((err) => { // eslint-disable-line no-unused-vars
 					if (err.stack) { console.log(err.stack); return err.stack; }
 					console.log(err); return err;
