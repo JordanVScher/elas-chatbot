@@ -1,10 +1,11 @@
-// const alunas = require('../server/models').alunos;
+const { createReadStream } = require('fs');
 const notificationTypes = require('../server/models').notification_types;
 const notificationQueue = require('../server/models').notification_queue;
 const indicadosAvaliadores = require('../server/models').indicacao_avaliadores;
 const aluno = require('../server/models').alunos;
 const help = require('./helper');
 const mailer = require('./mailer');
+const charts = require('./charts');
 
 const parametersRules = {
 	// notification_id: map
@@ -259,6 +260,45 @@ async function checkShouldSend(recipient, notification) {
 	return true;
 }
 
+async function buildAttachment(type, cpf) {
+	const result = [];
+
+	if (type.attachment_name) {
+		result.push({
+			filename: `${type.attachment_name}.pdf`,
+			content: createReadStream(`${process.cwd()}/${type.attachment_name}.pdf`),
+			contentType: 'application/pdf',
+		});
+	}
+
+	if (type.id.toString() === '13' && cpf) {
+		const pdf = { filename: `${cpf}_360Results.pdf` };
+		const { filename } = await charts.buildIndicadoChart(cpf); // actually path
+		pdf.content = filename || false;
+
+		if (pdf && pdf.content) {
+			result.push({
+				filename: pdf.filename,
+				content: createReadStream(pdf.content),
+				contentType: 'application/pdf',
+			});
+		}
+
+		const png = { filename: `${cpf}_sondagem.png` };
+		png.content = await charts.buildAlunoChart(cpf); // actually buffer
+
+		if (png && png.content) {
+			result.push({
+				filename: png.filename,
+				content: png.content,
+				contentType: 'image/png',
+			});
+		}
+	}
+
+	return result;
+}
+
 async function sendNotificationFromQueue() {
 	const moduleDates = await getModuleDates();
 
@@ -293,7 +333,7 @@ async function sendNotificationFromQueue() {
 
 			const error = {};
 			if (newText.email_text) { // if there's an email to send, send it
-				const mailError = await mailer.sendHTMLMail(newText.email_subject, recipient.email, newText.email_text, currentType.attachment_name);
+				const mailError = await mailer.sendHTMLMail(newText.email_subject, recipient.email, newText.email_text, await buildAttachment(currentType, recipient.cpf));
 				if (mailError) { error.mailError = mailError.toString(); } // save the error, if it happens
 			}
 

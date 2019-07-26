@@ -44,18 +44,9 @@ async function sendHTMLMail(subject, to, text, anexo) {
 	html = await html.replace('[CONTEUDO_MAIL]', text); // add nome to mail template
 
 	const options = {
-		from, to, subject: subject ? subject.toUpperCase() : '<Programa Elas>', html,
+		from, to, subject: subject ? subject.toUpperCase() : '<Programa Elas>', html, attachments: anexo,
 	};
 
-	if (anexo) {
-		options.attachments = [
-			{
-				filename: `${anexo}.pdf`,
-				content: createReadStream(`${process.cwd()}/${anexo}.pdf`),
-				contentType: 'application/pdf',
-			},
-		];
-	}
 
 	try {
 		const info = await transporter.sendMail(options);
