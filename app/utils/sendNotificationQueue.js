@@ -258,6 +258,7 @@ async function checkShouldSendNotification(notification, today) {
 	const toSend = help.moment(notification.when_to_send); // get moment to send the notification
 	const diffDays = toSend.diff(today, 'days'); // difference between today and the day the notification has to be sent, negative number -> time before the date
 
+	// todo: permitir o envio da notificação se a diferença de dia for negativa (a data pode ter sido ontem) e não tiver passado a data do módulo
 	if (diffDays !== 0 && notification.notification_type !== 15) { return false;	} // if it's not "today", don't send this notification yet (except for type 15)
 
 	// for this type of notiication, we also have to check if the hour difference isnt bigger than 24 (diffDays can be -1 or 0)

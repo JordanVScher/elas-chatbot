@@ -15,16 +15,16 @@ const notificationRulesAluna = [
 	{	notification_type: 13, modulo: 3, timeChange: [{ qtd: -1, type: 'days' }] },
 	{ notification_type: 14, modulo: 3, timeChange: [{ qtd: 5, type: 'days' }] },
 	// Receive notification 24h before every class
-	{ notification_type: 15, modulo: 1, timeChange: [{ qtd: -24, type: 'hours' }] },
-	{ notification_type: 15, modulo: 2, timeChange: [{ qtd: -24, type: 'hours' }] },
-	{ notification_type: 15, modulo: 3, timeChange: [{ qtd: -24, type: 'hours' }] },
+	{ notification_type: 15, modulo: 1, timeChange: [{ qtd: 0, type: 'days' }, { qtd: -24, type: 'hours' }] },
+	{ notification_type: 15, modulo: 2, timeChange: [{ qtd: 0, type: 'days' }, { qtd: -24, type: 'hours' }] },
+	{ notification_type: 15, modulo: 3, timeChange: [{ qtd: 0, type: 'days' }, { qtd: -24, type: 'hours' }] },
 	// Receive notification 1h before every class, on saturday (-1h) and sunday (saturday + 23h)
-	{ notification_type: 16, modulo: 1, timeChange: [{ qtd: -1, type: 'hours' }] },
-	{ notification_type: 16, modulo: 2, timeChange: [{ qtd: -1, type: 'hours' }] },
-	{ notification_type: 16, modulo: 3, timeChange: [{ qtd: -1, type: 'hours' }] },
-	{ notification_type: 16, modulo: 1, timeChange: [{ qtd: 23, type: 'hours' }] },
-	{ notification_type: 16, modulo: 2, timeChange: [{ qtd: 23, type: 'hours' }] },
-	{ notification_type: 16, modulo: 3, timeChange: [{ qtd: 23, type: 'hours' }] },
+	{ notification_type: 16, modulo: 1, timeChange: [{ qtd: 0, type: 'days' }, { qtd: -1, type: 'hours' }] },
+	{ notification_type: 16, modulo: 2, timeChange: [{ qtd: 0, type: 'days' }, { qtd: -1, type: 'hours' }] },
+	{ notification_type: 16, modulo: 3, timeChange: [{ qtd: 0, type: 'days' }, { qtd: -1, type: 'hours' }] },
+	{ notification_type: 16, modulo: 1, timeChange: [{ qtd: 0, type: 'days' }, { qtd: 23, type: 'hours' }] },
+	{ notification_type: 16, modulo: 2, timeChange: [{ qtd: 0, type: 'days' }, { qtd: 23, type: 'hours' }] },
+	{ notification_type: 16, modulo: 3, timeChange: [{ qtd: 0, type: 'days' }, { qtd: 23, type: 'hours' }] },
 ];
 
 const notificationRulesIndicado = [
@@ -33,33 +33,41 @@ const notificationRulesIndicado = [
 	{ notification_type: 12, modulo: 3, timeChange: [{ qtd: -12, type: 'days' }], familiar: true }, // eslint-disable-line object-curly-newline
 ];
 
-async function getSendDate(spreadsheet, turma, rule) {
+async function getSendDate(spreadsheet, turma, rule, i) {
 	const desiredDatahora = `datahora${rule.modulo}`;
 	const modulex = await spreadsheet.find(x => x.turma === turma && x[desiredDatahora]); // get turma that has this datahora (ex: datahora1)
 	if (modulex) {
-		const dataResult = new Date(modulex[desiredDatahora]);
+		let dataResult = '';
+		if (process.env.NODE_ENV === 'homol') {
+			dataResult = new Date(modulex[desiredDatahora]);
+		} else {
+			dataResult = new Date();
+		}
+
 		rule.timeChange.forEach((element) => {
 			// Negative qtd means amount of time before the date. Positive means after.
+			const toAdd = process.env.NODE_ENV === 'homol' ? element.qtd : i;
+
 			if (element.type === 'days') {
-				dataResult.setDate(dataResult.getDate() + element.qtd);
+				dataResult.setDate(dataResult.getDate() + toAdd);
 			} else if (element.type === 'hours') {
-				dataResult.setHours(dataResult.getHours() + element.qtd);
+				dataResult.setHours(dataResult.getHours() + toAdd);
 			} else if (element.type === 'minutes') {
-				dataResult.setMinutes(dataResult.getMinutes() + element.qtd);
+				dataResult.setMinutes(dataResult.getMinutes() + toAdd);
 			}
 		});
 
 		return dataResult;
 	}
-
 	return false;
 }
+
 
 async function addNewNotificationAlunas(alunaId, alunaTurma) {
 	const spreadsheet = await help.getFormatedSpreadsheet();
 	for (let i = 0; i < notificationRulesAluna.length; i++) {
 		const rule = notificationRulesAluna[i];
-		const sendDate = await getSendDate(spreadsheet, alunaTurma, rule);
+		const sendDate = await getSendDate(spreadsheet, alunaTurma, rule, i);
 		await notificationQueue.create({ notification_type: rule.notification_type, aluno_id: alunaId, when_to_send: sendDate }).then(res => res)
 			.catch((err) => { // eslint-disable-line
 				console.log('Erro em notificationQueue.create', JSON.stringify(err, null, 2)); help.Sentry.captureMessage('Erro em notificationQueue.create');
@@ -67,6 +75,7 @@ async function addNewNotificationAlunas(alunaId, alunaTurma) {
 	}
 }
 
+addNewNotificationAlunas(120, 'T7-SP');
 async function addNewNotificationIndicados(alunaId, alunaTurma) {
 	const indicados = await indicadosAvaliadores.findAll({ // get every indicado from aluna
 		where: { aluno_id: alunaId }, raw: true,

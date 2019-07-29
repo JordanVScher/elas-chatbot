@@ -84,6 +84,7 @@ module.exports = async (context) => {
 			await attach.sendSequenceMsgs(context, flow.queroSerAluna.cards, 'Ver Mais');
 			await context.sendText(flow.queroSerAluna.text2);
 			await context.sendText(flow.queroSerAluna.text3);
+			await context.sendText(flow.greetings.text3, await attach.getQR(flow.queroSerAluna));
 			break;
 		case 'jaSouAluna':
 			await context.sendText(flow.jaSouAluna.text1);

@@ -11,7 +11,7 @@ module.exports = {
 	},
 	mainMenu: {
 		defaultText: 'O que deseja fazer?',
-		menuOptions: ['Meu curso 💪', 'Falar com Donna 👩‍💻', 'Sobre ELAS 💁‍♀️'],
+		menuOptions: ['Meu curso 💪', 'Falar com Donna 💻', 'Sobre ELAS 💁‍♀️'],
 		menuPostback: ['meuCurso', 'falarDonna', 'sobreElas'],
 	},
 	jaSouAluna: {
@@ -70,6 +70,8 @@ module.exports = {
 		text1: 'Uau!! Então vamos lá, vou enviar o que ELAS oferece 😉 Lá vai textão ...',
 		text2: 'Espero que você venha aqui novamente me contando que é aluna do ELAS, hein.',
 		text3: 'Enquanto isso, no menu há os serviços que você pode acessar 🤗',
+		menuOptions: ['Já sou aluna 😘', 'Sobre ELAS 💁‍♀️'],
+		menuPostback: ['jaSouAluna', 'sobreElas'],
 		cards: [
 			{
 				text: 'Programa ELAS:\nÉ um treinamento intensivo de 54 horas, um programa completo de aprendizado ao longo de 3 meses. Além dos conteúdos, as alunas são mentoradas durante todo o período por meio de uma comunidade secreta exclusiva para elas. O conteúdo é extremamente prático e vivencial, dividido em 3 módulos, dentro de um ambiente exclusivo e seguro para COMPARTILHAR INFORMAÇÕES e para PROMOVER UMA EXPERIÊNCIA MEMORÁVEL no desenvolvimento comportamental das alunas.',
