@@ -1,5 +1,6 @@
 const { CronJob } = require('cron');
 const { createReadStream } = require('fs');
+const { readFileSync } = require('fs');
 const notificationTypes = require('../server/models').notification_types;
 const notificationQueue = require('../server/models').notification_queue;
 const indicadosAvaliadores = require('../server/models').indicacao_avaliadores;
@@ -366,7 +367,9 @@ async function sendNotificationFromQueue() {
 				const attachment = await buildAttachment(currentType, recipient.cpf);
 				const error = {};
 				if (newText.email_text) { // if there's an email to send, send it
-					const mailError = await mailer.sendHTMLMail(newText.email_subject, recipient.email, newText.email_text, attachment.mail);
+					let html = await readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
+					html = await html.replace('[CONTEUDO_MAIL]', newText.email_text); // add nome to mail template
+					const mailError = await mailer.sendHTMLMail(newText.email_subject, recipient.email, html, attachment.mail);
 					if (mailError) { error.mailError = mailError.toString(); } // save the error, if it happens
 				}
 
@@ -405,5 +408,4 @@ const sendNotificationCron = new CronJob(
 
 module.exports = {
 	sendNotificationCron,
-}
-;
+};

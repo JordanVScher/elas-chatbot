@@ -2,7 +2,6 @@ require('dotenv').config();
 
 const { createReadStream } = require('fs');
 const nodemailer = require('nodemailer');
-const { readFileSync } = require('fs');
 // const { Sentry } = require('./helper');
 
 const user = process.env.MAIL_USER;
@@ -39,10 +38,7 @@ async function sendTestMail(subject, text, to) {
 	}
 }
 
-async function sendHTMLMail(subject, to, text, anexo) {
-	let html = await readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
-	html = await html.replace('[CONTEUDO_MAIL]', text); // add nome to mail template
-
+async function sendHTMLMail(subject, to, html, anexo) {
 	const options = {
 		from, to, subject: subject ? subject.toUpperCase() : '<Programa Elas>', html, attachments: anexo,
 	};
