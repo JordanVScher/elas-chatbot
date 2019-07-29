@@ -4,11 +4,10 @@ const smAPI = require('../sm_api');
 const mailer = require('./mailer');
 const { eMail } = require('./flow');
 const db = require('./DB_helper');
+const addQueue = require('./addNotificationQueue');
 
 const surveysInfo = require('./sm_surveys');
 const surveysMaps = require('./sm_maps');
-const cronjob = require('./cronjob');
-
 
 // after a payement happens we send an e-mail to the buyer with the matricula/atividade 1 form
 async function sendMatricula(productID, pagamentoID, buyerEmail) {
@@ -158,7 +157,8 @@ async function handleAtividadeOne(response) {
 			await db.updateAlunoOnPagamento(answers.pgid, newUserID);
 		}
 
-		cronjob.test();
+		await addQueue.addNewNotificationAlunas(newUserID, answers.turma);
+
 		/* e-mail */
 		let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Apresentar_Donna.html`, 'utf-8');
 		html = await html.replace('[nome]', answers.nome); // add nome to mail template
@@ -203,6 +203,7 @@ async function handleIndicacao(response) {
 
 	const baseAnswers = await formatAnswers(response.pages[0].questions);
 	const aluna = await db.getAluno(response.custom_variables.cpf);
+	await addQueue.addNewNotificationAlunas(aluna.id, aluna.turma);
 
 	let indicados = {}; // could just as well be an array with the answers
 	await surveysMaps.indicacao360.forEach(async (element) => { // getting the answers for the indicados
@@ -229,6 +230,7 @@ async function handleIndicacao(response) {
 	for (let i = 0; i < familiar.length; i++) {
 		if (familiar[i].email) { await db.insertIndicacao(aluna.id, familiar[i], true);	}
 	}
+
 
 	// joining indicados and saving answer
 	let answers = indicacao.concat(familiar);
