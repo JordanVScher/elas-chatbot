@@ -86,7 +86,7 @@ async function formatFdsMod(date) {
 		return `${primeiroDia} e ${segundoDia} de ${primeiroMes}`;
 	}
 
-	return `dias ${primeiroDia} de ${primeiroMes} e ${segundoDia} de ${segundoMes}`;
+	return `${primeiroDia} de ${primeiroMes} e ${segundoDia} de ${segundoMes}`;
 }
 
 async function formatDiasMod(date, days) {

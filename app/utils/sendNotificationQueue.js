@@ -327,9 +327,6 @@ async function sendNotificationFromQueue() {
 		return false;
 	});
 
-	console.log(queue);
-
-
 	for (let i = 0; i < queue.length; i++) {
 		const notification = queue[i];
 		let recipient;
@@ -338,8 +335,6 @@ async function sendNotificationFromQueue() {
 		} else if (notification.indicado_id) {
 			recipient = await getIndicado(notification.indicado_id, moduleDates);
 		}
-
-		console.log(recipient);
 
 		if (await checkShouldSend(recipient, notification)) {
 			const currentType = types.find(x => x.id === notification.notification_type); // get the correct kind of notification
