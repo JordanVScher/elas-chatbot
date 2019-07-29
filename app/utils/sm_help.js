@@ -203,7 +203,7 @@ async function handleIndicacao(response) {
 
 	const baseAnswers = await formatAnswers(response.pages[0].questions);
 	const aluna = await db.getAluno(response.custom_variables.cpf);
-	await addQueue.addNewNotificationAlunas(aluna.id, aluna.turma);
+	await addQueue.addNewNotificationIndicados(aluna.id, aluna.turma);
 
 	let indicados = {}; // could just as well be an array with the answers
 	await surveysMaps.indicacao360.forEach(async (element) => { // getting the answers for the indicados
