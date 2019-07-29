@@ -1,3 +1,4 @@
+const { CronJob } = require('cron');
 const { createReadStream } = require('fs');
 const notificationTypes = require('../server/models').notification_types;
 const notificationQueue = require('../server/models').notification_queue;
@@ -250,7 +251,27 @@ async function replaceParameters(texts, newMap, recipient) {
 	return newTexts || {};
 }
 
-async function checkShouldSend(recipient, notification) {
+async function checkShouldSendNotification(notification, today) {
+	if (!notification) { return false;	}
+	console.log(notification);
+	const toSend = help.moment(notification.when_to_send); // get moment to send the notification
+	const diffDays = toSend.diff(today, 'days'); // difference between today and the day the notification has to be sent, negative number -> time before the date
+
+	if (diffDays !== 0 && notification.notification_type !== 15) { return false;	} // if it's not "today", don't send this notification yet (except for type 15)
+
+	// for this type of notiication, we also have to check if the hour difference isnt bigger than 24 (diffDays can be -1 or 0)
+	if (notification.notification_type === 15 && (diffDays === 0 || diffDays === -1)) {
+		const diffHour = toSend.diff(today, 'hours');
+		// example: toSend = 07/25 - 18:00, today has to be either 24 or 25, hour can be 18+ but can't be 17-
+		if (!(diffHour >= -24)) { return false;	}
+	} else if (notification.notification_type === 16) {
+		const diffHour = toSend.diff(today, 'hours');
+		if (!(diffHour === -1 || diffHour === 0)) { return false; } // one hour before or at the same hour: true
+	}
+
+	return true;
+}
+async function checkShouldSendRecipient(recipient, notification) {
 	if (!recipient) { return false;	}
 	if (notification.notification_type.toString() === '10') { // if it's this type of notification, check if recipient has answered the pre-avaliacao
 		const answerPre = recipient['respostas.pre'];
@@ -312,6 +333,7 @@ async function buildAttachment(type, cpf) {
 
 async function sendNotificationFromQueue() {
 	const moduleDates = await getModuleDates();
+	const today = new Date();
 
 	const queue = await notificationQueue.findAll({
 		where: { sent_at: null, error: null }, raw: true,
@@ -329,43 +351,59 @@ async function sendNotificationFromQueue() {
 
 	for (let i = 0; i < queue.length; i++) {
 		const notification = queue[i];
-		let recipient;
-		if (notification.aluno_id) {
-			recipient = await getAluna(notification.aluno_id, moduleDates);
-		} else if (notification.indicado_id) {
-			recipient = await getIndicado(notification.indicado_id, moduleDates);
-		}
-
-		if (await checkShouldSend(recipient, notification)) {
-			const currentType = types.find(x => x.id === notification.notification_type); // get the correct kind of notification
-			const map = parametersRules[currentType.id]; // get the respective map
-			const newText = await replaceParameters(currentType, await fillMasks(map, recipient), recipient);
-			const attachment = await buildAttachment(currentType, recipient.cpf);
-			const error = {};
-			if (newText.email_text) { // if there's an email to send, send it
-				const mailError = await mailer.sendHTMLMail(newText.email_subject, recipient.email, newText.email_text, attachment.mail);
-				if (mailError) { error.mailError = mailError.toString(); } // save the error, if it happens
+		if (await checkShouldSendNotification(notification, today) === true) {
+			let recipient;
+			if (notification.aluno_id) {
+				recipient = await getAluna(notification.aluno_id, moduleDates);
+			} else if (notification.indicado_id) {
+				recipient = await getIndicado(notification.indicado_id, moduleDates);
 			}
 
-			if (recipient['chatbot.fb_id'] && newText.chatbot_text) { // if aluna is linked with messenger we send a message to the bot
-				let chatbotError = await broadcast.sendBroadcastAluna(recipient['chatbot.fb_id'], newText.chatbot_text, newText.chatbot_quick_reply);
-				if (!chatbotError && newText.chatbot_cards) { chatbotError = await broadcast.sendCardAluna(recipient['chatbot.fb_id'], newText.chatbot_cards, recipient.cpf); }
-				if (!chatbotError && [attachment.chatbot.pdf || attachment.chatbot.png]) { chatbotError = await broadcast.sendFiles(recipient['chatbot.fb_id'], attachment.chatbot.pdf, attachment.chatbot.png); }
-				if (chatbotError) { error.chatbotError = chatbotError.toString(); } // save the error, if it happens
-			}
+			if (await checkShouldSendRecipient(recipient, notification)) {
+				const currentType = types.find(x => x.id === notification.notification_type); // get the correct kind of notification
+				const map = parametersRules[currentType.id]; // get the respective map
+				const newText = await replaceParameters(currentType, await fillMasks(map, recipient), recipient);
+				const attachment = await buildAttachment(currentType, recipient.cpf);
+				const error = {};
+				if (newText.email_text) { // if there's an email to send, send it
+					const mailError = await mailer.sendHTMLMail(newText.email_subject, recipient.email, newText.email_text, attachment.mail);
+					if (mailError) { error.mailError = mailError.toString(); } // save the error, if it happens
+				}
 
-			if (!error.mailError && !error.chatbotError) { // if there wasn't any errors, we can update the queue succesfully
-				notificationQueue.update({ sent_at: new Date() }, { where: { id: notification.id } }).then(rowsUpdated => rowsUpdated).catch((err) => {
-					console.log('Erro no update do sendAt', err); help.Sentry.captureMessage('Erro no update do sendAt');
-				});
-			} else { // if there was any errors, we store what happened
-				notificationQueue.update({ error }, { where: { id: notification.id } }).then(rowsUpdated => rowsUpdated).catch((err) => {
-					console.log('Erro no update do erro', err); help.Sentry.captureMessage('Erro no update do erro');
-				});
+				if (recipient['chatbot.fb_id'] && newText.chatbot_text) { // if aluna is linked with messenger we send a message to the bot
+					let chatbotError = await broadcast.sendBroadcastAluna(recipient['chatbot.fb_id'], newText.chatbot_text, newText.chatbot_quick_reply);
+					if (!chatbotError && newText.chatbot_cards) { chatbotError = await broadcast.sendCardAluna(recipient['chatbot.fb_id'], newText.chatbot_cards, recipient.cpf); }
+					if (!chatbotError && [attachment.chatbot.pdf || attachment.chatbot.png]) { chatbotError = await broadcast.sendFiles(recipient['chatbot.fb_id'], attachment.chatbot.pdf, attachment.chatbot.png); }
+					if (chatbotError) { error.chatbotError = chatbotError.toString(); } // save the error, if it happens
+				}
+
+				if (!error.mailError && !error.chatbotError) { // if there wasn't any errors, we can update the queue succesfully
+					notificationQueue.update({ sent_at: new Date() }, { where: { id: notification.id } }).then(rowsUpdated => rowsUpdated).catch((err) => {
+						console.log('Erro no update do sendAt', err); help.Sentry.captureMessage('Erro no update do sendAt');
+					});
+				} else { // if there was any errors, we store what happened
+					notificationQueue.update({ error }, { where: { id: notification.id } }).then(rowsUpdated => rowsUpdated).catch((err) => {
+						console.log('Erro no update do erro', err); help.Sentry.captureMessage('Erro no update do erro');
+					});
+				}
 			}
 		}
 	}
 }
 
+const sendNotificationCron = new CronJob(
+	'00 00 8-22/1 * * *', async () => {
+		console.log('Running sendNotificationCron');
+		await sendNotificationFromQueue();
+	}, (() => {
+		console.log('Crontab sendNotificationCron stopped.');
+	}),
+	true, /* Starts the job right now (no need for MissionTimer.start()) */
+	'America/Sao_Paulo', false,
+	false, // runOnInit = true useful only for tests
+);
 
-sendNotificationFromQueue();
+module.exports = {
+	sendNotificationCron,
+}
+;

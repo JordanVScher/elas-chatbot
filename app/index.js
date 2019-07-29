@@ -7,7 +7,7 @@ const corsMiddleware = require('restify-cors-middleware');
 const restify = require('restify');
 const { newSurveyResponse } = require('./utils/sm_help');
 const pgAPI = require('./pg_api');
-const cronjob = require('./utils/cronjob');
+const queue = require('./utils/sendNotificationQueue');
 
 const config = require('./bottender.config.js').messenger;
 
@@ -93,5 +93,5 @@ server.listen(process.env.API_PORT, () => {
 	console.log(`Server is running on ${process.env.API_PORT} port...`);
 	console.log(`App: ${process.env.APP} & Page: ${process.env.PAGE}`);
 	console.log(`MA User: ${process.env.MA_USER}`);
-	console.log(`Crontab FirstTimer is running? => ${cronjob.FirstTimer.running}`);
+	console.log(`Crontab sendNotificationCron is running? => ${queue.sendNotificationCron.running}`);
 });
