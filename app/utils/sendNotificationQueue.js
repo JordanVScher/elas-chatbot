@@ -202,6 +202,11 @@ async function extendRecipient(recipient, moduleDates, turma) {
 	if (ourTurma.modulo3) { result.mod3 = ourTurma.modulo3; }
 	if (ourTurma.local) { result.local = ourTurma.local; }
 
+	const now = new Date(); // figure out which module the aluna is on
+	if (ourTurma.modulo1 >= now) { result.moduloAvisar = 1;	}
+	if (ourTurma.modulo2 >= now) { result.moduloAvisar = 2;	}
+	if (ourTurma.modulo3 >= now) { result.moduloAvisar = 3;	}
+
 	return result;
 }
 
@@ -322,6 +327,9 @@ async function sendNotificationFromQueue() {
 		return false;
 	});
 
+	console.log(queue);
+
+
 	for (let i = 0; i < queue.length; i++) {
 		const notification = queue[i];
 		let recipient;
@@ -330,6 +338,8 @@ async function sendNotificationFromQueue() {
 		} else if (notification.indicado_id) {
 			recipient = await getIndicado(notification.indicado_id, moduleDates);
 		}
+
+		console.log(recipient);
 
 		if (await checkShouldSend(recipient, notification)) {
 			const currentType = types.find(x => x.id === notification.notification_type); // get the correct kind of notification
