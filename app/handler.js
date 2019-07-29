@@ -94,7 +94,7 @@ module.exports = async (context) => {
 		case 'validCPF':
 			if (context.state.gotTurma) {
 				await context.setState({ turma: context.state.gotTurma.turma });
-				await context.sendText(flow.jaSouAluna.validCPF.replace('<name>', context.state.gotTurma.nome).replace('<turma>', context.state.turma.replace('turma', '')),
+				await context.sendText(flow.jaSouAluna.validCPF.replace('<name>', context.state.gotTurma.nome_completo).replace('<turma>', context.state.turma.replace('turma', '')),
 					await attach.getQR(flow.jaSouAluna));
 			} else {
 				await context.sendText('Não achei sua turma');
@@ -108,10 +108,10 @@ module.exports = async (context) => {
 			await context.sendText('Ainda não tenho esse CPF! Digite de novo!');
 			break;
 		case 'confirmaMatricula':
+			await db.linkUserToCPF(context.session.user.id, context.state.cpf);
 			await context.setState({ agendaData: await dialogs.getAgenda(context), matricula: true });
 			await context.sendText(flow.confirmaMatricula.text1);
 			await context.sendText(await dialogs.buildAgendaMsg(context.state.agendaData), await attach.getQR(flow.confirmaMatricula));
-			// await context.sendText(flow.confirmaMatricula.text2, await attach.getQR(flow.confirmaMatricula));
 			break;
 		case 'afterConfirma':
 			await context.sendText(flow.confirmaMatricula.after1);

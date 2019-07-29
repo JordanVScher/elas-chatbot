@@ -9,6 +9,19 @@ if (process.env.TEST !== 'true') {
 	});
 }
 
+async function getAlunaFromPDF(cpf) {
+	const aluna = await sequelize.query(`
+	SELECT * from alunos WHERE cpf = '${cpf}';
+	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
+		console.log(`Got ${cpf} successfully!`);
+		return results && results[0] && results[0].turma ? results[0] : false;
+	}).catch((err) => {
+		console.error('Error on upsertAluno => ', err);
+	});
+
+	return aluna;
+}
+
 async function upsertAluno(nome, cpf, turma, email) {
 	let date = new Date();
 	date = await moment(date).format('YYYY-MM-DD HH:mm:ss');
@@ -324,6 +337,7 @@ async function getAlunasFromTurma(turma) {
 
 module.exports = {
 	upsertUser,
+	getAlunaFromPDF,
 	upsertPagamento,
 	upsertAluno,
 	linkUserToCPF,

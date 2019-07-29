@@ -273,6 +273,7 @@ async function checkShouldSendNotification(notification, today) {
 
 	return true;
 }
+
 async function checkShouldSendRecipient(recipient, notification) {
 	if (!recipient) { return false;	}
 	if (notification.notification_type.toString() === '10') { // if it's this type of notification, check if recipient has answered the pre-avaliacao
@@ -410,3 +411,5 @@ const sendNotificationCron = new CronJob(
 module.exports = {
 	sendNotificationCron,
 };
+
+// sendNotificationFromQueue();
