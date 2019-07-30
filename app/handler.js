@@ -50,6 +50,8 @@ module.exports = async (context) => {
 				await dialogs.handleCPF(context);
 			} else if (['CPFNotFound', 'invalidCPF', 'validCPF'].includes(context.state.dialog)) {
 				await dialogs.handleCPF(context);
+			} if (context.state.whatWasTyped.toLowerCase() === process.env.RESET && process.env.ENV !== 'prod') {
+				await context.setState({ turma: '', matricula: '' });
 			} else {
 				console.log('--------------------------');
 				console.log(`${context.session.user.first_name} ${context.session.user.last_name} digitou ${context.event.message.text}`);
@@ -127,7 +129,6 @@ module.exports = async (context) => {
 			await context.sendText(flow.confirmaMatricula.after1);
 			await dialogs.sendMainMenu(context);
 			break;
-			// case 'sendFirst':
 		case 'erradoMatricula':
 			await db.linkUserToCPF(context.session.user.id, '');
 			await context.sendText(flow.erradoMatricula.text1, await attach.getQR(flow.erradoMatricula));
@@ -136,9 +137,7 @@ module.exports = async (context) => {
 			await context.sendText(flow.talkToElas.text1);
 			await context.sendText(flow.talkToElas.text2);
 			await context.sendText(flow.talkToElas.text3);
-
 			break;
-
 		case 'falarDonna':
 			await context.sendText('Escreva suas dúvidas que eu vou tentar responder.');
 			await timers.createFalarDonnaTimer(context.session.user.id, context);
@@ -147,11 +146,9 @@ module.exports = async (context) => {
 			await context.setState({ spreadsheet: await help.getFormatedSpreadsheet() });
 			await context.setState({ ourTurma: await context.state.spreadsheet.find(x => x.turma === context.state.turma) });
 			await context.setState({ mod1Date: context.state.ourTurma['módulo1'] });
-
 			await context.sendText(flow.Atividade2.text1.replace('[MOD1_15DIAS]', await help.formatDiasMod(context.state.mod1Date, -15)));
 			await attach.sendAtividade2Cards(context, flow.Atividade2.cards, context.state.cpf);
 			await context.sendText(flow.Atividade2.text2.replace('[MOD1_2DIAS]', await help.formatDiasMod(context.state.mod1Date, -2)), await attach.getQR(flow.Atividade2));
-
 			await context.setState({ spreadsheet: '', ourTurma: '', mod1Date: '' });
 			break;
 		case 'mail6pt2':

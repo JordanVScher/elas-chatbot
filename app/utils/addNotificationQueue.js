@@ -74,9 +74,6 @@ async function addNewNotificationAlunas(alunaId, alunaTurma) {
 	}
 }
 
-addNewNotificationAlunas();
-
-
 async function addNewNotificationIndicados(alunaId, alunaTurma) {
 	const indicados = await indicadosAvaliadores.findAll({ // get every indicado from aluna
 		where: { aluno_id: alunaId }, raw: true,
