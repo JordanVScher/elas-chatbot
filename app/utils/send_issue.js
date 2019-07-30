@@ -24,11 +24,14 @@ async function createIssue(context) {
 		if (issueResponse && issueResponse.id) {
 			await context.sendText(issueText.success);
 			console.log('created issue? true');
+
+			await context.setState({ dialog: 'mainMenu' });
 			return true;
 		}
 	}
 	await context.sendText(issueText.failure);
 	console.log('created issue? false');
+	await context.setState({ dialog: 'mainMenu' });
 	return false;
 }
 module.exports.createIssue = createIssue;

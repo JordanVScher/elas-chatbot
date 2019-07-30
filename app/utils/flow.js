@@ -11,8 +11,8 @@ module.exports = {
 	},
 	mainMenu: {
 		defaultText: 'O que deseja fazer?',
-		menuOptions: ['Meu curso 💪', 'Falar com Donna 💻', 'Sobre ELAS 💁‍♀️'],
-		menuPostback: ['meuCurso', 'falarDonna', 'sobreElas'],
+		menuOptions: ['Falar com Donna 💻', 'Sobre ELAS 💁‍♀️'],
+		menuPostback: ['falarDonna', 'sobreElas'],
 	},
 	jaSouAluna: {
 		text1: '❤️',
@@ -44,22 +44,6 @@ module.exports = {
 		text3: 'Quando resolver com ELAS venha conversar comigo novamente. No menu há os serviços que você pode acessar 🤗',
 		text4: 'Até lá, que tal compartilhar ELAS para suas amigas?',
 	},
-	// sendFirst: {
-	// 	text1: 'Queremos conhecer um pouco mais sobre você  😉 Clique no link abaixo e preencha o formulário.',
-	// 	text2: 'É muito importante preencher todas as perguntas. O nosso objetivo é poder te conhecer melhor para oferecer o conteúdo que vá direto ao encontro das suas necessidades. Entender melhor o seu perfil e suas expectativas será importante também para avaliar o resultado final no seu desenvolvimento.',
-	// 	cardTitle: 'Atividade 1',
-	// 	text3: '⚠️ Agora, um passo importante! ⚠️\nEscolha seus avaliadores, pessoas do seu convívio que podem avaliar o seu comportamento. '
-	// 	+ 'Escolha as pessoas cuja relação seja importante e estratégica para o seu desenvolvimento e crescimento.',
-	// 	text4: 'Eles responderão um questionário sobre você, um agora antes do curso e outro no fim. Clique no link abaixo para preencher esses dados',
-	// 	menuOptions: ['Já sei! Continuar'],
-	// 	menuPostback: ['avaliadores1'],
-	// },
-	// avaliadores1: {
-	// 	text1: 'Beleza 😀\n*Ah, é legal avisá-los sobre!',
-	// 	text2: 'Clique no link abaixo e preencha o formulário',
-	// 	cardTitle: 'Avaliadores',
-
-	// },
 	shareElas: {
 		siteTitle: 'Compartilhar',
 		// siteSubTitle: '',
@@ -109,7 +93,7 @@ module.exports = {
 		menuPostback: ['jaSouAluna', 'queroSerAluna'],
 	},
 	issueText: {
-		success: 'Obrigado por sua mensagem',
+		success: 'Obrigado por sua mensagem, vamos tentar te responder em breve',
 		failure: 'Não consegui salvar a mensagem',
 	},
 	eMail: {

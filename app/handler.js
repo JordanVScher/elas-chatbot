@@ -8,6 +8,7 @@ const dialogs = require('./utils/dialogs');
 const attach = require('./utils/attach');
 const flow = require('./utils/flow');
 const help = require('./utils/helper');
+const timers = require('./utils/timers');
 
 module.exports = async (context) => {
 	try {
@@ -25,6 +26,7 @@ module.exports = async (context) => {
 			// session: JSON.stringify(context.state),
 		});
 		db.upsertUser(context.session.user.id, `${context.session.user.first_name} ${context.session.user.last_name}`);
+		await timers.deleteTimers(context.session.user.id);
 
 		if (context.event.isPostback) {
 			await context.setState({ lastPBpayload: context.event.postback.payload });
@@ -65,9 +67,13 @@ module.exports = async (context) => {
 		}
 		switch (context.state.dialog) {
 		case 'greetings':
-			await context.sendText(flow.greetings.text1.replace('<first_name>', context.session.user.first_name));
-			await context.sendText(flow.greetings.text2);
-			await context.sendText(flow.greetings.text3, await attach.getQR(flow.greetings));
+			if (context.state.matricula === true) {
+				await dialogs.sendMainMenu(context);
+			} else {
+				await context.sendText(flow.greetings.text1.replace('<first_name>', context.session.user.first_name));
+				await context.sendText(flow.greetings.text2);
+				await context.sendText(flow.greetings.text3, await attach.getQR(flow.greetings));
+			}
 			break;
 		case 'mainMenu':
 			await dialogs.sendMainMenu(context);
@@ -77,7 +83,11 @@ module.exports = async (context) => {
 			await context.sendText(flow.sobreElas.text2);
 			await context.sendText(flow.sobreElas.text3);
 			await context.sendImage(flow.sobreElas.gif1);
-			await context.sendText(flow.greetings.text3, await attach.getQR(flow.sobreElas));
+			if (context.state.matricula === true) {
+				await dialogs.sendMainMenu(context);
+			} else {
+				await context.sendText(flow.greetings.text3, await attach.getQR(flow.sobreElas));
+			}
 			break;
 		case 'queroSerAluna':
 			await context.sendText(flow.queroSerAluna.text1);
@@ -126,20 +136,13 @@ module.exports = async (context) => {
 			await context.sendText(flow.talkToElas.text1);
 			await context.sendText(flow.talkToElas.text2);
 			await context.sendText(flow.talkToElas.text3);
-			// await context.sendText(flow.talkToElas.text4);
-			// await attach.sendShare(context, flow.shareElas);
+
 			break;
-		// 	await context.sendText(flow.sendFirst.text1);
-		// 	await context.sendText(flow.sendFirst.text2);
-		// 	await attach.cardLinkNoImage(context, flow.sendFirst.cardTitle, process.env.ATIVIDADE1_LINK.replace('TURMARESPOSTA', context.state.turma));
-		// 	await context.sendText(flow.sendFirst.text3);
-		// 	await context.sendText(flow.sendFirst.text4, await attach.getQR(flow.sendFirst));
-		// 	break;
-		// case 'avaliadores1':
-		// 	await context.sendText(flow.avaliadores1.text1);
-		// 	await context.sendText(flow.avaliadores1.text2);
-		// 	await attach.cardLinkNoImage(context, flow.avaliadores1.cardTitle, process.env.INDICACAO360_LINK.replace('TURMARESPOSTA', context.state.turma));
-		// 	break;
+
+		case 'falarDonna':
+			await context.sendText('Escreva suas dúvidas que eu vou tentar responder.');
+			await timers.createFalarDonnaTimer(context.session.user.id, context);
+			break;
 		case 'Atividade2':
 			await context.setState({ spreadsheet: await help.getFormatedSpreadsheet() });
 			await context.setState({ ourTurma: await context.state.spreadsheet.find(x => x.turma === context.state.turma) });
