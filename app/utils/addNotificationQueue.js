@@ -56,7 +56,8 @@ async function getSendDate(spreadsheet, turma, rule, i) {
 	}
 
 	const today = new Date();
-	today.setMinutes(today.getMinutes() + i + 3);
+	const toAdd = (i + 1) * 3;
+	today.setMinutes(today.getMinutes() + toAdd);
 	return today;
 }
 
@@ -72,6 +73,8 @@ async function addNewNotificationAlunas(alunaId, alunaTurma) {
 			});
 	}
 }
+
+addNewNotificationAlunas();
 
 
 async function addNewNotificationIndicados(alunaId, alunaTurma) {
