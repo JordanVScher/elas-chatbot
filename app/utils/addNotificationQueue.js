@@ -34,24 +34,30 @@ const notificationRulesIndicado = [
 ];
 
 async function getSendDate(spreadsheet, turma, rule, i) {
-	const desiredDatahora = `datahora${rule.modulo}`;
-	const modulex = await spreadsheet.find(x => x.turma === turma && x[desiredDatahora]); // get turma that has this datahora (ex: datahora1)
-	if (modulex) {
-		const dataResult = new Date(modulex[desiredDatahora]);
-		rule.timeChange.forEach((element) => {
-			// Negative qtd means amount of time before the date. Positive means after.
-			if (element.type === 'days') {
-				dataResult.setDate(dataResult.getDate() + element.qtd);
-			} else if (element.type === 'hours') {
-				dataResult.setHours(dataResult.getHours() + element.qtd);
-			} else if (element.type === 'minutes') {
-				dataResult.setMinutes(dataResult.getMinutes() + element.qtd);
-			}
-		});
+	if (process.env.NODE_ENV === 'prod') {
+		const desiredDatahora = `datahora${rule.modulo}`;
+		const modulex = await spreadsheet.find(x => x.turma === turma && x[desiredDatahora]); // get turma that has this datahora (ex: datahora1)
+		if (modulex) {
+			const dataResult = new Date(modulex[desiredDatahora]);
+			rule.timeChange.forEach((element) => {
+				// Negative qtd means amount of time before the date. Positive means after.
+				if (element.type === 'days') {
+					dataResult.setDate(dataResult.getDate() + element.qtd);
+				} else if (element.type === 'hours') {
+					dataResult.setHours(dataResult.getHours() + element.qtd);
+				} else if (element.type === 'minutes') {
+					dataResult.setMinutes(dataResult.getMinutes() + element.qtd);
+				}
+			});
 
-		return dataResult;
+			return dataResult;
+		}
+		return false;
 	}
-	return false;
+
+	const today = new Date();
+	today.setMinutes(today.getMinutes() + i + 3);
+	return today;
 }
 
 
@@ -62,16 +68,17 @@ async function addNewNotificationAlunas(alunaId, alunaTurma) {
 		const sendDate = await getSendDate(spreadsheet, alunaTurma, rule, i);
 		await notificationQueue.create({ notification_type: rule.notification_type, aluno_id: alunaId, when_to_send: sendDate }).then(res => res)
 			.catch((err) => { // eslint-disable-line
-				console.log('Erro em notificationQueue.create', JSON.stringify(err, null, 2)); help.Sentry.captureMessage('Erro em notificationQueue.create');
+				console.log('Erro em notificationQueue.create', err); help.Sentry.captureMessage('Erro em notificationQueue.create');
 			});
 	}
 }
+
 
 async function addNewNotificationIndicados(alunaId, alunaTurma) {
 	const indicados = await indicadosAvaliadores.findAll({ // get every indicado from aluna
 		where: { aluno_id: alunaId }, raw: true,
 	}).then(res => res).catch((err) => {
-		console.log('Erro em indicadosAvaliadores.findAll', JSON.stringify(err, null, 2)); help.Sentry.captureMessage('Erro em indicadosAvaliadores.findAll');
+		console.log('Erro em indicadosAvaliadores.findAll', err); help.Sentry.captureMessage('Erro em indicadosAvaliadores.findAll');
 		return false;
 	});
 
@@ -79,14 +86,14 @@ async function addNewNotificationIndicados(alunaId, alunaTurma) {
 		const spreadsheet = await help.getFormatedSpreadsheet();
 		for (let i = 0; i < notificationRulesIndicado.length; i++) {
 			const rule = notificationRulesIndicado[i];
-			const sendDate = await getSendDate(spreadsheet, alunaTurma, rule);
+			const sendDate = await getSendDate(spreadsheet, alunaTurma, rule, i);
 
 			indicados.forEach(async (indicado) => {
 				// indicado can only receive a notification where familiar true if indicado is also familiar = true
 				if (!rule.familiar || (rule.familiar === true && indicado.familiar === true)) {
 					await notificationQueue.create({ notification_type: rule.notification_type, indicado_id: indicado.id, when_to_send: sendDate }).then(res => res)
             .catch((err) => { // eslint-disable-line
-							console.log('Erro em notificationQueue.create', JSON.stringify(err, null, 2)); help.Sentry.captureMessage('Erro em notificationQueue.create');
+							console.log('Erro em notificationQueue.create', err); help.Sentry.captureMessage('Erro em notificationQueue.create');
 						});
 				}
 			});

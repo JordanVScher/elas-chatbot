@@ -256,20 +256,27 @@ async function checkShouldSendNotification(notification, today) {
 	if (!notification) { return false;	}
 	console.log(notification);
 	const toSend = help.moment(notification.when_to_send); // get moment to send the notification
-	const diffDays = toSend.diff(today, 'days'); // difference between today and the day the notification has to be sent, negative number -> time before the date
+	if (process.env.NODE_ENV === 'prod') {
+		const diffDays = toSend.diff(today, 'days'); // difference between today and the day the notification has to be sent, negative number -> time before the date
 
-	// todo: permitir o envio da notificação se a diferença de dia for negativa (a data pode ter sido ontem) e não tiver passado a data do módulo
-	if (diffDays !== 0 && notification.notification_type !== 15) { return false;	} // if it's not "today", don't send this notification yet (except for type 15)
+		// todo: permitir o envio da notificação se a diferença de dia for negativa (a data pode ter sido ontem) e não tiver passado a data do módulo
+		if (diffDays !== 0 && notification.notification_type !== 15) { return false;	} // if it's not "today", don't send this notification yet (except for type 15)
 
-	// for this type of notiication, we also have to check if the hour difference isnt bigger than 24 (diffDays can be -1 or 0)
-	if (notification.notification_type === 15 && (diffDays === 0 || diffDays === -1)) {
-		const diffHour = toSend.diff(today, 'hours');
-		// example: toSend = 07/25 - 18:00, today has to be either 24 or 25, hour can be 18+ but can't be 17-
-		if (!(diffHour >= -24)) { return false;	}
-	} else if (notification.notification_type === 16) {
-		const diffHour = toSend.diff(today, 'hours');
-		if (!(diffHour === -1 || diffHour === 0)) { return false; } // one hour before or at the same hour: true
+		// for this type of notiication, we also have to check if the hour difference isnt bigger than 24 (diffDays can be -1 or 0)
+		if (notification.notification_type === 15 && (diffDays === 0 || diffDays === -1)) {
+			const diffHour = toSend.diff(today, 'hours');
+			// example: toSend = 07/25 - 18:00, today has to be either 24 or 25, hour can be 18+ but can't be 17-
+			if (!(diffHour >= -24)) { return false;	}
+		} else if (notification.notification_type === 16) {
+			const diffHour = toSend.diff(today, 'hours');
+			if (!(diffHour === -1 || diffHour === 0)) { return false; } // one hour before or at the same hour: true
+		}
+
+		return true;
 	}
+
+	const diffMinutes = toSend.diff(today, 'minutes');
+	if (diffMinutes > 0) { return false; }
 
 	return true;
 }
@@ -397,7 +404,8 @@ async function sendNotificationFromQueue() {
 }
 
 const sendNotificationCron = new CronJob(
-	'00 00 8-22/1 * * *', async () => {
+	'00 * 8-22/1 * * *', async () => {
+	// '00 00 8-22/1 * * *', async () => {
 		console.log('Running sendNotificationCron');
 		await sendNotificationFromQueue();
 	}, (() => {
