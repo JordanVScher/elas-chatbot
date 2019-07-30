@@ -37,23 +37,15 @@ async function getSendDate(spreadsheet, turma, rule, i) {
 	const desiredDatahora = `datahora${rule.modulo}`;
 	const modulex = await spreadsheet.find(x => x.turma === turma && x[desiredDatahora]); // get turma that has this datahora (ex: datahora1)
 	if (modulex) {
-		let dataResult = '';
-		if (process.env.NODE_ENV === 'homol') {
-			dataResult = new Date(modulex[desiredDatahora]);
-		} else {
-			dataResult = new Date();
-		}
-
+		const dataResult = new Date(modulex[desiredDatahora]);
 		rule.timeChange.forEach((element) => {
 			// Negative qtd means amount of time before the date. Positive means after.
-			const toAdd = process.env.NODE_ENV === 'homol' ? element.qtd : i;
-
 			if (element.type === 'days') {
-				dataResult.setDate(dataResult.getDate() + toAdd);
+				dataResult.setDate(dataResult.getDate() + element.qtd);
 			} else if (element.type === 'hours') {
-				dataResult.setHours(dataResult.getHours() + toAdd);
+				dataResult.setHours(dataResult.getHours() + element.qtd);
 			} else if (element.type === 'minutes') {
-				dataResult.setMinutes(dataResult.getMinutes() + toAdd);
+				dataResult.setMinutes(dataResult.getMinutes() + element.qtd);
 			}
 		});
 
