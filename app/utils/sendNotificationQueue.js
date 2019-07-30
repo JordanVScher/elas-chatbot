@@ -260,16 +260,20 @@ async function checkShouldSendNotification(notification, today) {
 		const diffDays = toSend.diff(today, 'days'); // difference between today and the day the notification has to be sent, negative number -> time before the date
 
 		// todo: permitir o envio da notificação se a diferença de dia for negativa (a data pode ter sido ontem) e não tiver passado a data do módulo
-		if (diffDays !== 0 && notification.notification_type !== 15) { return false;	} // if it's not "today", don't send this notification yet (except for type 15)
+		if (notification.notification_type !== 15) { // notification 15 has a different day rule
+			if (!(diffDays <= 0)) { return false;	} // "today" or days before (in case the notification was created after the regular day to send the notification has passed)
+		}
 
-		// for this type of notiication, we also have to check if the hour difference isnt bigger than 24 (diffDays can be -1 or 0)
-		if (notification.notification_type === 15 && (diffDays === 0 || diffDays === -1)) {
+		// for this type of notiication, we also have to check if the hour difference isnt bigger than 24
+		if (notification.notification_type === 15) {
+			if (!(diffDays === 0 || diffDays === -1)) { return false; } // diffDays can only be -1 or 0 (yesterday or today)
 			const diffHour = toSend.diff(today, 'hours');
-			// example: toSend = 07/25 - 18:00, today has to be either 24 or 25, hour can be 18+ but can't be 17-
-			if (!(diffHour >= -24)) { return false;	}
+			// > 0 -> notification can't be sent after the date
+			// < -24 0 -> notification can't be sent before 24h from the date
+			if (diffHour > 0 || diffHour < -24) { return false;	}
 		} else if (notification.notification_type === 16) {
 			const diffHour = toSend.diff(today, 'hours');
-			if (!(diffHour === -1 || diffHour === 0)) { return false; } // one hour before or at the same hour: true
+			if (!(diffHour === 1 || diffHour === 0)) { return false; } // one hour before or at the same hour: true
 		}
 
 		return true;
@@ -419,5 +423,3 @@ const sendNotificationCron = new CronJob(
 module.exports = {
 	sendNotificationCron,
 };
-
-// sendNotificationFromQueue();
