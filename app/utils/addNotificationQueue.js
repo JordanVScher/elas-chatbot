@@ -28,8 +28,8 @@ const notificationRulesAluna = [
 ];
 
 const notificationRulesIndicado = [
-	{ notification_type: 3, modulo: 1, timeChange: [{ qtd: -10, type: 'days' }] },
-	{ notification_type: 10, modulo: 3, timeChange: [{ qtd: -12, type: 'days' }] },
+	{ notification_type: 3, modulo: 1, timeChange: [{ qtd: -10, type: 'days' }], reminderDate: 6 }, // eslint-disable-line object-curly-newline
+	{ notification_type: 10, modulo: 3, timeChange: [{ qtd: -12, type: 'days' }], reminderDate: 3 }, // eslint-disable-line object-curly-newline
 	{ notification_type: 12, modulo: 3, timeChange: [{ qtd: -12, type: 'days' }], familiar: true }, // eslint-disable-line object-curly-newline
 ];
 
@@ -88,15 +88,30 @@ async function addNewNotificationIndicados(alunaId, alunaTurma) {
 			const rule = notificationRulesIndicado[i];
 			const sendDate = await getSendDate(spreadsheet, alunaTurma, rule, i);
 
-			indicados.forEach(async (indicado) => {
+			for (let j = 0; j < indicados.length; j++) {
+				const indicado = indicados[j];
+
 				// indicado can only receive a notification where familiar true if indicado is also familiar = true
 				if (!rule.familiar || (rule.familiar === true && indicado.familiar === true)) {
 					await notificationQueue.create({ notification_type: rule.notification_type, indicado_id: indicado.id, when_to_send: sendDate }).then(res => res)
-            .catch((err) => { // eslint-disable-line
+						.catch((err) => {
 							console.log('Erro em notificationQueue.create', err); help.Sentry.captureMessage('Erro em notificationQueue.create');
 						});
+
+					if (rule.reminderDate) {
+						// e-mails for non-familiars may be sent twice if the indicado didn't answer the form.
+						// rule.reminderDate has the added days in which to send the new notification.
+						await sendDate.setDate(await sendDate.getDate() + rule.reminderDate);
+
+						await notificationQueue.create({
+							notification_type: rule.notification_type, indicado_id: indicado.id, when_to_send: sendDate, check_answered: true,
+						}).then(res => res)
+							.catch((err) => {
+								console.log('Erro em notificationQueue.create for reminderDate', err); help.Sentry.captureMessage('Erro em notificationQueue.create for reminderDate');
+							});
+					}
 				}
-			});
+			}
 		}
 	} else {
 		console.log(`Erro em addNewNotificationIndicados -> aluna ${alunaId} não tem indicados`); help.Sentry.captureMessage('Erro em addNewNotificationIndicados');
@@ -108,3 +123,4 @@ module.exports = {
 };
 
 // addNewNotificationAlunas(120, 'T7-SP');
+// addNewNotificationIndicados(120, 'T7-SP');

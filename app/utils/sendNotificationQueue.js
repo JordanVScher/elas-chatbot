@@ -254,25 +254,25 @@ async function replaceParameters(texts, newMap, recipient) {
 
 async function checkShouldSendNotification(notification, today) {
 	if (!notification) { return false;	}
-	console.log(notification);
+
 	const toSend = help.moment(notification.when_to_send); // get moment to send the notification
 	if (process.env.NODE_ENV === 'prod') {
 		const diffDays = toSend.diff(today, 'days'); // difference between today and the day the notification has to be sent, negative number -> time before the date
+		const diffHour = toSend.diff(today, 'hours');
 
-		// todo: permitir o envio da notificação se a diferença de dia for negativa (a data pode ter sido ontem) e não tiver passado a data do módulo
+		// can send "today" or days before but not after the day (in case the notification was created after the regular day to send the notification has passed)
 		if (notification.notification_type !== 15) { // notification 15 has a different day rule
-			if (!(diffDays <= 0)) { return false;	} // "today" or days before (in case the notification was created after the regular day to send the notification has passed)
+			if (diffDays > 0 || diffHour > 0) { return false;	}
 		}
 
 		// for this type of notiication, we also have to check if the hour difference isnt bigger than 24
 		if (notification.notification_type === 15) {
 			if (!(diffDays === 0 || diffDays === -1)) { return false; } // diffDays can only be -1 or 0 (yesterday or today)
-			const diffHour = toSend.diff(today, 'hours');
+
 			// > 0 -> notification can't be sent after the date
 			// < -24 0 -> notification can't be sent before 24h from the date
 			if (diffHour > 0 || diffHour < -24) { return false;	}
 		} else if (notification.notification_type === 16) {
-			const diffHour = toSend.diff(today, 'hours');
 			if (!(diffHour === 1 || diffHour === 0)) { return false; } // one hour before or at the same hour: true
 		}
 
@@ -287,14 +287,33 @@ async function checkShouldSendNotification(notification, today) {
 
 async function checkShouldSendRecipient(recipient, notification) {
 	if (!recipient) { return false;	}
-	if (notification.notification_type.toString() === '10') { // if it's this type of notification, check if recipient has answered the pre-avaliacao
+	if (notification.notification_type === 3 && notification.check_answered === true) {
+		const answerPre = recipient['respostas.pre'];
+		if (answerPre && Object.keys(answerPre)) { // if pre was already answered, there's no need to resend this notification
+			notificationQueue.update({ error: { misc: 'Indicado já respondeu pré' } }, { where: { id: notification.id } }).then(rowsUpdated => rowsUpdated).catch((err) => {
+				console.log('Erro no update do erro check_answered & 3', err); help.Sentry.captureMessage('Erro no update do erro check_answered & 3');
+			});
+			return false;
+		}
+	}
+
+	if (notification.notification_type === 10) { // if it's this type of notification, check if recipient has answered the pre-avaliacao
 		const answerPre = recipient['respostas.pre'];
 		if (!answerPre || !Object.keys(answerPre)) {
 			notificationQueue.update({ error: { misc: 'Indicado não respondeu pré-avaliação' } }, { where: { id: notification.id } }).then(rowsUpdated => rowsUpdated).catch((err) => {
-				console.log('Erro no update do erro', err); help.Sentry.captureMessage('Erro no update do erro');
+				console.log('Erro no update do erro === 10', err); help.Sentry.captureMessage('Erro no update do erro === 10');
 			});
-
 			return false;
+		}
+
+		if (notification.check_answered === true) { // check if we need to see if recipient answered pos already
+			const answerPos = recipient['respostas.pos'];
+			if (answerPos && Object.keys(answerPos)) { // if pos was already answered, there's no need to resend this notification
+				notificationQueue.update({ error: { misc: 'Indicado já respondeu pós' } }, { where: { id: notification.id } }).then(rowsUpdated => rowsUpdated).catch((err) => {
+					console.log('Erro no update do erro check_answered & 10', err); help.Sentry.captureMessage('Erro no update do erro check_answered & 10');
+				});
+				return false;
+			}
 		}
 	}
 

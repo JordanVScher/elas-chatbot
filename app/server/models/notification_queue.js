@@ -6,6 +6,7 @@ module.exports = (sequelize, DataTypes) => {
 			aluno_id: DataTypes.INTEGER,
 			indicado_id: DataTypes.INTEGER,
 			when_to_send: DataTypes.DATE,
+			check_answered: DataTypes.BOOLEAN,
 			sent_at: DataTypes.DATE,
 			error: DataTypes.JSON,
 			createdAt: { type: DataTypes.DATE, field: 'created_at' },
