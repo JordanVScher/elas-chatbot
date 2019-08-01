@@ -4,7 +4,7 @@ const baseNotification = {
 	notification_type: 1,
 	aluno_id: 120,
 	indicado_id: null,
-	when_to_send: new Date(),
+	when_to_send: '',
 	sent_at: null,
 	error: null,
 };
@@ -26,9 +26,9 @@ const baseRecipientIndicado = {
 	'aluna.cpf': '7418529355',
 	'aluna.email': 'Barfoo@bar.com',
 	'aluna.turma': 'TURMA1',
-	mod1: new Date('2019-07-30T16:12:00.000Z'),
-	mod2: new Date('2019-08-15T16:43:00.000Z'),
-	mod3: new Date('2019-09-10T15:25:00.000Z'),
+	mod1: '2019-07-30T16:12:00.000Z',
+	mod2: '2019-08-15T16:43:00.000Z',
+	mod3: '2019-09-10T15:25:00.000Z',
 	local: 'Vila do Teste',
 	moduloAvisar: 3,
 };

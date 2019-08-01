@@ -257,26 +257,19 @@ async function checkShouldSendNotification(notification, today) {
 
 	const toSend = help.moment(notification.when_to_send); // get moment to send the notification
 	if (process.env.NODE_ENV === 'prod') {
-		const diffDays = toSend.diff(today, 'days'); // difference between today and the day the notification has to be sent, negative number -> time before the date
-		const diffHour = toSend.diff(today, 'hours');
-
-		// can send "today" or days before but not after the day (in case the notification was created after the regular day to send the notification has passed)
-		if (notification.notification_type !== 15) { // notification 15 has a different day rule
-			if (diffDays > 0 || diffHour > 0) { return false;	}
+		if (notification.notification_type !== 15 && notification.notification_type !== 16) { // notification 15 and 16 have a different day rule
+			if (today >= toSend) { return true; }	// check if date toSend happens beore today, if it was not sent back then it can be sent now
 		}
 
-		// for this type of notiication, we also have to check if the hour difference isnt bigger than 24
+		const diffHour = toSend.diff(today, 'hours'); // difference between today and the hour the notification has to be sent
+
 		if (notification.notification_type === 15) {
-			if (!(diffDays === 0 || diffDays === -1)) { return false; } // diffDays can only be -1 or 0 (yesterday or today)
-
-			// > 0 -> notification can't be sent after the date
-			// < -24 0 -> notification can't be sent before 24h from the date
-			if (diffHour > 0 || diffHour < -24) { return false;	}
+			if (diffHour <= 0 && diffHour > -23) { return true; } // this type can only be sent less than 24h after the notification.toSend
 		} else if (notification.notification_type === 16) {
-			if (!(diffHour === 1 || diffHour === 0)) { return false; } // one hour before or at the same hour: true
+			if (diffHour === 0 && today >= toSend) { return true; } // this type can only be sent less than 1h after the notification.toSend
 		}
 
-		return true;
+		return false;
 	}
 
 	const diffMinutes = toSend.diff(today, 'minutes');
@@ -392,8 +385,7 @@ async function sendNotificationFromQueue() {
 				recipient = await getIndicado(notification.indicado_id, moduleDates);
 			}
 
-			console.log(recipient);
-			if (await checkShouldSendRecipient(recipient, notification)) {
+			if (await checkShouldSendRecipient(recipient, notification) === true) {
 				const currentType = types.find(x => x.id === notification.notification_type); // get the correct kind of notification
 				const map = parametersRules[currentType.id]; // get the respective map
 				const newText = await replaceParameters(currentType, await fillMasks(map, recipient), recipient);
@@ -441,7 +433,7 @@ const sendNotificationCron = new CronJob(
 );
 
 module.exports = {
-	sendNotificationCron, checkShouldSendRecipient,
+	sendNotificationCron, checkShouldSendRecipient, checkShouldSendNotification, sendNotificationFromQueue,
 };
 
 
