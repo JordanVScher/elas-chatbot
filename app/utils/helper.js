@@ -57,6 +57,10 @@ const atividadesCompletas = {
 	1: 'Atividades 1, 2 e 3', 2: 'Atividades 4, 5 e 6', 3: 'Atividades 7, 8 e 9',
 };
 
+function getTimestamp() {
+	const date = new Date();
+	return moment(date).format('YYYY-MM-DD');
+}
 
 function formatDate(date) {
 	let day = date.getDate() + 1; // different timezone from spreadsheet
@@ -204,4 +208,5 @@ module.exports = {
 	formatFdsMod,
 	formatDiasMod,
 	atividadesCompletas,
+	getTimestamp,
 };

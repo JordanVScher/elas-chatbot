@@ -144,4 +144,8 @@ module.exports = {
 		menuOptions: ['Ok'],
 		menuPostback: ['mainMenu'],
 	},
+
+	adminMenu: {
+		errorMsg: 'Escreva novamente ou escolha uma das opções!',
+	},
 };

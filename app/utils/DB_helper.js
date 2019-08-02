@@ -335,6 +335,26 @@ async function getAlunasFromTurma(turma) {
 }
 
 
+async function getAlunasReport(turma) {
+	const result = await sequelize.query(`
+	SELECT ALUNO.id as "ID", ALUNO.cpf as "CPF", ALUNO.turma as "Turma", ALUNO.nome_completo as "Nome Completo", ALUNO.email as "E-mail", 
+	ALUNO.created_at as "Criado em", 	BOT_USER.fb_id as "ID Facebook" 
+	FROM alunos ALUNO
+	LEFT JOIN chatbot_users BOT_USER ON BOT_USER.cpf = ALUNO.cpf
+	WHERE ALUNO.turma = '${turma}'
+	ORDER BY BOT_USER.fb_id;
+	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
+		console.log(`Got ${turma} successfully!`);
+		return results;
+	}).catch((err) => {
+		console.error('Error on getAlunasReport => ', err);
+	});
+	console.log(result);
+
+	return result || false;
+}
+
+
 module.exports = {
 	upsertUser,
 	getAlunaFromPDF,
@@ -354,4 +374,5 @@ module.exports = {
 	getAlunasFromTurma,
 	getIndicadoFromAluna,
 	updateAlunoOnPagamento,
+	getAlunasReport,
 };

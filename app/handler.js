@@ -31,7 +31,7 @@ module.exports = async (context) => {
 		if (context.event.isPostback) {
 			await context.setState({ lastPBpayload: context.event.postback.payload });
 			if (context.state.lastPBpayload === 'teste') {
-				await context.setState({ dialog: 'afterConfirma' });
+				await context.setState({ dialog: 'alunosTurmaCSV' });
 				// await context.setState({ dialog: 'sendFirst' });
 			} else {
 				await context.setState({ dialog: context.state.lastPBpayload });
@@ -162,6 +162,13 @@ module.exports = async (context) => {
 			break;
 		case 'createIssueDirect':
 			await createIssue(context);
+			break;
+		// adminMenu -----------------------------------------------------------------------------
+		case 'alunosTurmaCSV':
+			await dialogs.sendCSV(context, 'T7-SP');
+			break;
+		case 'alunosRespostasCSV':
+			await dialogs.sendCSV(context, 'T7-SP');
 			break;
 		} // end switch case
 	} catch (error) {

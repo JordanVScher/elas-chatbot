@@ -2,6 +2,8 @@ const db = require('./DB_helper');
 const help = require('./helper');
 const attach = require('./attach');
 const flow = require('./flow');
+const admin = require('./admin_menu/admin_helper');
+
 
 module.exports.sendMainMenu = async (context, txtMsg) => {
 	const text = txtMsg || flow.mainMenu.defaultText;
@@ -67,4 +69,26 @@ module.exports.buildAgendaMsg = async (data) => {
 	if (data.local) { msg += `🏠 Local: ${await help.toTitleCase(data.local)}`; }
 
 	return msg;
+};
+
+
+module.exports.sendCSV = async (context, turma) => {
+	let result = '';
+	switch (context.state.dialog) {
+	case 'alunosTurmaCSV':
+		result = await admin.getAlunoTurmaCSV(turma.toUpperCase());
+		break;
+	case 'alunosRespostasCSV':
+		result = await admin.getAlunoRespostasCSV(turma.toUpperCase());
+		break;
+	default:
+		break;
+	}
+
+
+	if (!result || result.error || !result.content) {
+		await context.sendText(`${result.error} ${flow.adminMenu.errorMsg}`);
+	} else {
+		await context.sendFile(result.content, { filename: result.filename || 'seu_arquivo.csv' });
+	}
 };
