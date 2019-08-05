@@ -1,5 +1,6 @@
 const { sequelize } = require('../server/models/index');
 const { moment } = require('./helper');
+const { Sentry } = require('./helper');
 
 if (process.env.TEST !== 'true') {
 	sequelize.authenticate().then(() => {
@@ -353,6 +354,46 @@ async function getAlunasReport(turma) {
 	return { content: result, input: turma } || false;
 }
 
+async function addAlunaFromCSV(aluno) {
+	let date = new Date();
+	date = await moment(date).format('YYYY-MM-DD HH:mm:ss');
+
+	const columns = [];
+	const values = [];
+	const set = [];
+
+	if (aluno['Nome Completo']) {
+		columns.push('nome_completo'); values.push(`'${aluno['Nome Completo']}'`); set.push(`${columns[columns.length - 1]} = ${values[values.length - 1]}`);
+	}
+	if (aluno.CPF) {
+		columns.push('cpf'); values.push(`'${aluno.CPF}'`);
+	}
+	if (aluno['E-mail']) {
+		columns.push('email'); values.push(`'${aluno['E-mail']}'`); set.push(`${columns[columns.length - 1]} = ${values[values.length - 1]}`);
+	}
+
+	columns.push('created_at'); values.push(`'${date}'`);
+	columns.push('updated_at'); values.push(`'${date}'`); set.push(`${columns[columns.length - 1]} = ${values[values.length - 1]}`);
+
+	const queryString = `INSERT INTO "alunos"(${columns.join(', ')})
+	VALUES(${values.join(', ')})
+	ON CONFLICT(cpf)
+	DO UPDATE
+	SET ${set.join(', ')}
+	RETURNING id;`;
+
+	const result = await sequelize.query(queryString).spread((results, metadata) => { // eslint-disable-line no-unused-vars
+		console.log('addAlunaFromCSV success!');
+		return results && results[0] ? results[0] : false;
+	}).catch((err) => {
+		console.error('rro no addAlunaFromCSV!', err);
+		Sentry.captureMessage('Erro no addAlunaFromCSV!');
+		return { error: 'Valor inválido!' };
+	});
+
+	return result;
+}
+
 
 module.exports = {
 	upsertUser,
@@ -374,4 +415,5 @@ module.exports = {
 	getIndicadoFromAluna,
 	updateAlunoOnPagamento,
 	getAlunasReport,
+	addAlunaFromCSV,
 };

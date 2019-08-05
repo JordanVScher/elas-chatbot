@@ -1,5 +1,7 @@
 require('dotenv').config();
 const { parseAsync } = require('json2csv');
+const request = require('request-promise');
+const { csv2json } = require('csvjson-csv2json');
 
 const help = require('../helper');
 
@@ -11,4 +13,32 @@ async function buildCSV(data, texts) {
 	return { csvData: await Buffer.from(result, 'utf8'), filename: `${await help.getTimestamp()}_${newFilename}.csv` };
 }
 
-module.exports = { buildCSV };
+async function getJsonFromURL(url) {
+	const csvData = await request.get(url, (error, response, body) => body);
+	const json = csv2json(csvData, { parseNumbers: true });
+	return json;
+}
+
+async function getFeedbackMsgs(addedALunos, errors) {
+	// addedALunos => csvLines.length - errors.length
+	const result = [];
+
+	if (addedALunos === 0) {
+		result.push('Nenhuma aluna foi adicionada!');
+	} else if (addedALunos === 1) {
+		result.push('Uma aluna foi adicionada!');
+	} else {
+		result.push(`${addedALunos} alunas foram adicionadas!`);
+	}
+
+	if (errors.length === 1) {
+		result.push(`Ocorreu 1 erro na linha ${errors[0]}`);
+	} else if (errors.length > 1) {
+		result.push(`Ocorreram ${errors.length} erros. Nas linhas ${errors.join(', ').replace(/,(?=[^,]*$)/, ' e')}.`);
+	}
+
+	return result;
+}
+
+
+module.exports = { buildCSV, getJsonFromURL, getFeedbackMsgs };

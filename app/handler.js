@@ -66,7 +66,10 @@ module.exports = async (context) => {
 				}
 			}
 			// await createIssue(context, 'Não entendi sua mensagem pois ela é muito complexa. Você pode escrever novamente, de forma mais direta?');
+		} else if (context.event.isFile && context.event.file && context.event.file.url) {
+			await context.setState({ dialog: 'createAlunos', fileURL: context.event.file.url.replace('https', 'http') });
 		}
+
 		switch (context.state.dialog) {
 		case 'greetings':
 			if (context.state.matricula === true) {
@@ -165,10 +168,11 @@ module.exports = async (context) => {
 			break;
 		// adminMenu -----------------------------------------------------------------------------
 		case 'alunosTurmaCSV':
-			await dialogs.sendCSV(context, 'T7-SP');
-			break;
 		case 'alunosRespostasCSV':
 			await dialogs.sendCSV(context, 'T7-SP');
+			break;
+		case 'createAlunos':
+			await dialogs.receiveCSV(context);
 			break;
 		} // end switch case
 	} catch (error) {

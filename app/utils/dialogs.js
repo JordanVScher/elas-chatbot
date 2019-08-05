@@ -93,3 +93,31 @@ module.exports.sendCSV = async (context, turma) => {
 		await context.sendFile(result.csvData, { filename: result.filename || 'seu_arquivo.csv' });
 	}
 };
+
+
+module.exports.receiveCSV = async (context) => {
+	const csvLines = await admin.getJsonFromURL(context.state.fileURL);
+	console.log(csvLines);
+
+	const errors = []; // stores lines that presented an error
+
+	for (let i = 0; i < csvLines.length; i++) {
+		const element = csvLines[i];
+
+		if (!element['Nome Completo'] || !element.cpf) { // check if aluno has the bare minumium to be added tot he database
+			const newAluno = await db.addAlunaFromCSV(element);
+			if (!newAluno || newAluno.error || !newAluno.id) { errors.push(i + 2); } // save line where error happended
+		} else {
+			errors.push(i + 2);
+		}
+	}
+
+	const feedbackMsgs = await admin.getFeedbackMsgs(csvLines.length - errors.length, errors);
+	for (let i = 0; i < feedbackMsgs.length; i++) {
+		const element = feedbackMsgs[i];
+		await context.sendText(element);
+	}
+};
+
+
+// const test = 'http://cdn.fbsbx.com/v/t59.2708-21/64764944_673750623091868_9048548562756960256_n.csv/2019-08-02_Turma_T7-SP.csv?_nc_cat=104&_nc_oc=AQlbK1ZCCyCEj7A16L9dB56cr2cZVuULnE49ArhgFWNrUf1yH4Ceg43cHHYgqmNla8pnJbKMXSvFHInDxIfL74pe&_nc_ht=cdn.fbsbx.com&oh=eed9b3333d261501d64ef6da0f52f8a1&oe=5D4B4E38';

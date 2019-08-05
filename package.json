@@ -18,6 +18,7 @@
     "chartjs-node-canvas": "^2.4.0",
     "child_process": "^1.0.2",
     "cron": "^1.7.1",
+    "csvjson-csv2json": "^5.0.6",
     "dialogflow": "^0.6.0",
     "dotenv": "^4.0.0",
     "fs-extra": "^7.0.0",
