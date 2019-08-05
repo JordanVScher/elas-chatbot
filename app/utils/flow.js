@@ -147,5 +147,9 @@ module.exports = {
 
 	adminMenu: {
 		errorMsg: 'Escreva novamente ou escolha uma das opções!',
+		alunosTurmaCSV: {
+			error: 'Não encontrei nenhuma aluna nessa turma!',
+			filename: 'Turma_<INPUT>',
+		},
 	},
 };

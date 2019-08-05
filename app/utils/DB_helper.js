@@ -349,9 +349,8 @@ async function getAlunasReport(turma) {
 	}).catch((err) => {
 		console.error('Error on getAlunasReport => ', err);
 	});
-	console.log(result);
 
-	return result || false;
+	return { content: result, input: turma } || false;
 }
 
 
