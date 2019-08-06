@@ -370,12 +370,8 @@ async function getAlunasRespostasReport(turma) {
 		console.error('Error on getAlunasRespostasReport => ', err);
 	});
 
-	console.log(result);
-
 	return { content: result, input: turma } || false;
 }
-
-getAlunasRespostasReport('T7-SP');
 
 async function addAlunaFromCSV(aluno) {
 	let date = new Date();
