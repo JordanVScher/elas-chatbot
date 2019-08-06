@@ -15,8 +15,16 @@ async function buildCSV(data, texts) {
 
 async function getJsonFromURL(url) {
 	const csvData = await request.get(url, (error, response, body) => body);
-	const json = csv2json(csvData, { parseNumbers: true });
-	return json;
+	try {
+		if (csvData) {
+			const json = csv2json(csvData, { parseNumbers: true });
+			if (json) { return json; }
+			return false;
+		}
+		return false;
+	} catch (error) {
+		return false;
+	}
 }
 
 async function getFeedbackMsgs(addedALunos, errors) {

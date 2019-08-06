@@ -9,6 +9,7 @@ const attach = require('./utils/attach');
 const flow = require('./utils/flow');
 const help = require('./utils/helper');
 const timers = require('./utils/timers');
+const { checkUserOnLabel } = require('./utils/postback');
 
 module.exports = async (context) => {
 	try {
@@ -31,7 +32,7 @@ module.exports = async (context) => {
 		if (context.event.isPostback) {
 			await context.setState({ lastPBpayload: context.event.postback.payload });
 			if (context.state.lastPBpayload === 'teste') {
-				await context.setState({ dialog: 'alunosTurmaCSV' });
+				await context.setState({ dialog: 'adminMenu' });
 				// await context.setState({ dialog: 'sendFirst' });
 			} else {
 				await context.setState({ dialog: context.state.lastPBpayload });
@@ -45,14 +46,20 @@ module.exports = async (context) => {
 				context.event.message.quick_reply.payload, context.event.message.quick_reply.payload);
 		} else if (context.event.isText) {
 			await context.setState({ whatWasTyped: context.event.message.text });
-			if (context.state.dialog === 'jaSouAluna') {
+			if (context.state.whatWasTyped === process.env.ADMIN_KEYWORD) {
+				if (await checkUserOnLabel(context.session.user.id, process.env.ADMIN_LABEL_ID)) {
+					await context.setState({ dialog: 'adminMenu' });
+				} else {
+					await context.sendText(flow.adminMenu.notAdmin); await context.setState({ dialog: 'greetings' });
+				}
+			} else if (context.state.dialog === 'jaSouAluna') {
 				await context.sendImage(flow.jaSouAluna.gif1);
 				await dialogs.handleCPF(context);
 			} else if (['CPFNotFound', 'invalidCPF', 'validCPF'].includes(context.state.dialog)) {
 				await dialogs.handleCPF(context);
-			} if (context.state.whatWasTyped.toLowerCase() === process.env.RESET && process.env.ENV !== 'prod') {
+			} else if (context.state.whatWasTyped.toLowerCase() === process.env.RESET && process.env.ENV !== 'prod') {
 				await context.setState({ turma: '', matricula: '' });
-			} else {
+			}	else {
 				console.log('--------------------------');
 				console.log(`${context.session.user.first_name} ${context.session.user.last_name} digitou ${context.event.message.text}`);
 				console.log('Usa dialogflow?', context.state.chatbotData.use_dialogflow);
@@ -65,9 +72,14 @@ module.exports = async (context) => {
 					await context.setState({ dialog: 'createIssueDirect' });
 				}
 			}
-			// await createIssue(context, 'Não entendi sua mensagem pois ela é muito complexa. Você pode escrever novamente, de forma mais direta?');
 		} else if (context.event.isFile && context.event.file && context.event.file.url) {
-			await context.setState({ dialog: 'createAlunos', fileURL: context.event.file.url.replace('https', 'http') });
+			if (context.state.dialog === 'inserirAlunas' || context.state.dialog === 'createAlunos') { // on this dialog we can receive a file
+				if (await checkUserOnLabel(context.session.user.id, process.env.ADMIN_LABEL_ID)) { // for safety reasons we check if the user is an admin again
+					await context.setState({ dialog: 'createAlunos', fileURL: context.event.file.url.replace('https', 'http') });
+				} else {
+					await context.sendText(flow.adminMenu.notAdmin); await context.setState({ dialog: 'greetings' });
+				}
+			}
 		}
 
 		switch (context.state.dialog) {
@@ -167,6 +179,14 @@ module.exports = async (context) => {
 			await createIssue(context);
 			break;
 		// adminMenu -----------------------------------------------------------------------------
+		case 'adminMenu':
+			await context.sendText(flow.adminMenu.firstMenu.txt1, await attach.getQR(flow.adminMenu.firstMenu));
+			break;
+		case 'inserirAlunas':
+			await context.sendText(flow.adminMenu.inserirAlunas.txt1);
+			await context.sendText(process.env.CSV_EXEMPLE_LINK);
+			await context.sendText(flow.adminMenu.inserirAlunas.txt2, await attach.getQR(flow.adminMenu.inserirAlunas));
+			break;
 		case 'alunosTurmaCSV':
 		case 'alunosRespostasCSV':
 			await dialogs.sendCSV(context, 'T7-SP');

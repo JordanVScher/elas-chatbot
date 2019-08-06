@@ -146,6 +146,19 @@ module.exports = {
 	},
 
 	adminMenu: {
+		firstMenu: {
+			txt1: 'Esse é o menu do admin. Clique em uma opção:',
+			menuOptions: ['Inserir Alunas'],
+			menuPostback: ['inserirAlunas'],
+		},
+		inserirAlunas: {
+			txt1: 'Envie o CSV com os dados das novas alunas. As colunas devem estar formatadas como esse arquivo de exemplo:',
+			txt2: 'É necessário que cada nova aluna tenha o nome completo e o CPF. Se o CPF já estiver cadastrado, os dados da aluna serão atualizados com os valores no CSV (se houver algum).',
+			invalidFile: 'Erro! Verifique se o arquivo CSV está formatado corretamente e envie novamente!',
+			menuOptions: ['Voltar'],
+			menuPostback: ['adminMenu'],
+		},
+		notAdmin: 'Você não é admin!',
 		errorMsg: 'Escreva novamente ou escolha uma das opções!',
 		alunosTurmaCSV: {
 			error: 'Não encontrei nenhuma aluna nessa turma!',

@@ -97,25 +97,26 @@ module.exports.sendCSV = async (context, turma) => {
 
 module.exports.receiveCSV = async (context) => {
 	const csvLines = await admin.getJsonFromURL(context.state.fileURL);
-	console.log(csvLines);
+	if (csvLines) {
+		const errors = []; // stores lines that presented an error
 
-	const errors = []; // stores lines that presented an error
-
-	for (let i = 0; i < csvLines.length; i++) {
-		const element = csvLines[i];
-
-		if (!element['Nome Completo'] || !element.cpf) { // check if aluno has the bare minumium to be added tot he database
-			const newAluno = await db.addAlunaFromCSV(element);
-			if (!newAluno || newAluno.error || !newAluno.id) { errors.push(i + 2); } // save line where error happended
-		} else {
-			errors.push(i + 2);
+		for (let i = 0; i < csvLines.length; i++) {
+			const element = csvLines[i];
+			if (!element['Nome Completo'] || !element.cpf) { // check if aluno has the bare minumium to be added tot he database
+				const newAluno = await db.addAlunaFromCSV(element);
+				if (!newAluno || newAluno.error || !newAluno.id) { errors.push(i + 2); } // save line where error happended
+			} else {
+				errors.push(i + 2);
+			}
 		}
-	}
 
-	const feedbackMsgs = await admin.getFeedbackMsgs(csvLines.length - errors.length, errors);
-	for (let i = 0; i < feedbackMsgs.length; i++) {
-		const element = feedbackMsgs[i];
-		await context.sendText(element);
+		const feedbackMsgs = await admin.getFeedbackMsgs(csvLines.length - errors.length, errors);
+		for (let i = 0; i < feedbackMsgs.length; i++) {
+			const element = feedbackMsgs[i];
+			await context.sendText(element);
+		}
+	} else {
+		await context.sendText(flow.adminMenu.inserirAlunas.invalidFile, await attach.getQR(flow.adminMenu.inserirAlunas));
 	}
 };
 
