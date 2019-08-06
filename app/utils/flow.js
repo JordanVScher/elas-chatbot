@@ -165,6 +165,9 @@ module.exports = {
 		},
 		notAdmin: 'Você não é admin!',
 		errorMsg: 'Escreva novamente ou escolha uma das opções!',
+
+	},
+	adminCSV: {
 		alunosTurmaCSV: {
 			txt1: 'Alunas da Turma:',
 			error: 'Não encontrei nenhuma aluna nessa turma!',

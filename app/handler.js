@@ -200,9 +200,11 @@ module.exports = async (context) => {
 			await context.sendText(flow.adminMenu.verTurma.txt1, await attach.getQR(flow.adminMenu.verTurma));
 			break;
 		case 'alunosTurmaCSV':
-			await dialogs.sendCSV(context, 'T7-SP');
-			await context.setState({ dialog: 'alunosRespostasCSV' });
-			await dialogs.sendCSV(context, 'T7-SP');
+			for (let i = 0; i < Object.keys(flow.adminCSV).length; i++) {
+				const element = Object.keys(flow.adminCSV)[i];
+				await context.setState({ dialog: element });
+				await dialogs.sendCSV(context, 'T7-SP');
+			}
 
 			await context.sendText('Se quiser os dados de outra turma basta digitar novamente.', await attach.getQR(flow.adminMenu.verTurma));
 			await context.setState({ dialog: 'alunosTurmaCSV' });

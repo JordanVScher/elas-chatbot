@@ -339,7 +339,7 @@ async function getAlunasFromTurma(turma) {
 async function getAlunasReport(turma) {
 	const result = await sequelize.query(`
 	SELECT ALUNO.id as "ID", ALUNO.cpf as "CPF", ALUNO.turma as "Turma", ALUNO.nome_completo as "Nome Completo", ALUNO.email as "E-mail", 
-	ALUNO.created_at as "Criado em", 	BOT_USER.fb_id as "ID Facebook" 
+	ALUNO.created_at as "Criado em", 	BOT_USER.fb_id as "ID Facebook", ALUNO.updated_at as "Atualizado em"
 	FROM alunos ALUNO
 	LEFT JOIN chatbot_users BOT_USER ON BOT_USER.cpf = ALUNO.cpf
 	WHERE ALUNO.turma = '${turma}'
@@ -353,6 +353,29 @@ async function getAlunasReport(turma) {
 
 	return { content: result, input: turma } || false;
 }
+
+async function getAlunasRespostasReport(turma) {
+	const result = await sequelize.query(`
+	SELECT RESPOSTA.id as "RESPOSTA ID", ALUNO.nome_completo as "Nome Completo", ALUNO.cpf as "ALUNO CPF", RESPOSTA.pre as "Sondagem Pré", RESPOSTA.pos as "Sondagem Pós",
+	RESPOSTA.atividade_modulo1 as "Módulo 1", RESPOSTA.atividade_modulo2 as "Módulo 2", RESPOSTA.atividade_modulo3 as "Módulo 3",
+	RESPOSTA.created_at as "Respondido em", RESPOSTA.updated_at as "Atualizado em"
+	FROM alunos_respostas RESPOSTA
+	LEFT JOIN alunos ALUNO ON ALUNO.id = RESPOSTA.aluno_id
+	WHERE ALUNO.turma = '${turma}'
+	ORDER BY RESPOSTA.id;
+	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
+		console.log(`Got ${turma} successfully!`);
+		return results;
+	}).catch((err) => {
+		console.error('Error on getAlunasRespostasReport => ', err);
+	});
+
+	console.log(result);
+
+	return { content: result, input: turma } || false;
+}
+
+getAlunasRespostasReport('T7-SP');
 
 async function addAlunaFromCSV(aluno) {
 	let date = new Date();
@@ -416,4 +439,5 @@ module.exports = {
 	updateAlunoOnPagamento,
 	getAlunasReport,
 	addAlunaFromCSV,
+	getAlunasRespostasReport,
 };

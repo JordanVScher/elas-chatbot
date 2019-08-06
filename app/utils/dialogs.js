@@ -80,18 +80,18 @@ module.exports.sendCSV = async (context) => {
 		result = await db.getAlunasReport(input);
 		break;
 	case 'alunosRespostasCSV':
-		// result = await db.getAlunasRespostasReport(input);
+		result = await db.getAlunasRespostasReport(input);
 		break;
 	default:
 		break;
 	}
 
-	result = await admin.buildCSV(result, flow.adminMenu[context.state.dialog]);
+	result = await admin.buildCSV(result, flow.adminCSV[context.state.dialog]);
 
 	if (!result || result.error || !result.csvData) {
 		await context.sendText(result.error);
 	} else {
-		await context.sendText(flow.adminMenu[context.state.dialog].txt1);
+		await context.sendText(flow.adminCSV[context.state.dialog].txt1);
 		await context.sendFile(result.csvData, { filename: result.filename || 'seu_arquivo.csv' });
 	}
 };
