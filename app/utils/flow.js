@@ -144,7 +144,6 @@ module.exports = {
 		menuOptions: ['Ok'],
 		menuPostback: ['mainMenu'],
 	},
-
 	adminMenu: {
 		firstMenu: {
 			txt1: 'Esse é o menu do admin. Clique em uma opção:',
@@ -165,18 +164,22 @@ module.exports = {
 		},
 		notAdmin: 'Você não é admin!',
 		errorMsg: 'Escreva novamente ou escolha uma das opções!',
-
 	},
 	adminCSV: {
 		alunosTurmaCSV: {
 			txt1: 'Alunas da Turma:',
 			error: 'Não encontrei nenhuma aluna nessa turma!',
-			filename: 'Turma_<INPUT>',
+			filename: 'TURMA_<INPUT>',
 		},
 		alunosRespostasCSV: {
-			txt1: 'Respostas da turma',
+			txt1: 'Respostas da turma:',
 			error: 'Não encontrei nenhuma resposta nessa turma!',
 			filename: 'RESPOSTAS_TURMA_<INPUT>',
+		},
+		indicadosCSV: {
+			txt1: 'Indicados da turma:',
+			error: 'Não encontrei nenhum indicado nessa turma!',
+			filename: 'INDICADOS_TURMA_<INPUT>',
 		},
 	},
 };

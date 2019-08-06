@@ -373,6 +373,27 @@ async function getAlunasRespostasReport(turma) {
 	return { content: result, input: turma } || false;
 }
 
+async function getAlunasIndicadosReport(turma) {
+	const result = await sequelize.query(`
+	SELECT INDICADO.id as "INDICADO ID", ALUNO.nome_completo as "Nome Aluna", ALUNO.cpf as "ALUNO CPF", INDICADO.nome as "Nome Completo",
+	INDICADO.email as "E-mail", INDICADO.telefone as "Telefone", INDICADO.relacao_com_aluna as "Relação com Aluna",
+	INDICADO.created_at as "Criado em", INDICADO.updated_at as "Atualizado em",
+	RESPOSTAS.pre as "Pré-Avaliação", RESPOSTAS.pos as "Pós-Avaliação"
+	FROM indicacao_avaliadores INDICADO
+	LEFT JOIN alunos ALUNO ON ALUNO.id = INDICADO.aluno_id
+	LEFT JOIN indicados_respostas RESPOSTAS ON INDICADO.id = RESPOSTAS.indicado_id
+	WHERE ALUNO.turma = '${turma}'
+	ORDER BY ALUNO.id, INDICADO.id;
+	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
+		console.log(`Got ${turma} successfully!`);
+		return results;
+	}).catch((err) => {
+		console.error('Error on getAlunasRespostasReport => ', err);
+	});
+
+	return { content: result, input: turma } || false;
+}
+
 async function addAlunaFromCSV(aluno) {
 	let date = new Date();
 	date = await moment(date).format('YYYY-MM-DD HH:mm:ss');
@@ -436,4 +457,5 @@ module.exports = {
 	getAlunasReport,
 	addAlunaFromCSV,
 	getAlunasRespostasReport,
+	getAlunasIndicadosReport,
 };

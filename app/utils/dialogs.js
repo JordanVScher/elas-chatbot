@@ -82,6 +82,9 @@ module.exports.sendCSV = async (context) => {
 	case 'alunosRespostasCSV':
 		result = await db.getAlunasRespostasReport(input);
 		break;
+	case 'indicadosCSV':
+		result = await db.getAlunasIndicadosReport(input);
+		break;
 	default:
 		break;
 	}
