@@ -72,14 +72,15 @@ module.exports.buildAgendaMsg = async (data) => {
 };
 
 
-module.exports.sendCSV = async (context, turma) => {
-	const input = turma.trim().toUpperCase();
+module.exports.sendCSV = async (context) => {
+	const input = context.state.searchTurma.trim().toUpperCase();
 	let result = '';
 	switch (context.state.dialog) {
 	case 'alunosTurmaCSV':
 		result = await db.getAlunasReport(input);
 		break;
 	case 'alunosRespostasCSV':
+		// result = await db.getAlunasRespostasReport(input);
 		break;
 	default:
 		break;
@@ -88,8 +89,9 @@ module.exports.sendCSV = async (context, turma) => {
 	result = await admin.buildCSV(result, flow.adminMenu[context.state.dialog]);
 
 	if (!result || result.error || !result.csvData) {
-		await context.sendText(`${result.error} ${flow.adminMenu.errorMsg}`);
+		await context.sendText(result.error);
 	} else {
+		await context.sendText(flow.adminMenu[context.state.dialog].txt1);
 		await context.sendFile(result.csvData, { filename: result.filename || 'seu_arquivo.csv' });
 	}
 };

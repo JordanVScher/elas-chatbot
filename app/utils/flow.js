@@ -148,8 +148,8 @@ module.exports = {
 	adminMenu: {
 		firstMenu: {
 			txt1: 'Esse é o menu do admin. Clique em uma opção:',
-			menuOptions: ['Inserir Alunas'],
-			menuPostback: ['inserirAlunas'],
+			menuOptions: ['Inserir Alunas', 'Ver Turma'],
+			menuPostback: ['inserirAlunas', 'verTurma'],
 		},
 		inserirAlunas: {
 			txt1: 'Envie o CSV com os dados das novas alunas. As colunas devem estar formatadas como esse arquivo de exemplo:',
@@ -158,11 +158,22 @@ module.exports = {
 			menuOptions: ['Voltar'],
 			menuPostback: ['adminMenu'],
 		},
+		verTurma: {
+			txt1: 'Aqui você poderá baixar um CSV com os dados das alunas de uma turma. Digite a turma, exemplo: T1-SP.',
+			menuOptions: ['Voltar'],
+			menuPostback: ['adminMenu'],
+		},
 		notAdmin: 'Você não é admin!',
 		errorMsg: 'Escreva novamente ou escolha uma das opções!',
 		alunosTurmaCSV: {
+			txt1: 'Alunas da Turma:',
 			error: 'Não encontrei nenhuma aluna nessa turma!',
 			filename: 'Turma_<INPUT>',
+		},
+		alunosRespostasCSV: {
+			txt1: 'Respostas da turma',
+			error: 'Não encontrei nenhuma resposta nessa turma!',
+			filename: 'RESPOSTAS_TURMA_<INPUT>',
 		},
 	},
 };

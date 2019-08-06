@@ -55,6 +55,12 @@ module.exports = async (context) => {
 			} else if (context.state.dialog === 'jaSouAluna') {
 				await context.sendImage(flow.jaSouAluna.gif1);
 				await dialogs.handleCPF(context);
+			} else if (context.state.dialog === 'verTurma' || context.state.dialog === 'alunosTurmaCSV') {
+				if (await checkUserOnLabel(context.session.user.id, process.env.ADMIN_LABEL_ID)) {
+					await context.setState({ searchTurma: context.state.whatWasTyped, dialog: 'alunosTurmaCSV' });
+				} else {
+					await context.sendText(flow.adminMenu.notAdmin); await context.setState({ dialog: 'greetings' });
+				}
 			} else if (['CPFNotFound', 'invalidCPF', 'validCPF'].includes(context.state.dialog)) {
 				await dialogs.handleCPF(context);
 			} else if (context.state.whatWasTyped.toLowerCase() === process.env.RESET && process.env.ENV !== 'prod') {
@@ -187,12 +193,19 @@ module.exports = async (context) => {
 			await context.sendText(process.env.CSV_EXEMPLE_LINK);
 			await context.sendText(flow.adminMenu.inserirAlunas.txt2, await attach.getQR(flow.adminMenu.inserirAlunas));
 			break;
-		case 'alunosTurmaCSV':
-		case 'alunosRespostasCSV':
-			await dialogs.sendCSV(context, 'T7-SP');
-			break;
 		case 'createAlunos':
 			await dialogs.receiveCSV(context);
+			break;
+		case 'verTurma':
+			await context.sendText(flow.adminMenu.verTurma.txt1, await attach.getQR(flow.adminMenu.verTurma));
+			break;
+		case 'alunosTurmaCSV':
+			await dialogs.sendCSV(context, 'T7-SP');
+			await context.setState({ dialog: 'alunosRespostasCSV' });
+			await dialogs.sendCSV(context, 'T7-SP');
+
+			await context.sendText('Se quiser os dados de outra turma basta digitar novamente.', await attach.getQR(flow.adminMenu.verTurma));
+			await context.setState({ dialog: 'alunosTurmaCSV' });
 			break;
 		} // end switch case
 	} catch (error) {
