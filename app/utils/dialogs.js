@@ -3,7 +3,7 @@ const help = require('./helper');
 const attach = require('./attach');
 const flow = require('./flow');
 const admin = require('./admin_menu/admin_helper');
-
+const { alunos } = require('../server/models');
 
 module.exports.sendMainMenu = async (context, txtMsg) => {
 	const text = txtMsg || flow.mainMenu.defaultText;
@@ -19,8 +19,8 @@ module.exports.sendMainMenu = async (context, txtMsg) => {
 };
 
 module.exports.handleCPF = async (context) => {
-	const cpf = context.state.whatWasTyped.replace(/[_.,-]/g, '');
-	if ((cpf.length === 11 && parseInt(cpf, 10)) === false) {
+	const cpf = await help.getCPFValid(context.state.whatWasTyped);
+	if (!cpf) {
 		await context.setState({ dialog: 'invalidCPF' });
 	} else if (await db.checkCPF(cpf) === false) { // check if this cpf exists
 		await context.setState({ dialog: 'CPFNotFound' });
@@ -122,6 +122,53 @@ module.exports.receiveCSV = async (context) => {
 		}
 	} else {
 		await context.sendText(flow.adminMenu.inserirAlunas.invalidFile, await attach.getQR(flow.adminMenu.inserirAlunas));
+	}
+};
+
+module.exports.adminAlunaCPF = async (context) => {
+	await context.setState({ adminAlunaCPF: await help.getCPFValid(context.state.whatWasTyped) });
+	if (!context.state.adminAlunaCPF) {
+		await context.sendText(flow.adminMenu.mudarTurma.invalidCPF);
+	} else {
+		await context.setState({ adminAlunaFound: await db.getAlunaFromPDF(context.state.adminAlunaCPF) });
+		if (!context.state.adminAlunaFound) {
+			await context.sendText(flow.adminMenu.mudarTurma.alunaNotFound);
+		} else {
+			await context.sendText(flow.adminMenu.mudarTurma.alunaFound + await help.buildAlunaMsg(context.state.adminAlunaFound));
+			await context.setState({ dialog: 'mudarAskTurma' });
+		}
+	}
+};
+
+module.exports.mudarAskTurma = async (context) => {
+	await context.setState({ desiredTurma: context.state.whatWasTyped.trim().toUpperCase() });
+	const validTurma = await alunos.findOne({ where: { turma: context.state.desiredTurma } }).then(aluna => aluna).catch((err) => {
+		console.log('Erro em mudarAskTurma getCount', err); help.Sentry.captureMessage('Erro em mudarAskTurma getCount');
+		return false;
+	});
+
+	if (!validTurma) {
+		await context.sendText(flow.adminMenu.mudarTurma.turmaInvalida);
+	} else {
+		const transferedAluna = await alunos.update({ turma: context.state.desiredTurma },
+			{ where: { cpf: context.state.adminAlunaFound.cpf } }).then(() => true).catch((err) => {
+			console.log('Erro em mudarAskTurma update', err); help.Sentry.captureMessage('Erro em mudarAskTurma update');
+			return false;
+		});
+
+		if (transferedAluna) {
+			await context.sendText(flow.adminMenu.mudarTurma.transferComplete.replace('<TURMA>', context.state.desiredTurma));
+			const count = await alunos.count({ where: { turma: context.state.desiredTurma } }).then(alunas => alunas).catch((err) => {
+				console.log('Erro em mudarAskTurma getCount', err); help.Sentry.captureMessage('Erro em mudarAskTurma getCount');
+				return false;
+			});
+			if (count !== false) { await context.sendText(flow.adminMenu.mudarTurma.turmaCount.replace('<COUNT>', count).replace('<TURMA>', context.state.desiredTurma)); }
+			await context.setState({
+				dialog: 'adminMenu', desiredTurma: '', adminAlunaFound: '', adminAlunaCPF: '',
+			});
+		} else {
+			await context.sendText(flow.adminMenu.mudarTurma.transferFailed);
+		}
 	}
 };
 

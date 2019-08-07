@@ -147,8 +147,8 @@ module.exports = {
 	adminMenu: {
 		firstMenu: {
 			txt1: 'Esse é o menu do admin. Clique em uma opção:',
-			menuOptions: ['Inserir Alunas', 'Ver Turma'],
-			menuPostback: ['inserirAlunas', 'verTurma'],
+			menuOptions: ['Inserir Alunas', 'Ver Turma', 'Mudar Turma'],
+			menuPostback: ['inserirAlunas', 'verTurma', 'mudarTurma'],
 		},
 		inserirAlunas: {
 			txt1: 'Envie o CSV com os dados das novas alunas. As colunas devem estar formatadas como esse arquivo de exemplo:',
@@ -159,8 +159,22 @@ module.exports = {
 		},
 		verTurma: {
 			txt1: 'Aqui você poderá baixar um CSV com os dados das alunas de uma turma. Digite a turma, exemplo: T1-SP.',
+			txt2: 'Se quiser os dados de outra turma basta digitar novamente.',
 			menuOptions: ['Voltar'],
 			menuPostback: ['adminMenu'],
+		},
+		mudarTurma: {
+			txt1: 'Entre o CPF da Aluna que deseja mudar de turma. Pode ser só números. \nSe não souber o CPF, baixe o CSV com as informações da turma clicando no botão abaixo.',
+			invalidCPF: 'CPF inválido. Tente novamente.',
+			alunaNotFound: 'Não encontrei nenhuma aluna com esse CPF. Tente novemente.',
+			alunaFound: 'Aluna encontrada:\n\n',
+			txt2: 'Entre com a turma para transerir a aluna. Hoje, <NOME> está na turma <TURMA>.',
+			transferComplete: 'Aluna foi transferida para turma <TURMA> com sucesso!',
+			transferFailed: 'Um erro aconteceu, tente novamente!',
+			turmaInvalida: 'Turma inválida! Não existe nenhuma aluna nessa turma! Adicione alguma aluna nessa turma antes de transferir alguém pra lá!',
+			turmaCount: 'Agora existem <COUNT> aluna(s) na turma <TURMA>.',
+			menuOptions: ['Voltar', 'Ver Turma'],
+			menuPostback: ['adminMenu', 'verTurma'],
 		},
 		notAdmin: 'Você não é admin!',
 		errorMsg: 'Escreva novamente ou escolha uma das opções!',

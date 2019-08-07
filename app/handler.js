@@ -65,7 +65,11 @@ module.exports = async (context) => {
 				await dialogs.handleCPF(context);
 			} else if (context.state.whatWasTyped.toLowerCase() === process.env.RESET && process.env.ENV !== 'prod') {
 				await context.setState({ turma: '', matricula: '' });
-			}	else {
+			} else if (context.state.dialog === 'mudarTurma') {
+				await dialogs.adminAlunaCPF(context);
+			} else if (context.state.dialog === 'mudarAskTurma') {
+				await dialogs.mudarAskTurma(context);
+			} else {
 				console.log('--------------------------');
 				console.log(`${context.session.user.first_name} ${context.session.user.last_name} digitou ${context.event.message.text}`);
 				console.log('Usa dialogflow?', context.state.chatbotData.use_dialogflow);
@@ -205,9 +209,14 @@ module.exports = async (context) => {
 				await context.setState({ dialog: element });
 				await dialogs.sendCSV(context, 'T7-SP');
 			}
-
-			await context.sendText('Se quiser os dados de outra turma basta digitar novamente.', await attach.getQR(flow.adminMenu.verTurma));
+			await context.sendText(flow.adminMenu.verTurma.txt2, await attach.getQR(flow.adminMenu.verTurma));
 			await context.setState({ dialog: 'alunosTurmaCSV' });
+			break;
+		case 'mudarTurma':
+			await context.sendText(flow.adminMenu.mudarTurma.txt1, await attach.getQR(flow.adminMenu.mudarTurma));
+			break;
+		case 'mudarAskTurma':
+			await context.sendText(flow.adminMenu.mudarTurma.txt2.replace('<NOME>', context.state.adminAlunaFound.nome_completo).replace('<TURMA>', context.state.adminAlunaFound.turma), await attach.getQR(flow.adminMenu.verTurma));
 			break;
 		} // end switch case
 	} catch (error) {

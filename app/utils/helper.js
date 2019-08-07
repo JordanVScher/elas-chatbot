@@ -170,6 +170,12 @@ async function separateString(someString) {
 	return { firstString, secondString };
 }
 
+async function getCPFValid(cpf) {
+	const result = cpf.replace(/[_.,-]/g, '');
+	if (!parseInt(cpf, 10)) { return false;	}
+	return result;
+}
+
 async function formatDialogFlow(text) {
 	let result = text.toLowerCase();
 	result = await result.replace(/([\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2580-\u27BF]|\uD83E[\uDD10-\uDDFF])/g, '');
@@ -184,6 +190,18 @@ function getPercentageChange(oldNumber, newNumber) {
 	const decreaseValue = oldNumber - newNumber;
 	const result = ((decreaseValue / oldNumber) * 100) * -1; // invert progression, if the number went up show a positive percentage
 	return parseFloat(result.toFixed(2), 10);
+}
+
+function buildAlunaMsg(aluna) {
+	let result = '';
+
+	if (aluna.id) { result += `ID: ${aluna.id}\n`;	}
+	if (aluna.nome_completo) { result += `Nome: ${aluna.nome_completo}\n`;	}
+	if (aluna.cpf) { result += `CPF: ${aluna.cpf}\n`;	}
+	if (aluna.email) { result += `E-mail: ${aluna.email}\n`;	}
+	if (aluna.turma) { result += `Turma: ${aluna.turma}\n`;	}
+
+	return result;
 }
 
 
@@ -209,4 +227,6 @@ module.exports = {
 	formatDiasMod,
 	atividadesCompletas,
 	getTimestamp,
+	getCPFValid,
+	buildAlunaMsg,
 };
