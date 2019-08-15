@@ -205,6 +205,12 @@ function buildAlunaMsg(aluna) {
 }
 
 
+function DBError(msg, err) {
+	console.log(msg, err); Sentry.captureMessage(msg);
+	return false;
+}
+
+
 module.exports = {
 	apiai: dialogFlow(process.env.DIALOGFLOW_TOKEN),
 	Sentry,
@@ -229,4 +235,5 @@ module.exports = {
 	getTimestamp,
 	getCPFValid,
 	buildAlunaMsg,
+	DBError,
 };

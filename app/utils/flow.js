@@ -44,12 +44,12 @@ module.exports = {
 		text3: 'Quando resolver com ELAS venha conversar comigo novamente. No menu há os serviços que você pode acessar 🤗',
 		text4: 'Até lá, que tal compartilhar ELAS para suas amigas?',
 	},
-	shareElas: {
-		siteTitle: 'Compartilhar',
-		// siteSubTitle: '',
-		// imageURL: '',
-		siteURL: 'https://www.facebook.com/Elas-homol-287066982237234/',
-	},
+	// shareElas: {
+	// 	siteTitle: 'Compartilhar',
+	// 	// siteSubTitle: '',
+	// 	// imageURL: '',
+	// 	siteURL: 'https://www.facebook.com/Elas-homol-287066982237234/',
+	// },
 	queroSerAluna: {
 		text1: 'Uau!! Então vamos lá, vou enviar o que ELAS oferece 😉 Lá vai textão ...',
 		text2: 'Espero que você venha aqui novamente me contando que é aluna do ELAS, hein.',

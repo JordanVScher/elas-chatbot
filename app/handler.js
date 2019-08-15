@@ -41,9 +41,17 @@ module.exports = async (context) => {
 			}
 		} else if (context.event.isQuickReply) {
 			await context.setState({ lastQRpayload: context.event.quickReply.payload });
-			await context.setState({ dialog: context.state.lastQRpayload });
-			await MaAPI.logFlowChange(context.session.user.id, context.state.chatbotData.user_id,
-				context.event.message.quick_reply.payload, context.event.message.quick_reply.payload);
+			if (context.state.lastQRpayload.slice(0, 4) === 'poll') { // user answered poll that came from timer
+				await context.setState({ answer: context.event.message.quick_reply.payload.replace('poll', '') });
+				await MaAPI.postPollAnswer(context.session.user.id, context.state.answer, 'dialog');
+				await MaAPI.logAnsweredPoll(context.session.user.id, context.state.politicianData.user_id, context.state.answer);
+				await context.sendText('Agradecemos sua resposta.');
+				await context.setState({ answer: '', dialog: 'mainMenu' });
+			} else {
+				await context.setState({ dialog: context.state.lastQRpayload });
+				await MaAPI.logFlowChange(context.session.user.id, context.state.chatbotData.user_id,
+					context.event.message.quick_reply.payload, context.event.message.quick_reply.payload);
+			}
 		} else if (context.event.isText) {
 			await context.setState({ whatWasTyped: context.event.message.text });
 			if (context.state.whatWasTyped === process.env.ADMIN_KEYWORD) {
