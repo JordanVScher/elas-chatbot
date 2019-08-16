@@ -72,7 +72,7 @@ module.exports = async (context) => {
 			} else if (['CPFNotFound', 'invalidCPF', 'validCPF'].includes(context.state.dialog)) {
 				await dialogs.handleCPF(context);
 			} else if (context.state.whatWasTyped.toLowerCase() === process.env.RESET && process.env.ENV !== 'prod') {
-				await context.setState({ turma: '', matricula: '' });
+				await context.setState({ matricula: '', gotAluna: '' });
 			} else if (context.state.dialog === 'mudarTurma') {
 				await dialogs.adminAlunaCPF(context);
 			} else if (context.state.dialog === 'mudarAskTurma') {
@@ -137,9 +137,8 @@ module.exports = async (context) => {
 			await context.sendText(flow.jaSouAluna.text3);
 			break;
 		case 'validCPF':
-			if (context.state.gotTurma) {
-				await context.setState({ turma: context.state.gotTurma.turma });
-				await context.sendText(flow.jaSouAluna.validCPF.replace('<name>', context.state.gotTurma.nome_completo).replace('<turma>', context.state.turma.replace('turma', '')),
+			if (context.state.gotAluna) {
+				await context.sendText(flow.jaSouAluna.validCPF.replace('<name>', context.state.gotAluna.nome_completo).replace('<turma>', context.state.gotAluna.turma.replace('turma', '')),
 					await attach.getQR(flow.jaSouAluna));
 			} else {
 				await context.sendText('Não achei sua turma');
@@ -177,7 +176,7 @@ module.exports = async (context) => {
 			break;
 		case 'Atividade2':
 			await context.setState({ spreadsheet: await help.getFormatedSpreadsheet() });
-			await context.setState({ ourTurma: await context.state.spreadsheet.find(x => x.turma === context.state.turma) });
+			await context.setState({ ourTurma: await context.state.spreadsheet.find(x => x.turma === context.state.gotAluna.turma) });
 			await context.setState({ mod1Date: context.state.ourTurma['módulo1'] });
 			await context.sendText(flow.Atividade2.text1.replace('[MOD1_15DIAS]', await help.formatDiasMod(context.state.mod1Date, -15)));
 			await attach.sendAtividade2Cards(context, flow.Atividade2.cards, context.state.cpf);

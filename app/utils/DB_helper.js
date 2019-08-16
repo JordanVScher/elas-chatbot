@@ -10,7 +10,6 @@ if (process.env.TEST !== 'true') {
 	});
 }
 
-
 async function getTurmaID(turmaName) {
 	const id = await sequelize.query(`
 	SELECT id FROM turma where nome = '${turmaName}';
@@ -22,13 +21,28 @@ async function getTurmaID(turmaName) {
 	return id;
 }
 
+async function getTurmaName(turmaID) {
+	const nome = await sequelize.query(`
+	SELECT nome FROM turma where id = '${turmaID}';
+	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
+		console.log('Got turma nome!');
+		return results && results[0] && results[0].nome ? results[0].nome : false;
+	}).catch((err) => { sentryError('Erro em getTurmaName =>', err); });
+
+	return nome;
+}
+
 async function getAlunaFromPDF(cpf) {
 	const aluna = await sequelize.query(`
 	SELECT * from alunos WHERE cpf = '${cpf}';
 	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
 		console.log(`Got ${cpf} successfully!`);
-		return results && results[0] && results[0].turma ? results[0] : false;
+		return results && results[0] && results[0].turma_id ? results[0] : false;
 	}).catch((err) => { sentryError('Erro em getAlunaFromPDF =>', err); });
+
+	if (aluna.turma_id) {
+		aluna.turma = await getTurmaName(aluna.turma_id);
+	}
 
 	return aluna;
 }
@@ -418,4 +432,5 @@ module.exports = {
 	getAlunasRespostasReport,
 	getAlunasIndicadosReport,
 	getTurmaID,
+	getTurmaName,
 };

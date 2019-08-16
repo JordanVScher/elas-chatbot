@@ -25,7 +25,7 @@ module.exports.handleCPF = async (context) => {
 	} else if (await db.checkCPF(cpf) === false) { // check if this cpf exists
 		await context.setState({ dialog: 'CPFNotFound' });
 	} else {
-		await context.setState({ cpf, gotTurma: await db.getAlunaFromPDF(cpf) });
+		await context.setState({ cpf, gotAluna: await db.getAlunaFromPDF(cpf) });
 		await context.setState({ dialog: 'validCPF' });
 	}
 };
@@ -34,7 +34,7 @@ module.exports.handleCPF = async (context) => {
 module.exports.getAgenda = async (context) => {
 	const result = {};
 	const spreadsheet = await help.reloadSpreadSheet(1, 6);
-	const onTheTurma = await spreadsheet.find(x => x.turma === context.state.turma);
+	const onTheTurma = await spreadsheet.find(x => x.turma === context.state.gotAluna.turma);
 
 	if (onTheTurma) {
 		result.local = onTheTurma.local; // the local

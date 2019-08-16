@@ -184,20 +184,14 @@ async function separateAnswer(respostas, elementos) {
 	return result;
 }
 
-// async function sendMailToIndicados(indicados, aluna) {
-// 	const text = `Olá. Você foi indicado por ${aluna.nome} para a avaliação. Responda abaixo:\n `;
-// 	for (let i = 0; i < indicados.length; i++) {
-// 		const newLink = `${surveysInfo.avaliador360pre.link.replace('IDRESPOSTA', indicados[i].id)}`;
-// 		await sendTestMail(`${aluna.nome} te indicou!`, text + newLink, indicados[i].email);
-// 	}
-// }
-
 async function handleIndicacao(response) {
 	// response.custom_variables = { turma: 'T7-SP', cpf: '12345678911' };
 	console.log('custom_variables', response.custom_variables);
 
 	const baseAnswers = await formatAnswers(response.pages[0].questions);
 	const aluna = await db.getAluno(response.custom_variables.cpf);
+
+
 	await addQueue.addNewNotificationIndicados(aluna.id, aluna.turma);
 
 	let indicados = {}; // could just as well be an array with the answers
@@ -267,6 +261,7 @@ async function handleAvaliador(response, column, map) {
 
 // what to do with the form that was just answered
 async function newSurveyResponse(event) {
+	console.log(event);
 	const responses = await smAPI.getResponseWithAnswers(event.filter_id, event.object_id); console.log('responses', JSON.stringify(responses, null, 2)); // get details of the event
 	switch (responses.survey_id) { // which survey was answered?
 	case surveysInfo.sondagemPre.id:
