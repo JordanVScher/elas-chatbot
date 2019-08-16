@@ -1,10 +1,11 @@
 const fs = require('fs');
-const helper = require('./helper');
+const { sentryError } = require('./helper');
 const smAPI = require('../sm_api');
 const mailer = require('./mailer');
 const { eMail } = require('./flow');
 const db = require('./DB_helper');
 const addQueue = require('./addNotificationQueue');
+const { turma } = require('../server/models');
 
 const surveysInfo = require('./sm_surveys');
 const surveysMaps = require('./sm_maps');
@@ -12,16 +13,15 @@ const surveysMaps = require('./sm_maps');
 // after a payement happens we send an e-mail to the buyer with the matricula/atividade 1 form
 async function sendMatricula(productID, pagamentoID, buyerEmail) {
 	try {
-		const spreadsheet = await helper.reloadSpreadSheet(1, 6); // console.log('spreadsheet', spreadsheet); // load spreadsheet
-		const column = await spreadsheet.find(x => x.pagseguroId.toString() === productID.toString()); console.log('column', column); // get same product id (we want to know the "turma")
-		let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Matricula.html`, 'utf-8');
+		// get turma that matches the product that was bought
+		const ourTurma = await turma.findOne({ where: { pagseguro_id: productID }, raw: true }).then(aluna => aluna).catch(err => sentryError('FindOne turma', err));
+
+		let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Matricula.html`, 'utf-8'); // prepare the e-mail
 		html = await html.replace(/<link_atividade>/g, surveysInfo.atividade1.link); // add link to mail template
-		html = await html.replace(/TURMARESPOSTA/g, column.turma); // update the turma
+		html = await html.replace(/TURMARESPOSTA/g, ourTurma.nome); // update the turma
 		html = await html.replace(/PSIDRESPOSTA/g, pagamentoID); // update the turma
 		await mailer.sendHTMLMail(eMail.atividade1.assunto, buyerEmail, html);
-	} catch (error) {
-		console.log('Erro em sendMatricula', error); helper.Sentry.captureMessage('Erro em sendMatricula');
-	}
+	} catch (error) { sentryError('Erro sendMatricula', error); }
 }
 
 async function addCustomParametersToAnswer(answers, parameters) {
@@ -164,9 +164,7 @@ async function handleAtividadeOne(response) {
 		html = await html.replace('[nome]', answers.nome); // add nome to mail template
 		html = await html.replace(/<link_donna>/g, process.env.LINK_DONNA); // add chatbot link to mail template
 		await mailer.sendHTMLMail(eMail.depoisMatricula.assunto, answers.email, html);
-	} catch (error) {
-		console.log('Erro em handleAtividadeOne', error); helper.Sentry.captureMessage('Erro em handleAtividadeOne');
-	}
+	} catch (error) {	sentryError('Erro em handleAtividadeOne', error); }
 }
 
 async function separateAnswer(respostas, elementos) {
