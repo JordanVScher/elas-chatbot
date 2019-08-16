@@ -1,7 +1,7 @@
 const notificationQueue = require('../server/models').notification_queue;
 const indicadosAvaliadores = require('../server/models').indicacao_avaliadores;
 const { turma } = require('../server/models');
-const help = require('./helper');
+const { sentryError } = require('./helper');
 
 const notificationRulesAluna = [
 	{ notification_type: 1, modulo: 1, timeChange: [{ qtd: -19, type: 'days' }]	},
@@ -66,36 +66,33 @@ async function getSendDate(ourTurma, rule, i) {
 
 async function addNewNotificationAlunas(alunaId, turmaID) {
 	try {
-		const ourTurma = await turma.findOne({ where: { id: turmaID }, raw: true }).then(res => res).catch(err => help.sentryError('Erro em turmaFindOne', err));
+		const ourTurma = await turma.findOne({ where: { id: turmaID }, raw: true }).then(res => res).catch(err => sentryError('Erro em turmaFindOne', err));
 
 		if (ourTurma) {
 			for (let i = 0; i < notificationRulesAluna.length; i++) {
 				const rule = notificationRulesAluna[i];
 				const sendDate = await getSendDate(ourTurma, rule, i);
 				await notificationQueue.create({ notification_type: rule.notification_type, aluno_id: alunaId, when_to_send: sendDate })
-					.then(res => res).catch(err => help.sentryError('Erro em notificationQueue.create', err));
+					.then(res => res).catch(err => sentryError('Erro em notificationQueue.create', err));
 			}
 		} else {
-			help.sentryError('Situação em addNewNotificationAlunas ', new Error(`turma ${turmaID} not found`));
+			sentryError('Situação em addNewNotificationAlunas ', new Error(`turma ${turmaID} not found`));
 		}
 	} catch (error) {
-		help.sentryError('Erro em addNewNotificationAlunas ', error);
+		sentryError('Erro em addNewNotificationAlunas ', error);
 	}
 }
 
-async function addNewNotificationIndicados(alunaId, alunaTurma) {
+async function addNewNotificationIndicados(alunaId, turmaID) {
 	const indicados = await indicadosAvaliadores.findAll({ // get every indicado from aluna
 		where: { aluno_id: alunaId }, raw: true,
-	}).then(res => res).catch((err) => {
-		console.log('Erro em indicadosAvaliadores.findAll', err); help.Sentry.captureMessage('Erro em indicadosAvaliadores.findAll');
-		return false;
-	});
+	}).then(res => res).catch(err => sentryError('Erro em indicadosAvaliadores.findAll', err));
 
 	if (indicados && indicados.length > 0) {
-		const spreadsheet = await help.getFormatedSpreadsheet();
+		const ourTurma = await turma.findOne({ where: { id: turmaID }, raw: true }).then(res => res).catch(err => sentryError('Erro em turmaFindOne', err));
 		for (let i = 0; i < notificationRulesIndicado.length; i++) {
 			const rule = notificationRulesIndicado[i];
-			const sendDate = await getSendDate(spreadsheet, alunaTurma, rule, i);
+			const sendDate = await getSendDate(ourTurma, rule, i);
 
 			for (let j = 0; j < indicados.length; j++) {
 				const indicado = indicados[j];
@@ -103,9 +100,7 @@ async function addNewNotificationIndicados(alunaId, alunaTurma) {
 				// indicado can only receive a notification where familiar true if indicado is also familiar = true
 				if (!rule.familiar || (rule.familiar === true && indicado.familiar === true)) {
 					await notificationQueue.create({ notification_type: rule.notification_type, indicado_id: indicado.id, when_to_send: sendDate }).then(res => res)
-						.catch((err) => {
-							console.log('Erro em notificationQueue.create', err); help.Sentry.captureMessage('Erro em notificationQueue.create');
-						});
+						.catch(err => sentryError('Erro em notificationQueue.create', err));
 
 					if (rule.reminderDate) {
 						// e-mails for non-familiars may be sent twice if the indicado didn't answer the form.
@@ -114,15 +109,13 @@ async function addNewNotificationIndicados(alunaId, alunaTurma) {
 
 						await notificationQueue.create({
 							notification_type: rule.notification_type, indicado_id: indicado.id, when_to_send: sendDate, check_answered: true,
-						}).then(res => res).catch((err) => {
-							console.log('Erro em notificationQueue.create for reminderDate', err); help.Sentry.captureMessage('Erro em notificationQueue.create for reminderDate');
-						});
+						}).then(res => res).catch(err => sentryError('Erro em notificationQueue.create for reminderDate', err));
 					}
 				}
 			}
 		}
 	} else {
-		console.log(`Erro em addNewNotificationIndicados -> aluna ${alunaId} não tem indicados`); help.Sentry.captureMessage('Erro em addNewNotificationIndicados');
+		sentryError(`Erro em addNewNotificationIndicados -> aluna ${alunaId} não tem indicados`, new Error('Couldnt find aluna indicados'));
 	}
 }
 
@@ -131,8 +124,5 @@ module.exports = {
 };
 
 
-addNewNotificationAlunas(265, 15);
-
-
-// addNewNotificationAlunas(120, 'T7-SP');
-// addNewNotificationIndicados(120, 'T7-SP');
+// addNewNotificationAlunas(120, 15);
+// addNewNotificationIndicados(265, 15);

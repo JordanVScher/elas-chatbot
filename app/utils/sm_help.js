@@ -154,7 +154,7 @@ async function handleAtividadeOne(response) {
 			await db.updateAlunoOnPagamento(answers.pgid, newUserID);
 		}
 
-		await addQueue.addNewNotificationAlunas(newUserID, await db.getIndicadoRespostas(answers.turma));
+		await addQueue.addNewNotificationAlunas(newUserID, await db.getTurmaID(answers.turma));
 
 		/* e-mail */
 		let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Apresentar_Donna.html`, 'utf-8');
@@ -191,9 +191,6 @@ async function handleIndicacao(response) {
 	const baseAnswers = await formatAnswers(response.pages[0].questions);
 	const aluna = await db.getAluno(response.custom_variables.cpf);
 
-
-	await addQueue.addNewNotificationIndicados(aluna.id, aluna.turma);
-
 	let indicados = {}; // could just as well be an array with the answers
 	await surveysMaps.indicacao360.forEach(async (element) => { // getting the answers for the indicados
 		const aux = baseAnswers.find(x => x.id === element.questionID);
@@ -220,6 +217,7 @@ async function handleIndicacao(response) {
 		if (familiar[i].email) { await db.insertIndicacao(aluna.id, familiar[i], true);	}
 	}
 
+	await addQueue.addNewNotificationIndicados(aluna.id, aluna.turma_id);
 
 	// joining indicados and saving answer
 	let answers = indicacao.concat(familiar);

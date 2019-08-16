@@ -107,7 +107,7 @@ async function insertFamiliar(alunaID, userData) {
 
 async function getAluno(cpf) {
 	const id = await sequelize.query(`
-	SELECT id, cpf, email, turma_id as turma, nome_completo as nome FROM alunos WHERE cpf = '${cpf}' LIMIT 1;
+	SELECT id, cpf, email, turma_id, nome_completo as nome FROM alunos WHERE cpf = '${cpf}' LIMIT 1;
 	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
 		console.log(`Got ${cpf}'s id successfully!`);
 		return results && results[0] ? results[0] : false;
