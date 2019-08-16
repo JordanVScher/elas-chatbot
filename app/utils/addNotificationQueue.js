@@ -1,5 +1,6 @@
 const notificationQueue = require('../server/models').notification_queue;
 const indicadosAvaliadores = require('../server/models').indicacao_avaliadores;
+const { turma } = require('../server/models');
 const help = require('./helper');
 
 const notificationRulesAluna = [
@@ -33,12 +34,12 @@ const notificationRulesIndicado = [
 	{ notification_type: 12, modulo: 3, timeChange: [{ qtd: -12, type: 'days' }], familiar: true }, // eslint-disable-line object-curly-newline
 ];
 
-async function getSendDate(spreadsheet, turma, rule, i) {
+async function getSendDate(ourTurma, rule, i) {
 	if (process.env.NODE_ENV === 'prod') {
-		const desiredDatahora = `datahora${rule.modulo}`;
-		const modulex = await spreadsheet.find(x => x.turma === turma && x[desiredDatahora]); // get turma that has this datahora (ex: datahora1)
-		if (modulex) {
-			const dataResult = new Date(modulex[desiredDatahora]);
+		const desiredDatahora = `modulo${rule.modulo}`;
+		if (ourTurma) {
+			const dataResult = new Date(ourTurma[desiredDatahora]);
+
 			rule.timeChange.forEach((element) => {
 				// Negative qtd means amount of time before the date. Positive means after.
 				if (element.type === 'days') {
@@ -55,6 +56,7 @@ async function getSendDate(spreadsheet, turma, rule, i) {
 		return false;
 	}
 
+
 	const today = new Date();
 	const toAdd = (i + 1) * 3;
 	today.setMinutes(today.getMinutes() + toAdd);
@@ -62,15 +64,22 @@ async function getSendDate(spreadsheet, turma, rule, i) {
 }
 
 
-async function addNewNotificationAlunas(alunaId, alunaTurma) {
-	const spreadsheet = await help.getFormatedSpreadsheet();
-	for (let i = 0; i < notificationRulesAluna.length; i++) {
-		const rule = notificationRulesAluna[i];
-		const sendDate = await getSendDate(spreadsheet, alunaTurma, rule, i);
-		await notificationQueue.create({ notification_type: rule.notification_type, aluno_id: alunaId, when_to_send: sendDate }).then(res => res)
-			.catch((err) => { // eslint-disable-line
-				console.log('Erro em notificationQueue.create', err); help.Sentry.captureMessage('Erro em notificationQueue.create');
-			});
+async function addNewNotificationAlunas(alunaId, turmaID) {
+	try {
+		const ourTurma = await turma.findOne({ where: { id: turmaID }, raw: true }).then(res => res).catch(err => help.sentryError('Erro em turmaFindOne', err));
+
+		if (ourTurma) {
+			for (let i = 0; i < notificationRulesAluna.length; i++) {
+				const rule = notificationRulesAluna[i];
+				const sendDate = await getSendDate(ourTurma, rule, i);
+				await notificationQueue.create({ notification_type: rule.notification_type, aluno_id: alunaId, when_to_send: sendDate })
+					.then(res => res).catch(err => help.sentryError('Erro em notificationQueue.create', err));
+			}
+		} else {
+			help.sentryError('Situação em addNewNotificationAlunas ', new Error(`turma ${turmaID} not found`));
+		}
+	} catch (error) {
+		help.sentryError('Erro em addNewNotificationAlunas ', error);
 	}
 }
 
@@ -105,10 +114,9 @@ async function addNewNotificationIndicados(alunaId, alunaTurma) {
 
 						await notificationQueue.create({
 							notification_type: rule.notification_type, indicado_id: indicado.id, when_to_send: sendDate, check_answered: true,
-						}).then(res => res)
-							.catch((err) => {
-								console.log('Erro em notificationQueue.create for reminderDate', err); help.Sentry.captureMessage('Erro em notificationQueue.create for reminderDate');
-							});
+						}).then(res => res).catch((err) => {
+							console.log('Erro em notificationQueue.create for reminderDate', err); help.Sentry.captureMessage('Erro em notificationQueue.create for reminderDate');
+						});
 					}
 				}
 			}
@@ -121,6 +129,10 @@ async function addNewNotificationIndicados(alunaId, alunaTurma) {
 module.exports = {
 	addNewNotificationAlunas, addNewNotificationIndicados,
 };
+
+
+addNewNotificationAlunas(265, 15);
+
 
 // addNewNotificationAlunas(120, 'T7-SP');
 // addNewNotificationIndicados(120, 'T7-SP');

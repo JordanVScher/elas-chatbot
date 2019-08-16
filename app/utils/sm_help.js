@@ -154,7 +154,7 @@ async function handleAtividadeOne(response) {
 			await db.updateAlunoOnPagamento(answers.pgid, newUserID);
 		}
 
-		await addQueue.addNewNotificationAlunas(newUserID, answers.turma);
+		await addQueue.addNewNotificationAlunas(newUserID, await db.getIndicadoRespostas(answers.turma));
 
 		/* e-mail */
 		let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Apresentar_Donna.html`, 'utf-8');
