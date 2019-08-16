@@ -1,6 +1,6 @@
 const { sequelize } = require('../server/models/index');
 const { moment } = require('./helper');
-const { Sentry } = require('./helper');
+const { sentryError } = require('./helper');
 
 if (process.env.TEST !== 'true') {
 	sequelize.authenticate().then(() => {
@@ -10,15 +10,25 @@ if (process.env.TEST !== 'true') {
 	});
 }
 
+
+async function getTurmaID(turmaName) {
+	const id = await sequelize.query(`
+	SELECT id FROM turma where nome = '${turmaName}';
+	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
+		console.log('Got turma id!');
+		return results && results[0] && results[0].id ? results[0].id : false;
+	}).catch((err) => { sentryError('Erro em getTurmaID =>', err); });
+
+	return id;
+}
+
 async function getAlunaFromPDF(cpf) {
 	const aluna = await sequelize.query(`
 	SELECT * from alunos WHERE cpf = '${cpf}';
 	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
 		console.log(`Got ${cpf} successfully!`);
 		return results && results[0] && results[0].turma ? results[0] : false;
-	}).catch((err) => {
-		console.error('Error on upsertAluno => ', err);
-	});
+	}).catch((err) => { sentryError('Erro em getAlunaFromPDF =>', err); });
 
 	return aluna;
 }
@@ -26,23 +36,24 @@ async function getAlunaFromPDF(cpf) {
 async function upsertAluno(nome, cpf, turma, email) {
 	let date = new Date();
 	date = await moment(date).format('YYYY-MM-DD HH:mm:ss');
+	const turmaId = await getTurmaID(turma);
 
 	const id = await sequelize.query(`
-	INSERT INTO "alunos" (nome_completo, cpf, turma, email, created_at, updated_at)
-  VALUES ('${nome}', '${cpf}', '${turma}', '${email}', '${date}', '${date}')
+	INSERT INTO "alunos" (nome_completo, cpf, turma_id, email, created_at, updated_at)
+  VALUES ('${nome}', '${cpf}', '${turmaId}', '${email}', '${date}', '${date}')
 	ON CONFLICT (cpf)
   DO UPDATE
-		SET nome_completo = '${nome}', turma = '${turma}', email = '${email}', updated_at = '${date}'
+		SET nome_completo = '${nome}', turma_id = '${turmaId}', email = '${email}', updated_at = '${date}'
 		RETURNING id;
 	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
 		console.log(`Added ${nome} successfully!`);
 		return results && results[0] && results[0].id ? results[0].id : false;
-	}).catch((err) => {
-		console.error('Error on upsertAluno => ', err);
-	});
+	}).catch((err) => { sentryError('Erro em upsertAluno =>', err); });
+
 
 	return id;
 }
+
 
 async function insertIndicacao(alunaID, userData, familiar) {
 	let date = new Date();
@@ -57,9 +68,8 @@ async function insertIndicacao(alunaID, userData, familiar) {
 	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
 		console.log(`Added ${userData.email} successfully!`);
 		return results && results[0] ? results[0] : false;
-	}).catch((err) => {
-		console.error('Error on insertIndicacao => ', err);
-	});
+	}).catch((err) => { sentryError('Erro em insertIndicacao =>', err); });
+
 
 	return id;
 }
@@ -75,9 +85,8 @@ async function insertFamiliar(alunaID, userData) {
 	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
 		console.log(`Added ${userData.email} successfully!`);
 		return results && results[0] ? results[0] : false;
-	}).catch((err) => {
-		console.error('Error on insertFamiliar => ', err);
-	});
+	}).catch((err) => { sentryError('Erro em insertFamiliar =>', err); });
+
 
 	return id;
 }
@@ -88,9 +97,8 @@ async function getAluno(cpf) {
 	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
 		console.log(`Got ${cpf}'s id successfully!`);
 		return results && results[0] ? results[0] : false;
-	}).catch((err) => {
-		console.error('Error on getAluno => ', err);
-	});
+	}).catch((err) => { sentryError('Erro em getAluno =>', err); });
+
 
 	return id;
 }
@@ -109,9 +117,8 @@ async function getAlunoRespostas(cpf) {
 `).spread((results, metadata) => { // eslint-disable-line no-unused-vars
 		console.log(`Got ${cpf}'s respostas successfully!`);
 		return results && results[0] ? results[0] : false;
-	}).catch((err) => {
-		console.error('Error on getAlunoRespostas => ', err);
-	});
+	}).catch((err) => { sentryError('Erro em getAlunoRespostas =>', err); });
+
 
 	return aluna;
 }
@@ -129,9 +136,7 @@ async function getIndicadoRespostas(cpf) {
 `).spread((results, metadata) => { // eslint-disable-line no-unused-vars
 		console.log(`Got ${cpf}'s respostas successfully!`);
 		return results || false;
-	}).catch((err) => {
-		console.error('Error on getIndicadoRespostas => ', err);
-	});
+	}).catch((err) => { sentryError('Erro em getIndicadoRespostas =>', err); });
 
 	return indicado;
 }
@@ -157,9 +162,8 @@ async function getIndicadoFromAluna(AlunaID, familiar, pre, pos) {
 `).spread((results, metadata) => { // eslint-disable-line no-unused-vars
 		console.log(`Got ${AlunaID}'s indicados successfully!`);
 		return results || false;
-	}).catch((err) => {
-		console.error('Error on getIndicadoFromAluna => ', err);
-	});
+	}).catch((err) => { sentryError('Erro em getIndicadoFromAluna =>', err); });
+
 
 	return indicado || [];
 }
@@ -177,9 +181,7 @@ async function upsertPrePos(userID, response, column) {
 		SET aluno_id = '${userID}', ${column} = '${response}', updated_at = '${date}';;
 	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
 		console.log(`Added ${userID}'s ${column} successfully!`);
-	}).catch((err) => {
-		console.error('Error on upsertPreCadastro => ', err);
-	});
+	}).catch((err) => { sentryError('Erro em upsertPrePos =>', err); });
 }
 
 async function upsertPrePos360(userID, response, column) {
@@ -195,9 +197,7 @@ async function upsertPrePos360(userID, response, column) {
 		SET indicado_id = '${userID}', ${column} = '${response}', updated_at = '${date}';;
 	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
 		console.log(`Added ${userID}'s ${column} successfully!`);
-	}).catch((err) => {
-		console.error('Error on upsertPreCadastro => ', err);
-	});
+	}).catch((err) => { sentryError('Erro em upsertPrePos360 =>', err); });
 }
 
 async function updateAtividade(userID, column, answered) {
@@ -212,9 +212,7 @@ async function updateAtividade(userID, column, answered) {
 		SET aluno_id = '${userID}', ${column} = '${answered}', updated_at = '${date}';;
 	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
 		console.log(`Added ${userID}'s ${column} successfully!`);
-	}).catch((err) => {
-		console.error('Error on updateAtividade => ', err);
-	});
+	}).catch((err) => { sentryError('Erro em updateAtividade =>', err); });
 }
 
 async function upsertUser(FBID, userName) {
@@ -229,9 +227,7 @@ async function upsertUser(FBID, userName) {
     SET user_name = '${userName}', updated_at = '${date}';
 	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
 		console.log(`Added ${userName} successfully!`);
-	}).catch((err) => {
-		console.error('Error on upsertUser => ', err);
-	});
+	}).catch((err) => { sentryError('Erro em upsertUser =>', err); });
 }
 
 async function updateAlunoOnPagamento(pagamentoId, alunoId) {
@@ -245,9 +241,7 @@ async function updateAlunoOnPagamento(pagamentoId, alunoId) {
    id = '${pagamentoId}';
 	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
 		console.log(`Updated pagamento ${pagamentoId} successfully!`);
-	}).catch((err) => {
-		console.error('Error on updateAlunoOnPagamento => ', err);
-	});
+	}).catch((err) => { sentryError('Erro em updateAlunoOnPagamento =>', err); });
 }
 
 async function checkCPF(cpf) {
@@ -256,9 +250,7 @@ async function checkCPF(cpf) {
 	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
 		console.log(`Checked ${cpf} successfully!`);
 		return results;
-	}).catch((err) => {
-		console.error('Error on checkCPF => ', err);
-	});
+	}).catch((err) => { sentryError('Erro em checkCPF =>', err); });
 
 	if (result && result[0] && result[0].exists === true) { return true; }
 	return false;
@@ -275,9 +267,7 @@ async function linkUserToCPF(FBID, cpf) {
    fb_id = '${FBID}';
 	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
 		console.log(`Added ${FBID}'s cpf successfully!`);
-	}).catch((err) => {
-		console.error('Error on linkUserToCPF => ', err);
-	});
+	}).catch((err) => { sentryError('Erro em linkUserToCPF =>', err); });
 }
 
 async function getUserTurma(FBID) {
@@ -290,9 +280,8 @@ async function getUserTurma(FBID) {
 	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
 		console.log(`Got ${FBID}'s turma successfully!`);
 		return results;
-	}).catch((err) => {
-		console.error('Error on getUserTurma => ', err);
-	});
+	}).catch((err) => { sentryError('Erro em getUserTurma =>', err); });
+
 
 	if (result && result[0] && result[0].turma && result[0].nome) { return result[0];	}
 	return false;
@@ -308,9 +297,8 @@ async function getAlunasFromTurma(turma) {
 	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
 		console.log(`Got ${turma} successfully!`);
 		return results;
-	}).catch((err) => {
-		console.error('Error on getAlunasFromTurma => ', err);
-	});
+	}).catch((err) => { sentryError('Erro em getAlunasFromTurma =>', err); });
+
 
 	return result || false;
 }
@@ -327,9 +315,8 @@ async function getAlunasReport(turma) {
 	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
 		console.log(`Got ${turma} successfully!`);
 		return results;
-	}).catch((err) => {
-		console.error('Error on getAlunasReport => ', err);
-	});
+	}).catch((err) => { sentryError('Erro em getAlunasReport =>', err); });
+
 
 	return { content: result, input: turma } || false;
 }
@@ -346,9 +333,7 @@ async function getAlunasRespostasReport(turma) {
 	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
 		console.log(`Got ${turma} successfully!`);
 		return results;
-	}).catch((err) => {
-		console.error('Error on getAlunasRespostasReport => ', err);
-	});
+	}).catch((err) => { sentryError('Erro em getAlunasRespostasReport =>', err); });
 
 	return { content: result, input: turma } || false;
 }
@@ -367,9 +352,8 @@ async function getAlunasIndicadosReport(turma) {
 	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
 		console.log(`Got ${turma} successfully!`);
 		return results;
-	}).catch((err) => {
-		console.error('Error on getAlunasRespostasReport => ', err);
-	});
+	}).catch((err) => { sentryError('Error on getAlunasIndicadosReport => ', err);	});
+
 
 	return { content: result, input: turma } || false;
 }
@@ -402,12 +386,8 @@ async function addAlunaFromCSV(aluno) {
 	SET ${set.join(', ')}
 	RETURNING id;`;
 
-	const result = await sequelize.query(queryString).spread((results, metadata) => { // eslint-disable-line no-unused-vars
-		console.log('addAlunaFromCSV success!');
-		return results && results[0] ? results[0] : false;
-	}).catch((err) => {
-		console.error('rro no addAlunaFromCSV!', err);
-		Sentry.captureMessage('Erro no addAlunaFromCSV!');
+	const result = await sequelize.query(queryString).spread((results, metadata) => (results && results[0] ? results[0] : false)).catch((err) => { // eslint-disable-line no-unused-vars
+		sentryError('Erro no addAlunaFromCSV =>', err);
 		return { error: 'Valor inválido!' };
 	});
 
@@ -437,4 +417,5 @@ module.exports = {
 	addAlunaFromCSV,
 	getAlunasRespostasReport,
 	getAlunasIndicadosReport,
+	getTurmaID,
 };
