@@ -132,9 +132,6 @@ async function replaceChoiceId(answers, map, surveyID) {
 }
 
 async function handleAtividade(response, column) {
-	// response.custom_variables = { turma: 'T7-SP', cpf: '12345678911' };
-	console.log('custom_variables', response.custom_variables);
-
 	const aluno = await db.getAluno(response.custom_variables.cpf);
 	if (aluno) {
 		await db.updateAtividade(aluno.id, column, true);
