@@ -234,26 +234,6 @@ async function upsertUser(FBID, userName) {
 	});
 }
 
-async function upsertPagamento(documentoTipo, documentoValor, email, productId, transctionId) {
-	let date = new Date();
-	date = await moment(date).format('YYYY-MM-DD HH:mm:ss');
-
-	const result = await sequelize.query(`
-	INSERT INTO "pagamentos" (documento_tipo, documento_valor, email, id_produto, id_transacao, created_at, updated_at)
-  VALUES ('${documentoTipo}', '${documentoValor}', '${email}', '${productId}', '${transctionId}', '${date}', '${date}')
-  ON CONFLICT (id_transacao)
-  DO UPDATE
-		SET documento_tipo = '${documentoTipo}', documento_valor = '${documentoValor}', email = '${email}', updated_at = '${date}'
-	RETURNING id;
-	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
-		console.log(`Added ${email} successfully!`);
-		return results && results[0] ? results[0] : false;
-	}).catch((err) => {
-		console.error('Error on upsertPagamento => ', err);
-	});
-
-	return result;
-}
 async function updateAlunoOnPagamento(pagamentoId, alunoId) {
 	let date = new Date();
 	date = await moment(date).format('YYYY-MM-DD HH:mm:ss');
@@ -438,7 +418,6 @@ async function addAlunaFromCSV(aluno) {
 module.exports = {
 	upsertUser,
 	getAlunaFromPDF,
-	upsertPagamento,
 	upsertAluno,
 	linkUserToCPF,
 	checkCPF,

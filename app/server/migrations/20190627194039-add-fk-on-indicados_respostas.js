@@ -1,7 +1,7 @@
 
 
 module.exports = {
-	up: (queryInterface, Sequelize) => queryInterface.addConstraint('indicados_respostas', ['indicado_id'], {
+	up: (queryInterface, Sequelize) => queryInterface.addConstraint('indicados_respostas', ['indicado_id'], { // eslint-disable-line no-unused-vars
 		type: 'foreign key',
 		name: 'indicado_id_fk',
 		references: {
@@ -12,5 +12,5 @@ module.exports = {
 		},
 	}),
 
-	down: (queryInterface, Sequelize) => queryInterface.removeConstraint('indicados_respostas', 'indicado_id_fk'),
+	down: (queryInterface, Sequelize) => queryInterface.removeConstraint('indicados_respostas', 'indicado_id_fk'), // eslint-disable-line no-unused-vars
 };

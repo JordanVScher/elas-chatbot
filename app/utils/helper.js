@@ -205,7 +205,7 @@ function buildAlunaMsg(aluna) {
 }
 
 
-function DBError(msg, err) {
+function sentryError(msg, err) {
 	console.log(msg, err); Sentry.captureMessage(msg);
 	return false;
 }
@@ -235,5 +235,5 @@ module.exports = {
 	getTimestamp,
 	getCPFValid,
 	buildAlunaMsg,
-	DBError,
+	sentryError,
 };

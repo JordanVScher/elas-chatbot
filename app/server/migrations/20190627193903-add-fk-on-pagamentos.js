@@ -9,5 +9,5 @@ module.exports = {
 		},
 	}),
 
-	down: (queryInterface, Sequelize) => queryInterface.removeColumn('pagamentos', 'aluno_id'),
+	down: (queryInterface, Sequelize) => queryInterface.removeColumn('pagamentos', 'aluno_id'), // eslint-disable-line no-unused-vars
 };

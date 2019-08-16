@@ -5,9 +5,8 @@ const PagSeguro = require('pagseguro-nodejs');
 const { promisify } = require('util');
 const { parseString } = require('xml2js');
 const smHelp = require('./utils/sm_help');
-// const mailer = require('./utils/mailer');
-const { Sentry } = require('./utils/helper');
-const db = require('./utils/DB_helper');
+const { pagamentos } = require('./server/models');
+const { sentryError } = require('./utils/helper');
 
 const pagseguro = new PagSeguro({
 	email: process.env.PAG_SEGURO_EMAIL,
@@ -24,8 +23,6 @@ async function createVenda(itemId = 1) { // for testing only, creates a link to 
 	pagseguro.currency('BRL');
 	// pagseguro.reference('foo_id');
 	// pagseguro.redirect('https://123.ngrok.io/pagamento/bar');
-	pagseguro.notify('https://e49f5eb4.ngrok.io/pagamento');
-
 	pagseguro.addItem({
 		id: itemId,
 		description: 'Item Foobar',
@@ -78,27 +75,27 @@ async function handlePagamento(notification) {
 		if (success && !response.error) {
 			try {
 				const answer = await xmlParse(response); console.log('answer', JSON.stringify(answer, null, 2)); // parse xml to json
-				const productID = answer.transaction.items[0].item[0].id[0]; console.log('productID', productID); // productID
-				if (answer.transaction.status && answer.transaction.status.toString() === '3') {
-					// await db.upsertPagamento(answer.transaction.sender[0].documents[0].document[0].type[0], answer.transaction.sender[0].documents[0].document[0].value[0],
-					// answer.transaction.sender[0].email[0], productID, answer.transaction.code[0]); // saves pagamento
-					const pagamentoId = await db.upsertPagamento('cpf', '0',
-						answer.transaction.sender[0].email[0], productID, answer.transaction.code[0]); // saves pagamento
-
-					await smHelp.sendMatricula(productID, pagamentoId.id, process.env.ENV === 'local' ? 'jordan@appcivico.com' : answer.transaction.sender[0].email[0]); // send email
+				if (answer.transaction.status && answer.transaction.status.toString() === '3') { // 3 -> accepted transaction
+					const productID = answer.transaction.items[0].item[0].id[0]; console.log('productID', productID); // productID
+					const newPagamento = await pagamentos.findOrCreate({ // saving new payment
+						where: { id_transacao: answer.transaction.code[0] },
+						defaults: {
+							email: answer.transaction.sender[0].email[0], documento_tipo: 'cpf', documento_valor: '0', id_produto: productID, id_transacao: answer.transaction.code[0],
+						},
+					}).then(res => res[0].dataValues).catch(err => sentryError('upsert pagamento', err));
+					// we need the newPagamento id to send in the matrocilua mail
+					await smHelp.sendMatricula(productID, newPagamento.id, process.env.ENV === 'local' ? 'jordan@appcivico.com' : answer.transaction.sender[0].email[0]); // send email
 				} else {
-					console.log(`Status: ${answer.transaction.status}.\nQuem comprou: ${answer.transaction.sender[0].email[0]}`);
+					sentryError(`Status: ${answer.transaction.status}.\nQuem comprou: ${answer.transaction.sender[0].email[0]}`, answer.transaction);
 				}
 			} catch (error) {
-				console.log(error);
-				Sentry.captureMessage('Erro em handleNotification');
+				sentryError('Erro em handleNotification', error);
 			}
 		} else {
-			Sentry.captureMessage('Erro em pagseguro.notification');
+			sentryError('Erro em pagseguro.notification', response);
 		}
 	});
 }
-
 
 // const mock = {
 // 	notificationCode: 'A8B88B-E1ABDCABDC33-D6643ECF9FEF-A7957F',
