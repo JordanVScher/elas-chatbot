@@ -382,6 +382,9 @@ async function addAlunaFromCSV(aluno) {
 	if (aluno['E-mail']) {
 		columns.push('email'); values.push(`'${aluno['E-mail']}'`); set.push(`${columns[columns.length - 1]} = ${values[values.length - 1]}`);
 	}
+	if (aluno.turma_id) {
+		columns.push('turma_id'); values.push(`'${aluno.turma_id}'`); set.push(`${columns[columns.length - 1]} = ${values[values.length - 1]}`);
+	}
 
 	columns.push('created_at'); values.push(`'${date}'`);
 	columns.push('updated_at'); values.push(`'${date}'`); set.push(`${columns[columns.length - 1]} = ${values[values.length - 1]}`);

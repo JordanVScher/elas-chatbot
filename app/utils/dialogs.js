@@ -4,6 +4,7 @@ const attach = require('./attach');
 const flow = require('./flow');
 const admin = require('./admin_menu/admin_helper');
 const { alunos } = require('../server/models');
+const { turma } = require('../server/models');
 
 module.exports.sendMainMenu = async (context, txtMsg) => {
 	const text = txtMsg || flow.mainMenu.defaultText;
@@ -100,14 +101,20 @@ module.exports.sendCSV = async (context) => {
 };
 
 
-module.exports.receiveCSV = async (context) => {
+module.exports.receiveCSV = async (context) => { // createAlunos/ inserir
+	const turmas = await turma.findAll({ where: {}, raw: true }).then(res => res).catch(err => help.sentryError('Erro em turma.findAll', err));
 	const csvLines = await admin.getJsonFromURL(context.state.fileURL);
 	if (csvLines) {
 		const errors = []; // stores lines that presented an error
 
 		for (let i = 0; i < csvLines.length; i++) {
 			const element = csvLines[i];
-			if (!element['Nome Completo'] || !element.cpf) { // check if aluno has the bare minumium to be added tot he database
+			if (element.Turma) {
+				element.Turma = await turmas.find(x => x.nome === element.Turma); // find the turma that has that name
+				element.turma_id = element.Turma ? element.Turma.id : false; // get that turma id
+			} // convert turma as name to turma as id
+
+			if (element['Nome Completo'] && element.CPF && element.turma_id) { // check if aluno has the bare minumium to be added to the database and if turma is valid(it exists)
 				const newAluno = await db.addAlunaFromCSV(element);
 				if (!newAluno || newAluno.error || !newAluno.id) { errors.push(i + 2); } // save line where error happended
 			} else {
@@ -118,7 +125,7 @@ module.exports.receiveCSV = async (context) => {
 		const feedbackMsgs = await admin.getFeedbackMsgs(csvLines.length - errors.length, errors);
 		for (let i = 0; i < feedbackMsgs.length; i++) {
 			const element = feedbackMsgs[i];
-			await context.sendText(element);
+			await context.sendText(element, await attach.getQR(flow.adminMenu.inserirAlunas));
 		}
 	} else {
 		await context.sendText(flow.adminMenu.inserirAlunas.invalidFile, await attach.getQR(flow.adminMenu.inserirAlunas));

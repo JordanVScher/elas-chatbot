@@ -411,5 +411,3 @@ const sendNotificationCron = new CronJob(
 module.exports = {
 	sendNotificationCron, checkShouldSendRecipient, checkShouldSendNotification, sendNotificationFromQueue,
 };
-
-sendNotificationFromQueue();
