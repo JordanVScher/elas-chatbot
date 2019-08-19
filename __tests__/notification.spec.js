@@ -5,14 +5,13 @@ const data = require('./mock_data');
 
 process.env.NODE_ENV = 'prod';
 
-// if checkShouldSendNotification returns true we can send that notification
-it('checkShouldSendNotification - no recipient', async () => {
+it('checkShouldSendRecipient - no recipient', async () => {
 	const notification = data.baseNotification; const recipient = null;
 	const result = await sendNotificationQueue.checkShouldSendRecipient(recipient, notification);
 	await expect(result).toBeFalsy();
 });
 
-it('checkShouldSendNotification - regular case', async () => {
+it('checkShouldSendRecipient - regular case', async () => {
 	const notification = data.baseNotification; const recipient = data.baseRecipientIndicado;
 	notification.notification_type = 55;
 
@@ -20,21 +19,21 @@ it('checkShouldSendNotification - regular case', async () => {
 	await expect(result).toBeTruthy();
 });
 
-it('checkShouldSendNotification - type 3, no check_answered', async () => {
+it('checkShouldSendRecipient - type 3, no check_answered', async () => {
 	const notification = data.baseNotification; const recipient = data.baseRecipientIndicado;
 	notification.notification_type = 3;
 	const result = await sendNotificationQueue.checkShouldSendRecipient(recipient, notification);
 	await expect(result).toBeTruthy();
 });
 
-it('checkShouldSendNotification - type 3 and check_answered, no answer pre', async () => {
+it('checkShouldSendRecipient - type 3 and check_answered, no answer pre', async () => {
 	const notification = data.baseNotification; const recipient = data.baseRecipientIndicado;
 	notification.notification_type = 3; notification.check_answered = true;
 	const result = await sendNotificationQueue.checkShouldSendRecipient(recipient, notification);
 	await expect(result).toBeTruthy();
 });
 
-it('checkShouldSendNotification - type 3 and check_answered, with pre answer', async () => {
+it('checkShouldSendRecipient - type 3 and check_answered, with pre answer', async () => {
 	const notification = data.baseNotification; const recipient = data.baseRecipientIndicado;
 	notification.notification_type = 3; notification.check_answered = true;
 	recipient['respostas.pre'] = { foo: 'bar' };
@@ -42,7 +41,7 @@ it('checkShouldSendNotification - type 3 and check_answered, with pre answer', a
 	await expect(result).toBeFalsy();
 });
 
-it('checkShouldSendNotification - type 10, no check_answered, no pre answer', async () => {
+it('checkShouldSendRecipient - type 10, no check_answered, no pre answer', async () => {
 	const notification = data.baseNotification; const recipient = data.baseRecipientIndicado;
 	notification.notification_type = 10; notification.check_answered = false;
 	recipient['respostas.pre'] = {};
@@ -50,7 +49,7 @@ it('checkShouldSendNotification - type 10, no check_answered, no pre answer', as
 	await expect(result).toBeFalsy();
 });
 
-it('checkShouldSendNotification - type 10, no check_answered, with pre answer', async () => {
+it('checkShouldSendRecipient - type 10, no check_answered, with pre answer', async () => {
 	const notification = data.baseNotification; const recipient = data.baseRecipientIndicado;
 	notification.notification_type = 10; notification.check_answered = false;
 	recipient['respostas.pre'] = { foo: 'bar' };
@@ -58,7 +57,7 @@ it('checkShouldSendNotification - type 10, no check_answered, with pre answer', 
 	await expect(result).toBeTruthy();
 });
 
-it('checkShouldSendNotification - type 10 and check_answered, no pos answer', async () => {
+it('checkShouldSendRecipient - type 10 and check_answered, no pos answer', async () => {
 	const notification = data.baseNotification; const recipient = data.baseRecipientIndicado;
 	notification.notification_type = 10; notification.check_answered = true;
 	recipient['respostas.pos'] = {};
@@ -66,7 +65,7 @@ it('checkShouldSendNotification - type 10 and check_answered, no pos answer', as
 	await expect(result).toBeTruthy();
 });
 
-it('checkShouldSendNotification - type 10 and check_answered, with pos answer', async () => {
+it('checkShouldSendRecipient - type 10 and check_answered, with pos answer', async () => {
 	const notification = data.baseNotification; const recipient = data.baseRecipientIndicado;
 	notification.notification_type = 10; notification.check_answered = true;
 	recipient['respostas.pos'] = { foo: 'bar' };
@@ -74,7 +73,6 @@ it('checkShouldSendNotification - type 10 and check_answered, with pos answer', 
 	await expect(result).toBeFalsy();
 });
 
-// if checkShouldSendNotification returns true we can send that notification
 it('checkShouldSendNotification - same moment', async () => {
 	const notification = data.baseNotification; const today = new Date('2019-07-15T12:30:00.000Z');
 	notification.when_to_send = new Date('2019-07-15T12:30:00.000Z');

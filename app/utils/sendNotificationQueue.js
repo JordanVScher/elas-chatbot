@@ -283,6 +283,7 @@ async function checkShouldSendRecipient(recipient, notification) {
 		if (!answerPre || Object.entries(answerPre).length === 0) {
 			await notificationQueue.update({ error: { misc: 'Indicado não respondeu pré-avaliação' } }, { where: { id: notification.id } })
 				.then(rowsUpdated => rowsUpdated).catch(err => sentryError('Erro no update do erro === 10', err));
+			return false;
 		}
 
 		if (notification.check_answered === true) { // check if we need to see if recipient answered pos already
@@ -290,6 +291,7 @@ async function checkShouldSendRecipient(recipient, notification) {
 			if (answerPos && Object.entries(answerPos).length !== 0) { // if pos was already answered, there's no need to resend this notification
 				await notificationQueue.update({ error: { misc: 'Indicado já respondeu pós' } }, { where: { id: notification.id } })
 					.then(rowsUpdated => rowsUpdated).catch(err => sentryError('Erro no update do erro check_answered & 10', err));
+				return false;
 			}
 		}
 	}
