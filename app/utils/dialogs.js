@@ -1,5 +1,6 @@
 const db = require('./DB_helper');
 const help = require('./helper');
+const { sentryError } = require('./helper');
 const attach = require('./attach');
 const flow = require('./flow');
 const admin = require('./admin_menu/admin_helper');
@@ -148,27 +149,19 @@ module.exports.adminAlunaCPF = async (context) => {
 };
 
 module.exports.mudarAskTurma = async (context) => {
-	await context.setState({ desiredTurma: context.state.whatWasTyped.trim().toUpperCase() });
-	const validTurma = await alunos.findOne({ where: { turma: context.state.desiredTurma } }).then(aluna => aluna).catch((err) => {
-		console.log('Erro em mudarAskTurma getCount', err); help.Sentry.captureMessage('Erro em mudarAskTurma getCount');
-		return false;
-	});
+	await context.setState({ desiredTurma: context.state.whatWasTyped.toUpperCase() });
+	const validTurma = await db.getTurmaID(context.state.desiredTurma); // get the id that will be user for the transfer
 
-	if (!validTurma) {
+	if (!validTurma) { // if theres no id then it's not a valid turma
 		await context.sendText(flow.adminMenu.mudarTurma.turmaInvalida);
 	} else {
-		const transferedAluna = await alunos.update({ turma: context.state.desiredTurma },
-			{ where: { cpf: context.state.adminAlunaFound.cpf } }).then(() => true).catch((err) => {
-			console.log('Erro em mudarAskTurma update', err); help.Sentry.captureMessage('Erro em mudarAskTurma update');
-			return false;
-		});
+		const transferedAluna = await alunos.update({ turma_id: validTurma }, { where: { cpf: context.state.adminAlunaFound.cpf } })
+			.then(() => true).catch(err => sentryError('Erro em mudarAskTurma update', err));
 
 		if (transferedAluna) {
 			await context.sendText(flow.adminMenu.mudarTurma.transferComplete.replace('<TURMA>', context.state.desiredTurma));
-			const count = await alunos.count({ where: { turma: context.state.desiredTurma } }).then(alunas => alunas).catch((err) => {
-				console.log('Erro em mudarAskTurma getCount', err); help.Sentry.captureMessage('Erro em mudarAskTurma getCount');
-				return false;
-			});
+			const count = await alunos.count({ where: { turma_id: validTurma } })
+				.then(alunas => alunas).catch(err => sentryError('Erro em mudarAskTurma getCoun', err));
 			if (count !== false) { await context.sendText(flow.adminMenu.mudarTurma.turmaCount.replace('<COUNT>', count).replace('<TURMA>', context.state.desiredTurma)); }
 			await context.setState({
 				dialog: 'adminMenu', desiredTurma: '', adminAlunaFound: '', adminAlunaCPF: '',
@@ -178,6 +171,3 @@ module.exports.mudarAskTurma = async (context) => {
 		}
 	}
 };
-
-
-// const test = 'http://cdn.fbsbx.com/v/t59.2708-21/64764944_673750623091868_9048548562756960256_n.csv/2019-08-02_Turma_T7-SP.csv?_nc_cat=104&_nc_oc=AQlbK1ZCCyCEj7A16L9dB56cr2cZVuULnE49ArhgFWNrUf1yH4Ceg43cHHYgqmNla8pnJbKMXSvFHInDxIfL74pe&_nc_ht=cdn.fbsbx.com&oh=eed9b3333d261501d64ef6da0f52f8a1&oe=5D4B4E38';
