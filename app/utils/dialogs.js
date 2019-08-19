@@ -74,17 +74,17 @@ module.exports.buildAgendaMsg = async (data) => {
 
 
 module.exports.sendCSV = async (context) => {
-	const input = context.state.searchTurma.trim().toUpperCase();
+	const turmaID = context.state.searchTurma;
 	let result = '';
 	switch (context.state.dialog) {
 	case 'alunosTurmaCSV':
-		result = await db.getAlunasReport(input);
+		result = await db.getAlunasReport(turmaID);
 		break;
 	case 'alunosRespostasCSV':
-		result = await db.getAlunasRespostasReport(input);
+		result = await db.getAlunasRespostasReport(turmaID);
 		break;
 	case 'indicadosCSV':
-		result = await db.getAlunasIndicadosReport(input);
+		result = await db.getAlunasIndicadosReport(turmaID);
 		break;
 	default:
 		break;

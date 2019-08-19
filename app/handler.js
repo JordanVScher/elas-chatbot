@@ -65,7 +65,7 @@ module.exports = async (context) => {
 				await dialogs.handleCPF(context);
 			} else if (context.state.dialog === 'verTurma' || context.state.dialog === 'alunosTurmaCSV') {
 				if (await checkUserOnLabel(context.session.user.id, process.env.ADMIN_LABEL_ID)) {
-					await context.setState({ searchTurma: context.state.whatWasTyped, dialog: 'alunosTurmaCSV' });
+					await context.setState({ searchTurma: await db.getTurmaID(context.state.whatWasTyped.toUpperCase()), dialog: 'alunosTurmaCSV' });
 				} else {
 					await context.sendText(flow.adminMenu.notAdmin); await context.setState({ dialog: 'greetings' });
 				}
