@@ -5,7 +5,7 @@ module.exports = (sequelize, DataTypes) => {
 			nome_completo: DataTypes.STRING,
 			cpf: DataTypes.STRING,
 			email: DataTypes.STRING,
-			turma: DataTypes.STRING,
+			turma_id: DataTypes.STRING,
 			createdAt: { type: DataTypes.DATE, field: 'created_at' },
 			updatedAt: { type: DataTypes.DATE, field: 'updated_at' },
 		},

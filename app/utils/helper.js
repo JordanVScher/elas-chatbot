@@ -10,9 +10,7 @@ moment.locale('pt-BR');
 Sentry.init({	dsn: process.env.SENTRY_DSN, environment: process.env.ENV, captureUnhandledRejections: false });
 
 async function getJsDateFromExcel(excelDate) {
-	if (!Number(excelDate)) {
-		throw new Error('wrong input format');
-	}
+	if (!Number(excelDate)) { throw new Error('wrong input format'); }
 
 	const secondsInDay = 24 * 60 * 60;
 	const missingLeapYearDay = secondsInDay * 1000;
@@ -206,7 +204,7 @@ function buildAlunaMsg(aluna) {
 
 
 function sentryError(msg, err) {
-	console.log(msg, err); Sentry.captureMessage(msg);
+	console.log(msg, err || ''); Sentry.captureMessage(msg);
 	return false;
 }
 

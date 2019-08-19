@@ -76,7 +76,7 @@ async function addNewNotificationAlunas(alunaId, turmaID) {
 					.then(res => res).catch(err => sentryError('Erro em notificationQueue.create', err));
 			}
 		} else {
-			sentryError('Situação em addNewNotificationAlunas ', new Error(`turma ${turmaID} not found`));
+			sentryError(`addNewNotificationAlunas: turma ${turmaID} not found`);
 		}
 	} catch (error) {
 		sentryError('Erro em addNewNotificationAlunas ', error);
@@ -115,7 +115,7 @@ async function addNewNotificationIndicados(alunaId, turmaID) {
 			}
 		}
 	} else {
-		sentryError(`Erro em addNewNotificationIndicados -> aluna ${alunaId} não tem indicados`, new Error('Couldnt find aluna indicados'));
+		sentryError(`addNewNotificationIndicados: aluna ${alunaId} não tem indicados`);
 	}
 }
 

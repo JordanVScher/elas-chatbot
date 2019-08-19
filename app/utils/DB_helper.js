@@ -47,6 +47,16 @@ async function getAlunaFromPDF(cpf) {
 	return aluna;
 }
 
+async function getModuloDates() {
+	const result = await sequelize.query(`
+	SELECT id, local, horario_modulo1 as modulo1, horario_modulo2 as modulo2, horario_modulo3 as modulo3 from turma
+	where local IS NOT NULL AND horario_modulo1 IS NOT NULL AND horario_modulo2 IS NOT NULL AND horario_modulo3 IS NOT NULL;
+	`).spread(results => (results || false)).catch((err) => { sentryError('Erro em getModuloDates =>', err); });
+
+
+	return result;
+}
+
 async function upsertAluno(nome, cpf, turma, email) {
 	let date = new Date();
 	date = await moment(date).format('YYYY-MM-DD HH:mm:ss');
@@ -284,29 +294,12 @@ async function linkUserToCPF(FBID, cpf) {
 	}).catch((err) => { sentryError('Erro em linkUserToCPF =>', err); });
 }
 
-async function getUserTurma(FBID) {
-	const result = await sequelize.query(`
-	SELECT ALUNO.turma, ALUNO.nome_completo AS nome
-	FROM alunos ALUNO
-	INNER JOIN chatbot_users BOT_USER ON BOT_USER.cpf = ALUNO.cpf
-	WHERE BOT_USER.fb_id = '${FBID}'
-	ORDER BY BOT_USER.fb_id;
-	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
-		console.log(`Got ${FBID}'s turma successfully!`);
-		return results;
-	}).catch((err) => { sentryError('Erro em getUserTurma =>', err); });
-
-
-	if (result && result[0] && result[0].turma && result[0].nome) { return result[0];	}
-	return false;
-}
-
 async function getAlunasFromTurma(turma) {
 	const result = await sequelize.query(`
-	SELECT ALUNO.id, ALUNO.cpf, ALUNO.turma, ALUNO.nome_completo, ALUNO.email, BOT_USER.fb_id
+	SELECT ALUNO.id, ALUNO.cpf, ALUNO.turma_id, ALUNO.nome_completo, ALUNO.email, BOT_USER.fb_id
 	FROM alunos ALUNO
 	LEFT JOIN chatbot_users BOT_USER ON BOT_USER.cpf = ALUNO.cpf
-	WHERE ALUNO.turma = '${turma}'
+	WHERE ALUNO.turma_id = '${turma}'
 	ORDER BY BOT_USER.fb_id;
 	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
 		console.log(`Got ${turma} successfully!`);
@@ -320,11 +313,11 @@ async function getAlunasFromTurma(turma) {
 
 async function getAlunasReport(turma) {
 	const result = await sequelize.query(`
-	SELECT ALUNO.id as "ID", ALUNO.cpf as "CPF", ALUNO.turma as "Turma", ALUNO.nome_completo as "Nome Completo", ALUNO.email as "E-mail", 
+	SELECT ALUNO.id as "ID", ALUNO.cpf as "CPF", ALUNO.turma_id as "Turma", ALUNO.nome_completo as "Nome Completo", ALUNO.email as "E-mail", 
 	ALUNO.created_at as "Criado em", 	BOT_USER.fb_id as "ID Facebook", ALUNO.updated_at as "Atualizado em"
 	FROM alunos ALUNO
 	LEFT JOIN chatbot_users BOT_USER ON BOT_USER.cpf = ALUNO.cpf
-	WHERE ALUNO.turma = '${turma}'
+	WHERE ALUNO.turma_id = '${turma}'
 	ORDER BY BOT_USER.fb_id;
 	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
 		console.log(`Got ${turma} successfully!`);
@@ -342,7 +335,7 @@ async function getAlunasRespostasReport(turma) {
 	RESPOSTA.created_at as "Respondido em", RESPOSTA.updated_at as "Atualizado em"
 	FROM alunos_respostas RESPOSTA
 	LEFT JOIN alunos ALUNO ON ALUNO.id = RESPOSTA.aluno_id
-	WHERE ALUNO.turma = '${turma}'
+	WHERE ALUNO.turma_id = '${turma}'
 	ORDER BY RESPOSTA.id;
 	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
 		console.log(`Got ${turma} successfully!`);
@@ -361,7 +354,7 @@ async function getAlunasIndicadosReport(turma) {
 	FROM indicacao_avaliadores INDICADO
 	LEFT JOIN alunos ALUNO ON ALUNO.id = INDICADO.aluno_id
 	LEFT JOIN indicados_respostas RESPOSTAS ON INDICADO.id = RESPOSTAS.indicado_id
-	WHERE ALUNO.turma = '${turma}'
+	WHERE ALUNO.turma_id = '${turma}'
 	ORDER BY ALUNO.id, INDICADO.id;
 	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
 		console.log(`Got ${turma} successfully!`);
@@ -415,7 +408,6 @@ module.exports = {
 	upsertAluno,
 	linkUserToCPF,
 	checkCPF,
-	getUserTurma,
 	upsertPrePos,
 	upsertPrePos360,
 	updateAtividade,
@@ -433,4 +425,5 @@ module.exports = {
 	getAlunasIndicadosReport,
 	getTurmaID,
 	getTurmaName,
+	getModuloDates,
 };

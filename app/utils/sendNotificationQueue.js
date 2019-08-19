@@ -6,12 +6,14 @@ const notificationQueue = require('../server/models').notification_queue;
 const indicadosAvaliadores = require('../server/models').indicacao_avaliadores;
 const aluno = require('../server/models').alunos;
 const help = require('./helper');
+const { sentryError } = require('./helper');
 const mailer = require('./mailer');
 const charts = require('./charts');
 const broadcast = require('./broadcast');
+const { getModuloDates } = require('./DB_helper');
+const { getTurmaName } = require('./DB_helper');
 
 const parametersRules = {
-	// notification_id: map
 	1: {
 		GRUPOWHATS: process.env.GRUPOWHATSAP,
 		LINKDONNA: process.env.LINK_DONNA,
@@ -81,7 +83,7 @@ async function replaceDataText(original, data) {
 }
 
 async function replaceCustomParameters(original, recipient) {
-	const alunaTurma = recipient.turma;
+	const alunaTurma = recipient.getTurmaName;
 	const alunaCPF = recipient.cpf;
 	const indicadoID = recipient.id && recipient.aluno_id ? recipient.id : 0;
 	let text = original;
@@ -108,6 +110,10 @@ async function replaceCustomParameters(original, recipient) {
 		} else {
 			text = text.replace('indicaid=IDRESPOSTA', '');
 		}
+	}
+
+	if ((text.match(/=/g)).length === 1) {
+		text.replace('&', '');
 	}
 
 	return text;
@@ -147,7 +153,7 @@ async function fillMasks(replaceMap, recipientData) {
 				newData = await help.formatFdsMod(recipientData.mod3);
 				break;
 			case 'TURMA':
-				newData = recipientData.turma;
+				newData = recipientData.turmaName;
 				break;
 			case 'MOD1_15DIAS':
 				newData = await help.formatDiasMod(recipientData.mod1, -15);
@@ -182,23 +188,10 @@ async function fillMasks(replaceMap, recipientData) {
 	return result;
 }
 
-async function getModuleDates() {
-	const result = {};
-	let spreadSheet = await help.getFormatedSpreadsheet();
-	spreadSheet = spreadSheet.filter(x => x.turma && x.datahora1 && x.datahora2 && x.datahora3);
-
-	spreadSheet.forEach(async (element) => {
-		result[element.turma] = {
-			modulo1: element.datahora1, modulo2: element.datahora2, modulo3: element.datahora3, local: element.local,
-		};
-	});
-
-	return result;
-}
-
 async function extendRecipient(recipient, moduleDates, turma) {
 	const result = recipient;
-	const ourTurma = moduleDates[turma];
+
+	const ourTurma = await moduleDates.find(x => x.id === turma);
 	if (ourTurma.modulo1) { result.mod1 = ourTurma.modulo1; }
 	if (ourTurma.modulo2) { result.mod2 = ourTurma.modulo2; }
 	if (ourTurma.modulo3) { result.mod3 = ourTurma.modulo3; }
@@ -213,31 +206,27 @@ async function extendRecipient(recipient, moduleDates, turma) {
 }
 
 async function getIndicado(id, moduleDates) {
-	const result = await indicadosAvaliadores.findByPk(id, { raw: true, include: ['respostas', 'aluna'] }).then(res => res).catch((err) => {
-		console.log('Erro ao carregar indicado', err); help.Sentry.captureMessage('Erro ao carregar indicado');
-		return false;
-	});
+	const result = await indicadosAvaliadores.findByPk(id, { raw: true, include: ['respostas', 'aluna'] })
+		.then(res => res).catch(err => sentryError('Erro ao carregar indicado', err));
 
 	if (result && result.email) {
-		return extendRecipient(result, moduleDates, result['aluna.turma']);
+		return extendRecipient(result, moduleDates, result['aluna.turma_id']);
 	}
 
-	console.log('Erro: indicado não tem e-mail', JSON.stringify(result, null, 2)); help.Sentry.captureMessage('Erro: indicado não tem e-mail');
-	return false;
+	return sentryError('Erro: indicado não tem e-mail', result);
 }
 
 async function getAluna(id, moduleDates) {
-	const result = await aluno.findByPk(id, { raw: true, include: ['chatbot'] }).then(res => res).catch((err) => {
-		console.log('Erro ao carregar aluno', err); help.Sentry.captureMessage('Erro ao carregar indicado');
-		return false;
-	});
+	const result = await aluno.findByPk(id, { raw: true, include: ['chatbot'] })
+		.then(res => res).catch(err => sentryError('Erro ao carregar aluno', err));
+
 
 	if (result && (result.email || result['chatbot.fb_id'])) {
-		return extendRecipient(result, moduleDates, result.turma);
+		if (result.turma) { result.turmaName = await getTurmaName(result.turma); }
+		return extendRecipient(result, moduleDates, result.turma_id);
 	}
 
-	console.log('Erro: indicado não tem e-mail', JSON.stringify(result, null, 2)); help.Sentry.captureMessage('Erro: indicado não tem e-mail');
-	return false;
+	return sentryError('Erro: aluno não tem e-mail', result);
 }
 
 async function replaceParameters(texts, newMap, recipient) {
@@ -283,9 +272,8 @@ async function checkShouldSendRecipient(recipient, notification) {
 	if (notification.notification_type === 3 && notification.check_answered === true) {
 		const answerPre = recipient['respostas.pre'];
 		if (answerPre && Object.keys(answerPre)) { // if pre was already answered, there's no need to resend this notification
-			await notificationQueue.update({ error: { misc: 'Indicado já respondeu pré' } }, { where: { id: notification.id } }).then(rowsUpdated => rowsUpdated).catch((err) => {
-				console.log('Erro no update do erro check_answered & 3', err); help.Sentry.captureMessage('Erro no update do erro check_answered & 3');
-			});
+			await notificationQueue.update({ error: { misc: 'Indicado já respondeu pré' } }, { where: { id: notification.id } })
+				.then(rowsUpdated => rowsUpdated).catch(err => sentryError('Erro no update do erro check_answered & 3', err));
 			return false;
 		}
 	}
@@ -293,19 +281,15 @@ async function checkShouldSendRecipient(recipient, notification) {
 	if (notification.notification_type === 10) { // if it's this type of notification, check if recipient has answered the pre-avaliacao
 		const answerPre = recipient['respostas.pre'];
 		if (!answerPre || Object.entries(answerPre).length === 0) {
-			await notificationQueue.update({ error: { misc: 'Indicado não respondeu pré-avaliação' } }, { where: { id: notification.id } }).then(rowsUpdated => rowsUpdated).catch((err) => {
-				console.log('Erro no update do erro === 10', err); help.Sentry.captureMessage('Erro no update do erro === 10');
-			});
-			return false;
+			await notificationQueue.update({ error: { misc: 'Indicado não respondeu pré-avaliação' } }, { where: { id: notification.id } })
+				.then(rowsUpdated => rowsUpdated).catch(err => sentryError('Erro no update do erro === 10', err));
 		}
 
 		if (notification.check_answered === true) { // check if we need to see if recipient answered pos already
 			const answerPos = recipient['respostas.pos'];
 			if (answerPos && Object.entries(answerPos).length !== 0) { // if pos was already answered, there's no need to resend this notification
-				await notificationQueue.update({ error: { misc: 'Indicado já respondeu pós' } }, { where: { id: notification.id } }).then(rowsUpdated => rowsUpdated).catch((err) => {
-					console.log('Erro no update do erro check_answered & 10', err); help.Sentry.captureMessage('Erro no update do erro check_answered & 10');
-				});
-				return false;
+				await notificationQueue.update({ error: { misc: 'Indicado já respondeu pós' } }, { where: { id: notification.id } })
+					.then(rowsUpdated => rowsUpdated).catch(err => sentryError('Erro no update do erro check_answered & 10', err));
 			}
 		}
 	}
@@ -358,22 +342,14 @@ async function buildAttachment(type, cpf) {
 }
 
 async function sendNotificationFromQueue() {
-	const moduleDates = await getModuleDates();
+	const moduleDates = await getModuloDates();
 	const today = new Date();
 
-	const queue = await notificationQueue.findAll({
-		where: { sent_at: null, error: null }, raw: true,
-	}).then(res => res).catch((err) => {
-		console.log('Erro ao carregar notification_queue', err); help.Sentry.captureMessage('Erro ao carregar notification_queue');
-		return false;
-	});
+	const queue = await notificationQueue.findAll({ where: { sent_at: null, error: null }, raw: true })
+		.then(res => res).catch(err => sentryError('Erro ao carregar notification_queue', err));
 
-	const types = await notificationTypes.findAll({
-		where: {}, raw: true,
-	}).then(res => res).catch((err) => {
-		console.log('Erro ao carregar notification_types', err); help.Sentry.captureMessage('Erro ao carregar notification_types');
-		return false;
-	});
+	const types = await notificationTypes.findAll({ where: {}, raw: true })
+		.then(res => res).catch(err => sentryError('Erro ao carregar notification_types', err));
 
 	for (let i = 0; i < queue.length; i++) {
 		const notification = queue[i];
@@ -406,13 +382,11 @@ async function sendNotificationFromQueue() {
 				}
 
 				if (!error.mailError && !error.chatbotError) { // if there wasn't any errors, we can update the queue succesfully
-					await notificationQueue.update({ sent_at: new Date() }, { where: { id: notification.id } }).then(rowsUpdated => rowsUpdated).catch((err) => {
-						console.log('Erro no update do sendAt', err); help.Sentry.captureMessage('Erro no update do sendAt');
-					});
+					await notificationQueue.update({ sent_at: new Date() }, { where: { id: notification.id } })
+						.then(rowsUpdated => rowsUpdated).catch(err => sentryError('Erro no update do sendAt', err));
 				} else { // if there was any errors, we store what happened
-					await notificationQueue.update({ error }, { where: { id: notification.id } }).then(rowsUpdated => rowsUpdated).catch((err) => {
-						console.log('Erro no update do erro', err); help.Sentry.captureMessage('Erro no update do erro');
-					});
+					await notificationQueue.update({ error }, { where: { id: notification.id } })
+						.then(rowsUpdated => rowsUpdated).catch(err => sentryError('Erro no update do erro', err));
 				}
 			}
 		}
@@ -422,7 +396,7 @@ async function sendNotificationFromQueue() {
 const sendNotificationCron = new CronJob(
 	'00 * 8-22/1 * * *', async () => {
 	// '00 00 8-22/1 * * *', async () => {
-		console.log('Running sendNotificationCron');
+		// console.log('Running sendNotificationCron');
 		// await sendNotificationFromQueue();
 	}, (() => {
 		console.log('Crontab sendNotificationCron stopped.');
@@ -436,5 +410,4 @@ module.exports = {
 	sendNotificationCron, checkShouldSendRecipient, checkShouldSendNotification, sendNotificationFromQueue,
 };
 
-
-// sendNotificationFromQueue();
+sendNotificationFromQueue();
