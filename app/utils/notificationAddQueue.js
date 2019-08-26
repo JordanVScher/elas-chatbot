@@ -13,7 +13,7 @@ async function addNewNotificationAlunas(alunaId, turmaID) {
 				const rule = rulesAlunos[i];
 				const sendDate = await rules.getSendDate(ourTurma, rule, i);
 				await notificationQueue.create({
-					notification_type: rule.notification_type, aluno_id: alunaId, when_to_send: sendDate, turma_id: turmaID,
+					notification_type: rule.notification_type, aluno_id: alunaId, when_to_send: sendDate, turma_id: turmaID, modulo: rule.modulo,
 				}).then(res => res).catch(err => sentryError('Erro em notificationQueue.create', err));
 			}
 		} else {
@@ -41,7 +41,7 @@ async function addNewNotificationIndicados(alunaId, turmaID) {
 				// indicado can only receive a notification where rule familiar = true if indicado is also familiar = true
 				if (!rule.familiar || (rule.familiar === true && indicado.familiar === true)) {
 					await notificationQueue.create({
-						notification_type: rule.notification_type, indicado_id: indicado.id, when_to_send: sendDate, turma_id: turmaID,
+						notification_type: rule.notification_type, indicado_id: indicado.id, when_to_send: sendDate, turma_id: turmaID, modulo: rule.modulo,
 					}).then(res => res).catch(err => sentryError('Erro em notificationQueue.create', err));
 
 					if (rule.reminderDate) {

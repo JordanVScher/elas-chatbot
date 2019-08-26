@@ -73,6 +73,34 @@ it('checkShouldSendRecipient - type 10 and check_answered, with pos answer', asy
 	await expect(result).toBeFalsy();
 });
 
+it('findCurrentModulo - mod 1', async () => {
+	const { moduleDates } = data;
+	const today = new Date('2019-01-03T12:30:00.000Z');
+	const result = await sendNotificationQueue.findCurrentModulo(moduleDates[0], today);
+	await expect(result === 1).toBeTruthy();
+});
+
+it('findCurrentModulo - mod 2 same day', async () => {
+	const { moduleDates } = data;
+	const today = new Date('2019-03-05T12:30:00.000Z');
+	const result = await sendNotificationQueue.findCurrentModulo(moduleDates[0], today);
+	await expect(result === 2).toBeTruthy();
+});
+
+it('findCurrentModulo - mod 2 one day before mod 3', async () => {
+	const { moduleDates } = data;
+	const today = new Date('2019-05-04T12:30:00.000Z');
+	const result = await sendNotificationQueue.findCurrentModulo(moduleDates[0], today);
+	await expect(result === 2).toBeTruthy();
+});
+
+it('findCurrentModulo - mod 3', async () => {
+	const { moduleDates } = data;
+	const today = new Date('2019-05-07T12:30:00.000Z');
+	const result = await sendNotificationQueue.findCurrentModulo(moduleDates[0], today);
+	await expect(result === 3).toBeTruthy();
+});
+
 it('checkShouldSendNotification - alunaNotificationBefore- dont send before sendDate', async () => {
 	const notification = data.alunaNotificationBefore;
 	const { moduleDates } = data;
@@ -208,86 +236,96 @@ it('checkShouldSendNotification - alunaNotificationAfterMod3 - dont send after m
 	await expect(result).toBeFalsy();
 });
 
+// 15 ----------
 
-// it('checkShouldSendNotification - dont send before correct time', async () => {
-// 	const notification = data.baseNotification; const today = new Date('2019-07-15T12:20:00.000Z');
-// 	notification.when_to_send = new Date('2019-07-15T12:30:00.000Z');
-// 	const result = await sendNotificationQueue.checkShouldSendNotification(notification, today);
-// 	await expect(result).toBeFalsy();
-// });
+it('checkShouldSendNotification - type15notification - dont send before sendDate', async () => {
+	const notification = data.type15notification;
+	const { moduleDates } = data;
+	const today = new Date('2019-01-03T18:50:00.000Z');
 
-// it('checkShouldSendNotification - send after correct time', async () => {
-// 	const notification = data.baseNotification; const today = new Date('2019-07-15T12:40:00.000Z');
-// 	notification.when_to_send = new Date('2019-07-15T12:30:00.000Z');
-// 	const result = await sendNotificationQueue.checkShouldSendNotification(notification, today);
-// 	await expect(result).toBeTruthy();
-// });
-
-// it('checkShouldSendNotification - type 15, send same moment', async () => {
-// 	const notification = data.baseNotification; const today = new Date('2019-07-15T12:30:00.000Z');
-// 	notification.notification_type = 15;
-// 	notification.when_to_send = new Date('2019-07-15T12:30:00.000Z');
-// 	const result = await sendNotificationQueue.checkShouldSendNotification(notification, today);
-// 	await expect(result).toBeTruthy();
-// });
-
-// it('checkShouldSendNotification - type 15, send less than 24h after', async () => {
-// 	const notification = data.baseNotification; const today = new Date('2019-07-16T12:30:00.000Z');
-// 	notification.notification_type = 15;
-// 	notification.when_to_send = new Date('2019-07-15T12:30:00.000Z');
-// 	const result = await sendNotificationQueue.checkShouldSendNotification(notification, today);
-// 	await expect(result).toBeFalsy();
-// });
-
-// it('checkShouldSendNotification - type 15, dont send before', async () => {
-// 	const notification = data.baseNotification; const today = new Date('2019-07-14T12:30:00.000Z');
-// 	notification.notification_type = 15;
-// 	notification.when_to_send = new Date('2019-07-15T12:30:00.000Z');
-// 	const result = await sendNotificationQueue.checkShouldSendNotification(notification, today);
-// 	await expect(result).toBeFalsy();
-// });
-
-// it('checkShouldSendNotification - type 15, dont send 24h after', async () => {
-// 	const notification = data.baseNotification; const today = new Date('2019-07-16T12:30:00.000Z');
-// 	notification.notification_type = 15;
-// 	notification.when_to_send = new Date('2019-07-15T12:30:00.000Z');
-// 	const result = await sendNotificationQueue.checkShouldSendNotification(notification, today);
-// 	await expect(result).toBeFalsy();
-// });
-
-// it('checkShouldSendNotification - type 16, send same hour', async () => {
-// 	const notification = data.baseNotification; const today = new Date('2019-07-16T12:30:00.000Z');
-// 	notification.notification_type = 16;
-// 	notification.when_to_send = new Date('2019-07-16T12:30:00.000Z');
-// 	const result = await sendNotificationQueue.checkShouldSendNotification(notification, today);
-// 	await expect(result).toBeTruthy();
-// });
-
-// it('checkShouldSendNotification - type 16, send less than 1h after', async () => {
-// 	const notification = data.baseNotification; const today = new Date('2019-07-15T13:00:00.000Z');
-// 	notification.notification_type = 16;
-// 	notification.when_to_send = new Date('2019-07-15T12:30:00.000Z');
-// 	const result = await sendNotificationQueue.checkShouldSendNotification(notification, today);
-// 	await expect(result).toBeTruthy();
-// });
-
-// it('checkShouldSendNotification - type 16, dont send before', async () => {
-// 	const notification = data.baseNotification; const today = new Date('2019-07-15T11:30:00.000Z');
-// 	notification.notification_type = 16;
-// 	notification.when_to_send = new Date('2019-07-15T12:30:00.000Z');
-// 	const result = await sendNotificationQueue.checkShouldSendNotification(notification, today);
-// 	await expect(result).toBeFalsy();
-// });
-
-// it('checkShouldSendNotification - type 16, dont send 1h after', async () => {
-// 	const notification = data.baseNotification; const today = new Date('2019-07-15T13:30:00.000Z');
-// 	notification.notification_type = 16;
-// 	notification.when_to_send = new Date('2019-07-15T12:30:00.000Z');
-// 	const result = await sendNotificationQueue.checkShouldSendNotification(notification, today);
-// 	await expect(result).toBeFalsy();
-// });
-
-
-afterAll(() => {
-	sequelize.close();
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	await expect(result).toBeFalsy();
 });
+
+it('checkShouldSendNotification - type15notification - send', async () => {
+	const notification = data.type15notification;
+	const { moduleDates } = data;
+	const today = new Date('2019-01-04T15:50:00.000Z');
+
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	await expect(result).toBeTruthy();
+});
+
+it('checkShouldSendNotification - type15notification - dont send after moduleDate', async () => {
+	const notification = data.type15notification;
+	const { moduleDates } = data;
+	const today = new Date('2019-05-06T15:50:00.000Z');
+
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	await expect(result).toBeFalsy();
+});
+
+it('checkShouldSendNotification - type16notification - saturday - dont send before sendDate', async () => {
+	const notification = data.type16notification;
+	const { moduleDates } = data;
+	const today = new Date('2019-01-04T15:50:00.000Z');
+
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	await expect(result).toBeFalsy();
+});
+
+it('checkShouldSendNotification - type16notification - saturday - send exactly one hour before', async () => {
+	const notification = data.type16notification;
+	const { moduleDates } = data;
+	const today = new Date('2019-01-05T09:00:00.000Z');
+
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	await expect(result).toBeTruthy();
+});
+
+it('checkShouldSendNotification - type16notification - saturday - send between dates', async () => {
+	const notification = data.type16notification;
+	const { moduleDates } = data;
+	const today = new Date('2019-01-05T09:30:00.000Z');
+
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	await expect(result).toBeTruthy();
+});
+
+it('checkShouldSendNotification - type16notification - saturday - dont send after moduleDates', async () => {
+	const notification = data.type16notification;
+	const { moduleDates } = data;
+	const today = new Date('2019-01-05T12:30:00.000Z');
+
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	await expect(result).toBeFalsy();
+});
+
+it('checkShouldSendNotification - type16notification - sunday - dont send before sendDate', async () => {
+	const notification = data.type16notification;
+	const { moduleDates } = data;
+	const today = new Date('2019-01-06T03:50:00.000Z');
+
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	await expect(result).toBeFalsy();
+});
+
+it('checkShouldSendNotification - type16notification - sunday - send between', async () => {
+	const notification = data.type16notification;
+	const { moduleDates } = data;
+	const today = new Date('2019-01-06T13:50:00.000Z');
+
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	await expect(result).toBeTruthy();
+});
+
+it('checkShouldSendNotification - type16notification - sunday - dont send after moduleDates', async () => {
+	const notification = data.type16notification;
+	const { moduleDates } = data;
+	const today = new Date('2019-01-06T23:50:00.000Z');
+
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	await expect(result).toBeTruthy();
+});
+
+afterAll(() => { sequelize.close(); });

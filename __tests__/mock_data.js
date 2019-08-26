@@ -42,6 +42,26 @@ module.exports = {
 		error: null,
 	},
 
+	type15notification: {
+		id: 1,
+		notification_type: 15,
+		aluno_id: 120,
+		turma_id: 1,
+		when_to_send: '',
+		sent_at: null,
+		error: null,
+	},
+
+	type16notification: {
+		id: 1,
+		notification_type: 16,
+		aluno_id: 120,
+		turma_id: 1,
+		when_to_send: '',
+		sent_at: null,
+		error: null,
+	},
+
 	moduleDates: [{
 		id: 1,
 		local: 'FOOBAR',

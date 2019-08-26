@@ -242,12 +242,35 @@ async function replaceParameters(texts, newMap, recipient) {
 	return newTexts || {};
 }
 
+async function findCurrentModulo(turmaData, today = new Date()) {
+	let currentModule = 1;
+
+	for (let i = 1; i <= 3; i++) {
+		const moduleX = turmaData[`modulo${i}`];
+		if (today >= new Date(moduleX)) { currentModule = i; }
+	}
+
+	return currentModule;
+}
+
 
 async function checkShouldSendNotification(notification, moduleDates, today) {
 	const ourTurma = moduleDates.find(x => x.id === notification.turma_id); // turma for this notification
-	const currentRule = rules.notificationRules.find(x => x.notification_type === notification.notification_type); // rule for this notification
-	const dateToSend = await rules.getSendDate(ourTurma, currentRule); // the date to send
 
+	let currentRule = ''; // depends on the notification_type, rule for the notification (and module)
+	if (notification.notification_type === 15) {
+		const currentModule = await findCurrentModulo(moduleDates, today);
+		currentRule = await rules.notificationRules.find(x => x.notification_type === notification.notification_type && x.modulo === currentModule);
+	} else if (notification.notification_type === 16) {
+		const currentModule = await findCurrentModulo(moduleDates, today);
+		let sunday = false;
+		if (today.getDay() === 0) { sunday = true; }
+		currentRule = await rules.notificationRules.find(x => x.notification_type === notification.notification_type && x.modulo === currentModule && x.sunday === sunday);
+	} else {
+		currentRule = await rules.notificationRules.find(x => x.notification_type === notification.notification_type);
+	}
+
+	const dateToSend = await rules.getSendDate(ourTurma, currentRule); // the date to send
 	const moduloDate = new Date(ourTurma[`modulo${currentRule.modulo}`]);
 
 	const min = dateToSend;
@@ -404,7 +427,7 @@ async function sendNotificationFromQueue() {
 const sendNotificationCron = new CronJob(
 	'00 * 8-22/1 * * *', async () => {
 	// '00 00 8-22/1 * * *', async () => {
-		// console.log('Running sendNotificationCron');
+		console.log('Running sendNotificationCron');
 		await sendNotificationFromQueue();
 	}, (() => {
 		console.log('Crontab sendNotificationCron stopped.');
@@ -415,5 +438,5 @@ const sendNotificationCron = new CronJob(
 );
 
 module.exports = {
-	sendNotificationCron, checkShouldSendRecipient, checkShouldSendNotification, sendNotificationFromQueue,
+	sendNotificationCron, checkShouldSendRecipient, checkShouldSendNotification, sendNotificationFromQueue, findCurrentModulo,
 };
