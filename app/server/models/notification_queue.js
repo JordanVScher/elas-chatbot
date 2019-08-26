@@ -5,6 +5,7 @@ module.exports = (sequelize, DataTypes) => {
 			notification_type: DataTypes.INTEGER,
 			aluno_id: DataTypes.INTEGER,
 			indicado_id: DataTypes.INTEGER,
+			turma_id: DataTypes.INTEGER,
 			when_to_send: DataTypes.DATE,
 			check_answered: DataTypes.BOOLEAN,
 			sent_at: DataTypes.DATE,

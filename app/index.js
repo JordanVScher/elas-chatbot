@@ -6,7 +6,7 @@ const corsMiddleware = require('restify-cors-middleware');
 const restify = require('restify');
 const { newSurveyResponse } = require('./utils/sm_help');
 const pgAPI = require('./pg_api');
-const { sendNotificationCron } = require('./utils/sendNotificationQueue');
+const { sendNotificationCron } = require('./utils/notificationSendQueue');
 const { updateTurmasCron } = require('./utils/turma');
 
 const config = require('./bottender.config.js').messenger;

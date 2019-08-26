@@ -12,6 +12,7 @@ const charts = require('./charts');
 const broadcast = require('./broadcast');
 const { getModuloDates } = require('./DB_helper');
 const { getTurmaName } = require('./DB_helper');
+const rules = require('./notificationRules');
 
 const parametersRules = {
 	1: {
@@ -83,7 +84,7 @@ async function replaceDataText(original, data) {
 }
 
 async function replaceCustomParameters(original, recipient) {
-	const alunaTurma = recipient.getTurmaName;
+	const alunaTurma = await getTurmaName(recipient.turma_id);
 	const alunaCPF = recipient.cpf;
 	const indicadoID = recipient.id && recipient.aluno_id ? recipient.id : 0;
 	let text = original;
@@ -112,7 +113,7 @@ async function replaceCustomParameters(original, recipient) {
 		}
 	}
 
-	if ((text.match(/=/g)).length === 1) {
+	if ((text.includes('www') && text.match(/=/g)).length === 1) {
 		text.replace('&', '');
 	}
 
@@ -188,10 +189,10 @@ async function fillMasks(replaceMap, recipientData) {
 	return result;
 }
 
-async function extendRecipient(recipient, moduleDates, turma) {
+async function extendRecipient(recipient, moduleDates, turmaID) {
 	const result = recipient;
 
-	const ourTurma = await moduleDates.find(x => x.id === turma);
+	const ourTurma = await moduleDates.find(x => x.id === turmaID);
 	if (ourTurma.modulo1) { result.mod1 = ourTurma.modulo1; }
 	if (ourTurma.modulo2) { result.mod2 = ourTurma.modulo2; }
 	if (ourTurma.modulo3) { result.mod3 = ourTurma.modulo3; }
@@ -220,7 +221,6 @@ async function getAluna(id, moduleDates) {
 	const result = await aluno.findByPk(id, { raw: true, include: ['chatbot'] })
 		.then(res => res).catch(err => sentryError('Erro ao carregar aluno', err));
 
-
 	if (result && (result.email || result['chatbot.fb_id'])) {
 		if (result.turma) { result.turmaName = await getTurmaName(result.turma); }
 		return extendRecipient(result, moduleDates, result.turma_id);
@@ -231,6 +231,7 @@ async function getAluna(id, moduleDates) {
 
 async function replaceParameters(texts, newMap, recipient) {
 	const newTexts = texts;
+
 	const objKeys = Object.keys(newTexts);
 	for (let i = 0; i < objKeys.length; i++) { // replace the content in every kind of text we may have, e-mail subject or body, chatbot text, etc
 		const element = objKeys[i];
@@ -241,30 +242,34 @@ async function replaceParameters(texts, newMap, recipient) {
 	return newTexts || {};
 }
 
-async function checkShouldSendNotification(notification, today) {
-	if (!notification) { return false;	}
 
-	const toSend = help.moment(notification.when_to_send); // get moment to send the notification
-	if (process.env.NODE_ENV === 'prod') {
-		if (notification.notification_type !== 15 && notification.notification_type !== 16) { // notification 15 and 16 have a different day rule
-			if (today >= toSend) { return true; }	// check if date toSend happens beore today, if it was not sent back then it can be sent now
+async function checkShouldSendNotification(notification, moduleDates, today) {
+	const ourTurma = moduleDates.find(x => x.id === notification.turma_id); // turma for this notification
+	const currentRule = rules.notificationRules.find(x => x.notification_type === notification.notification_type); // rule for this notification
+	const dateToSend = await rules.getSendDate(ourTurma, currentRule); // the date to send
+
+	const moduloDate = new Date(ourTurma[`modulo${currentRule.modulo}`]);
+
+	const min = dateToSend;
+	let	max;
+
+	if (dateToSend < moduloDate) { // notification will be sent before the moduloDate, today needs to be between the notification date and the moduleDate
+		max = moduloDate;
+	} else { // notification will be sent after the moduloDate
+		const nextModule = currentRule.modulo + 1; // get next module, today needs to be between the notification date and the moduleDate rom the next module
+		if (nextModule <= 3) {
+			max = new Date(ourTurma[`modulo${nextModule}`]);
+		} else { // if there's no next module, add a few days to the day of the module
+			moduloDate.setDate(moduloDate.getDate() + 15);
+			max = moduloDate;
 		}
-
-		const diffHour = toSend.diff(today, 'hours'); // difference between today and the hour the notification has to be sent
-
-		if (notification.notification_type === 15) {
-			if (diffHour <= 0 && diffHour > -23) { return true; } // this type can only be sent less than 24h after the notification.toSend
-		} else if (notification.notification_type === 16) {
-			if (diffHour === 0 && today >= toSend) { return true; } // this type can only be sent less than 1h after the notification.toSend
-		}
-
-		return false;
 	}
 
-	const diffMinutes = toSend.diff(today, 'minutes');
-	if (diffMinutes > 0) { return false; }
+	if (today >= min && today <= max) { // if today is inside the date range we can send the notification
+		return true;
+	}
 
-	return true;
+	return false; // can't send this notification
 }
 
 async function checkShouldSendRecipient(recipient, notification) {
@@ -355,7 +360,8 @@ async function sendNotificationFromQueue() {
 
 	for (let i = 0; i < queue.length; i++) {
 		const notification = queue[i];
-		if (await checkShouldSendNotification(notification, today) === true) {
+
+		if (await checkShouldSendNotification(notification, moduleDates, today) === true) {
 			let recipient;
 			if (notification.aluno_id) {
 				recipient = await getAluna(notification.aluno_id, moduleDates);
@@ -399,7 +405,7 @@ const sendNotificationCron = new CronJob(
 	'00 * 8-22/1 * * *', async () => {
 	// '00 00 8-22/1 * * *', async () => {
 		// console.log('Running sendNotificationCron');
-		// await sendNotificationFromQueue();
+		await sendNotificationFromQueue();
 	}, (() => {
 		console.log('Crontab sendNotificationCron stopped.');
 	}),

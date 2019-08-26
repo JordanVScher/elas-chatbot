@@ -88,7 +88,6 @@ const updateTurmasCron = new CronJob(
 	false, // runOnInit = true useful only for tests
 );
 
-
 module.exports = {
 	updateTurmas, updateTurmasCron,
 };

@@ -204,7 +204,8 @@ function buildAlunaMsg(aluna) {
 
 
 function sentryError(msg, err) {
-	console.log(msg, err || ''); Sentry.captureMessage(msg);
+	console.log(msg, err || '');
+	if (process.env.ENV !== 'local') { Sentry.captureMessage(msg); }
 	return false;
 }
 

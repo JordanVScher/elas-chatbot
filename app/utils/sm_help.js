@@ -4,7 +4,7 @@ const smAPI = require('../sm_api');
 const mailer = require('./mailer');
 const { eMail } = require('./flow');
 const db = require('./DB_helper');
-const addQueue = require('./addNotificationQueue');
+const addQueue = require('./notificationAddQueue');
 const { turma } = require('../server/models');
 
 const surveysInfo = require('./sm_surveys');
