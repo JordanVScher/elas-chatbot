@@ -84,7 +84,7 @@ async function replaceDataText(original, data) {
 }
 
 async function replaceCustomParameters(original, recipient) {
-	const alunaTurma = await getTurmaName(recipient.turma_id);
+	const alunaTurma = recipient.turmaName ? recipient.turmaName : await getTurmaName(recipient.turma_id);
 	const alunaCPF = recipient.cpf;
 	const indicadoID = recipient.id && recipient.aluno_id ? recipient.id : 0;
 	let text = original;
@@ -211,6 +211,7 @@ async function getIndicado(id, moduleDates) {
 		.then(res => res).catch(err => sentryError('Erro ao carregar indicado', err));
 
 	if (result && result.email) {
+		if (result['aluna.turma_id']) { result.turmaName = await getTurmaName(result['aluna.turma_id']); }
 		return extendRecipient(result, moduleDates, result['aluna.turma_id']);
 	}
 
@@ -272,6 +273,11 @@ async function checkShouldSendNotification(notification, moduleDates, today) {
 
 	const dateToSend = await rules.getSendDate(ourTurma, currentRule); // the date to send
 	const moduloDate = new Date(ourTurma[`modulo${currentRule.modulo}`]);
+
+	if (notification.check_answered === true) {
+		dateToSend.setDate(dateToSend.getDate() + currentRule.reminderDate);
+	}
+
 
 	const min = dateToSend;
 	let	max;

@@ -328,4 +328,117 @@ it('checkShouldSendNotification - type16notification - sunday - dont send after 
 	await expect(result).toBeTruthy();
 });
 
+// // 3 e 10 - no check_answer
+
+it('checkShouldSendNotification - indicadoNotification 3 - no check_answer - dont send before', async () => {
+	const notification = data.indicadoNotification; notification.notification_type = 3; notification.check_answered = false;
+	const { moduleDates } = data;
+	const today = new Date('2018-12-25T23:50:00.000Z');
+
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	await expect(result).toBeFalsy();
+});
+
+it('checkShouldSendNotification - indicadoNotification 3 - no check_answer - send between', async () => {
+	const notification = data.indicadoNotification; notification.notification_type = 3; notification.check_answered = false;
+	const { moduleDates } = data;
+	const today = new Date('2018-12-30T23:50:00.000Z');
+
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	await expect(result).toBeTruthy();
+});
+
+it('checkShouldSendNotification - indicadoNotification 3 - no check_answer - dont send after', async () => {
+	const notification = data.indicadoNotification; notification.notification_type = 3; notification.check_answered = false;
+	const { moduleDates } = data;
+	const today = new Date('2019-01-06T23:50:00.000Z');
+
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	await expect(result).toBeFalsy();
+});
+
+it('checkShouldSendNotification - indicadoNotification 10 - no check_answer - dont send before', async () => {
+	const notification = data.indicadoNotification; notification.notification_type = 10; notification.check_answered = true;
+	const { moduleDates } = data;
+	const today = new Date('2019-04-25T23:50:00.000Z');
+
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	await expect(result).toBeFalsy();
+});
+
+it('checkShouldSendNotification - indicadoNotification 10 - no check_answer - send between', async () => {
+	const notification = data.indicadoNotification; notification.notification_type = 10; notification.check_answered = false;
+	const { moduleDates } = data;
+	const today = new Date('2019-05-01T23:50:00.000Z');
+
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	await expect(result).toBeTruthy();
+});
+
+it('checkShouldSendNotification - indicadoNotification 10 - no check_answer - dont send after', async () => {
+	const notification = data.indicadoNotification; notification.notification_type = 10; notification.check_answered = false;
+	const { moduleDates } = data;
+	const today = new Date('2019-05-06T23:50:00.000Z');
+
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	await expect(result).toBeFalsy();
+});
+
+// 3 e 10 - with check_answer
+
+it('checkShouldSendNotification - indicadoNotification 3 - with check_answer - dont send before', async () => {
+	const notification = data.indicadoNotification; notification.notification_type = 3; notification.check_answered = true;
+	const { moduleDates } = data;
+	const today = new Date('2019-01-31T23:50:00.000Z');
+
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	await expect(result).toBeFalsy();
+});
+
+it('checkShouldSendNotification - indicadoNotification 3 - with check_answer - send between', async () => {
+	const notification = data.indicadoNotification; notification.notification_type = 3; notification.check_answered = true;
+	const { moduleDates } = data;
+	const today = new Date('2019-01-04T23:50:00.000Z');
+
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	await expect(result).toBeTruthy();
+});
+
+it('checkShouldSendNotification - indicadoNotification 3 - with check_answer - dont send after', async () => {
+	const notification = data.indicadoNotification; notification.notification_type = 3; notification.check_answered = true;
+	const { moduleDates } = data;
+	const today = new Date('2019-01-06T23:50:00.000Z');
+
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	await expect(result).toBeFalsy();
+});
+
+it('checkShouldSendNotification - indicadoNotification 10 - with check_answer - dont send before', async () => {
+	const notification = data.indicadoNotification; notification.notification_type = 10; notification.check_answered = true;
+	const { moduleDates } = data;
+	const today = new Date('2019-04-22T23:50:00.000Z');
+
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	await expect(result).toBeFalsy();
+});
+
+it('checkShouldSendNotification - indicadoNotification 10 - with check_answer - send between', async () => {
+	const notification = data.indicadoNotification; notification.notification_type = 10; notification.check_answered = true;
+	const { moduleDates } = data;
+	const today = new Date('2019-05-01T23:50:00.000Z');
+
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	await expect(result).toBeTruthy();
+});
+
+it('checkShouldSendNotification - indicadoNotification 10 - with check_answer - dont send after', async () => {
+	const notification = data.indicadoNotification; notification.notification_type = 10; notification.check_answered = true;
+	const { moduleDates } = data;
+	const today = new Date('2019-05-06T23:50:00.000Z');
+
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	await expect(result).toBeFalsy();
+});
+
+
 afterAll(() => { sequelize.close(); });
