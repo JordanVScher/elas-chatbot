@@ -100,7 +100,12 @@ async function associatesLabelToUser(userID, labelID) { // eslint-disable-line n
 	return client.associateLabel(userID, labelID);
 }
 
+async function printNewLabel(labelName) {
+	const newLabel = await client.createLabel(labelName);
+	console.log('newLabel =>', newLabel);
+	return newLabel;
+}
 
 module.exports = {
-	checkUserOnLabel, associatesLabelToUser, getLabelID,
+	checkUserOnLabel, associatesLabelToUser, getLabelID, printNewLabel,
 };
