@@ -224,6 +224,21 @@ async function upsertPrePos360(userID, response, column) {
 	}).catch((err) => { sentryError('Erro em upsertPrePos360 =>', err); });
 }
 
+async function getAlunaFromFBID(FBID) {
+	const aluna = await sequelize.query(`
+	SELECT ALUNO.id, ALUNO.cpf, ALUNO.turma_id, ALUNO.nome_completo, ALUNO.email, BOT_USER.fb_id
+	FROM alunos ALUNO
+	LEFT JOIN chatbot_users BOT_USER ON BOT_USER.cpf = ALUNO.cpf
+	WHERE BOT_USER.fb_id = '${FBID}'
+	ORDER BY BOT_USER.fb_id;
+`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
+		console.log(`Got ${FBID}'s aluna successfully!`);
+		return results[0] || false;
+	}).catch((err) => { sentryError('Erro em getIndicadoFromAluna =>', err); });
+
+	return aluna;
+}
+
 async function updateAtividade(userID, column, answered) {
 	let date = new Date();
 	date = await moment(date).format('YYYY-MM-DD HH:mm:ss');
@@ -429,4 +444,5 @@ module.exports = {
 	getTurmaID,
 	getTurmaName,
 	getModuloDates,
+	getAlunaFromFBID,
 };

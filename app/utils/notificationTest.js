@@ -10,7 +10,6 @@ const { getModuloDates } = require('./DB_helper');
 const notificationTypes = require('../server/models').notification_types;
 const notificationQueue = require('../server/models').notification_queue;
 const indicadosAvaliadores = require('../server/models').indicacao_avaliadores;
-// const aluno = require('../server/models').alunos;
 const { getTurmaName } = require('./DB_helper');
 
 const time = 30 * 1000;
@@ -45,7 +44,7 @@ async function sendTestNotification(alunaID) {
 		}
 	}
 
-	if (queue) {
+	if (queue && queue.length > 0) {
 		const moduleDates = await getModuloDates();
 		const aluna = await sendQueue.getAluna(alunaID, moduleDates);
 		const types = await notificationTypes.findAll({ where: {}, raw: true })
@@ -89,7 +88,7 @@ async function sendTestNotification(alunaID) {
 					if (error.objectKeys > 0) {
 						await help.sentryError(`Erro na ${newText.email_subject} do aluno ${recipient.email}`, error);
 					}
-				}, time * i);
+				}, time * (i + 1));
 			}
 		}
 		return { qtd: queue.length };

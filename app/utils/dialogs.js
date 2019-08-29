@@ -7,7 +7,8 @@ const admin = require('./admin_menu/admin_helper');
 const { sendTestNotification } = require('./notificationTest');
 const { alunos } = require('../server/models');
 const { turma } = require('../server/models');
-const chatbot = require('../server/models').chatbot_users;
+const { addNewNotificationAlunas } = require('./notificationAddQueue');
+const { addNewNotificationIndicados } = require('./notificationAddQueue');
 
 module.exports.sendMainMenu = async (context, txtMsg) => {
 	const text = txtMsg || flow.mainMenu.defaultText;
@@ -176,14 +177,17 @@ module.exports.mudarAskTurma = async (context) => {
 
 module.exports.mailTest = async (context) => {
 	await context.setState({ dialog: '' });
-	const aluna = await chatbot.findOne({ where: { fb_id: context.session.user.id }, raw: true }).then(res => res).catch(err => sentryError('Erro em chatbot.FindOne', err));
+	const aluna = await db.getAlunaFromFBID(context.session.user.id);
 
 	if (aluna && aluna.id) {
 		const result = await sendTestNotification(aluna.id);
 		if (result && result.qtd) {
 			await context.sendText(`Sucesso, suas ${result.qtd} notificações estão sendo enviadas`);
 		} else {
-			await context.sendText('Ocorreu um erro, você não tem notificações.');
+			await context.sendText('Você não tem notificações. Vou criar novas notificações pra você e seus indicados (Se vc tiver algum)');
+			await addNewNotificationAlunas(aluna.id, aluna.turma_id);
+			await addNewNotificationIndicados(aluna.id, aluna.turma_id);
+			await context.sendText('Pronto! As notificações começarão a ser mandadas em 30 segundos. Se não começarem a chegar, mande a palavra-chave novamente.');
 		}
 	} else {
 		await context.sendText('Não consegui estabelecer o vínculo entre seu usuário no chatbot e alguma aluna cadastrada. Tente se vincular através do seu PDF, entre no fluxo Já Sou Aluna e se cadastre.');
