@@ -3,7 +3,7 @@ const { sequelize } = require('../app/server/models/index');
 const sendNotificationQueue = require('../app/utils/notificationSendQueue');
 const data = require('./mock_data');
 
-process.env.NODE_ENV = 'prod';
+process.env.ENV = 'prod';
 
 it('checkShouldSendRecipient - no recipient', async () => {
 	const notification = data.indicadoNotification; const recipient = null;

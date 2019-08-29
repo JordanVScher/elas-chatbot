@@ -75,7 +75,8 @@ async function handlePagamento(notification) {
 		if (success && !response.error) {
 			try {
 				const answer = await xmlParse(response); console.log('answer', JSON.stringify(answer, null, 2)); // parse xml to json
-				if (answer.transaction.status && answer.transaction.status.toString() === '3') { // 3 -> accepted transaction
+				const code = answer.transaction.status.toString() || false;
+				if ((process.env.ENV === 'prod' && code === '3') || (process.env.ENV !== 'prod' && code)) { // 3 -> accepted transaction
 					const productID = answer.transaction.items[0].item[0].id[0]; console.log('productID', productID); // productID
 					const newPagamento = await pagamentos.findOrCreate({ // saving new payment
 						where: { id_transacao: answer.transaction.code[0] },
@@ -86,7 +87,7 @@ async function handlePagamento(notification) {
 					// we need the newPagamento id to send in the matrocilua mail
 					await smHelp.sendMatricula(productID, newPagamento.id, process.env.ENV === 'local' ? 'jordan@appcivico.com' : answer.transaction.sender[0].email[0]); // send email
 				} else {
-					sentryError(`Status: ${answer.transaction.status}.\nQuem comprou: ${answer.transaction.sender[0].email[0]}`, answer.transaction);
+					sentryError(`Status: ${code}.\nQuem comprou: ${answer.transaction.sender[0].email[0]}`, answer.transaction);
 				}
 			} catch (error) {
 				sentryError('Erro em handleNotification', error);
