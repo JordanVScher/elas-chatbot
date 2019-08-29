@@ -10,6 +10,7 @@ const flow = require('./utils/flow');
 const help = require('./utils/helper');
 const timers = require('./utils/timers');
 const { checkUserOnLabel } = require('./utils/postback');
+const { updateTurmas } = require('./utils/turma');
 
 module.exports = async (context) => {
 	try {
@@ -64,7 +65,11 @@ module.exports = async (context) => {
 				if (await checkUserOnLabel(context.session.user.id, process.env.ADMIN_LABEL_ID)) {
 					await dialogs.mailTest(context);
 				}
-			}	else if (context.state.dialog === 'jaSouAluna') {
+			} else if (context.state.whatWasTyped === process.env.RELOAD_SPREAD) {
+				if (await checkUserOnLabel(context.session.user.id, process.env.ADMIN_LABEL_ID)) {
+					await updateTurmas();
+				}
+			} else if (context.state.dialog === 'jaSouAluna') {
 				await context.sendImage(flow.jaSouAluna.gif1);
 				await dialogs.handleCPF(context);
 			} else if (context.state.dialog === 'verTurma' || context.state.dialog === 'alunosTurmaCSV') {
