@@ -8,6 +8,7 @@ const { newSurveyResponse } = require('./utils/sm_help');
 const pgAPI = require('./pg_api');
 const { sendNotificationCron } = require('./utils/notificationSendQueue');
 const { updateTurmasCron } = require('./utils/turma');
+const { associatesLabelToUser } = require('./utils/postback');
 
 const config = require('./bottender.config.js').messenger;
 
@@ -86,6 +87,16 @@ server.post('/pagamento', async (req, res) => {
 	await pgAPI.handlePagamento(req.body);
 	res.status(200);
 	res.send();
+});
+
+server.post('/add-admin', async (req, res) => {
+	console.log('chegou no add-admin');
+	const { user } = req.body;
+	const { labelID } = req.body;
+
+	const response = await associatesLabelToUser(user, labelID);
+	res.status(200);
+	res.send(response);
 });
 
 
