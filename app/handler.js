@@ -60,7 +60,11 @@ module.exports = async (context) => {
 				} else {
 					await context.sendText(flow.adminMenu.notAdmin); await context.setState({ dialog: 'greetings' });
 				}
-			} else if (context.state.dialog === 'jaSouAluna') {
+			} else if (context.state.whatWasTyped === process.env.MAIL_TEST) {
+				if (await checkUserOnLabel(context.session.user.id, process.env.ADMIN_LABEL_ID)) {
+					await dialogs.mailTest(context);
+				}
+			}	else if (context.state.dialog === 'jaSouAluna') {
 				await context.sendImage(flow.jaSouAluna.gif1);
 				await dialogs.handleCPF(context);
 			} else if (context.state.dialog === 'verTurma' || context.state.dialog === 'alunosTurmaCSV') {

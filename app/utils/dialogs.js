@@ -4,8 +4,10 @@ const { sentryError } = require('./helper');
 const attach = require('./attach');
 const flow = require('./flow');
 const admin = require('./admin_menu/admin_helper');
+const { sendTestNotification } = require('./notificationTest');
 const { alunos } = require('../server/models');
 const { turma } = require('../server/models');
+const chatbot = require('../server/models').chatbot_users;
 
 module.exports.sendMainMenu = async (context, txtMsg) => {
 	const text = txtMsg || flow.mainMenu.defaultText;
@@ -169,5 +171,21 @@ module.exports.mudarAskTurma = async (context) => {
 		} else {
 			await context.sendText(flow.adminMenu.mudarTurma.transferFailed);
 		}
+	}
+};
+
+module.exports.mailTest = async (context) => {
+	await context.setState({ dialog: '' });
+	const aluna = await chatbot.findOne({ where: { fb_id: context.session.user.id }, raw: true }).then(res => res).catch(err => sentryError('Erro em chatbot.FindOne', err));
+
+	if (aluna && aluna.id) {
+		const result = await sendTestNotification(aluna.id);
+		if (result && result.qtd) {
+			await context.sendText(`Sucesso, suas ${result.qtd} notificações estão sendo enviadas`);
+		} else {
+			await context.sendText('Ocorreu um erro, você não tem notificações.');
+		}
+	} else {
+		await context.sendText('Não consegui estabelecer o vínculo entre seu usuário no chatbot e alguma aluna cadastrada. Tente se vincular através do seu PDF, entre no fluxo Já Sou Aluna e se cadastre.');
 	}
 };

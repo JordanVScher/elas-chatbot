@@ -8,8 +8,8 @@ const aluno = require('../server/models').alunos;
 const help = require('./helper');
 const { sentryError } = require('./helper');
 const mailer = require('./mailer');
-const charts = require('./charts');
 const broadcast = require('./broadcast');
+const charts = require('./charts');
 const { getModuloDates } = require('./DB_helper');
 const { getTurmaName } = require('./DB_helper');
 const rules = require('./notificationRules');
@@ -434,7 +434,7 @@ const sendNotificationCron = new CronJob(
 	'00 * 8-22/1 * * *', async () => {
 	// '00 00 8-22/1 * * *', async () => {
 		console.log('Running sendNotificationCron');
-		await sendNotificationFromQueue();
+		// await sendNotificationFromQueue();
 	}, (() => {
 		console.log('Crontab sendNotificationCron stopped.');
 	}),
@@ -444,5 +444,15 @@ const sendNotificationCron = new CronJob(
 );
 
 module.exports = {
-	sendNotificationCron, checkShouldSendRecipient, checkShouldSendNotification, sendNotificationFromQueue, findCurrentModulo,
+	sendNotificationCron,
+	checkShouldSendRecipient,
+	checkShouldSendNotification,
+	sendNotificationFromQueue,
+	findCurrentModulo,
+	getAluna,
+	getIndicado,
+	replaceParameters,
+	parametersRules,
+	buildAttachment,
+	fillMasks,
 };

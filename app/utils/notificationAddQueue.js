@@ -69,4 +69,4 @@ module.exports = {
 
 
 // addNewNotificationAlunas(120, 15);
-// addNewNotificationIndicados(265, 15);
+// addNewNotificationIndicados(120, 15);

@@ -28,61 +28,27 @@ const notificationRules = [
 
 
 // return the sum of the module date (from the turma) with the notification rule
-async function getSendDate(ourTurma, currentRule, i) {
-	if (process.env.NODE_ENV === 'prod') {
-		const desiredDatahora = `modulo${currentRule.modulo}`;
+async function getSendDate(ourTurma, currentRule) {
+	const desiredDatahora = `modulo${currentRule.modulo}`;
 
-		if (ourTurma) {
-			const dataResult = new Date(ourTurma[desiredDatahora]);
-			currentRule.timeChange.forEach((element) => {
-				// Negative qtd means amount of time before the date. Positive means after.
-				if (element.type === 'days') {
-					dataResult.setDate(dataResult.getDate() + element.qtd);
-				} else if (element.type === 'hours') {
-					dataResult.setHours(dataResult.getHours() + element.qtd);
-				} else if (element.type === 'minutes') {
-					dataResult.setMinutes(dataResult.getMinutes() + element.qtd);
-				}
-			});
+	if (ourTurma) {
+		const dataResult = new Date(ourTurma[desiredDatahora]);
+		currentRule.timeChange.forEach((element) => {
+			// Negative qtd means amount of time before the date. Positive means after.
+			if (element.type === 'days') {
+				dataResult.setDate(dataResult.getDate() + element.qtd);
+			} else if (element.type === 'hours') {
+				dataResult.setHours(dataResult.getHours() + element.qtd);
+			} else if (element.type === 'minutes') {
+				dataResult.setMinutes(dataResult.getMinutes() + element.qtd);
+			}
+		});
 
-			return dataResult;
-		}
-		return false;
+		return dataResult;
 	}
-
-	const today = new Date();
-	const toAdd = (i + 1) * 3;
-	today.setMinutes(today.getMinutes() + toAdd);
-	return today;
+	return false;
 }
 
 module.exports = {
 	getSendDate, notificationRules,
 };
-
-
-// async function checkShould1SendNotification(notification, today) {
-// 	if (!notification) { return false;	}
-
-// 	const toSend = help.moment(notification.when_to_send); // get moment to send the notification
-// 	if (process.env.NODE_ENV === 'prod') {
-// 		if (notification.notification_type !== 15 && notification.notification_type !== 16) { // notification 15 and 16 have a different day rule
-// 			if (today >= toSend) { return true; }	// check if date toSend happens beore today, if it was not sent back then it can be sent now
-// 		}
-
-// 		const diffHour = toSend.diff(today, 'hours'); // difference between today and the hour the notification has to be sent
-
-// 		if (notification.notification_type === 15) {
-// 			if (diffHour <= 0 && diffHour > -23) { return true; } // this type can only be sent less than 24h after the notification.toSend
-// 		} else if (notification.notification_type === 16) {
-// 			if (diffHour === 0 && today >= toSend) { return true; } // this type can only be sent less than 1h after the notification.toSend
-// 		}
-
-// 		return false;
-// 	}
-
-// 	const diffMinutes = toSend.diff(today, 'minutes');
-// 	if (diffMinutes > 0) { return false; }
-
-// 	return true;
-// }
