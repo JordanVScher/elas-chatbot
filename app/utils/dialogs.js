@@ -104,7 +104,6 @@ module.exports.sendCSV = async (context) => {
 	}
 };
 
-
 module.exports.receiveCSV = async (context) => { // createAlunos/ inserir
 	const turmas = await turma.findAll({ where: {}, raw: true }).then(res => res).catch(err => help.sentryError('Erro em turma.findAll', err));
 	const csvLines = await admin.getJsonFromURL(context.state.fileURL);
@@ -119,8 +118,13 @@ module.exports.receiveCSV = async (context) => { // createAlunos/ inserir
 			} // convert turma as name to turma as id
 
 			if (element['Nome Completo'] && element.CPF && element.turma_id) { // check if aluno has the bare minumium to be added to the database and if turma is valid(it exists)
-				const newAluno = await db.addAlunaFromCSV(element);
-				if (!newAluno || newAluno.error || !newAluno.id) { errors.push(i + 2); } // save line where error happended
+				element.CPF = await help.getCPFValid(element.CPF);
+				if (!element.CPF) {
+					errors.push(i + 2);
+				} else {
+					const newAluno = await db.addAlunaFromCSV(element);
+					if (!newAluno || newAluno.error || !newAluno.id) { errors.push(i + 2); } // save line where error happended
+				}
 			} else {
 				errors.push(i + 2);
 			}

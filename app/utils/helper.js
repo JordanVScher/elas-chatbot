@@ -169,7 +169,7 @@ async function separateString(someString) {
 }
 
 async function getCPFValid(cpf) {
-	const result = cpf.replace(/[_.,-]/g, '');
+	const result = cpf.toString().replace(/[_.,-]/g, '');
 	if (!result || cpf.length < 11 || !/^\d+$/.test(result)) { return false; }
 	return result;
 }
