@@ -84,9 +84,12 @@ module.exports.sendCSV = async (context) => {
 	case 'alunosTurmaCSV':
 		result = await db.getAlunasReport(turmaID);
 		break;
-	case 'alunosRespostasCSV':
-		result = await db.getAlunasRespostasReport(turmaID);
+	case 'alunosRespostasCSV': {
+		const firstResult = await db.getAlunasRespostasReport(turmaID);
+		result = { content: [], input: turmaID };
+		result.content = await admin.formatRespostasCSV(firstResult.content, 'Respondido');
 		break;
+	}
 	case 'indicadosCSV':
 		result = await db.getAlunasIndicadosReport(turmaID);
 		break;

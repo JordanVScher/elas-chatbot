@@ -72,7 +72,29 @@ async function NotificationChangeTurma(alunaID, turmaID) {
 	}
 }
 
+async function formatRespostasCSV(lines, replament) {
+	const result = [];
+	for (let i = 0; i < lines.length; i++) {
+		const line = lines[i];
+		if (line['Sondagem Pré']) line['Sondagem Pré'] = true;
+		if (line['Sondagem Pós']) line['Sondagem Pós'] = true;
+
+		const newLine = {};
+		await Object.keys(line).forEach(async (element) => {
+			if (line[element] === true) {
+				newLine[element] = replament;
+			} else if (line[element] === false) {
+				newLine[element] = '';
+			} else {
+				newLine[element] = line[element];
+			}
+		});
+		result.push(newLine);
+	}
+
+	return result;
+}
 
 module.exports = {
-	buildCSV, getJsonFromURL, getFeedbackMsgs, NotificationChangeTurma,
+	buildCSV, getJsonFromURL, getFeedbackMsgs, NotificationChangeTurma, formatRespostasCSV,
 };
