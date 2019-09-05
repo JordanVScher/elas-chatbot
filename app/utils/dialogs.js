@@ -118,12 +118,16 @@ module.exports.receiveCSV = async (context) => { // createAlunos/ inserir
 			} // convert turma as name to turma as id
 
 			if (element['Nome Completo'] && element.CPF && element.turma_id) { // check if aluno has the bare minumium to be added to the database and if turma is valid(it exists)
-				element.CPF = await help.getCPFValid(element.CPF);
+				element.CPF = await help.getCPFValid(element.CPF); // format cpf
 				if (!element.CPF) {
 					errors.push(i + 2);
 				} else {
 					const newAluno = await db.addAlunaFromCSV(element);
-					if (!newAluno || newAluno.error || !newAluno.id) { errors.push(i + 2); } // save line where error happended
+					if (!newAluno || newAluno.error || !newAluno.id) { // save line where error happended
+						errors.push(i + 2);
+					} else {
+						await admin.NotificationChangeTurma(newAluno.id, element.turma_id);
+					}
 				}
 			} else {
 				errors.push(i + 2);
@@ -162,10 +166,9 @@ module.exports.mudarAskTurma = async (context) => {
 	if (!validTurma) { // if theres no id then it's not a valid turma
 		await context.sendText(flow.adminMenu.mudarTurma.turmaInvalida);
 	} else {
-		const transferedAluna = await alunos.update({ turma_id: validTurma }, { where: { cpf: context.state.adminAlunaFound.cpf } })
-			.then(() => true).catch(err => sentryError('Erro em mudarAskTurma update', err));
-
+		const transferedAluna = await alunos.update({ turma_id: validTurma }, { where: { cpf: context.state.adminAlunaFound.cpf } }).then(() => true).catch(err => sentryError('Erro em mudarAskTurma update', err));
 		if (transferedAluna) {
+			await admin.NotificationChangeTurma(context.state.adminAlunaFound.id, validTurma);
 			await context.sendText(flow.adminMenu.mudarTurma.transferComplete.replace('<TURMA>', context.state.desiredTurma));
 			const count = await alunos.count({ where: { turma_id: validTurma } })
 				.then(alunas => alunas).catch(err => sentryError('Erro em mudarAskTurma getCoun', err));
