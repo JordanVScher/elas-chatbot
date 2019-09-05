@@ -411,10 +411,7 @@ async function addAlunaFromCSV(aluno) {
 	SET ${set.join(', ')}
 	RETURNING id;`;
 
-	const result = await sequelize.query(queryString).spread((results, metadata) => (results && results[0] ? results[0] : false)).catch((err) => { // eslint-disable-line no-unused-vars
-		sentryError('Erro no addAlunaFromCSV =>', err);
-		return { error: 'Valor inválido!' };
-	});
+	const result = await sequelize.query(queryString).spread(results => (results && results[0] ? results[0] : false)).catch(err => sentryError('Erro no addAlunaFromCSV =>', err));
 
 	return result;
 }

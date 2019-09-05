@@ -117,26 +117,33 @@ module.exports.receiveCSV = async (context) => { // createAlunos/ inserir
 				element.turma_id = element.Turma ? element.Turma.id : false; // get that turma id
 			} // convert turma as name to turma as id
 
-			if (element['Nome Completo'] && element.CPF && element.turma_id) { // check if aluno has the bare minumium to be added to the database and if turma is valid(it exists)
-				element.CPF = await help.getCPFValid(element.CPF); // format cpf
-				if (!element.CPF) {
-					errors.push(i + 2);
-				} else {
-					const newAluno = await db.addAlunaFromCSV(element);
-					if (!newAluno || newAluno.error || !newAluno.id) { // save line where error happended
-						errors.push(i + 2);
+			if (element.Turma && element.turma_id) { // check valid turma
+				if (element['Nome Completo']) { // check if aluno has the bare minumium to be added to the database
+					element.CPF = await help.getCPFValid(element.CPF); // format cpf
+					if (!element.CPF) {
+						errors.push({ line: i + 2, msg: 'CPF inválido!' });
 					} else {
-						await admin.NotificationChangeTurma(newAluno.id, element.turma_id);
+						const newAluno = await db.addAlunaFromCSV(element);
+						if (!newAluno || newAluno.error || !newAluno.id) { // save line where error happended
+							errors.push({ line: i + 2, msg: 'Erro ao salvar no banco' });
+						} else {
+							await admin.NotificationChangeTurma(newAluno.id, element.turma_id);
+						}
 					}
+				} else {
+					errors.push({ line: i + 2, msg: 'Falta o nome da aluna' });
 				}
 			} else {
-				errors.push(i + 2);
+				errors.push({ line: i + 2, msg: `Turma ${element.Turma || ''} inválida` });
 			}
 		}
 
 		const feedbackMsgs = await admin.getFeedbackMsgs(csvLines.length - errors.length, errors);
 		for (let i = 0; i < feedbackMsgs.length; i++) {
 			const element = feedbackMsgs[i];
+			if (i === 1) {
+				await context.sendText('Aconteceram alguns erros, o número da linha exibido abaixo é contando com o header do CSV');
+			}
 			await context.sendText(element, await attach.getQR(flow.adminMenu.inserirAlunas));
 		}
 	} else {

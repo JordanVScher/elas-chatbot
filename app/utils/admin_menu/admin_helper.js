@@ -42,11 +42,17 @@ async function getFeedbackMsgs(addedALunos, errors) {
 		result.push(`${addedALunos} alunas foram adicionadas!`);
 	}
 
-	if (errors.length === 1) {
-		result.push(`Ocorreu 1 erro na linha ${errors[0]}`);
-	} else if (errors.length > 1) {
-		result.push(`Ocorreram ${errors.length} erros. Nas linhas ${errors.join(', ').replace(/,(?=[^,]*$)/, ' e')}.`);
-	}
+	let messageToSend;
+	errors.forEach((element) => {
+		if (!messageToSend) messageToSend = 'Erros:';
+		messageToSend += `\nLinha ${element.line}: ${element.msg}`;
+		if (messageToSend.length >= 1700) {
+			result.push(messageToSend);
+			messageToSend = null;
+		}
+	});
+
+	if (messageToSend) result.push(messageToSend);
 
 	return result;
 }
