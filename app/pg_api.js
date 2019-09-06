@@ -81,7 +81,7 @@ async function handlePagamento(notification) {
 					const newPagamento = await pagamentos.findOrCreate({ // saving new payment
 						where: { id_transacao: answer.transaction.code[0] },
 						defaults: {
-							email: answer.transaction.sender[0].email[0], documento_tipo: 'cpf', documento_valor: '0', id_produto: productID, id_transacao: answer.transaction.code[0],
+							email: answer.transaction.sender[0].email[0], docType: 'cpf', docValue: '0', productID, transactionID: answer.transaction.code[0],
 						},
 					}).then(res => res[0].dataValues).catch(err => sentryError('upsert pagamento', err));
 					// we need the newPagamento id to send in the matrocilua mail
