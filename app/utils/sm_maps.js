@@ -48,6 +48,12 @@ module.exports = {
 		{ questionID: '294966524', paramName: 'cpf' },
 		{ questionID: '294966525', paramName: 'email' },
 		{ questionID: '294966526', paramName: 'telefone' },
+		{ questionID: '294966527', paramName: 'endereco' },
+		{ questionID: '294966528', paramName: 'data_nascimento' },
+		{ questionID: '294966530', paramName: 'contato_emergencia_nome' },
+		{ questionID: '294966531', paramName: 'contato_emergencia_phone' },
+		{ questionID: '294966532', paramName: 'contato_emergencia_email' },
+		{ questionID: '294966533', paramName: 'contato_emergencia_parentesco' },
 	],
 	sondagemPre: [
 		{ questionID: '1989850599', dropdown: '298300398', paramName: 'obetivos_perseguidos' },
