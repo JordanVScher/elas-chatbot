@@ -68,6 +68,21 @@ function formatDate(date) {
 	return `${day}/${month}`;
 }
 
+async function findModuleToday(turma) {
+	let result;
+	const today = new Date();
+	Object.keys(turma).forEach(element => {
+		// we are looking for the first moduleDate that happens after today
+		if (element.slice(0, 6) === 'modulo' && !result) {
+			const modDate = turma[element];
+			if (today <= modDate) {
+				result = element.replace('modulo', '');
+			}
+		}
+	});
+	return result;
+}
+
 
 async function formatModulo1(date) {
 	return `dia ${moment(date).utcOffset('+0000').format('DD')} de ${moment(date).utcOffset('+0000').format('MMMM')}`;
@@ -235,4 +250,5 @@ module.exports = {
 	getCPFValid,
 	buildAlunaMsg,
 	sentryError,
+	findModuleToday,
 };

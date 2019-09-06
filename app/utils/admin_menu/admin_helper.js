@@ -6,7 +6,8 @@ const help = require('../helper');
 const { getTurmaName } = require('./../DB_helper');
 const { addNewNotificationAlunas } = require('./../notificationAddQueue');
 const notificationQueue = require('../../server/models').notification_queue;
-
+const turmaChangelog = require('../../server/models').aluno_turma_changelog;
+const { turma } = require('../../server/models');
 
 async function buildCSV(data, texts) {
 	if (!data || !data.content || data.content.length === 0) { return { error: texts.error }; }
@@ -57,6 +58,17 @@ async function getFeedbackMsgs(addedALunos, errors) {
 	return result;
 }
 
+
+async function SaveTurmaChange(alunaID, turmaOriginal, turmaNova) {
+	if (turmaOriginal !== turmaNova) {
+		const alunoTurma = await turma.findOne({ where: { id: turmaOriginal }, raw: true }).then(res => res).catch(err => help.sentryError('Erro em turma.findAll', err));
+		const currentModule = await help.findModuleToday(alunoTurma);
+		turmaChangelog.create({
+			alunoID: alunaID, turmaOriginal, turmaNova, modulo: currentModule,
+		}).then(res => res).catch(err => help.sentryError('Erro em turmaChangelog.create', err));
+	}
+}
+
 // updates (or creates) notifications in queue when the aluna changes the turma
 async function NotificationChangeTurma(alunaID, turmaID) {
 	const userNotifications = await notificationQueue.findAll({ where: { aluno_id: alunaID }, raw: true }).then(res => res).catch(err => help.sentryError('Erro em notificationQueue.findAll', err));
@@ -96,5 +108,5 @@ async function formatRespostasCSV(lines, replament) {
 }
 
 module.exports = {
-	buildCSV, getJsonFromURL, getFeedbackMsgs, NotificationChangeTurma, formatRespostasCSV,
+	buildCSV, getJsonFromURL, getFeedbackMsgs, NotificationChangeTurma, formatRespostasCSV, SaveTurmaChange,
 };
