@@ -346,8 +346,8 @@ async function getAlunasReport(turma) {
 
 async function getAlunasRespostasReport(turma) {
 	const result = await sequelize.query(`
-	SELECT RESPOSTA.id as "RESPOSTA ID", ALUNO.nome_completo as "Nome Completo", ALUNO.cpf as "ALUNO CPF", RESPOSTA.pre as "Sondagem Pré", RESPOSTA.pos as "Sondagem Pós",
-	RESPOSTA.atividade_1 as "Cadastro",
+	SELECT RESPOSTA.id as "RESPOSTA ID", ALUNO.nome_completo as "Nome Completo", ALUNO.cpf as "ALUNA CPF", ALUNO.email as "ALUNA E-MAIL",
+	RESPOSTA.pre as "Sondagem Pré", RESPOSTA.pos as "Sondagem Pós", RESPOSTA.atividade_1 as "Cadastro",
 	RESPOSTA.atividade_modulo1 as "Avaliação Módulo 1", RESPOSTA.atividade_modulo2 as "Avaliação Módulo 2", RESPOSTA.atividade_modulo3 as "Avaliação Módulo 3"
 	FROM alunos_respostas RESPOSTA
 	LEFT JOIN alunos ALUNO ON ALUNO.id = RESPOSTA.aluno_id

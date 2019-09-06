@@ -186,7 +186,7 @@ module.exports = {
 			filename: 'TURMA_<INPUT>',
 		},
 		alunosRespostasCSV: {
-			txt1: 'Respostas da turma:',
+			txt1: 'Controle de preenchimento das atividades:',
 			error: 'Não encontrei nenhuma resposta nessa turma!',
 			filename: 'RESPOSTAS_TURMA_<INPUT>',
 		},
