@@ -179,6 +179,7 @@ module.exports.mudarAskTurma = async (context) => {
 		const transferedAluna = await alunos.update({ turma_id: validTurma }, { where: { cpf: context.state.adminAlunaFound.cpf } }).then(() => true).catch(err => sentryError('Erro em mudarAskTurma update', err));
 		if (transferedAluna) {
 			await admin.NotificationChangeTurma(context.state.adminAlunaFound.id, validTurma);
+			await admin.SaveTurmaChange(context.state.adminAlunaFound.id, context.state.adminAlunaFound.turma_id, validTurma);
 			await context.sendText(flow.adminMenu.mudarTurma.transferComplete.replace('<TURMA>', context.state.desiredTurma));
 			const count = await alunos.count({ where: { turma_id: validTurma } })
 				.then(alunas => alunas).catch(err => sentryError('Erro em mudarAskTurma getCoun', err));
