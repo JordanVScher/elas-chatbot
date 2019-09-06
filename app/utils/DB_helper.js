@@ -49,7 +49,7 @@ async function getAlunaFromPDF(cpf) {
 
 async function getModuloDates() {
 	const result = await sequelize.query(`
-	SELECT id, local, horario_modulo1 as modulo1, horario_modulo2 as modulo2, horario_modulo3 as modulo3 from turma
+	SELECT id, nome, local, horario_modulo1 as modulo1, horario_modulo2 as modulo2, horario_modulo3 as modulo3 from turma
 	where local IS NOT NULL AND horario_modulo1 IS NOT NULL AND horario_modulo2 IS NOT NULL AND horario_modulo3 IS NOT NULL;
 	`).spread(results => (results || false)).catch((err) => { sentryError('Erro em getModuloDates =>', err); });
 
@@ -328,10 +328,11 @@ async function getAlunasFromTurma(turma) {
 
 async function getAlunasReport(turma) {
 	const result = await sequelize.query(`
-	SELECT ALUNO.id as "ID", ALUNO.cpf as "CPF", ALUNO.turma_id as "Turma", ALUNO.nome_completo as "Nome Completo", ALUNO.email as "E-mail", 
+	SELECT ALUNO.id as "ID", ALUNO.cpf as "CPF", TURMA.nome as "Turma", ALUNO.nome_completo as "Nome Completo", ALUNO.email as "E-mail", 
 	ALUNO.created_at as "Criado em", 	BOT_USER.fb_id as "ID Facebook", ALUNO.updated_at as "Atualizado em"
 	FROM alunos ALUNO
 	LEFT JOIN chatbot_users BOT_USER ON BOT_USER.cpf = ALUNO.cpf
+	LEFT JOIN turma TURMA ON TURMA.id = ALUNO.turma_id
 	WHERE ALUNO.turma_id = '${turma}'
 	ORDER BY BOT_USER.fb_id;
 	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
