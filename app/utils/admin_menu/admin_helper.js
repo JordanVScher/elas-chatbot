@@ -59,17 +59,18 @@ async function getFeedbackMsgs(addedALunos, errors) {
 	return result;
 }
 
-
 async function SaveTurmaChange(alunaID, turmaOriginal, turmaNova) {
 	if (!turmaOriginal) {
 		turmaOriginal = await alunos.findOne({ where: { id: alunaID }, raw: true }).then(res => res.turma_id).catch(err => help.sentryError('Erro em alunos.findOne', err)); // eslint-disable-line no-param-reassign
 	}
 
 	if (turmaOriginal !== turmaNova) {
-		const alunoTurma = await turma.findOne({ where: { id: turmaOriginal }, raw: true }).then(res => res).catch(err => help.sentryError('Erro em turma.findOne', err));
-		const currentModule = await help.findModuleToday(alunoTurma);
+		const alunoTurmaOriginal = await turma.findOne({ where: { id: turmaOriginal }, raw: true }).then(res => res).catch(err => help.sentryError('Erro em turma.findOne', err));
+		const moduloOriginal = await help.findModuleToday(alunoTurmaOriginal);
+		const alunoTurmaNova = await turma.findOne({ where: { id: turmaNova }, raw: true }).then(res => res).catch(err => help.sentryError('Erro em turma.findOne', err));
+		const moduloNovo = await help.findModuleToday(alunoTurmaNova);
 		turmaChangelog.create({
-			alunoID: alunaID, turmaOriginal, turmaNova, modulo: currentModule,
+			alunoID: alunaID, turmaOriginal, turmaNova, moduloOriginal, moduloNovo,
 		}).then(res => res).catch(err => help.sentryError('Erro em turmaChangelog.create', err));
 	}
 }
