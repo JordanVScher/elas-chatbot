@@ -57,20 +57,26 @@ async function getModuloDates() {
 	return result;
 }
 
-async function upsertAluno(nome, cpf, turma, email) {
+async function upsertAluno(answers) {
 	let date = new Date();
 	date = await moment(date).format('YYYY-MM-DD HH:mm:ss');
-	const turmaId = await getTurmaID(turma);
+	const turmaId = await getTurmaID(answers.turma);
 
 	const id = await sequelize.query(`
-	INSERT INTO "alunos" (nome_completo, cpf, turma_id, email, created_at, updated_at)
-  VALUES ('${nome}', '${cpf}', '${turmaId}', '${email}', '${date}', '${date}')
+	INSERT INTO "alunos" (nome_completo, cpf, turma_id, email, created_at, updated_at, rg, telefone, endereco, data_nascimento,
+	contato_emergencia_nome, contato_emergencia_email, contato_emergencia_fone, contato_emergencia_relacao	)
+	VALUES ('${answers.nome}', '${answers.cpf}', '${turmaId}', '${answers.email}', '${date}', '${date}', '${answers.rg}',
+	'${answers.telefone}', '${answers.endereco}','${answers.data_nascimento}', '${answers.contato_emergencia_nome}',
+	'${answers.contato_emergencia_fone}', '${answers.contato_emergencia_email}', '${answers.contato_emergencia_relacao}')
 	ON CONFLICT (cpf)
   DO UPDATE
-		SET nome_completo = '${nome}', turma_id = '${turmaId}', email = '${email}', updated_at = '${date}'
+		SET nome_completo = '${answers.nome}', turma_id = '${turmaId}', email = '${answers.email}', updated_at = '${date}',
+		rg = '${answers.rg}', telefone = '${answers.telefone}', endereco = '${answers.endereco}', data_nascimento = '${answers.data_nascimento}',
+		contato_emergencia_nome = '${answers.contato_emergencia_nome}', contato_emergencia_email = '${answers.contato_emergencia_email}',
+		contato_emergencia_relacao = '${answers.contato_emergencia_relacao}', contato_emergencia_fone = '${answers.contato_emergencia_fone}'
 		RETURNING id;
 	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
-		console.log(`Added ${nome} successfully!`);
+		console.log(`Added ${answers.nome} successfully!`);
 		return results && results[0] && results[0].id ? results[0].id : false;
 	}).catch((err) => { sentryError('Erro em upsertAluno =>', err); });
 
@@ -328,8 +334,11 @@ async function getAlunasFromTurma(turma) {
 
 async function getAlunasReport(turma) {
 	const result = await sequelize.query(`
-	SELECT ALUNO.id as "ID", ALUNO.cpf as "CPF", TURMA.nome as "Turma", ALUNO.nome_completo as "Nome Completo", ALUNO.email as "E-mail", 
-	ALUNO.created_at as "Criado em", 	BOT_USER.fb_id as "ID Facebook", ALUNO.updated_at as "Atualizado em"
+	SELECT ALUNO.id as "ID", ALUNO.cpf as "CPF", TURMA.nome as "Turma", ALUNO.nome_completo as "Nome Completo", ALUNO.email as "E-mail",
+	ALUNO.telefone as "Telefone", ALUNO.rg as "RG", ALUNO.data_nascimento as "Data de Nascimento", 
+	ALUNO.contato_emergencia_nome as "Nome Contado de Emergência", ALUNO.contato_emergencia_email as "E-mail do Contado ",
+	ALUNO.contato_emergencia_fone as "Telefone do Contado",	ALUNO.contato_emergencia_relacao as "Relação com Contado",
+	BOT_USER.fb_id as "ID Facebook", ALUNO.created_at as "Criado em", ALUNO.updated_at as "Atualizado em"
 	FROM alunos ALUNO
 	LEFT JOIN chatbot_users BOT_USER ON BOT_USER.cpf = ALUNO.cpf
 	LEFT JOIN turma TURMA ON TURMA.id = ALUNO.turma_id

@@ -140,7 +140,6 @@ async function handleAtividade(response, column) {
 
 async function handleAtividadeOne(response) {
 	try {
-		// response.custom_variables = { turma: 'T7-SP' };
 		console.log('custom_variables', response.custom_variables);
 
 		let answers = await getSpecificAnswers(surveysMaps.atividade1, response.pages);
@@ -148,7 +147,7 @@ async function handleAtividadeOne(response) {
 		answers = await addCustomParametersToAnswer(answers, response.custom_variables);
 		if (answers.cpf) { answers.cpf = await answers.cpf.replace(/[_.,-]/g, ''); }
 
-		const newUserID = await db.upsertAluno(answers.nome, answers.cpf, answers.turma, answers.email);
+		const newUserID = await db.upsertAluno(answers);
 		if (newUserID) {
 			await db.updateAtividade(newUserID, 'atividade_1', true);
 			await db.updateAlunoOnPagamento(answers.pgid, newUserID);
