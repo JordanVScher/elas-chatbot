@@ -126,6 +126,9 @@ module.exports.receiveCSV = async (context) => { // createAlunos/ inserir
 					if (!element.CPF) {
 						errors.push({ line: i + 2, msg: 'CPF inválido!' });
 					} else {
+						const oldAluno = await alunos.findOne({ where: { cpf: element.CPF }, raw: true }).then(res => res).catch(err => help.sentryError('Erro em alunos.findOne', err));
+						if (oldAluno) { await admin.SaveTurmaChange(oldAluno.id, oldAluno.turma_id, element.turma_id); }
+
 						const newAluno = await db.addAlunaFromCSV(element);
 						if (!newAluno || newAluno.error || !newAluno.id) { // save line where error happended
 							errors.push({ line: i + 2, msg: 'Erro ao salvar no banco' });
@@ -182,7 +185,7 @@ module.exports.mudarAskTurma = async (context) => {
 			await admin.SaveTurmaChange(context.state.adminAlunaFound.id, context.state.adminAlunaFound.turma_id, validTurma);
 			await context.sendText(flow.adminMenu.mudarTurma.transferComplete.replace('<TURMA>', context.state.desiredTurma));
 			const count = await alunos.count({ where: { turma_id: validTurma } })
-				.then(alunas => alunas).catch(err => sentryError('Erro em mudarAskTurma getCoun', err));
+				.then(alunas => alunas).catch(err => sentryError('Erro em mudarAskTurma getCount', err));
 			if (count !== false) { await context.sendText(flow.adminMenu.mudarTurma.turmaCount.replace('<COUNT>', count).replace('<TURMA>', context.state.desiredTurma)); }
 			await context.setState({
 				dialog: 'adminMenu', desiredTurma: '', adminAlunaFound: '', adminAlunaCPF: '',

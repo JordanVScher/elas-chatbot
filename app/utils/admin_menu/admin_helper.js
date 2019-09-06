@@ -8,6 +8,7 @@ const { addNewNotificationAlunas } = require('./../notificationAddQueue');
 const notificationQueue = require('../../server/models').notification_queue;
 const turmaChangelog = require('../../server/models').aluno_turma_changelog;
 const { turma } = require('../../server/models');
+const { alunos } = require('../../server/models');
 
 async function buildCSV(data, texts) {
 	if (!data || !data.content || data.content.length === 0) { return { error: texts.error }; }
@@ -60,8 +61,12 @@ async function getFeedbackMsgs(addedALunos, errors) {
 
 
 async function SaveTurmaChange(alunaID, turmaOriginal, turmaNova) {
+	if (!turmaOriginal) {
+		turmaOriginal = await alunos.findOne({ where: { id: alunaID }, raw: true }).then(res => res.turma_id).catch(err => help.sentryError('Erro em alunos.findOne', err)); // eslint-disable-line no-param-reassign
+	}
+
 	if (turmaOriginal !== turmaNova) {
-		const alunoTurma = await turma.findOne({ where: { id: turmaOriginal }, raw: true }).then(res => res).catch(err => help.sentryError('Erro em turma.findAll', err));
+		const alunoTurma = await turma.findOne({ where: { id: turmaOriginal }, raw: true }).then(res => res).catch(err => help.sentryError('Erro em turma.findOne', err));
 		const currentModule = await help.findModuleToday(alunoTurma);
 		turmaChangelog.create({
 			alunoID: alunaID, turmaOriginal, turmaNova, modulo: currentModule,
