@@ -98,6 +98,7 @@ module.exports.sendCSV = async (context) => {
 		break;
 	}
 
+	result.content = await admin.putColumnsLast(result.content, ['Criado em', 'Atualizado em']);
 	result = await admin.buildCSV(result, flow.adminCSV[context.state.dialog]);
 
 	if (!result || result.error || !result.csvData) {

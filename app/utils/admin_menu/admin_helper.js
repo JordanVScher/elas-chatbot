@@ -152,6 +152,20 @@ async function addTurmaTransferenceCSV(lines) {
 	return newLines;
 }
 
+async function putColumnsLast(lines, columns) {
+	lines.forEach((line) => {
+		columns.forEach((element) => {
+			const aux = line[element];
+			if (aux) {
+				delete line[element]; // eslint-disable-line no-param-reassign
+				line[element] = aux; // eslint-disable-line no-param-reassign
+			}
+		});
+	});
+
+	return lines;
+}
+
 module.exports = {
-	buildCSV, getJsonFromURL, getFeedbackMsgs, NotificationChangeTurma, formatRespostasCSV, SaveTurmaChange, addTurmaTransferenceCSV,
+	buildCSV, getJsonFromURL, getFeedbackMsgs, NotificationChangeTurma, formatRespostasCSV, SaveTurmaChange, addTurmaTransferenceCSV, putColumnsLast,
 };
