@@ -4,6 +4,7 @@ const request = require('request-promise');
 const { csv2json } = require('csvjson-csv2json');
 const help = require('../helper');
 const { getTurmaName } = require('./../DB_helper');
+// const { getAlunasReport } = require('./../DB_helper');
 const { buildTurmaDictionary } = require('./../DB_helper');
 const { addNewNotificationAlunas } = require('./../notificationAddQueue');
 const notificationQueue = require('../../server/models').notification_queue;
@@ -130,11 +131,22 @@ async function addTurmaTransferenceCSV(lines) {
 	const newLines = lines;
 	const allLogChange = await turmaChangelog.findAll({ where: {}, raw: true }).then(res => res).catch(err => help.sentryError('Erro em turmaChangelog.findAll', err));
 	const turmaDictionary = await buildTurmaDictionary();
-	await newLines.content.forEach(async (line) => {
+	const columnTransferenciaText = 'Transferência de Turma';
+	let maxTransferences = 0;
+	// Add new lines for transferências
+	newLines.content.forEach((line) => {
 		const alunoTurmaLog = allLogChange.filter(x => x.alunoID === line.ID);
-		await alunoTurmaLog.forEach(async (change, index) => {
-			line[`Transferência de Turma ${index + 1}`] = buildColumnTurmaChange(change, turmaDictionary); // eslint-disable-line no-param-reassign
+		alunoTurmaLog.forEach((change, index) => {
+			line[`${columnTransferenciaText} ${index + 1}`] = buildColumnTurmaChange(change, turmaDictionary); // eslint-disable-line no-param-reassign
+			if (index > maxTransferences) maxTransferences = index + 1;
 		});
+	});
+
+	// adding columnTransferencia to lines that don't have any value for them (JSON to CSV seems to ignore columns that are not always present)
+	newLines.content.forEach((element) => {
+		for (let i = 1; i <= maxTransferences; i++) {
+			if (!element[`${columnTransferenciaText} ${i}`]) element[`${columnTransferenciaText} ${i}`] = null; // eslint-disable-line no-param-reassign
+		}
 	});
 
 	return newLines;
