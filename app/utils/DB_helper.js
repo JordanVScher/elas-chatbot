@@ -426,6 +426,15 @@ async function addAlunaFromCSV(aluno) {
 	return result;
 }
 
+async function buildTurmaDictionary() {
+	const result = {};
+	const turmas = await getModuloDates();
+	turmas.forEach((element) => {
+		result[element.id] = element.nome;
+		result[element.nome] = element.id;
+	});
+	return result;
+}
 
 module.exports = {
 	upsertUser,
@@ -452,4 +461,5 @@ module.exports = {
 	getTurmaName,
 	getModuloDates,
 	getAlunaFromFBID,
+	buildTurmaDictionary,
 };

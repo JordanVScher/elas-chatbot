@@ -4,6 +4,7 @@ const request = require('request-promise');
 const { csv2json } = require('csvjson-csv2json');
 const help = require('../helper');
 const { getTurmaName } = require('./../DB_helper');
+const { buildTurmaDictionary } = require('./../DB_helper');
 const { addNewNotificationAlunas } = require('./../notificationAddQueue');
 const notificationQueue = require('../../server/models').notification_queue;
 const turmaChangelog = require('../../server/models').aluno_turma_changelog;
@@ -113,6 +114,32 @@ async function formatRespostasCSV(lines, replament) {
 	return result;
 }
 
+function buildColumnTurmaChange(log, turmaNames) {
+	let result = '';
+
+	if (log.turmaOriginal) result += turmaNames[log.turmaOriginal] || `ID ${log.turmaOriginal}`;
+	if (log.moduloOriginal) result += ` (Módulo ${log.moduloOriginal})`;
+	result += ' => ';
+	if (log.turmaNova) result += turmaNames[log.turmaNova] || `ID ${log.turmaNova}`;
+	if (log.moduloNovo) result += ` (Módulo ${log.moduloNovo})`;
+
+	return result;
+}
+
+async function addTurmaTransferenceCSV(lines) {
+	const newLines = lines;
+	const allLogChange = await turmaChangelog.findAll({ where: {}, raw: true }).then(res => res).catch(err => help.sentryError('Erro em turmaChangelog.findAll', err));
+	const turmaDictionary = await buildTurmaDictionary();
+	await newLines.content.forEach(async (line) => {
+		const alunoTurmaLog = allLogChange.filter(x => x.alunoID === line.ID);
+		await alunoTurmaLog.forEach(async (change, index) => {
+			line[`Transferência de Turma ${index + 1}`] = buildColumnTurmaChange(change, turmaDictionary); // eslint-disable-line no-param-reassign
+		});
+	});
+
+	return newLines;
+}
+
 module.exports = {
-	buildCSV, getJsonFromURL, getFeedbackMsgs, NotificationChangeTurma, formatRespostasCSV, SaveTurmaChange,
+	buildCSV, getJsonFromURL, getFeedbackMsgs, NotificationChangeTurma, formatRespostasCSV, SaveTurmaChange, addTurmaTransferenceCSV,
 };

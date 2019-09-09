@@ -83,6 +83,7 @@ module.exports.sendCSV = async (context) => {
 	switch (context.state.dialog) {
 	case 'alunosTurmaCSV':
 		result = await db.getAlunasReport(turmaID);
+		result = await admin.addTurmaTransferenceCSV(result);
 		break;
 	case 'alunosRespostasCSV': {
 		const firstResult = await db.getAlunasRespostasReport(turmaID);
