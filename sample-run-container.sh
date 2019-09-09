@@ -9,7 +9,7 @@ export DATA_DIR='/tmp/elas-chatbot/data/'
 export DOCKER_LAN_IP=$(ifconfig docker0 | grep 'inet addr:' | awk '{ split($2,a,":"); print a[2] }')
 
 # porta que será feito o bind
-export LISTEN_PORT=1006
+export LISTEN_PORT=1007
 sequelize db:migrate
 
 docker run --name elas-chatbot \
