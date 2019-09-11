@@ -396,7 +396,7 @@ async function addAlunaFromCSV(aluno) {
 
 	const columns = [];
 	const values = [];
-	const set = [];
+	const set = []; // for do update only
 
 	if (aluno['Nome Completo']) {
 		columns.push('nome_completo'); values.push(`'${aluno['Nome Completo']}'`); set.push(`${columns[columns.length - 1]} = ${values[values.length - 1]}`);
@@ -411,6 +411,7 @@ async function addAlunaFromCSV(aluno) {
 		columns.push('turma_id'); values.push(`'${aluno.turma_id}'`); set.push(`${columns[columns.length - 1]} = ${values[values.length - 1]}`);
 	}
 
+	columns.push('veio_do_admin'); values.push('TRUE');
 	columns.push('created_at'); values.push(`'${date}'`);
 	columns.push('updated_at'); values.push(`'${date}'`); set.push(`${columns[columns.length - 1]} = ${values[values.length - 1]}`);
 
