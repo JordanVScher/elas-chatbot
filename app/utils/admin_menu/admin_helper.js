@@ -4,7 +4,6 @@ const request = require('request-promise');
 const { csv2json } = require('csvjson-csv2json');
 const help = require('../helper');
 const { getTurmaName } = require('./../DB_helper');
-// const { getAlunasReport } = require('./../DB_helper');
 const { buildTurmaDictionary } = require('./../DB_helper');
 const { addNewNotificationAlunas } = require('./../notificationAddQueue');
 const notificationQueue = require('../../server/models').notification_queue;
@@ -14,7 +13,7 @@ const { alunos } = require('../../server/models');
 
 async function buildCSV(data, texts) {
 	if (!data || !data.content || data.content.length === 0) { return { error: texts.error }; }
-	const result = await parseAsync(data.content, { includeEmptyRows: true }).then(csv => csv).catch(err => err);
+	const result = await parseAsync(await help.formatBoolean(data.content), { includeEmptyRows: true }).then(csv => csv).catch(err => err);
 	if (!result) { help.Sentry.captureMessage('Erro no parse!'); return { error: 'Erro no parse!' }; }
 	const newFilename = texts.filename.replace('<INPUT>', await getTurmaName(data.input));
 	return { csvData: await Buffer.from(result, 'utf8'), filename: `${await help.getTimestamp()}_${newFilename}.csv` };

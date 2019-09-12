@@ -346,7 +346,8 @@ async function getAlunasReport(turma) {
 	ALUNO.telefone as "Telefone", ALUNO.rg as "RG", ALUNO.data_nascimento as "Data de Nascimento", 
 	ALUNO.contato_emergencia_nome as "Nome Contado de Emergência", ALUNO.contato_emergencia_email as "E-mail do Contado ",
 	ALUNO.contato_emergencia_fone as "Telefone do Contado",	ALUNO.contato_emergencia_relacao as "Relação com Contado",
-	BOT_USER.fb_id as "ID Facebook", ALUNO.created_at as "Criado em", ALUNO.updated_at as "Atualizado em"
+	BOT_USER.fb_id as "ID Facebook", ALUNO.added_by_admin as "Adicionado pelo Admin",
+	ALUNO.created_at as "Criado em", ALUNO.updated_at as "Atualizado em"
 	FROM alunos ALUNO
 	LEFT JOIN chatbot_users BOT_USER ON BOT_USER.cpf = ALUNO.cpf
 	LEFT JOIN turma TURMA ON TURMA.id = ALUNO.turma_id
