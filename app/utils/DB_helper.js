@@ -335,7 +335,6 @@ async function getAlunasFromTurma(turma) {
 		return results;
 	}).catch((err) => { sentryError('Erro em getAlunasFromTurma =>', err); });
 
-
 	return result || false;
 }
 

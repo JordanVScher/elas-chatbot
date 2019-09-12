@@ -127,6 +127,7 @@ module.exports.receiveCSV = async (context) => { // createAlunos/ inserir
 					element.CPF = await help.getCPFValid(element.CPF); // format cpf
 					if (!element.CPF) {
 						errors.push({ line: i + 2, msg: 'CPF inválido!' });
+						help.sentryError('Erro em receiveCSV => CPF inválido!', { element });
 					} else {
 						const oldAluno = await alunos.findOne({ where: { cpf: element.CPF }, raw: true }).then(res => res).catch(err => help.sentryError('Erro em alunos.findOne', err));
 						if (oldAluno) { await admin.SaveTurmaChange(oldAluno.id, oldAluno.turma_id, element.turma_id); }
@@ -134,15 +135,18 @@ module.exports.receiveCSV = async (context) => { // createAlunos/ inserir
 						const newAluno = await db.addAlunaFromCSV(element);
 						if (!newAluno || newAluno.error || !newAluno.id) { // save line where error happended
 							errors.push({ line: i + 2, msg: 'Erro ao salvar no banco' });
+							help.sentryError('Erro em receiveCSV => Erro ao salvar no banco', { element });
 						} else {
 							await admin.NotificationChangeTurma(newAluno.id, element.turma_id);
 						}
 					}
 				} else {
 					errors.push({ line: i + 2, msg: 'Falta o nome da aluna' });
+					help.sentryError('Erro em receiveCSV => aluna sem nome', { element });
 				}
 			} else {
 				errors.push({ line: i + 2, msg: `Turma ${element.Turma || ''} inválida` });
+				help.sentryError('Erro em receiveCSV => turma inválida', { element });
 			}
 		}
 
