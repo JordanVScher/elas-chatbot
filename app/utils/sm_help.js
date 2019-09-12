@@ -140,13 +140,13 @@ async function handleAtividade(response, column) {
 
 async function handleAtividadeOne(response) {
 	try {
-		// response.custom_variables = { turma: 'T7-SP', cpf: '9999999999', pgid: '17' };
+		// response.custom_variables = { turma: 'T7-SP', cpf: '99999999990', pgid: '17' };
 		// console.log('custom_variables', response.custom_variables);
 		let answers = await getSpecificAnswers(surveysMaps.atividade1, response.pages);
 		answers = await replaceChoiceId(answers, surveysMaps.atividade1, response.survey_id);
 		answers = await addCustomParametersToAnswer(answers, response.custom_variables);
 		if (answers.cpf) { answers.cpf = await answers.cpf.replace(/[_.,-]/g, ''); }
-		answers.veio_do_admin = false; // user wasnt added by the admins
+		answers.added_by_admin = false; // user wasnt added by the admins
 
 		const newUser = await db.upsertAlunoCadastro(answers);
 		if (newUser && newUser.id) { // if everything went right we update a ew things

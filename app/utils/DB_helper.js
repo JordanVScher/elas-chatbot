@@ -66,9 +66,9 @@ async function upsertAlunoCadastro(userAnswers) {
 
 	const columns = [];
 	const values = [];
-	const set = []; // for do update only
+	let set = []; // for do update only
 
-	const alunoExtraData = ['nome_completo', 'cpf', 'turma_id', 'email', 'rg', 'telefone', 'endereco', 'data_nascimento', 'contato_emergencia_nome', 'contato_emergencia_fone', 'contato_emergencia_email', 'contato_emergencia_relacao', 'veio_do_admin'];
+	const alunoExtraData = ['nome_completo', 'cpf', 'turma_id', 'email', 'rg', 'telefone', 'endereco', 'data_nascimento', 'contato_emergencia_nome', 'contato_emergencia_fone', 'contato_emergencia_email', 'contato_emergencia_relacao', 'added_by_admin'];
 	alunoExtraData.forEach((element) => { // columns on the database
 		if (answers[element] !== undefined && answers[element] !== null) {
 			columns.push(element); values.push(`'${answers[element]}'`); set.push(`${columns[columns.length - 1]} = ${values[values.length - 1]}`);
@@ -77,6 +77,7 @@ async function upsertAlunoCadastro(userAnswers) {
 
 	columns.push('created_at'); values.push(`'${date}'`);
 	columns.push('updated_at'); values.push(`'${date}'`); set.push(`${columns[columns.length - 1]} = ${values[values.length - 1]}`);
+	set = set.filter(e => !e.includes('added_by_admin')); // we must never update where the user was added from
 
 	const queryString = `INSERT INTO "alunos"(${columns.join(', ')})
 	VALUES(${values.join(', ')})
@@ -417,7 +418,7 @@ async function addAlunaFromCSV(aluno) {
 		columns.push('turma_id'); values.push(`'${aluno.turma_id}'`); set.push(`${columns[columns.length - 1]} = ${values[values.length - 1]}`);
 	}
 
-	columns.push('veio_do_admin'); values.push('TRUE');
+	columns.push('added_by_admin'); values.push('TRUE');
 	columns.push('created_at'); values.push(`'${date}'`);
 	columns.push('updated_at'); values.push(`'${date}'`); set.push(`${columns[columns.length - 1]} = ${values[values.length - 1]}`);
 
