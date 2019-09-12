@@ -57,31 +57,37 @@ async function getModuloDates() {
 	return result;
 }
 
-async function upsertAluno(answers) {
+async function upsertAlunoCadastro(userAnswers) {
+	const answers = userAnswers;
+	answers.turma_id = await getTurmaID(answers.turma);
+
 	let date = new Date();
 	date = await moment(date).format('YYYY-MM-DD HH:mm:ss');
-	const turmaId = await getTurmaID(answers.turma);
 
-	const id = await sequelize.query(`
-	INSERT INTO "alunos" (nome_completo, cpf, turma_id, email, created_at, updated_at, rg, telefone, endereco, data_nascimento,
-	contato_emergencia_nome, contato_emergencia_email, contato_emergencia_fone, contato_emergencia_relacao	)
-	VALUES ('${answers.nome}', '${answers.cpf}', '${turmaId}', '${answers.email}', '${date}', '${date}', '${answers.rg}',
-	'${answers.telefone}', '${answers.endereco}','${answers.data_nascimento}', '${answers.contato_emergencia_nome}',
-	'${answers.contato_emergencia_fone}', '${answers.contato_emergencia_email}', '${answers.contato_emergencia_relacao}')
-	ON CONFLICT (cpf)
-  DO UPDATE
-		SET nome_completo = '${answers.nome}', turma_id = '${turmaId}', email = '${answers.email}', updated_at = '${date}',
-		rg = '${answers.rg}', telefone = '${answers.telefone}', endereco = '${answers.endereco}', data_nascimento = '${answers.data_nascimento}',
-		contato_emergencia_nome = '${answers.contato_emergencia_nome}', contato_emergencia_email = '${answers.contato_emergencia_email}',
-		contato_emergencia_relacao = '${answers.contato_emergencia_relacao}', contato_emergencia_fone = '${answers.contato_emergencia_fone}'
-		RETURNING id;
-	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
-		console.log(`Added ${answers.nome} successfully!`);
-		return results && results[0] && results[0].id ? results[0].id : false;
-	}).catch((err) => { sentryError('Erro em upsertAluno =>', err); });
+	const columns = [];
+	const values = [];
+	const set = []; // for do update only
 
+	const alunoExtraData = ['nome_completo', 'cpf', 'turma_id', 'email', 'rg', 'telefone', 'endereco', 'data_nascimento', 'contato_emergencia_nome', 'contato_emergencia_fone', 'contato_emergencia_email', 'contato_emergencia_relacao', 'veio_do_admin'];
+	alunoExtraData.forEach((element) => { // columns on the database
+		if (answers[element] !== undefined && answers[element] !== null) {
+			columns.push(element); values.push(`'${answers[element]}'`); set.push(`${columns[columns.length - 1]} = ${values[values.length - 1]}`);
+		}
+	});
 
-	return id;
+	columns.push('created_at'); values.push(`'${date}'`);
+	columns.push('updated_at'); values.push(`'${date}'`); set.push(`${columns[columns.length - 1]} = ${values[values.length - 1]}`);
+
+	const queryString = `INSERT INTO "alunos"(${columns.join(', ')})
+	VALUES(${values.join(', ')})
+	ON CONFLICT(cpf)
+	DO UPDATE
+	SET ${set.join(', ')}
+	RETURNING id;`;
+
+	const result = await sequelize.query(queryString).spread(results => (results && results[0] && results[0].id ? results[0] : false)).catch(err => sentryError('Erro no upsertAlunoCadastro =>', err));
+	if (result) result.turma_id = answers.turma_id;
+	return result;
 }
 
 
@@ -440,7 +446,7 @@ async function buildTurmaDictionary() {
 module.exports = {
 	upsertUser,
 	getAlunaFromPDF,
-	upsertAluno,
+	upsertAlunoCadastro,
 	linkUserToCPF,
 	checkCPF,
 	upsertPrePos,

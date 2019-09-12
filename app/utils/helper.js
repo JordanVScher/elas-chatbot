@@ -71,7 +71,7 @@ function formatDate(date) {
 async function findModuleToday(turma) {
 	let result;
 	const today = new Date();
-	Object.keys(turma).forEach(element => {
+	Object.keys(turma).forEach((element) => {
 		// we are looking for the first moduleDate that happens after today
 		if (element.slice(0, 6) === 'modulo' && !result) {
 			const modDate = turma[element];
@@ -220,7 +220,7 @@ function buildAlunaMsg(aluna) {
 
 function sentryError(msg, err) {
 	console.log(msg, err || '');
-	if (process.env.ENV !== 'local') { Sentry.captureMessage(msg); }
+	if (process.env.ENV !== 'local') { Sentry.captureMessage(msg); console.log('Error sent!\n'); }
 	return false;
 }
 

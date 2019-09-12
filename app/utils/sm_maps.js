@@ -43,7 +43,7 @@ module.exports = {
 
 	],
 	atividade1: [
-		{ questionID: '294966522', paramName: 'nome' },
+		{ questionID: '294966522', paramName: 'nome_completo' },
 		{ questionID: '294966524', paramName: 'cpf' },
 		{ questionID: '294966525', paramName: 'email' },
 		{ questionID: '294966526', paramName: 'telefone' },

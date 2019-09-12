@@ -140,22 +140,24 @@ async function handleAtividade(response, column) {
 
 async function handleAtividadeOne(response) {
 	try {
-		console.log('custom_variables', response.custom_variables);
-
+		// response.custom_variables = { turma: 'T7-SP', cpf: '9999999999', pgid: '17' };
+		// console.log('custom_variables', response.custom_variables);
 		let answers = await getSpecificAnswers(surveysMaps.atividade1, response.pages);
 		answers = await replaceChoiceId(answers, surveysMaps.atividade1, response.survey_id);
 		answers = await addCustomParametersToAnswer(answers, response.custom_variables);
 		if (answers.cpf) { answers.cpf = await answers.cpf.replace(/[_.,-]/g, ''); }
+		answers.veio_do_admin = false; // user wasnt added by the admins
 
-		const newUserID = await db.upsertAluno(answers);
-		if (newUserID) {
-			await db.updateAtividade(newUserID, 'atividade_1', true);
-			await db.updateAlunoOnPagamento(answers.pgid, newUserID);
+		const newUser = await db.upsertAlunoCadastro(answers);
+		if (newUser && newUser.id) { // if everything went right we update a ew things
+			await db.updateAtividade(newUser.id, 'atividade_1', true);
+			await db.updateAlunoOnPagamento(answers.pgid, newUser.id);
+			await addQueue.addNewNotificationAlunas(newUser.id, newUser.turma_id);
+		} else {
+			sentryError('Erro em no salvamento de cadastro', { answers, newUser });
 		}
 
-		await addQueue.addNewNotificationAlunas(newUserID, await db.getTurmaID(answers.turma));
-
-		/* e-mail */
+		/* sending "Apresentação" mail */
 		let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Apresentar_Donna.html`, 'utf-8');
 		html = await html.replace('[nome]', answers.nome); // add nome to mail template
 		html = await html.replace(/<link_donna>/g, process.env.LINK_DONNA); // add chatbot link to mail template
