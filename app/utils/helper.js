@@ -87,7 +87,7 @@ async function removeUndefined(array) {
 	const results = array;
 	results.forEach((obj) => {
 		Object.keys(obj).forEach((key) => {
-			if (obj[key] === 'undefined') obj[key] = ''; // eslint-disable-line no-param-reassign
+			if (obj[key] === 'undefined' || obj[key] === null) obj[key] = ''; // eslint-disable-line no-param-reassign
 		});
 	});
 
