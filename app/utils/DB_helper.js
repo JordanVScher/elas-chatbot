@@ -1,6 +1,7 @@
 const { sequelize } = require('../server/models/index');
 const { moment } = require('./helper');
 const { sentryError } = require('./helper');
+const { removeUndefined } = require('./helper');
 
 if (process.env.TEST !== 'true') {
 	sequelize.authenticate().then(() => {
@@ -356,8 +357,7 @@ async function getAlunasReport(turma) {
 		return results;
 	}).catch((err) => { sentryError('Erro em getAlunasReport =>', err); });
 
-
-	return { content: result, input: turma } || false;
+	return { content: await removeUndefined(result), input: turma } || false;
 }
 
 async function getAlunasRespostasReport(turma) {
@@ -374,7 +374,7 @@ async function getAlunasRespostasReport(turma) {
 		return results;
 	}).catch((err) => { sentryError('Erro em getAlunasRespostasReport =>', err); });
 
-	return { content: result, input: turma } || false;
+	return { content: await removeUndefined(result), input: turma } || false;
 }
 
 async function getAlunasIndicadosReport(turma) {
@@ -394,7 +394,7 @@ async function getAlunasIndicadosReport(turma) {
 	}).catch((err) => { sentryError('Error on getAlunasIndicadosReport => ', err);	});
 
 
-	return { content: result, input: turma } || false;
+	return { content: await removeUndefined(result), input: turma } || false;
 }
 
 async function addAlunaFromCSV(aluno) {

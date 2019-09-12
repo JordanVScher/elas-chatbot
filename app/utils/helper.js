@@ -83,6 +83,16 @@ async function findModuleToday(turma) {
 	return result;
 }
 
+async function removeUndefined(array) {
+	const results = array;
+	results.forEach((obj) => {
+		Object.keys(obj).forEach((key) => {
+			if (obj[key] === 'undefined') obj[key] = ''; // eslint-disable-line no-param-reassign
+		});
+	});
+
+	return results;
+}
 
 async function formatModulo1(date) {
 	return `dia ${moment(date).utcOffset('+0000').format('DD')} de ${moment(date).utcOffset('+0000').format('MMMM')}`;
@@ -251,4 +261,5 @@ module.exports = {
 	buildAlunaMsg,
 	sentryError,
 	findModuleToday,
+	removeUndefined,
 };
