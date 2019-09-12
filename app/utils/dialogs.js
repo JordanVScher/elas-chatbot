@@ -116,23 +116,27 @@ module.exports.receiveCSV = async (context) => { // createAlunos/ inserir
 		const errors = []; // stores lines that presented an error
 
 		for (let i = 0; i < csvLines.length; i++) {
-			const element = csvLines[i];
+			let element = csvLines[i];
 			if (element.Turma) {
-				element.Turma = await turmas.find(x => x.nome === element.Turma); // find the turma that has that name
+				element.Turma = await turmas.find(x => x.nome === element.Turma.toUpperCase()); // find the turma that has that name
 				element.turma_id = element.Turma ? element.Turma.id : false; // get that turma id
 			} // convert turma as name to turma as id
 
 			if (element.Turma && element.turma_id) { // check valid turma
-				if (element['Nome Completo']) { // check if aluno has the bare minumium to be added to the database
-					element.CPF = await help.getCPFValid(element.CPF); // format cpf
-					if (!element.CPF) {
+				element = await admin.convertCSVToDB(element, admin.swap(admin.alunaCSV));
+				console.log(element);
+
+				if (element.nome_completo) { // check if aluno has the bare minumium to be added to the database
+					element.cpf = await help.getCPFValid(element.cpf); // format cpf
+					if (!element.cpf) {
 						errors.push({ line: i + 2, msg: 'CPF inválido!' });
 						help.sentryError('Erro em receiveCSV => CPF inválido!', { element });
 					} else {
-						const oldAluno = await alunos.findOne({ where: { cpf: element.CPF }, raw: true }).then(res => res).catch(err => help.sentryError('Erro em alunos.findOne', err));
-						if (oldAluno) { await admin.SaveTurmaChange(oldAluno.id, oldAluno.turma_id, element.turma_id); }
-
-						const newAluno = await db.addAlunaFromCSV(element);
+						const oldAluno = await alunos.findOne({ where: { cpf: element.cpf }, raw: true }).then(res => res).catch(err => help.sentryError('Erro em alunos.findOne', err));
+						if (oldAluno) { await admin.SaveTurmaChange(oldAluno.id, oldAluno.turma_id, element.turma_id); } // if aluno existed before we save the turma change
+						element.added_by_admin = true;
+						const newAluno = await db.upsertAlunoCadastro(element);
+						// const newAluno = await db.addAlunaFromCSV(element);
 						if (!newAluno || newAluno.error || !newAluno.id) { // save line where error happended
 							errors.push({ line: i + 2, msg: 'Erro ao salvar no banco' });
 							help.sentryError('Erro em receiveCSV => Erro ao salvar no banco', { element });

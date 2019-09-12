@@ -147,6 +147,7 @@ async function handleAtividadeOne(response) {
 		answers = await addCustomParametersToAnswer(answers, response.custom_variables);
 		if (answers.cpf) { answers.cpf = await answers.cpf.replace(/[_.,-]/g, ''); }
 		answers.added_by_admin = false; // user wasnt added by the admins
+		answers.turma_id = await db.getTurmaID(answers.turma);
 
 		const newUser = await db.upsertAlunoCadastro(answers);
 		if (newUser && newUser.id) { // if everything went right we update a ew things

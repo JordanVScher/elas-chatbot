@@ -83,34 +83,6 @@ async function findModuleToday(turma) {
 	return result;
 }
 
-async function removeUndefined(array) {
-	const results = array;
-	results.forEach((obj) => {
-		Object.keys(obj).forEach((key) => {
-			if (obj[key] === 'undefined' || obj[key] === null) obj[key] = ''; // eslint-disable-line no-param-reassign
-		});
-	});
-
-	return results;
-}
-
-async function formatBoolean(array) {
-	const results = array;
-	results.forEach((obj) => {
-		Object.keys(obj).forEach((key) => {
-			if (typeof obj[key] === 'boolean') {
-				if (obj[key]) {
-					obj[key] = 'Sim'; // eslint-disable-line no-param-reassign
-				} else {
-					obj[key] = 'Não'; // eslint-disable-line no-param-reassign
-				}
-			}
-		});
-	});
-
-	return results;
-}
-
 async function formatModulo1(date) {
 	return `dia ${moment(date).utcOffset('+0000').format('DD')} de ${moment(date).utcOffset('+0000').format('MMMM')}`;
 }
@@ -278,6 +250,4 @@ module.exports = {
 	buildAlunaMsg,
 	sentryError,
 	findModuleToday,
-	removeUndefined,
-	formatBoolean,
 };

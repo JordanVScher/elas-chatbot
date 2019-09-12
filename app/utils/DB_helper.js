@@ -1,7 +1,7 @@
 const { sequelize } = require('../server/models/index');
 const { moment } = require('./helper');
 const { sentryError } = require('./helper');
-const { removeUndefined } = require('./helper');
+const { removeUndefined } = require('./admin_menu/CSV_format');
 
 if (process.env.TEST !== 'true') {
 	sequelize.authenticate().then(() => {
@@ -54,14 +54,11 @@ async function getModuloDates() {
 	where local IS NOT NULL AND horario_modulo1 IS NOT NULL AND horario_modulo2 IS NOT NULL AND horario_modulo3 IS NOT NULL;
 	`).spread(results => (results || false)).catch((err) => { sentryError('Erro em getModuloDates =>', err); });
 
-
 	return result;
 }
 
 async function upsertAlunoCadastro(userAnswers) {
 	const answers = userAnswers;
-	answers.turma_id = await getTurmaID(answers.turma);
-
 	let date = new Date();
 	date = await moment(date).format('YYYY-MM-DD HH:mm:ss');
 
@@ -343,7 +340,7 @@ async function getAlunasReport(turma) {
 	const result = await sequelize.query(`
 	SELECT ALUNO.id as "ID", ALUNO.cpf as "CPF", TURMA.nome as "Turma", ALUNO.nome_completo as "Nome Completo", ALUNO.email as "E-mail",
 	ALUNO.telefone as "Telefone", ALUNO.rg as "RG", ALUNO.data_nascimento as "Data de Nascimento", 
-	ALUNO.contato_emergencia_nome as "Nome Contado de Emergência", ALUNO.contato_emergencia_email as "E-mail do Contado ",
+	ALUNO.contato_emergencia_nome as "Nome Contado de Emergência", ALUNO.contato_emergencia_email as "E-mail do Contado",
 	ALUNO.contato_emergencia_fone as "Telefone do Contado",	ALUNO.contato_emergencia_relacao as "Relação com Contado",
 	BOT_USER.fb_id as "ID Facebook", ALUNO.added_by_admin as "Adicionado pelo Admin",
 	ALUNO.created_at as "Criado em", ALUNO.updated_at as "Atualizado em"
