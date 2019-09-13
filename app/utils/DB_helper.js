@@ -339,7 +339,7 @@ async function getAlunasFromTurma(turma) {
 async function getAlunasReport(turma) {
 	const result = await sequelize.query(`
 	SELECT ALUNO.id as "ID", ALUNO.cpf as "CPF", TURMA.nome as "Turma", ALUNO.nome_completo as "Nome Completo", ALUNO.email as "E-mail",
-	ALUNO.telefone as "Telefone", ALUNO.rg as "RG", ALUNO.data_nascimento as "Data de Nascimento", 
+	ALUNO.telefone as "Telefone", ALUNO.rg as "RG", ALUNO.endereco as "Endereço", ALUNO.data_nascimento as "Data de Nascimento", 
 	ALUNO.contato_emergencia_nome as "Nome Contado de Emergência", ALUNO.contato_emergencia_email as "E-mail do Contado",
 	ALUNO.contato_emergencia_fone as "Telefone do Contado",	ALUNO.contato_emergencia_relacao as "Relação com Contado",
 	BOT_USER.fb_id as "ID Facebook", ALUNO.added_by_admin as "Adicionado pelo Admin",

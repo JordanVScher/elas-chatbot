@@ -42,6 +42,7 @@ const alunaCSV = {
 	nome_completo: 'Nome Completo',
 	telefone: 'Telefone',
 	rg: 'RG',
+	endereco: 'Endereço',
 	data_nascimento: 'Data de Nascimento',
 	contato_emergencia_nome: 'Nome Contado de Emergência',
 	contato_emergencia_email: 'E-mail do Contado',
@@ -50,15 +51,21 @@ const alunaCSV = {
 
 };
 
-async function convertCSVToDB(obj, dictionary) {
-	Object.keys(obj).forEach((element) => {
-		if (dictionary[element]) {
-			obj[dictionary[element]] = obj[element];
-			delete obj[element];
+async function convertCSVToDB(line, dictionary) {
+	Object.keys(dictionary).forEach((element) => {
+		dictionary[element.replace(/\s/g, '')] = dictionary[element];
+	});
+
+	Object.keys(line).forEach((element) => {
+		const key = element.replace(/\s/g, '');
+
+		if (dictionary[key]) {
+			line[dictionary[key]] = line[element];
+			delete line[element];
 		}
 	});
 
-	return obj;
+	return line;
 }
 
 module.exports = 	{
