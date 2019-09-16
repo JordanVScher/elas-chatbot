@@ -77,7 +77,7 @@ async function upsertAlunoCadastro(userAnswers) {
 	columns.push('updated_at'); values.push(`'${date}'`); set.push(`${columns[columns.length - 1]} = ${values[values.length - 1]}`);
 	set = set.filter(e => !e.includes('added_by_admin')); // we must never update where the user was added from
 
-	const queryString = `INSERT INTO "alunos"(${columns.join(', ')})
+	const queryString = `INSERT INTO "alunos" (${columns.join(', ')})
 	VALUES(${values.join(', ')})
 	ON CONFLICT(cpf)
 	DO UPDATE
@@ -157,6 +157,47 @@ async function getAlunoRespostas(cpf) {
 
 	return aluna;
 }
+
+async function upsertIndicado(avaliador) {
+	const indicado = avaliador;
+	let date = new Date();
+	date = await moment(date).format('YYYY-MM-DD HH:mm:ss');
+
+	const columns = [];
+	const values = [];
+	const set = []; // for update only
+
+	const alunoExtraData = ['nome', 'email', 'telefone', 'aluno_id', 'familiar', 'relacao_com_aluna'];
+	alunoExtraData.forEach((element) => { // columns on the database
+		if (indicado[element] !== undefined && indicado[element] !== null) {
+			columns.push(element); values.push(`'${indicado[element]}'`); set.push(`${columns[columns.length - 1]} = ${values[values.length - 1]}`);
+		}
+	});
+
+	columns.push('created_at'); values.push(`'${date}'`);
+	columns.push('updated_at'); values.push(`'${date}'`); set.push(`${columns[columns.length - 1]} = ${values[values.length - 1]}`);
+
+	const foundIndicado = await sequelize.query(`
+	SELECT * FROM indicacao_avaliadores
+	WHERE email = '${indicado.email}' AND aluno_id = '${indicado.aluno_id}' LIMIT 1;
+`).spread(results => (results && results[0] ? results[0] : false)).catch((err) => { sentryError('Erro em select indicacao_avaliadores =>', err); });
+
+	// if we found this indicado we have to update it
+	if (foundIndicado && foundIndicado.id) {
+		const updatedIndicado = await sequelize.query(`
+		UPDATE indicacao_avaliadores SET ${set.join(', ')} WHERE id = '${foundIndicado.id}' RETURNING *;
+		`).spread(results => (results && results[0] ? results[0] : false)).catch((err) => { sentryError('Erro em update indicacao_avaliadores =>', err); });
+		return updatedIndicado;
+	}
+
+	// if avaliador wasnt found we insert it
+	const insertedIndicado = await sequelize.query(`
+	INSERT INTO indicacao_avaliadores(${columns.join(', ')}) VALUES(${values.join(', ')}) RETURNING *;
+	`).spread(results => (results && results[0] ? results[0] : false)).catch((err) => { sentryError('Erro em insert indicacao_avaliadores =>', err); });
+
+	return insertedIndicado;
+}
+
 
 async function getIndicadoRespostas(cpf) {
 	const indicado = await sequelize.query(`
@@ -467,4 +508,5 @@ module.exports = {
 	getModuloDates,
 	getAlunaFromFBID,
 	buildTurmaDictionary,
+	upsertIndicado,
 };

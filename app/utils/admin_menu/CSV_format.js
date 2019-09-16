@@ -26,6 +26,31 @@ async function formatBoolean(array) {
 	return results;
 }
 
+async function formatBooleanToDatabase(obj, positive, negative, toChange) {
+	toChange.forEach((key) => {
+		if (obj[key]) {
+			if (obj[key].toString() === positive) {
+				obj[key] = true;
+			} else if (obj[key].toString() === negative) {
+				obj[key] = false;
+			} else {
+				obj[key] = null;
+			}
+		}
+	});
+
+	return obj;
+}
+
+async function getMissingDataAvaliadoresCSV(element) {
+	const missing = [];
+	if (!element.nome) { missing.push('nome'); }
+	if (!element.email) { missing.push('e-mail'); }
+	if (!element.aluno_cpf) { missing.push('cpf da aluna'); }
+
+	return missing.join(', ').replace(/,(?=[^,]*$)/, ' e');
+}
+
 function swap(json) {
 	const ret = {};
 	for (const key in json) { // eslint-disable-line
@@ -48,7 +73,16 @@ const alunaCSV = {
 	contato_emergencia_email: 'E-mail do Contado',
 	contato_emergencia_fone: 'Telefone do Contado',
 	contato_emergencia_relacao: 'Relação com Contado',
+};
 
+const avaliadorCSV = {
+	nome: 'Nome Completo',
+	email: 'E-mail',
+	telefone: 'Telefone',
+	aluno_cpf: 'CPF da Aluna',
+	// aluno_id: 'ID da Aluna',
+	familiar: 'Familiar',
+	relacao_com_aluna: 'Relação com Aluna',
 };
 
 async function convertCSVToDB(line, dictionary) {
@@ -71,7 +105,10 @@ async function convertCSVToDB(line, dictionary) {
 module.exports = 	{
 	removeUndefined,
 	formatBoolean,
+	formatBooleanToDatabase,
 	convertCSVToDB,
 	alunaCSV,
+	avaliadorCSV,
 	swap,
+	getMissingDataAvaliadoresCSV,
 };

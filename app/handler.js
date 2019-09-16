@@ -207,16 +207,30 @@ module.exports = async (context) => {
 			await context.sendText(process.env.CSV_ALUNA_EXAMPLE_LINK);
 			await context.sendText(flow.adminMenu.inserirAlunas.txt2, await attach.getQR(flow.adminMenu.inserirAlunas));
 			break;
-		case 'createAlunos':
-			await dialogs.receiveCSVAluno(context);
+		case 'createAlunos': {
+			const result = await dialogs.receiveCSVAluno(context.state.csvLines);
+			if (result) {
+				await dialogs.sendFeedbackMsgs(context, result.errors);
+			} else {
+				await context.sendText(flow.adminMenu.inserirAlunas.invalidFile, await attach.getQR(flow.adminMenu.inserirAlunas));
+			}
+			await context.setState({ csvLines: '' });
+		}
 			break;
 		case 'inserirAvaliadores':
 			await context.sendText(flow.adminMenu.inserirAvaliadores.txt1);
 			await context.sendText(process.env.CSV_AVALI_EXAMPLE_LINK);
 			await context.sendText(flow.adminMenu.inserirAvaliadores.txt2, await attach.getQR(flow.adminMenu.inserirAvaliadores));
 			break;
-		case 'createAvaliadores':
-			await dialogs.receiveCSVAvaliadores(context);
+		case 'createAvaliadores': {
+			const result = await dialogs.receiveCSVAvaliadores(context.state.csvLines);
+			if (result) {
+				await dialogs.sendFeedbackMsgs(context, result.errors);
+			} else {
+				await context.sendText(flow.adminMenu.inserirAvaliadores.invalidFile, await attach.getQR(flow.adminMenu.inserirAvaliadores));
+			}
+			await context.setState({ csvLines: '' });
+		}
 			break;
 		case 'verTurma':
 			await context.sendText(flow.adminMenu.verTurma.txt1, await attach.getQR(flow.adminMenu.verTurma));

@@ -109,10 +109,21 @@ module.exports.sendCSV = async (context) => {
 	}
 };
 
-module.exports.receiveCSVAluno = async (context) => { // createAlunos/ inserir
-	const turmas = await turma.findAll({ where: {}, raw: true }).then(res => res).catch(err => help.sentryError('Erro em turma.findAll', err));
-	const csvLines = await admin.getJsonFromURL(context.state.fileURL);
+module.exports.sendFeedbackMsgs = async (context, errors) => {
+	const feedbackMsgs = await admin.getFeedbackMsgs(context.state.csvLines.length - errors.length, errors);
+	for (let i = 0; i < feedbackMsgs.length; i++) {
+		const element = feedbackMsgs[i];
+		if (i === 1) {
+			await context.sendText('Aconteceram alguns erros, o número da linha exibido abaixo é contando com o header do CSV');
+		}
+		await context.sendText(element, await attach.getQR(flow.adminMenu.inserirAlunas));
+	}
+};
+
+
+module.exports.receiveCSVAluno = async (csvLines) => { // createAlunos/ inserir
 	if (csvLines) {
+		const turmas = await turma.findAll({ where: {}, raw: true }).then(res => res).catch(err => help.sentryError('Erro em turma.findAll', err));
 		const errors = []; // stores lines that presented an error
 
 		for (let i = 0; i < csvLines.length; i++) {
@@ -128,7 +139,7 @@ module.exports.receiveCSVAluno = async (context) => { // createAlunos/ inserir
 					element.cpf = await help.getCPFValid(element.cpf); // format cpf
 					if (!element.cpf) {
 						errors.push({ line: i + 2, msg: 'CPF inválido!' });
-						help.sentryError('Erro em receiveCSV => CPF inválido!', { element });
+						help.sentryError('Erro em receiveCSVAluno => CPF inválido!', { element });
 					} else {
 						const oldAluno = await alunos.findOne({ where: { cpf: element.cpf }, raw: true }).then(res => res).catch(err => help.sentryError('Erro em alunos.findOne', err));
 						if (oldAluno) { await admin.SaveTurmaChange(oldAluno.id, oldAluno.turma_id, element.turma_id); } // if aluno existed before we save the turma change
@@ -137,41 +148,59 @@ module.exports.receiveCSVAluno = async (context) => { // createAlunos/ inserir
 						// const newAluno = await db.addAlunaFromCSV(element);
 						if (!newAluno || newAluno.error || !newAluno.id) { // save line where error happended
 							errors.push({ line: i + 2, msg: 'Erro ao salvar no banco' });
-							help.sentryError('Erro em receiveCSV => Erro ao salvar no banco', { element });
+							help.sentryError('Erro em receiveCSVAluno => Erro ao salvar no banco', { element });
 						} else {
 							await admin.NotificationChangeTurma(newAluno.id, element.turma_id);
 						}
 					}
 				} else {
 					errors.push({ line: i + 2, msg: 'Falta o nome da aluna' });
-					help.sentryError('Erro em receiveCSV => aluna sem nome', { element });
+					help.sentryError('Erro em receiveCSVAluno => aluna sem nome', { element });
 				}
 			} else {
 				errors.push({ line: i + 2, msg: `Turma ${element.Turma || ''} inválida` });
-				help.sentryError('Erro em receiveCSV => turma inválida', { element });
+				help.sentryError('Erro em receiveCSVAluno => turma inválida', { element });
 			}
 		}
-
-		const feedbackMsgs = await admin.getFeedbackMsgs(csvLines.length - errors.length, errors);
-		for (let i = 0; i < feedbackMsgs.length; i++) {
-			const element = feedbackMsgs[i];
-			if (i === 1) {
-				await context.sendText('Aconteceram alguns erros, o número da linha exibido abaixo é contando com o header do CSV');
-			}
-			await context.sendText(element, await attach.getQR(flow.adminMenu.inserirAlunas));
-		}
-	} else {
-		await context.sendText(flow.adminMenu.inserirAlunas.invalidFile, await attach.getQR(flow.adminMenu.inserirAlunas));
+		return { errors };
 	}
+	return help.sentryError('Erro em receiveCSVAluno => CSV inválido!', { csvLines });
 };
 
-module.exports.receiveCSVAvaliadores = async (context) => {
-	const csvLines = await admin.getJsonFromURL(context.state.fileURL);
+
+async function receiveCSVAvaliadores(csvLines) {
 	if (csvLines) {
 		const errors = []; // stores lines that presented an error
-		console.log(csvLines);
+		for (let i = 0; i < csvLines.length; i++) {
+			let element = csvLines[i];
+			element = await admin.convertCSVToDB(element, admin.swap(admin.avaliadorCSV));
+
+			if (element.nome && element.email && element.aluno_cpf) {
+				const avaliadorAluno = await alunos.findOne({ where: { cpf: element.aluno_cpf.toString() }, raw: true }).then(res => res).catch(err => help.sentryError('Erro em avaliadorAluno.findOne', err));
+				if (avaliadorAluno) {
+					element.aluno_id = avaliadorAluno.id;
+					element = await admin.formatBooleanToDatabase(element, 'Sim', 'Não', ['familiar']);
+					const newIndicado = await db.upsertIndicado(element);
+					if (!newIndicado || newIndicado.error || !newIndicado.id) { // save line where error happended
+						errors.push({ line: i + 2, msg: 'Erro ao salvar no banco' });
+						help.sentryError('Erro em receiveCSV => Erro ao salvar no banco', { element });
+					} else {
+						// TODO: update notification
+					}
+				} else {
+					errors.push({ line: i + 2, msg: `Nenhuma aluna com CPF ${element.aluno_cpf}` });
+					help.sentryError('Erro em receiveCSVAvaliadores => Avaliador sem nome ou e-mail ou cpf do aluno', { element });
+				}
+			} else {
+				errors.push({ line: i + 2, msg: `Avaliador sem ${await admin.getMissingDataAvaliadoresCSV(element)}.` });
+				help.sentryError(`Erro em receiveCSVAvaliadores => Avaliador sem ${await admin.getMissingDataAvaliadoresCSV(element)}.`, { element });
+			}
+		}
+		return { errors };
 	}
-};
+	return help.sentryError('Erro em receiveCSVAluno => CSV inválido!', { csvLines });
+}
+module.exports.receiveCSVAvaliadores = receiveCSVAvaliadores;
 
 module.exports.adminAlunaCPF = async (context) => {
 	await context.setState({ adminAlunaCPF: await help.getCPFValid(context.state.whatWasTyped) });
