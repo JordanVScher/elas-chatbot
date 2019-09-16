@@ -100,13 +100,7 @@ module.exports = async (context) => {
 				}
 			}
 		} else if (context.event.isFile && context.event.file && context.event.file.url) {
-			if (context.state.dialog === 'inserirAlunas' || context.state.dialog === 'createAlunos') { // on this dialog we can receive a file
-				if (await checkUserOnLabel(context.session.user.id, process.env.ADMIN_LABEL_ID)) { // for safety reasons we check if the user is an admin again
-					await context.setState({ dialog: 'createAlunos', fileURL: context.event.file.url.replace('https', 'http') });
-				} else {
-					await context.sendText(flow.adminMenu.notAdmin); await context.setState({ dialog: 'greetings' });
-				}
-			}
+			await dialogs.checkReceivedFile(context);
 		}
 
 		switch (context.state.dialog) {
@@ -210,11 +204,19 @@ module.exports = async (context) => {
 			break;
 		case 'inserirAlunas':
 			await context.sendText(flow.adminMenu.inserirAlunas.txt1);
-			await context.sendText(process.env.CSV_EXEMPLE_LINK);
+			await context.sendText(process.env.CSV_ALUNA_EXAMPLE_LINK);
 			await context.sendText(flow.adminMenu.inserirAlunas.txt2, await attach.getQR(flow.adminMenu.inserirAlunas));
 			break;
 		case 'createAlunos':
-			await dialogs.receiveCSV(context);
+			await dialogs.receiveCSVAluno(context);
+			break;
+		case 'inserirAvaliadores':
+			await context.sendText(flow.adminMenu.inserirAvaliadores.txt1);
+			await context.sendText(process.env.CSV_AVALI_EXAMPLE_LINK);
+			await context.sendText(flow.adminMenu.inserirAvaliadores.txt2, await attach.getQR(flow.adminMenu.inserirAvaliadores));
+			break;
+		case 'createAvaliadores':
+			await dialogs.receiveCSVAvaliadores(context);
 			break;
 		case 'verTurma':
 			await context.sendText(flow.adminMenu.verTurma.txt1, await attach.getQR(flow.adminMenu.verTurma));

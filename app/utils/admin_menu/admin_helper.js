@@ -11,6 +11,25 @@ const notificationQueue = require('../../server/models').notification_queue;
 const turmaChangelog = require('../../server/models').aluno_turma_changelog;
 const { turma } = require('../../server/models');
 const { alunos } = require('../../server/models');
+const { checkUserOnLabel } = require('../../utils/postback');
+const { adminMenu } = require('../../utils/flow');
+
+async function checkReceivedFile(context) {
+	// for safety reasons we check if the user is an admin again
+	const isAdmin = await checkUserOnLabel(context.session.user.id, process.env.ADMIN_LABEL_ID);
+	console.log('isAdmin', isAdmin);
+
+
+	if (await checkUserOnLabel(context.session.user.id, process.env.ADMIN_LABEL_ID)) {
+		await context.setState({ fileURL: context.event.file.url.replace('https', 'http') });
+		if (context.state.dialog === 'inserirAlunas' || context.state.dialog === 'createAlunos') await context.setState({ dialog: 'createAlunos' });
+		if (context.state.dialog === 'inserirAvaliadores' || context.state.dialog === 'createAvaliadores') await context.setState({ dialog: 'createAvaliadores' });
+	} else {
+		await context.sendText(adminMenu.notAdmin);
+		await context.setState({ dialog: 'greetings' });
+	}
+}
+
 
 async function buildCSV(data, texts) {
 	if (!data || !data.content || data.content.length === 0) { return { error: texts.error }; }
@@ -167,5 +186,5 @@ async function putColumnsLast(lines, columns) {
 }
 
 module.exports = {
-	buildCSV, getJsonFromURL, getFeedbackMsgs, NotificationChangeTurma, formatRespostasCSV, SaveTurmaChange, addTurmaTransferenceCSV, putColumnsLast, ...CSVFormat,
+	buildCSV, getJsonFromURL, getFeedbackMsgs, NotificationChangeTurma, formatRespostasCSV, SaveTurmaChange, addTurmaTransferenceCSV, putColumnsLast, ...CSVFormat, checkReceivedFile,
 };

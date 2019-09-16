@@ -147,12 +147,19 @@ module.exports = {
 	adminMenu: {
 		firstMenu: {
 			txt1: 'Esse é o menu do admin. Clique em uma opção:',
-			menuOptions: ['Inserir Alunas', 'Ver Turma', 'Mudar Turma'],
-			menuPostback: ['inserirAlunas', 'verTurma', 'mudarTurma'],
+			menuOptions: ['Inserir Alunas', 'Inserir Avaliadores', 'Ver Turma', 'Mudar Turma'],
+			menuPostback: ['inserirAlunas', 'inserirAvaliadores', 'verTurma', 'mudarTurma'],
 		},
 		inserirAlunas: {
 			txt1: 'Envie o CSV com os dados das novas alunas. As colunas devem estar formatadas como esse arquivo de exemplo:',
-			txt2: 'É necessário que cada nova aluna tenha o nome completo, o CPF e pertencer a uma turma válida! Se o CPF já estiver cadastrado, os dados da aluna serão atualizados com os valores no CSV (se houver algum).',
+			txt2: 'É necessário que cada aluna tenha o nome completo, o CPF e pertencer a uma turma válida! Se o CPF já estiver cadastrado, os dados da aluna serão atualizados com os valores no CSV (se houver algum).',
+			invalidFile: 'Erro! Verifique se o arquivo CSV está formatado corretamente e envie novamente!',
+			menuOptions: ['Voltar'],
+			menuPostback: ['adminMenu'],
+		},
+		inserirAvaliadores: {
+			txt1: 'Envie o CSV com os dados dos novos avaliadores. As colunas devem estar formatadas como esse arquivo de exemplo:',
+			txt2: 'É necessário que cada avaliador tenha o nome completo, o e-mail, assim como o CPF de uma Aluna! Se o o mesmo e-mail já estiver cadastrado naquala aluna, os dados do avaliador serão atualizados com os valores no CSV (se houver algum).',
 			invalidFile: 'Erro! Verifique se o arquivo CSV está formatado corretamente e envie novamente!',
 			menuOptions: ['Voltar'],
 			menuPostback: ['adminMenu'],

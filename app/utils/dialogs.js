@@ -109,7 +109,7 @@ module.exports.sendCSV = async (context) => {
 	}
 };
 
-module.exports.receiveCSV = async (context) => { // createAlunos/ inserir
+module.exports.receiveCSVAluno = async (context) => { // createAlunos/ inserir
 	const turmas = await turma.findAll({ where: {}, raw: true }).then(res => res).catch(err => help.sentryError('Erro em turma.findAll', err));
 	const csvLines = await admin.getJsonFromURL(context.state.fileURL);
 	if (csvLines) {
@@ -162,6 +162,14 @@ module.exports.receiveCSV = async (context) => { // createAlunos/ inserir
 		}
 	} else {
 		await context.sendText(flow.adminMenu.inserirAlunas.invalidFile, await attach.getQR(flow.adminMenu.inserirAlunas));
+	}
+};
+
+module.exports.receiveCSVAvaliadores = async (context) => {
+	const csvLines = await admin.getJsonFromURL(context.state.fileURL);
+	if (csvLines) {
+		const errors = []; // stores lines that presented an error
+		console.log(csvLines);
 	}
 };
 
@@ -222,3 +230,5 @@ module.exports.mailTest = async (context) => {
 		await context.sendText('Não consegui estabelecer o vínculo entre seu usuário no chatbot e alguma aluna cadastrada. Tente se vincular através do seu PDF, entre no fluxo Já Sou Aluna e se cadastre.');
 	}
 };
+
+module.exports.checkReceivedFile = admin.checkReceivedFile;
