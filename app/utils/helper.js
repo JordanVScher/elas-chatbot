@@ -52,7 +52,9 @@ const weekDayNameLong = {
 
 // ATIVIDADESCOMPLETAS
 const atividadesCompletas = {
-	1: 'Atividades 1, 2 e 3', 2: 'Atividades 4, 5 e 6', 3: 'Atividades 7, 8 e 9',
+	1: 'ATIVIDADE 1 - RELAÇÃO DE AVALIADORES, ATIVIDADE 2 - SONDAGEM DE FOCO e ATIVIDADE 3 - SEU INVENTÁRIO COMPORTAMENTAL',
+	2: 'AVALIAÇÃO MÓDULO 1 e LEITURA PRÉVIA',
+	3: 'AVALIAÇÃO MÓDULO 2, SONDAGEM DE FOCO e APRESENTAÇÃO',
 };
 
 function getTimestamp() {
