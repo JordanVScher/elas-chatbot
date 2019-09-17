@@ -34,7 +34,7 @@ async function formatBooleanToDatabase(obj, positive, negative, toChange) {
 			} else if (obj[key].toString() === negative) {
 				obj[key] = false;
 			} else {
-				obj[key] = null;
+				delete obj[key];
 			}
 		}
 	});

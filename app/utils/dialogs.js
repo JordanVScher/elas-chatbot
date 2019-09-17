@@ -171,6 +171,7 @@ module.exports.receiveCSVAluno = async (csvLines) => { // createAlunos/ inserir
 async function receiveCSVAvaliadores(csvLines) {
 	if (csvLines) {
 		const errors = []; // stores lines that presented an error
+		const indicados = [];
 		for (let i = 0; i < csvLines.length; i++) {
 			let element = csvLines[i];
 			element = await admin.convertCSVToDB(element, admin.swap(admin.avaliadorCSV));
@@ -185,7 +186,7 @@ async function receiveCSVAvaliadores(csvLines) {
 						errors.push({ line: i + 2, msg: 'Erro ao salvar no banco' });
 						help.sentryError('Erro em receiveCSV => Erro ao salvar no banco', { element });
 					} else {
-						// TODO: update notification
+						indicados.push(newIndicado);
 					}
 				} else {
 					errors.push({ line: i + 2, msg: `Nenhuma aluna com CPF ${element.aluno_cpf}` });
@@ -196,6 +197,8 @@ async function receiveCSVAvaliadores(csvLines) {
 				help.sentryError(`Erro em receiveCSVAvaliadores => Avaliador sem ${await admin.getMissingDataAvaliadoresCSV(element)}.`, { element });
 			}
 		}
+
+		await admin.updateNotificationIndicados(indicados);
 		return { errors };
 	}
 	return help.sentryError('Erro em receiveCSVAluno => CSV inválido!', { csvLines });

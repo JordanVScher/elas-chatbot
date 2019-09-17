@@ -6,13 +6,17 @@ const help = require('../helper');
 const CSVFormat = require('./CSV_format');
 const { getTurmaName } = require('./../DB_helper');
 const { buildTurmaDictionary } = require('./../DB_helper');
+const { getTurmaIdFromAluno } = require('./../DB_helper');
+const { updateIndicadoNotification } = require('./../DB_helper');
 const { addNewNotificationAlunas } = require('./../notificationAddQueue');
+const { addAvaliadorOnQueue } = require('./../notificationAddQueue');
 const notificationQueue = require('../../server/models').notification_queue;
 const turmaChangelog = require('../../server/models').aluno_turma_changelog;
 const { turma } = require('../../server/models');
 const { alunos } = require('../../server/models');
 const { checkUserOnLabel } = require('../../utils/postback');
 const { adminMenu } = require('../../utils/flow');
+const { notificationRules } = require('../notificationRules');
 
 async function buildCSV(data, texts) {
 	if (!data || !data.content || data.content.length === 0) { return { error: texts.error }; }
@@ -95,16 +99,49 @@ async function SaveTurmaChange(alunaID, turmaOriginal, turmaNova) {
 
 // updates (or creates) notifications in queue when the aluna changes the turma
 async function NotificationChangeTurma(alunaID, turmaID) {
-	const userNotifications = await notificationQueue.findAll({ where: { aluno_id: alunaID }, raw: true }).then(res => res).catch(err => help.sentryError('Erro em notificationQueue.findAll', err));
-	if (!userNotifications || userNotifications.length === 0) {
-		await addNewNotificationAlunas(alunaID, turmaID);
-	} else {
-		userNotifications.forEach((notification) => { // update notification only when it hasnt already been sent and the turma differs
-			if ((!notification.sent_at && !notification.error) && notification.turma_id !== turmaID) {
-				notificationQueue.update({ turma_id: turmaID }, { where: { id: notification.id } })
-					.then(rowsUpdated => rowsUpdated).catch(err => help.sentryError('Erro no update do notificationQueue', err));
+	try {
+		const userNotifications = await notificationQueue.findAll({ where: { aluno_id: alunaID }, raw: true }).then(res => res).catch(err => help.sentryError('Erro em notificationQueue.findAll', err));
+		if (!userNotifications || userNotifications.length === 0) {
+			await addNewNotificationAlunas(alunaID, turmaID);
+		} else {
+			userNotifications.forEach((notification) => { // update notification only when it hasnt already been sent and the turma differs
+				if ((!notification.sent_at && !notification.error) && notification.turma_id !== turmaID) {
+					notificationQueue.update({ turma_id: turmaID }, { where: { id: notification.id } })
+						.then(rowsUpdated => rowsUpdated).catch(err => help.sentryError('Erro no update do notificationQueue', err));
+				}
+			});
+		}
+	} catch (error) {
+		help.Sentry.captureMessage('Erro no NotificationChangeTurma!', error);
+	}
+}
+
+async function updateNotificationIndicados(indicados) {
+	try {
+		const rulesIndicados = await notificationRules.filter(x => x.indicado === true);
+		for (let i = 0; i < indicados.length; i++) {
+			const indicado = indicados[i];
+
+			const userNotifications = await notificationQueue.findAll({ where: { indicado_id: indicado.id }, raw: true }).then(res => res).catch(err => help.sentryError('Erro em notificationQueue.findAll', err));
+			const turmaID = await getTurmaIdFromAluno(indicado.aluno_id);
+
+			for (let j = 0; j < rulesIndicados.length; j++) {
+				const rule = rulesIndicados[j];
+				// console.log('rule', rule);
+
+				const foundNotification = await userNotifications.find(x => x.notification_type === rule.notification_type);
+				if (!foundNotification) { // add notification every only when it doesnt exist, even if user wasnt familiar before
+					await addAvaliadorOnQueue(rule, indicado, turmaID);
+				}
 			}
-		});
+
+			if (indicado.familiar !== true) { // if user is no longer familiar we update the error column
+				// obs: postgresql wont update a collumn that doesnt exist so we won't "update" the notification of an user that wasnt a familiar in the first place
+				await updateIndicadoNotification(indicado.id, 12, 'Não é mais familiar, foi atualizado no csv do admin');
+			}
+		}
+	} catch (error) {
+		help.Sentry.captureMessage('Erro no updateNotificationIndicados!', error);
 	}
 }
 
@@ -183,5 +220,15 @@ async function putColumnsLast(lines, columns) {
 }
 
 module.exports = {
-	buildCSV, getJsonFromURL, getFeedbackMsgs, NotificationChangeTurma, formatRespostasCSV, SaveTurmaChange, addTurmaTransferenceCSV, putColumnsLast, ...CSVFormat, checkReceivedFile,
+	buildCSV,
+	getJsonFromURL,
+	getFeedbackMsgs,
+	NotificationChangeTurma,
+	formatRespostasCSV,
+	SaveTurmaChange,
+	addTurmaTransferenceCSV,
+	putColumnsLast,
+	...CSVFormat,
+	checkReceivedFile,
+	updateNotificationIndicados,
 };

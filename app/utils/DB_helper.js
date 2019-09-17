@@ -68,7 +68,7 @@ async function upsertAlunoCadastro(userAnswers) {
 
 	const alunoExtraData = ['nome_completo', 'cpf', 'turma_id', 'email', 'rg', 'telefone', 'endereco', 'data_nascimento', 'contato_emergencia_nome', 'contato_emergencia_fone', 'contato_emergencia_email', 'contato_emergencia_relacao', 'added_by_admin'];
 	alunoExtraData.forEach((element) => { // columns on the database
-		if (answers[element] !== undefined && answers[element] !== null) {
+		if ((answers[element] && answers[element] !== undefined && answers[element] !== null) || answers[element] === false) {
 			columns.push(element); values.push(`'${answers[element]}'`); set.push(`${columns[columns.length - 1]} = ${values[values.length - 1]}`);
 		}
 	});
@@ -169,7 +169,7 @@ async function upsertIndicado(avaliador) {
 
 	const alunoExtraData = ['nome', 'email', 'telefone', 'aluno_id', 'familiar', 'relacao_com_aluna'];
 	alunoExtraData.forEach((element) => { // columns on the database
-		if (indicado[element] !== undefined && indicado[element] !== null) {
+		if ((indicado[element] && indicado[element] !== undefined && indicado[element] !== null) || indicado[element] === false) {
 			columns.push(element); values.push(`'${indicado[element]}'`); set.push(`${columns[columns.length - 1]} = ${values[values.length - 1]}`);
 		}
 	});
@@ -482,6 +482,21 @@ async function buildTurmaDictionary() {
 	return result;
 }
 
+
+async function getTurmaIdFromAluno(alunoID) {
+	const result = await sequelize.query(`SELECT turma_id FROM alunos	WHERE id = '${alunoID}';`)
+		.spread(results => (results && results[0] ? results[0].turma_id : false)).catch((err) => { sentryError('Error on getAlunasIndicadosReport => ', err); });
+	return result;
+}
+
+async function updateIndicadoNotification(indicadoID, notificationType, msg) {
+	const error = { msg };
+
+	const result = await sequelize.query(`UPDATE notification_queue SET error = '${JSON.stringify(error)}' WHERE indicado_id = '${indicadoID}' AND notification_type = '${notificationType}';`)
+		.spread(results => results).catch((err) => { sentryError('Error on getAlunasIndicadosReport => ', err); });
+	return result;
+}
+
 module.exports = {
 	upsertUser,
 	getAlunaFromPDF,
@@ -509,4 +524,6 @@ module.exports = {
 	getAlunaFromFBID,
 	buildTurmaDictionary,
 	upsertIndicado,
+	getTurmaIdFromAluno,
+	updateIndicadoNotification,
 };
