@@ -40,7 +40,7 @@ async function addNewNotificationIndicados(alunaId, turmaID) {
 					// indicado can only receive a notification where rule familiar = true if indicado is also familiar = true
 					if (!rule.familiar || (rule.familiar === true && indicado.familiar === true)) {
 						await notificationQueue.create({
-							notification_type: rule.notification_type, indicado_id: indicado.id, turma_id: turmaID, modulo: rule.modulo,
+							notification_type: rule.notification_type, aluno_id: alunaId, indicado_id: indicado.id, turma_id: turmaID, modulo: rule.modulo,
 						}).then(res => res).catch(err => sentryError('Erro em notificationQueue.create', err));
 
 						if (rule.reminderDate) {
@@ -49,7 +49,7 @@ async function addNewNotificationIndicados(alunaId, turmaID) {
 
 							// check_answered = true, in this kind of notification we have to check if the indicado hasn't answered the form already
 							await notificationQueue.create({
-								notification_type: rule.notification_type, indicado_id: indicado.id, check_answered: true, turma_id: turmaID,
+								notification_type: rule.notification_type, aluno_id: alunaId, indicado_id: indicado.id, check_answered: true, turma_id: turmaID,
 							}).then(res => res).catch(err => sentryError('Erro em notificationQueue.create for reminderDate', err));
 						}
 					}

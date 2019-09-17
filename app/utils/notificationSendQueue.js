@@ -392,7 +392,7 @@ async function sendNotificationFromQueue() {
 
 		if (await checkShouldSendNotification(notification, moduleDates, today) === true) {
 			let recipient;
-			if (notification.aluno_id) {
+			if (notification.aluno_id && !notification.indicado_id) { // if notification doesnt have indicado_id it's just an aluno notification
 				recipient = await getAluna(notification.aluno_id, moduleDates);
 			} else if (notification.indicado_id) {
 				recipient = await getIndicado(notification.indicado_id, moduleDates);
@@ -433,7 +433,7 @@ async function sendNotificationFromQueue() {
 const sendNotificationCron = new CronJob(
 	'00 * 8-22/1 * * *', async () => {
 	// '00 00 8-22/1 * * *', async () => {
-		console.log('Running sendNotificationCron');
+		// console.log('Running sendNotificationCron');
 		// await sendNotificationFromQueue();
 	}, (() => {
 		console.log('Crontab sendNotificationCron stopped.');
@@ -442,6 +442,7 @@ const sendNotificationCron = new CronJob(
 	'America/Sao_Paulo', false,
 	false, // runOnInit = true useful only for tests
 );
+
 
 module.exports = {
 	sendNotificationCron,

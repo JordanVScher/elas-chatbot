@@ -99,7 +99,7 @@ async function NotificationChangeTurma(alunaID, turmaID) {
 	if (!userNotifications || userNotifications.length === 0) {
 		await addNewNotificationAlunas(alunaID, turmaID);
 	} else {
-		userNotifications.forEach((notification) => { // update notification onlywhen it hasnt already been sent and the turma differs
+		userNotifications.forEach((notification) => { // update notification only when it hasnt already been sent and the turma differs
 			if ((!notification.sent_at && !notification.error) && notification.turma_id !== turmaID) {
 				notificationQueue.update({ turma_id: turmaID }, { where: { id: notification.id } })
 					.then(rowsUpdated => rowsUpdated).catch(err => help.sentryError('Erro no update do notificationQueue', err));
