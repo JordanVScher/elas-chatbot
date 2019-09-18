@@ -490,9 +490,10 @@ async function getTurmaIdFromAluno(alunoID) {
 }
 
 async function updateIndicadoNotification(indicadoID, notificationType, msg) {
-	const error = { msg };
+	let error = null;
+	if (msg) error = `'${JSON.stringify({ msg })}'`;
 
-	const result = await sequelize.query(`UPDATE notification_queue SET error = '${JSON.stringify(error)}' WHERE indicado_id = '${indicadoID}' AND notification_type = '${notificationType}';`)
+	const result = await sequelize.query(`UPDATE notification_queue SET error = ${error} WHERE indicado_id = '${indicadoID}' AND notification_type = '${notificationType}';`)
 		.spread(results => results).catch((err) => { sentryError('Error on getAlunasIndicadosReport => ', err); });
 	return result;
 }

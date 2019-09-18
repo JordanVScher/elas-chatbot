@@ -138,6 +138,8 @@ async function updateNotificationIndicados(indicados) {
 			if (indicado.familiar !== true) { // if user is no longer familiar we update the error column
 				// obs: postgresql wont update a collumn that doesnt exist so we won't "update" the notification of an user that wasnt a familiar in the first place
 				await updateIndicadoNotification(indicado.id, 12, 'Não é mais familiar, foi atualizado no csv do admin');
+			} else if (indicado.familiar === true) {
+				await updateIndicadoNotification(indicado.id, 12, null);
 			}
 		}
 	} catch (error) {
