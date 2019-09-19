@@ -127,7 +127,6 @@ async function updateNotificationIndicados(indicados) {
 
 			for (let j = 0; j < rulesIndicados.length; j++) {
 				const rule = rulesIndicados[j];
-				// console.log('rule', rule);
 
 				const foundNotification = await userNotifications.find(x => x.notification_type === rule.notification_type);
 				if (!foundNotification) { // add notification every only when it doesnt exist, even if user wasnt familiar before

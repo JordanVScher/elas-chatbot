@@ -50,7 +50,6 @@ const weekDayNameLong = {
 	0: 'Domingo', 1: 'Segunda-Feira', 2: 'Terça-Feira', 3: 'Quarta-Feira', 4: 'Quinta-Feira', 5: 'Sexta-Feira', 6: 'Sábado', 7: 'Domingo',
 };
 
-// ATIVIDADESCOMPLETAS
 const atividadesCompletas = {
 	1: 'ATIVIDADE 1 - RELAÇÃO DE AVALIADORES, ATIVIDADE 2 - SONDAGEM DE FOCO e ATIVIDADE 3 - SEU INVENTÁRIO COMPORTAMENTAL',
 	2: 'AVALIAÇÃO MÓDULO 1 e LEITURA PRÉVIA',
