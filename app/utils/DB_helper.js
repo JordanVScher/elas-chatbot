@@ -48,6 +48,28 @@ async function getAlunaFromPDF(cpf) {
 	return aluna;
 }
 
+async function getAlunaRespostasWarning(turmaID) {
+	const queryString = `
+		SELECT ALUNOS.id, ALUNOS.nome_completo, ALUNOS.telefone, ALUNOS.email, ALUNOS.cpf,
+		RESPOSTAS_ALUNOS.pre as "aluno_pre", RESPOSTAS_ALUNOS.pos as "aluno_pos", RESPOSTAS_ALUNOS.atividade_indicacao 
+		FROM alunos ALUNOS
+		LEFT JOIN alunos_respostas RESPOSTAS_ALUNOS ON ALUNOS.id = RESPOSTAS_ALUNOS.aluno_id
+		WHERE ALUNOS.turma_id = '${turmaID}';`;
+	const result = await sequelize.query(queryString).spread(results => results).catch(err => sentryError('Erro no upsertAlunoCadastro =>', err));
+	return result;
+}
+async function getIndicadoRespostasWarning(turma) {
+	const queryString = `
+		SELECT INDICADOS.id, INDICADOS.aluno_id, INDICADOS.email as "indicado_mail", INDICADOS.telefone as "indicado_telefone",
+		RESPOSTAS.pre as "indicado_pre", RESPOSTAS.pos as "indicado_pos"
+		FROM indicacao_avaliadores INDICADOS
+		LEFT JOIN indicados_respostas RESPOSTAS ON INDICADOS.id = RESPOSTAS.indicado_id
+		LEFT JOIN alunos ALUNOS ON alunos.id = INDICADOS.aluno_id
+		WHERE ALUNOS.turma_id = ${turma};`;
+	const result = await sequelize.query(queryString).spread(results => results).catch(err => sentryError('Erro no upsertAlunoCadastro =>', err));
+	return result;
+}
+
 async function getModuloDates() {
 	const result = await sequelize.query(`
 	SELECT id, nome, local, horario_modulo1 as modulo1, horario_modulo2 as modulo2, horario_modulo3 as modulo3 from turma
@@ -527,4 +549,6 @@ module.exports = {
 	upsertIndicado,
 	getTurmaIdFromAluno,
 	updateIndicadoNotification,
+	getAlunaRespostasWarning,
+	getIndicadoRespostasWarning,
 };
