@@ -1,3 +1,4 @@
+const { CronJob } = require('cron');
 const { parseAsync } = require('json2csv');
 const turmas = require('../../server/models').turma;
 const db = require('../DB_helper');
@@ -88,10 +89,8 @@ async function getMissingAnswers(users, moduloN) {
 		if (user.modulo) missingAnswer.push(user);
 	});
 
-
 	return missingAnswer;
 }
-
 
 async function formatDataToCSV(lines, CSV) {
 	lines.forEach((line) => {
@@ -123,12 +122,28 @@ async function GetWarningData(modulos) {
 	return formatDataToCSV(missingAnswers, columnCSV);
 }
 
-
 async function sendCSV() {
 	const modulos = await getValidModulos(2);
 	const content = await GetWarningData(modulos);
-	const result = await parseAsync(content, { includeEmptyRows: true }).then(csv => csv).catch(err => err);
-	const csv = { content: await Buffer.from(result, 'utf8'), filename: `${await help.getTimestamp()}_FALTA_RESPONDER.csv`, contentType: 'text/csv' };
-	await sendHTMLMail(missingAnswersWarning.mailSubject, eMailToSend, missingAnswersWarning.mailText, [csv]);
-	await sendWarning(csv);
+	if (content && content.length > 0) {
+		const result = await parseAsync(content, { includeEmptyRows: true }).then(csv => csv).catch(err => err);
+		const csv = { content: await Buffer.from(result, 'utf8'), filename: `${await help.getTimestamp()}_FALTA_RESPONDER.csv`, contentType: 'text/csv' };
+		await sendHTMLMail(missingAnswersWarning.mailSubject, eMailToSend, missingAnswersWarning.mailText, [csv]);
+		await sendWarning(csv);
+	}
 }
+
+const sendMissingWarningCron = new CronJob(
+	'00 * 10 * * *', async () => {
+	// '00 * 10 * * *', async () => {
+		console.log('Running sendMissingWarningCron');
+		await sendCSV();
+	}, (() => {
+		console.log('Crontab sendMissingWarningCron stopped.');
+	}),
+	true, /* Starts the job right now (no need for MissionTimer.start()) */
+	'America/Sao_Paulo', false,
+	false, // runOnInit = true useful only for tests
+);
+
+module.exports = { sendMissingWarningCron };

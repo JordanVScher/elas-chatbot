@@ -7,6 +7,7 @@ const restify = require('restify');
 const { newSurveyResponse } = require('./utils/sm_help');
 const pgAPI = require('./pg_api');
 const { sendNotificationCron } = require('./utils/notificationSendQueue');
+const { sendMissingWarningCron } = require('./utils/admin_menu/warn_admin');
 const { updateTurmasCron } = require('./utils/turma');
 const { associatesLabelToUser } = require('./utils/postback');
 
@@ -106,4 +107,5 @@ server.listen(process.env.API_PORT, () => {
 	console.log(`MA User: ${process.env.MA_USER}`);
 	console.log(`Crontab sendNotificationCron is running? => ${sendNotificationCron.running}`);
 	console.log(`Crontab updateTurmasCron is running? => ${updateTurmasCron.running}`);
+	console.log(`Crontab sendMissingWarningCron is running? => ${sendMissingWarningCron.running}`);
 });
