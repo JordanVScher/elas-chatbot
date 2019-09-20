@@ -6,9 +6,9 @@ const { moment } = require('../helper');
 
 // which questionarios should be answered by the time the new modulo starts
 const atividadesRules = {
-	1: { aluno: ['atividade_indicacao', 'aluno_pre'], avaliador: ['indicado_pre'] },
+	1: { aluno: ['atividade_indicacao', 'atividade_aluno_pre'], indicado: ['atividade_indicado_pre'] },
 	2: {},
-	3: { aluno: ['aluno_pos'], avaliador: ['indicado_pos'] },
+	3: { aluno: ['atividade_aluno_pos'], indicado: ['atividade_indicado_pos'] },
 };
 
 const warnDaysBefore = 2;
@@ -48,25 +48,27 @@ async function getMissingAnswers(alunos, indicados, moduloN) {
 
 	// check if aluno didnt answer the atividade yet and add aluno once to missing answer
 	alunos.forEach((aluno) => {
-		let added = false;
-		rule.aluno.forEach((atividade) => {
-			if (!aluno[atividade] && !added) {
-				aluno.module = moduloN;
-				missingAnswer.push(aluno);
-				added = true;
+		aluno.module = moduloN; aluno.missing = [];
+		Object.keys(aluno).forEach((key) => {
+			if (key.includes('atividade')) { // we care only for "atividade_*"
+			// if that atividade is on the modulo's rule and it's empty we add it to the "missing" key
+				if (rule.aluno.includes(key) && !aluno[key]) aluno.missing.push(key);
+				delete aluno[key]; // no more use for this atividade, answered or not
 			}
 		});
+		if (aluno.missing && aluno.missing.length > 0) missingAnswer.push(aluno);
 	});
 
+	// same thing as above but with indicado
 	indicados.forEach((indicado) => {
-		let added = false;
-		rule.avaliador.forEach((atividade) => {
-			if (!indicado[atividade] && !added) {
-				indicado.module = moduloN;
-				missingAnswer.push(indicado);
-				added = true;
+		indicado.module = moduloN; indicado.missing = [];
+		Object.keys(indicado).forEach((key) => {
+			if (key.includes('atividade')) {
+				if (rule.indicado.includes(key) && !indicado[key]) indicado.missing.push(key);
+				delete indicado[key];
 			}
 		});
+		if (indicado.missing && indicado.missing.length > 0) missingAnswer.push(indicado);
 	});
 
 	return missingAnswer;
@@ -79,6 +81,7 @@ async function GetWarningData() {
 		const modulo = modulos[i];
 		const alunos = await db.getAlunaRespostasWarning(modulo.turmaID);
 		const indicados = await db.getIndicadoRespostasWarning(modulo.turmaID);
+		console.log(indicados);
 
 		const aux = await getMissingAnswers(alunos, indicados, modulo.moduloN);
 		if (aux && aux.length > 0) missingAnswers = [...missingAnswers, ...aux];

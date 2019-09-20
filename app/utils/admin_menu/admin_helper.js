@@ -4,10 +4,7 @@ const request = require('request-promise');
 const { csv2json } = require('csvjson-csv2json');
 const help = require('../helper');
 const CSVFormat = require('./CSV_format');
-const { getTurmaName } = require('./../DB_helper');
-const { buildTurmaDictionary } = require('./../DB_helper');
-const { getTurmaIdFromAluno } = require('./../DB_helper');
-const { updateIndicadoNotification } = require('./../DB_helper');
+const db = require('./../DB_helper');
 const { addNewNotificationAlunas } = require('./../notificationAddQueue');
 const { addAvaliadorOnQueue } = require('./../notificationAddQueue');
 const notificationQueue = require('../../server/models').notification_queue;
@@ -22,7 +19,7 @@ async function buildCSV(data, texts) {
 	if (!data || !data.content || data.content.length === 0) { return { error: texts.error }; }
 	const result = await parseAsync(await CSVFormat.formatBoolean(data.content), { includeEmptyRows: true }).then(csv => csv).catch(err => err);
 	if (!result) { help.Sentry.captureMessage('Erro no parse!'); return { error: 'Erro no parse!' }; }
-	const newFilename = texts.filename.replace('<INPUT>', await getTurmaName(data.input));
+	const newFilename = texts.filename.replace('<INPUT>', await db.getTurmaName(data.input));
 	return { csvData: await Buffer.from(result, 'utf8'), filename: `${await help.getTimestamp()}_${newFilename}.csv` };
 }
 
@@ -123,7 +120,7 @@ async function updateNotificationIndicados(indicados) {
 			const indicado = indicados[i];
 
 			const userNotifications = await notificationQueue.findAll({ where: { indicado_id: indicado.id }, raw: true }).then(res => res).catch(err => help.sentryError('Erro em notificationQueue.findAll', err));
-			const turmaID = await getTurmaIdFromAluno(indicado.aluno_id);
+			const turmaID = await db.getTurmaIdFromAluno(indicado.aluno_id);
 
 			for (let j = 0; j < rulesIndicados.length; j++) {
 				const rule = rulesIndicados[j];
@@ -136,9 +133,9 @@ async function updateNotificationIndicados(indicados) {
 
 			if (indicado.familiar !== true) { // if user is no longer familiar we update the error column
 				// obs: postgresql wont update a collumn that doesnt exist so we won't "update" the notification of an user that wasnt a familiar in the first place
-				await updateIndicadoNotification(indicado.id, 12, 'Não é mais familiar, foi atualizado no csv do admin');
+				await db.updateIndicadoNotification(indicado.id, 12, 'Não é mais familiar, foi atualizado no csv do admin');
 			} else if (indicado.familiar === true) {
-				await updateIndicadoNotification(indicado.id, 12, null);
+				await db.updateIndicadoNotification(indicado.id, 12, null);
 			}
 		}
 	} catch (error) {
@@ -184,7 +181,7 @@ function buildColumnTurmaChange(log, turmaNames) {
 async function addTurmaTransferenceCSV(lines) {
 	const newLines = lines;
 	const allLogChange = await turmaChangelog.findAll({ where: {}, raw: true }).then(res => res).catch(err => help.sentryError('Erro em turmaChangelog.findAll', err));
-	const turmaDictionary = await buildTurmaDictionary();
+	const turmaDictionary = await db.buildTurmaDictionary();
 	const columnTransferenciaText = 'Transferência de Turma';
 	let maxTransferences = 0;
 	// Add new lines for transferências
