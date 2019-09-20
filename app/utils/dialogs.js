@@ -121,7 +121,7 @@ module.exports.sendFeedbackMsgs = async (context, errors) => {
 };
 
 
-module.exports.receiveCSVAluno = async (csvLines) => { // createAlunos/ inserir
+module.exports.receiveCSVAluno = async (csvLines, chatbotUserId) => { // createAlunos/ inserir
 	if (csvLines) {
 		const turmas = await turma.findAll({ where: {}, raw: true }).then(res => res).catch(err => help.sentryError('Erro em turma.findAll', err));
 		const errors = []; // stores lines that presented an error
@@ -142,7 +142,8 @@ module.exports.receiveCSVAluno = async (csvLines) => { // createAlunos/ inserir
 						help.sentryError('Erro em receiveCSVAluno => CPF inválido!', { element });
 					} else {
 						const oldAluno = await alunos.findOne({ where: { cpf: element.cpf }, raw: true }).then(res => res).catch(err => help.sentryError('Erro em alunos.findOne', err));
-						if (oldAluno) { await admin.SaveTurmaChange(oldAluno.id, oldAluno.turma_id, element.turma_id); } // if aluno existed before we save the turma change
+						// if aluno existed before we save the turma and label change
+						if (oldAluno) { await admin.SaveTurmaChange(chatbotUserId, oldAluno.id, oldAluno.turma_id, element.turma_id); }
 						element.added_by_admin = true;
 						const newAluno = await db.upsertAlunoCadastro(element);
 						// const newAluno = await db.addAlunaFromCSV(element);
@@ -230,7 +231,7 @@ module.exports.mudarAskTurma = async (context) => {
 		const transferedAluna = await alunos.update({ turma_id: validTurma }, { where: { cpf: context.state.adminAlunaFound.cpf } }).then(() => true).catch(err => sentryError('Erro em mudarAskTurma update', err));
 		if (transferedAluna) {
 			await admin.NotificationChangeTurma(context.state.adminAlunaFound.id, validTurma);
-			await admin.SaveTurmaChange(context.state.adminAlunaFound.id, context.state.adminAlunaFound.turma_id, validTurma);
+			await admin.SaveTurmaChange(context.state.chatbotData.user_id, context.state.adminAlunaFound.id, context.state.adminAlunaFound.turma_id, validTurma);
 			await context.sendText(flow.adminMenu.mudarTurma.transferComplete.replace('<TURMA>', context.state.desiredTurma));
 			const count = await alunos.count({ where: { turma_id: validTurma } })
 				.then(alunas => alunas).catch(err => sentryError('Erro em mudarAskTurma getCount', err));

@@ -28,6 +28,7 @@ module.exports = async (context) => {
 			// session: JSON.stringify(context.state),
 		});
 		db.upsertUser(context.session.user.id, `${context.session.user.first_name} ${context.session.user.last_name}`);
+		// MaAPI.getRecipient(context.state.chatbotData.user_id, context.session.user.id);
 		await timers.deleteTimers(context.session.user.id);
 
 		if (context.event.isPostback) {
@@ -215,7 +216,7 @@ module.exports = async (context) => {
 			await context.sendText(flow.adminMenu.inserirAlunas.txt2, await attach.getQR(flow.adminMenu.inserirAlunas));
 			break;
 		case 'createAlunos': {
-			const result = await dialogs.receiveCSVAluno(context.state.csvLines);
+			const result = await dialogs.receiveCSVAluno(context.state.csvLines, context.state.chatbotData.user_id);
 			if (result) {
 				await dialogs.sendFeedbackMsgs(context, result.errors);
 			} else {

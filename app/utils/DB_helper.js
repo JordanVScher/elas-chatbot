@@ -300,6 +300,20 @@ async function upsertPrePos360(userID, response, column) {
 	}).catch((err) => { sentryError('Erro em upsertPrePos360 =>', err); });
 }
 
+async function getChatbotUser(alunaID) {
+	const aluna = await sequelize.query(`
+	SELECT *
+	FROM chatbot_users BOT_USER
+	LEFT JOIN alunos ALUNOS ON BOT_USER.cpf = ALUNOS.cpf
+	WHERE ALUNOS.id = '${alunaID}'
+`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
+		console.log(`Got ${alunaID}'s aluna successfully!`);
+		return results[0] || false;
+	}).catch((err) => { sentryError('Erro em getChatbotUser =>', err); });
+
+	return aluna;
+}
+
 async function getAlunaFromFBID(FBID) {
 	const aluna = await sequelize.query(`
 	SELECT ALUNO.id, ALUNO.cpf, ALUNO.turma_id, ALUNO.nome_completo, ALUNO.email, BOT_USER.fb_id
@@ -553,4 +567,5 @@ module.exports = {
 	updateIndicadoNotification,
 	getAlunaRespostasWarning,
 	getIndicadoRespostasWarning,
+	getChatbotUser,
 };

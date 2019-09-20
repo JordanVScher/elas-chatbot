@@ -14,6 +14,7 @@ const { alunos } = require('../../server/models');
 const { checkUserOnLabel } = require('../../utils/postback');
 const { adminMenu } = require('../../utils/flow');
 const { notificationRules } = require('../notificationRules');
+const MaAPI = require('../../chatbot_api');
 
 async function buildCSV(data, texts) {
 	if (!data || !data.content || data.content.length === 0) { return { error: texts.error }; }
@@ -78,7 +79,15 @@ async function getFeedbackMsgs(addedALunos, errors) {
 	return result;
 }
 
-async function SaveTurmaChange(alunaID, turmaOriginal, turmaNova) {
+async function alunaChangeTurmaLabel(politicianID, alunaID, oldTurma, newTurma) {
+	const foundUser = await db.getChatbotUser(alunaID);
+	if (foundUser && foundUser.fb_id) {
+		await MaAPI.deleteRecipientLabel(politicianID, foundUser.fb_id, oldTurma);
+		await MaAPI.postRecipientLabel(politicianID, foundUser.fb_id, newTurma);
+	}
+}
+
+async function SaveTurmaChange(politicianID, alunaID, turmaOriginal, turmaNova) {
 	if (!turmaOriginal) {
 		turmaOriginal = await alunos.findOne({ where: { id: alunaID }, raw: true }).then(res => res.turma_id).catch(err => help.sentryError('Erro em alunos.findOne', err)); // eslint-disable-line no-param-reassign
 	}
@@ -91,8 +100,10 @@ async function SaveTurmaChange(alunaID, turmaOriginal, turmaNova) {
 		turmaChangelog.create({
 			alunoID: alunaID, turmaOriginal, turmaNova, moduloOriginal, moduloNovo,
 		}).then(res => res).catch(err => help.sentryError('Erro em turmaChangelog.create', err));
+		await alunaChangeTurmaLabel(politicianID, alunaID, alunoTurmaOriginal.nome, alunoTurmaNova.nome);
 	}
 }
+
 
 // updates (or creates) notifications in queue when the aluna changes the turma
 async function NotificationChangeTurma(alunaID, turmaID) {
