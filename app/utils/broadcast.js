@@ -2,6 +2,7 @@ require('dotenv').config();
 
 const { MessengerClient } = require('messaging-api-messenger');
 const { createReadStream } = require('fs');
+const { missingAnswersWarning } = require('./flow');
 
 const config = require('../bottender.config').messenger;
 
@@ -94,6 +95,22 @@ async function sendFiles(USER_ID, pdf, png) {
 }
 
 
+async function sendWarning(csv) {
+	const target = { custom_label_id: process.env.ADMIN_LABEL_ID, messaging_type: 'UPDATE', tag: 'ACCOUNT_UPDATE' };
+	const uploadedFile = await client.uploadFile(csv.content, { is_reusable: true, filename: csv.filename });
+	const messageTextID = await client.createMessageCreative([{ text: missingAnswersWarning.mailText }]);
+	const messageFileID = await client.createMessageCreative([{
+		attachment: {
+			type: 'file',
+			payload: { attachment_id: uploadedFile.attachment_id },
+		},
+	}]);
+
+	await client.sendBroadcastMessage(messageTextID.message_creative_id.toString(), target);
+	await client.sendBroadcastMessage(messageFileID.message_creative_id, target);
+}
+
+
 module.exports = {
-	sendCardAluna, sendBroadcastAluna, sendFiles,
+	sendCardAluna, sendBroadcastAluna, sendFiles, sendWarning,
 };
