@@ -204,4 +204,8 @@ module.exports = {
 			filename: 'INDICADOS_TURMA_<INPUT>',
 		},
 	},
+	missingAnswersWarning: {
+		mailSubject: 'Questionário não respondido',
+		mailText: 'Baixe o arquivo abaixo para visualizar quem não respondeu os questionários para a próxima aula',
+	},
 };

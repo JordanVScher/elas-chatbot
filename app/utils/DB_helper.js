@@ -50,8 +50,8 @@ async function getAlunaFromPDF(cpf) {
 
 async function getAlunaRespostasWarning(turmaID) {
 	const queryString = `
-		SELECT ALUNOS.id, ALUNOS.nome_completo, ALUNOS.telefone, ALUNOS.email, ALUNOS.cpf, ALUNOS.turma_id as "turma",
-		RESPOSTAS_ALUNOS.pre as "atividade_aluno_pre", RESPOSTAS_ALUNOS.pos as "atividade_aluno_pos", RESPOSTAS_ALUNOS.atividade_indicacao 
+		SELECT ALUNOS.id as "aluno_id", ALUNOS.nome_completo as "nome_aluno", ALUNOS.telefone, ALUNOS.email, ALUNOS.cpf, ALUNOS.turma_id as "turma",
+		RESPOSTAS_ALUNOS.pre as "atividade_aluno_pre", RESPOSTAS_ALUNOS.pos as "atividade_aluno_pos", RESPOSTAS_ALUNOS.atividade_indicacao
 		FROM alunos ALUNOS
 		LEFT JOIN alunos_respostas RESPOSTAS_ALUNOS ON ALUNOS.id = RESPOSTAS_ALUNOS.aluno_id
 		WHERE ALUNOS.turma_id = '${turmaID}';`;
@@ -60,7 +60,9 @@ async function getAlunaRespostasWarning(turmaID) {
 }
 async function getIndicadoRespostasWarning(turma) {
 	const queryString = `
-		SELECT INDICADOS.id, INDICADOS.aluno_id, INDICADOS.email as "indicado_mail", INDICADOS.telefone as "indicado_telefone", ALUNOS.turma_id as "turma",
+		SELECT INDICADOS.id as "indicado_id", INDICADOS.aluno_id, INDICADOS.nome as "indicado_nome",
+		INDICADOS.email as "indicado_mail", INDICADOS.telefone as "indicado_telefone", 
+		ALUNOS.turma_id as "turma", ALUNOS.nome_completo as "nome_aluno", ALUNOS.telefone, ALUNOS.email, ALUNOS.cpf,
 		RESPOSTAS.pre as "atividade_indicado_pre", RESPOSTAS.pos as "atividade_indicado_pos"
 		FROM indicacao_avaliadores INDICADOS
 		LEFT JOIN indicados_respostas RESPOSTAS ON INDICADOS.id = RESPOSTAS.indicado_id
