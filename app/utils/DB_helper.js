@@ -55,7 +55,7 @@ async function getAlunaRespostasWarning(turmaID) {
 		FROM alunos ALUNOS
 		LEFT JOIN alunos_respostas RESPOSTAS_ALUNOS ON ALUNOS.id = RESPOSTAS_ALUNOS.aluno_id
 		WHERE ALUNOS.turma_id = '${turmaID}';`;
-	const result = await sequelize.query(queryString).spread(results => results).catch(err => sentryError('Erro no upsertAlunoCadastro =>', err));
+	const result = await sequelize.query(queryString).spread(results => results).catch(err => sentryError('Erro no getAlunaRespostasWarning =>', err));
 	return result;
 }
 async function getIndicadoRespostasWarning(turma) {
@@ -68,7 +68,7 @@ async function getIndicadoRespostasWarning(turma) {
 		LEFT JOIN indicados_respostas RESPOSTAS ON INDICADOS.id = RESPOSTAS.indicado_id
 		LEFT JOIN alunos ALUNOS ON alunos.id = INDICADOS.aluno_id
 		WHERE ALUNOS.turma_id = ${turma};`;
-	const result = await sequelize.query(queryString).spread(results => results).catch(err => sentryError('Erro no upsertAlunoCadastro =>', err));
+	const result = await sequelize.query(queryString).spread(results => results).catch(err => sentryError('Erro no getIndicadoRespostasWarning =>', err));
 	return result;
 }
 

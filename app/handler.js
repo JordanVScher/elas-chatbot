@@ -82,6 +82,12 @@ module.exports = async (context) => {
 				await dialogs.handleCPF(context);
 			} else if (context.state.whatWasTyped.toLowerCase() === process.env.RESET && process.env.ENV !== 'prod') {
 				await context.setState({ matricula: '', gotAluna: '' });
+				await context.setState({ recipient: await MaAPI.getRecipient(context.state.chatbotData.user_id, context.session.user.id) });
+				if (context.state.recipient.extra_fields.labels) {
+					context.state.recipient.extra_fields.labels.forEach(async (element) => {
+						await MaAPI.deleteRecipientLabel(context.state.chatbotData.user_id, context.session.user.id, element.name);
+					});
+				}
 			} else if (context.state.dialog === 'mudarTurma') {
 				await dialogs.adminAlunaCPF(context);
 			} else if (context.state.dialog === 'mudarAskTurma') {
@@ -156,6 +162,7 @@ module.exports = async (context) => {
 			break;
 		case 'confirmaMatricula':
 			await db.linkUserToCPF(context.session.user.id, context.state.cpf);
+			await MaAPI.postRecipientLabel(context.state.chatbotData.user_id, context.session.user.id, context.state.gotAluna.turma);
 			await context.setState({ agendaData: await dialogs.getAgenda(context), matricula: true });
 			await context.sendText(flow.confirmaMatricula.text1);
 			await context.sendText(await dialogs.buildAgendaMsg(context.state.agendaData), await attach.getQR(flow.confirmaMatricula));
