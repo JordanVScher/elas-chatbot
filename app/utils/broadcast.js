@@ -97,17 +97,17 @@ async function sendFiles(USER_ID, pdf, png) {
 
 async function sendWarning(csv) {
 	const target = { custom_label_id: process.env.ADMIN_LABEL_ID, messaging_type: 'UPDATE', tag: 'ACCOUNT_UPDATE' };
-	const uploadedFile = await client.uploadFile(csv.content, { is_reusable: true, filename: csv.filename });
+	// const uploadedFile = await client.uploadFile(csv.content, { is_reusable: true, filename: csv.filename });
 	const messageTextID = await client.createMessageCreative([{ text: missingAnswersWarning.mailText }]);
-	const messageFileID = await client.createMessageCreative([{
-		attachment: {
-			type: 'file',
-			payload: { attachment_id: uploadedFile.attachment_id },
-		},
-	}]);
+	// const messageFileID = await client.createMessageCreative([{
+	// 	attachment: {
+	// 		type: 'file',
+	// 		payload: { attachment_id: uploadedFile.attachment_id },
+	// 	},
+	// }]);
 
-	await client.sendBroadcastMessage(messageTextID.message_creative_id.toString(), target);
-	await client.sendBroadcastMessage(messageFileID.message_creative_id, target);
+	await client.sendBroadcastMessage(messageTextID.message_creative_id, target);
+	// await client.sendBroadcastMessage(messageFileID.message_creative_id, target);
 }
 
 
