@@ -77,7 +77,7 @@ async function updateTurmas() {
 }
 
 const updateTurmasCron = new CronJob(
-	'0 0 * * * *', async () => {
+	'00 */1 * * * *', async () => {
 		console.log('Running updateTurmas');
 		await updateTurmas();
 	}, (() => {
