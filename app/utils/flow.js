@@ -208,4 +208,8 @@ module.exports = {
 		mailSubject: 'Questionário não respondido',
 		mailText: 'Baixe o arquivo abaixo para visualizar quem não respondeu os questionários para a próxima aula',
 	},
+	notifications: {
+		on: 'Vou te chamando conforme vou sabendo de mais bafos!',
+		off: 'Sem problemas, beibe. Não te enviarei mais nenhuma notificação.',
+	},
 };

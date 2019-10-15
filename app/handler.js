@@ -258,6 +258,16 @@ module.exports = async (context) => {
 		case 'mudarAskTurma':
 			await context.sendText(flow.adminMenu.mudarTurma.txt2.replace('<NOME>', context.state.adminAlunaFound.nome_completo.trim()).replace('<TURMA>', context.state.adminAlunaFound.turma), await attach.getQR(flow.adminMenu.verTurma));
 			break;
+		case 'notificationOn':
+			await MaAPI.updateBlacklistMA(context.session.user.id, 1);
+			await MaAPI.logNotification(context.session.user.id, context.state.politicianData.user_id, 3);
+			await context.sendText(flow.notifications.on);
+			break;
+		case 'notificationOff':
+			await MaAPI.updateBlacklistMA(context.session.user.id, 0);
+			await MaAPI.logNotification(context.session.user.id, context.state.politicianData.user_id, 4);
+			await context.sendText(flow.notifications.off);
+			break;
 		} // end switch case
 	} catch (error) {
 		await context.sendText('Ops. Tive um erro interno. Tente novamente.'); // warning user
