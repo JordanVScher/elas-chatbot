@@ -35,7 +35,6 @@ module.exports.handleCPF = async (context) => {
 	}
 };
 
-
 module.exports.getAgenda = async (context) => {
 	const result = {};
 	const spreadsheet = await help.reloadSpreadSheet(1, 6);

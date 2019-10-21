@@ -1,5 +1,4 @@
 const Sentry = require('@sentry/node');
-const dialogFlow = require('apiai-promise');
 const gsjson = require('google-spreadsheet-to-json');
 const accents = require('remove-accents');
 const moment = require('moment');
@@ -113,7 +112,7 @@ async function formatDiasMod(date, days) {
 
 
 // # Google Spreadsheet
-const privateKey = require('../../private_key.json');
+const privateKey = require(`../../${process.env.GOOGLE_APPLICATION_CREDENTIALS}`); // eslint-disable-line
 
 async function reloadSpreadSheet(worksheet, headerStart) {
 	const results = await gsjson({
@@ -134,7 +133,6 @@ async function reloadSpreadSheet(worksheet, headerStart) {
 
 	return results;
 }
-
 
 // format excel dates to regular dates
 async function getFormatedSpreadsheet() {
@@ -226,7 +224,6 @@ function sentryError(msg, err) {
 
 
 module.exports = {
-	apiai: dialogFlow(process.env.DIALOGFLOW_TOKEN),
 	Sentry,
 	separateString,
 	moment,

@@ -2,8 +2,7 @@ const MaAPI = require('./chatbot_api');
 // const opt = require('./utils/options');
 const db = require('./utils/DB_helper');
 const { createIssue } = require('./utils/send_issue');
-const { checkPosition } = require('./utils/dialogFlow');
-const { apiai } = require('./utils/helper');
+const DF = require('./utils/dialogFlow');
 const dialogs = require('./utils/dialogs');
 const attach = require('./utils/attach');
 const flow = require('./utils/flow');
@@ -46,7 +45,7 @@ module.exports = async (context) => {
 			if (context.state.lastQRpayload.slice(0, 4) === 'poll') { // user answered poll that came from timer
 				await context.setState({ answer: context.event.message.quick_reply.payload.replace('poll', '') });
 				await MaAPI.postPollAnswer(context.session.user.id, context.state.answer, 'dialog');
-				await MaAPI.logAnsweredPoll(context.session.user.id, context.state.politicianData.user_id, context.state.answer);
+				await MaAPI.logAnsweredPoll(context.session.user.id, context.state.chatbotData.user_id, context.state.answer);
 				await context.sendText('Agradecemos sua resposta.');
 				await context.setState({ answer: '', dialog: 'mainMenu' });
 			} else {
@@ -94,17 +93,7 @@ module.exports = async (context) => {
 			} else if (context.state.dialog === 'mudarAskTurma') {
 				await dialogs.mudarAskTurma(context);
 			} else {
-				console.log('--------------------------');
-				console.log(`${context.session.user.first_name} ${context.session.user.last_name} digitou ${context.event.message.text}`);
-				console.log('Usa dialogflow?', context.state.chatbotData.use_dialogflow);
-				if (context.state.chatbotData.use_dialogflow === 1) { // check if chatbot is using dialogFlow
-					await context.setState({ apiaiResp: await apiai.textRequest(await help.formatDialogFlow(context.state.whatWasTyped), { sessionId: context.session.user.id }) });
-					// await context.setState({ resultParameters: context.state.apiaiResp.result.parameters }); // getting the entities
-					await context.setState({ intentName: context.state.apiaiResp.result.metadata.intentName }); // getting the intent
-					await checkPosition(context);
-				} else { // not using dialogFlow
-					await context.setState({ dialog: 'createIssueDirect' });
-				}
+				await DF.dialogFlow(context);
 			}
 		} else if (context.event.isFile && context.event.file && context.event.file.url) {
 			await dialogs.checkReceivedFile(context);
@@ -260,12 +249,12 @@ module.exports = async (context) => {
 			break;
 		case 'notificationOn':
 			await MaAPI.updateBlacklistMA(context.session.user.id, 1);
-			await MaAPI.logNotification(context.session.user.id, context.state.politicianData.user_id, 3);
+			await MaAPI.logNotification(context.session.user.id, context.state.chatbotData.user_id, 3);
 			await context.sendText(flow.notifications.on);
 			break;
 		case 'notificationOff':
 			await MaAPI.updateBlacklistMA(context.session.user.id, 0);
-			await MaAPI.logNotification(context.session.user.id, context.state.politicianData.user_id, 4);
+			await MaAPI.logNotification(context.session.user.id, context.state.chatbotData.user_id, 4);
 			await context.sendText(flow.notifications.off);
 			break;
 		} // end switch case
