@@ -222,6 +222,32 @@ function sentryError(msg, err) {
 	return false;
 }
 
+const indicacaoErro = {
+	1: 'Indicado foi cadastrado sem um e-mail',
+	2: 'Indicado foi cadastrado com o mesmo e-mail da aluna',
+	3: 'Familiar foi cadastrado sem um e-mail',
+	4: 'Familiar foi cadastrado com o mesmo e-mail da aluna',
+};
+
+async function getIndicacaoErrorText(errors, aluna) {
+	let text = `Novos alertas com as indicações da aluna ${aluna.nome}:`;
+
+	errors.forEach((e, i) => {
+		text += `\n\nAlerta ${i + 1} - ${indicacaoErro[e.id]}:`;
+		if (e.indicado.nome) text += `\nNome: ${e.indicado.nome}`;
+		if (e.indicado.relacao) text += `\nRelação: ${e.indicado.relacao}`;
+		if (e.indicado.email) text += `\nE-mail: ${e.indicado.email}`;
+		if (e.indicado.tele) text += `\nTelefone: ${e.indicado.tele}`;
+	});
+
+	text += '\n\nDados da aluna:';
+	if (aluna.nome) text += `\nNome: ${aluna.nome}`;
+	if (aluna.turma) text += `\nTurma: ${aluna.turma}`;
+	if (aluna.cpf) text += `\nCPF: ${aluna.cpf}`;
+	if (aluna.email) text += `\nE-mail: ${aluna.email}`;
+
+	return text;
+}
 
 module.exports = {
 	Sentry,
@@ -248,4 +274,5 @@ module.exports = {
 	buildAlunaMsg,
 	sentryError,
 	findModuleToday,
+	getIndicacaoErrorText,
 };
