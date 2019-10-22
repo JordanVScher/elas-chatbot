@@ -149,7 +149,7 @@ it('checkShouldSendNotification - alunaNotificationBefore - dont send after modu
 it('checkShouldSendNotification - alunaNotificationAfter - dont send before sendDate', async () => {
 	const notification = data.alunaNotificationAfter;
 	const { moduleDates } = data;
-	const today = new Date('2019-01-09T12:30:00.000Z');
+	const today = new Date('2019-01-06T12:30:00.000Z');
 
 	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
 	await expect(result).toBeFalsy();
