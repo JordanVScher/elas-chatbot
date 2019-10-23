@@ -10,7 +10,7 @@ const broadcast = require('../broadcast');
 const pesquisa = require('../../server/models').aluno_pesquisa;
 const { alunos } = require('../../server/models');
 
-const broadcastStep = process.env.PESQUISA_MONTHS || 6;
+const broadcastStep = process.env.PESQUISA_MONTHS;
 
 const pesquisaLinks = {
 	1: 'foobar1',

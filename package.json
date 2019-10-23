@@ -47,6 +47,7 @@
     "sequelize": "^6.0.0",
     "sequelize-cli": "^5.4.0",
     "survey-monkey-streams": "^1.0.1",
+    "tinyurl": "^1.1.4",
     "util": "^0.12.0",
     "util.promisify": "^1.0.0",
     "xml2js": "^0.4.19"

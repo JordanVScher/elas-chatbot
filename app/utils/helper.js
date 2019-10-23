@@ -3,6 +3,7 @@ const gsjson = require('google-spreadsheet-to-json');
 const accents = require('remove-accents');
 const moment = require('moment');
 const pdf = require('html-pdf');
+const TinyURL = require('tinyurl');
 
 moment.locale('pt-BR');
 // Sentry - error reporting
@@ -249,6 +250,7 @@ async function getIndicacaoErrorText(errors, aluna) {
 	return text;
 }
 
+
 module.exports = {
 	Sentry,
 	separateString,
@@ -275,4 +277,5 @@ module.exports = {
 	sentryError,
 	findModuleToday,
 	getIndicacaoErrorText,
+	tinyUrl: TinyURL.shorten,
 };
