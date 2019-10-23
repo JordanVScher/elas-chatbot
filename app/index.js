@@ -9,6 +9,7 @@ const pgAPI = require('./pg_api');
 const { sendNotificationCron } = require('./utils/notificationSendQueue');
 const { sendMissingWarningCron } = require('./utils/admin_menu/warn_admin');
 const { updateTurmasCron } = require('./utils/turma');
+const { addPesquisasCron } = require('./utils/pesquisa/add_aluno_pesquisa');
 const { associatesLabelToUser } = require('./utils/postback');
 
 const config = require('./bottender.config.js').messenger;
@@ -108,4 +109,5 @@ server.listen(process.env.API_PORT, () => {
 	console.log(`Crontab sendNotificationCron is running? => ${sendNotificationCron.running}`);
 	console.log(`Crontab updateTurmasCron is running? => ${updateTurmasCron.running}`);
 	console.log(`Crontab sendMissingWarningCron is running? => ${sendMissingWarningCron.running}`);
+	console.log(`Crontab addPesquisasCron is running? => ${addPesquisasCron.running}`);
 });
