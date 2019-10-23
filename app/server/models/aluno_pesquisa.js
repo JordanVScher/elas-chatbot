@@ -7,6 +7,7 @@ module.exports = (sequelize, DataTypes) => {
 			msgsEnviadas: { type: DataTypes.INTEGER, field: 'msgs_enviadas' },
 			createdAt: { type: DataTypes.DATE, field: 'created_at' },
 			updatedAt: { type: DataTypes.DATE, field: 'updated_at' },
+			error: { type: DataTypes.JSON, field: 'error' },
 		},
 		{
 			freezeTableName: true,

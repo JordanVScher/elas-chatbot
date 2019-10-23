@@ -28,7 +28,7 @@ async function addAlunosPesquisa() {
 }
 
 const addPesquisasCron = new CronJob(
-	'00 00 * * * *', async () => {
+	'00 00 00 * * *', async () => {
 		console.log('Running addPesquisasCron');
 		try {
 			await addAlunosPesquisa();

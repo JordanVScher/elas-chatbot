@@ -208,6 +208,9 @@ module.exports = {
 		mailSubject: 'Questionário não respondido',
 		mailText: 'Baixe o arquivo abaixo para visualizar quem não respondeu os questionários para a próxima aula',
 	},
+	pesquisa: {
+		textMsg: 'Olá, como você está? Responda: <LINK_PESQUISA>',
+	},
 	notifications: {
 		on: 'Legal! Estarei te interando das novidades! Se quiser parar de receber nossas novidades, clique na opção "Parar Notificações 🛑" no menu abaixo. ⬇️',
 		off: 'Você quem manda. Não estarei mais te enviando nenhuma notificação. Se quiser voltar a receber nossas novidades, clique na opção "Ligar Notificações 👌" no menu abaixo. ⬇️',
