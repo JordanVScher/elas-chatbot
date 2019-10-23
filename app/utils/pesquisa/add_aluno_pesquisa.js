@@ -6,7 +6,7 @@ const { turma } = require('../../server/models');
 const pesquisa = require('../../server/models').aluno_pesquisa;
 const { sentryError } = require('../helper');
 
-const limitMonths = 6;
+const limitMonths = process.env.PESQUISA_MONTHS;
 
 // after the third module has passed (and before the first broadcast), add the alunos of the turma
 async function addAlunosPesquisa() {
