@@ -1,7 +1,7 @@
 // pesquisa: for alunos in pesquisa, send message with links every PESQUISA_MONTHS months
 // everytime a pesquisa_broadcast is sent, the next date will be updated thanks to the increment on msgsEnviadas
 const { CronJob } = require('cron');
-const { Op } = require('sequelize');
+// const { Op } = require('sequelize');
 const { readFileSync } = require('fs');
 const help = require('../helper');
 const flow = require('../flow');
@@ -9,30 +9,27 @@ const mailer = require('../mailer');
 const broadcast = require('../broadcast');
 const pesquisa = require('../../server/models').aluno_pesquisa;
 const { alunos } = require('../../server/models');
+const pData = require('./pesquisa_data');
 
 const broadcastStep = process.env.PESQUISA_MONTHS;
-
-const pesquisaLinks = {
-	1: 'foobar1',
-	2: 'foobar2',
-	3: 'foobar3',
-	4: 'foobar4',
-};
 
 /**
  * calculates the next date and checks if today is a valid day to send the next pesquisa broadcast
  * @param {string} today - today's date
- * @param {string} aluno - aluno_pesquisa row
+ * @param {string} pAluno - aluno_pesquisa row
  * @return {boolean} valid pesquisa to send or not
  */
-async function checkSendPesquisa(today, aluno) {
-	const nextMessage = aluno.msgsEnviadas + 1; // number of PESQUISA_MONTHS steps to take after the dataInicial
-	const dateToSend = aluno.dataInicial;
+async function checkSendPesquisa(today, pAluno) {
+	const nextMessage = pAluno.msgsEnviadas + 1; // number of PESQUISA_MONTHS steps to take after the dataInicial
+	const dateToSend = pAluno.dataInicial;
 	dateToSend.setMonth(dateToSend.getMonth() + (broadcastStep * nextMessage)); // next date
 
 	const todayMoment = help.moment(today);
 	const dateToSendMoment = help.moment(dateToSend);
 
+	// if msgsEnviadas is the same length as the amount of links we have actually sent, there's no more more links to send
+	const linksSent = Object.values(pAluno.linksEnviados);
+	if (pAluno.msgsEnviadas >= linksSent.length) return false;
 	if (todayMoment.diff(dateToSendMoment, 'days') >= 0) return true; // if today happens at or after the next date
 	return false;
 }
@@ -44,10 +41,10 @@ async function checkSendPesquisa(today, aluno) {
 async function getAlunosToSend() {
 	const alunosToSend = [];
 	const today = new Date();
-	const alunosMightSend = await pesquisa.findAll({ where: { msgsEnviadas: { [Op.lte]: Object.keys(pesquisaLinks).length } }, raw: true }).then(res => res).catch(err => help.sentryError('Erro em getAlunosToSend.findAll', err));
+	const alunosMightSend = await pesquisa.findAll({ where: {}, raw: true }).then(res => res).catch(err => help.sentryError('Erro em getAlunosToSend.findAll', err));
 
 	alunosMightSend.forEach((aluno) => {
-		if (checkSendPesquisa(today, aluno) !== true) {
+		if (checkSendPesquisa(today, aluno) === true) { // !== for easy testing
 			alunosToSend.push(aluno);
 		}
 	});
@@ -66,7 +63,11 @@ async function prepareAlunosToSend(alunosToSend) {
 		const e = alunosToSend[i];
 		const aluno = await alunos.findByPk(e.alunoID, { raw: true, include: ['chatbot'] }).then(res => res).catch(err => help.sentryError('Erro em prepareAlunosToSend.findOne', err));
 		aluno.newMessage = e.msgsEnviadas + 1; // the new number to update on msgsEnviadas
-		aluno.text = flow.pesquisa.textMsg.replace('<LINK_PESQUISA>', pesquisaLinks[aluno.newMessage]); // the text to be sent
+		aluno.text = flow.pesquisa.textMsg.replace('<LINK_PESQUISA>', pData.pesquisaLinksObj[aluno.newMessage]); // the text to be sent
+		console.log('e.linksEnviados', e.linksEnviados);
+		aluno.links = await pData.updateLinksObj(e.linksEnviados, pData.pesquisaLinksObj[aluno.newMessage]);
+		console.log('aluno.links', aluno.links);
+
 		result.push(aluno);
 	}
 	return result;
@@ -104,8 +105,9 @@ async function broadcastPesquisa(toSend) {
 async function updatePesquisa(sent) { // eslint-disable-line
 	for (let i = 0; i < sent.length; i++) {
 		const e = sent[i];
-		const toUpdate = { msgsEnviadas: e.newMessage, error: e.error };
+		const toUpdate = { msgsEnviadas: e.newMessage, error: e.error, linksEnviados: e.links };
 		if (e.error && e.error.mail && e.error.chatbot) delete toUpdate.msgsEnviadas;
+
 		await pesquisa.update(toUpdate, { where: { alunoID: e.id } })
 			.then(rowsUpdated => rowsUpdated).catch(err => help.sentryError('Erro no updatePesquisa2', err));
 	}
