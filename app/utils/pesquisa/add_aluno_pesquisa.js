@@ -12,12 +12,9 @@ const pData = require('./pesquisa_data');
 async function addAlunosPesquisa() {
 	const today = new Date();
 	const limitDate = new Date();
-	console.log(limitDate);
-
 	limitDate.setMonth(limitDate.getMonth() + pData.limitMonths);
 	// get turmas that end between today and the first broadcast
 	const turmas = await turma.findAll({ where: { modulo3: { [Op.gte]: today, [Op.lte]: limitDate } }, raw: true });
-	console.log(turmas);
 	if (turmas && turmas.length > 0) {
 		for (let i = 0; i < turmas.length; i++) {
 			const t = turmas[i];
