@@ -14,55 +14,53 @@ const { getModuloDates } = require('./DB_helper');
 const { getTurmaName } = require('./DB_helper');
 const rules = require('./notificationRules');
 
+async function replaceCustomParameters(original, recipient) {
+	const alunaTurma = recipient.turmaName ? recipient.turmaName : await getTurmaName(recipient.turma_id);
+	const alunaCPF = recipient.cpf;
+	const indicadoID = recipient.id && recipient.aluno_id ? recipient.id : 0;
+	const customParamRules = [
+		{ query: 'turma=', param: 'TURMARESPOSTA', data: alunaTurma },
+		{ query: 'cpf=', param: 'CPFRESPOSTA', data: alunaCPF },
+		{ query: 'indicaid=', param: 'IDRESPOSTA', data: indicadoID },
+	];
+	let url = original;
+
+	customParamRules.forEach((e) => {
+		if (url.includes(`${e.query}${e.param}`)) {
+			if (e.data && e.data.toString().length > 0) {
+				url = url.replace(new RegExp(e.param, 'g'), e.data);
+			} else {
+				url = url.replace(e.query + e.param, '');
+			}
+		}
+	});
+
+	// if url has only one param, remove & from query string
+	if (url.match(/=/g).length === 1) url.replace('&', '');
+
+	url = await help.getTinyUrl(url);
+
+	return url;
+}
+
+
 // uses each key in data to replace globally keywords/mask on the text with the correct data
-async function replaceDataText(original, data) {
+async function replaceDataText(original, data, recipient) {
 	let text = original;
 	Object.keys(data).forEach(async (element) => {
-		if (data[element] && data[element].length > 0) {
+		let replace = data[element];
+		if (replace && replace.length > 0) {
 			const regex = new RegExp(`\\[${element}\\]`, 'g');
-			text = text.replace(regex, data[element]);
+			if (replace.includes('surveymonkey')) {
+				replace = await replaceCustomParameters(replace, recipient);
+			}
+			text = text.replace(regex, replace);
 		}
 	});
 
 	return text;
 }
 
-async function replaceCustomParameters(original, recipient) {
-	const alunaTurma = recipient.turmaName ? recipient.turmaName : await getTurmaName(recipient.turma_id);
-	const alunaCPF = recipient.cpf;
-	const indicadoID = recipient.id && recipient.aluno_id ? recipient.id : 0;
-	let text = original;
-
-	if (text.includes('turma=TURMARESPOSTA')) {
-		if (alunaTurma && alunaTurma.toString().length > 0) {
-			text = text.replace(/TURMARESPOSTA/g, alunaTurma);
-		} else {
-			text = text.replace('turma=TURMARESPOSTA', '');
-		}
-	}
-
-	if (text.includes('cpf=CPFRESPOSTA')) {
-		if (alunaCPF && alunaCPF.toString().length > 0) {
-			text = text.replace(/CPFRESPOSTA/g, alunaCPF);
-		} else {
-			text = text.replace('cpf=CPFRESPOSTA', '');
-		}
-	}
-
-	if (text.includes('indicaid=IDRESPOSTA')) {
-		if (indicadoID && indicadoID.toString().length > 0) {
-			text = text.replace(/IDRESPOSTA/g, indicadoID);
-		} else {
-			text = text.replace('indicaid=IDRESPOSTA', '');
-		}
-	}
-
-	if ((text.includes('www') && text.match(/=/g)).length === 1) {
-		text.replace('&', '');
-	}
-
-	return text;
-}
 /*
 	fillMasks: checks which data is empty so that we can fill with dynamic data.
 	Used in the mail handlers below.
@@ -181,7 +179,7 @@ async function replaceParameters(texts, newMap, recipient) {
 	for (let i = 0; i < objKeys.length; i++) { // replace the content in every kind of text we may have, e-mail subject or body, chatbot text, etc
 		const element = objKeys[i];
 		if (newTexts[element] && typeof newTexts[element] === 'string') {
-			newTexts[element] = await replaceCustomParameters(await replaceDataText(newTexts[element], newMap), recipient);
+			newTexts[element] = await replaceDataText(newTexts[element], newMap, recipient);
 		}
 	}
 	return newTexts || {};
@@ -335,7 +333,7 @@ async function sendNotificationFromQueue() {
 	for (let i = 0; i < queue.length; i++) {
 		const notification = queue[i];
 
-		if (await checkShouldSendNotification(notification, moduleDates, today) === true) {
+		if (await checkShouldSendNotification(notification, moduleDates, today) === true) { // !== for easy testing
 			let recipient;
 			if (notification.aluno_id && !notification.indicado_id) { // if notification doesnt have indicado_id it's just an aluno notification
 				recipient = await getAluna(notification.aluno_id, moduleDates);
