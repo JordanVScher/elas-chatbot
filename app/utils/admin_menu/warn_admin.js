@@ -49,7 +49,7 @@ async function getValidModulos(warnDaysBefore = 2) {
 				aux.setHours(0, 0, 0, 0);
 				const b = help.moment(aux);
 				const diff = a.diff(b, 'days');
-				if (diff === warnDaysBefore) {
+				if (diff === warnDaysBefore) { // !== for easy testing
 					result.push({
 						turmaID: turma.id,
 						moduloN,
@@ -74,7 +74,7 @@ async function getMissingAnswers(users, moduloN) {
 			const currentRule = user.indicado_id ? rule.indicado : rule.aluno;
 			if (key.includes('atividade')) { // we care only for "atividade_*"
 				// if that atividade is on the modulo's rule and it's empty we add it to the "missing" key
-				if (currentRule.includes(key)) {
+				if (currentRule && currentRule.includes(key)) {
 					if (user[key]) {
 						user[key] = 'Respondido';
 					} else {
@@ -116,7 +116,10 @@ async function GetWarningData(modulos) {
 		const indicados = await db.getIndicadoRespostasWarning(modulo.turmaID);
 		const users = alunos.concat(indicados);
 		const aux = await getMissingAnswers(users, modulo.moduloN);
-		if (aux && aux.length > 0) missingAnswers = [...missingAnswers, ...aux];
+
+		if (aux && aux.length > 0) {
+			missingAnswers = [...missingAnswers, ...aux];
+		}
 	}
 
 	return formatDataToCSV(missingAnswers, columnCSV);
