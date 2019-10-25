@@ -93,4 +93,17 @@ module.exports = {
 		local: 'Vila do Teste',
 		moduloAvisar: 3,
 	},
+
+	pesquisaAluno: {
+		id: 1,
+		alunoID: 1,
+		dataInicial: '2019-01-10T10:00:00.000Z',
+		msgsEnviadas: 0,
+		createdAt: '2019-10-24T16:07:06.206Z',
+		updatedAt: '2019-10-24T16:10:06.109Z',
+		error: { chatbot: '\nCoundnt send ,msg', eMail: '\nCoundnt send mail' },
+		linksEnviados: {
+			1: '', 2: '', 3: '', 4: '',
+		},
+	},
 };

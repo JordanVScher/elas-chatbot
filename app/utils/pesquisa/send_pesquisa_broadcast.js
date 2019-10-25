@@ -21,13 +21,13 @@ const broadcastStep = process.env.PESQUISA_MONTHS;
  */
 async function checkSendPesquisa(today, pAluno) {
 	const nextMessage = pAluno.msgsEnviadas + 1; // number of PESQUISA_MONTHS steps to take after the dataInicial
-	const dateToSend = pAluno.dataInicial;
+	const dateToSend = new Date(pAluno.dataInicial);
 	dateToSend.setMonth(dateToSend.getMonth() + (broadcastStep * nextMessage)); // next date
-
 	const todayMoment = help.moment(today);
 	const dateToSendMoment = help.moment(dateToSend);
 
 	// if msgsEnviadas is the same length as the amount of links we have actually sent, there's no more more links to send
+
 	const linksSent = Object.values(pAluno.linksEnviados);
 	if (pAluno.msgsEnviadas >= linksSent.length) return false;
 	if (todayMoment.diff(dateToSendMoment, 'days') >= 0) return true; // if today happens at or after the next date
@@ -138,5 +138,5 @@ const sendPesquisasCron = new CronJob(
 );
 
 module.exports = {
-	sendPesquisasCron,
+	sendPesquisasCron, checkSendPesquisa,
 };
