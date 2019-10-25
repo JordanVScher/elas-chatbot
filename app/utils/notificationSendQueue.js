@@ -47,7 +47,8 @@ async function replaceCustomParameters(original, recipient) {
 // uses each key in data to replace globally keywords/mask on the text with the correct data
 async function replaceDataText(original, data, recipient) {
 	let text = original;
-	Object.keys(data).forEach(async (element) => {
+	for (let i = 0; i < Object.keys(data).length; i++) {
+		const element = Object.keys(data)[i];
 		let replace = data[element];
 		if (replace && replace.length > 0) {
 			const regex = new RegExp(`\\[${element}\\]`, 'g');
@@ -56,7 +57,7 @@ async function replaceDataText(original, data, recipient) {
 			}
 			text = text.replace(regex, replace);
 		}
-	});
+	}
 
 	return text;
 }
@@ -165,7 +166,7 @@ async function getAluna(id, moduleDates) {
 		.then(res => res).catch(err => sentryError('Erro ao carregar aluno', err));
 
 	if (result && (result.email || result['chatbot.fb_id'])) {
-		if (result.turma) { result.turmaName = await getTurmaName(result.turma); }
+		if (result.turma_id) { result.turmaName = await getTurmaName(result.turma_id); }
 		return extendRecipient(result, moduleDates, result.turma_id);
 	}
 
@@ -326,6 +327,7 @@ async function sendNotificationFromQueue() {
 
 	const queue = await notificationQueue.findAll({ where: { sent_at: null, error: null }, raw: true })
 		.then(res => res).catch(err => sentryError('Erro ao carregar notification_queue', err));
+
 
 	const types = await notificationTypes.findAll({ where: {}, raw: true })
 		.then(res => res).catch(err => sentryError('Erro ao carregar notification_types', err));
