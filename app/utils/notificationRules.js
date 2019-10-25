@@ -1,3 +1,5 @@
+const { getTinyUrl } = require('./helper');
+
 const notificationRules = [
 	{ notification_type: 1, modulo: 1, timeChange: [{ qtd: -19, type: 'days' }] },
 	{ notification_type: 2, modulo: 1, timeChange: [{ qtd: -19, type: 'days' }] },
@@ -49,6 +51,64 @@ async function getSendDate(ourTurma, currentRule) {
 	return false;
 }
 
+async function buildParametersRules() {
+	return {
+		1: {
+			GRUPOWHATS: await getTinyUrl(process.env.GRUPOWHATSAP),
+			LINKDONNA: await getTinyUrl(process.env.LINK_DONNA),
+			MODULO1: '',
+			LOCAL: '',
+			FDSMOD1: '',
+			FDSMOD2: '',
+			FDSMOD3: '',
+		},
+		2: {
+			SONDAGEMPRE: process.env.SONDAGEM_PRE_LINK,
+			INDICACAO360: process.env.INDICACAO360_LINK,
+			DISC_LINK: await getTinyUrl(process.env.DISC_LINK1),
+			LINKDONNA: await getTinyUrl(process.env.LINK_DONNA),
+			TURMA: '',
+			MOD1_15DIAS: '',
+			MOD1_2DIAS: '',
+		},
+		3: { AVALIADORPRE: process.env.AVALIADOR360PRE_LINK, MOD1_2DIAS: '' },
+		4: { AVALIADORPRE: process.env.AVALIADOR360PRE_LINK, MOD1_2DIAS: '' },
+		5: { AVALIACAO1: process.env.MODULO1_LINK },
+		6: { LINKDONNA: await getTinyUrl(process.env.LINK_DONNA) },
+		7: {
+			EMAILMENTORIA: process.env.EMAILMENTORIA,
+			MOD3_LASTDAY: '',
+			MOD3_2DIAS: '',
+		},
+		8: { AVALIACAO2: process.env.MODULO2_LINK },
+		9: {
+			SONDAGEMPOS: process.env.SONDAGEM_POS_LINK,
+			DISC_LINK: await getTinyUrl(process.env.DISC_LINK2),
+			TURMA: '',
+			MOD3_7DIAS: '',
+		},
+		10: {
+			AVALIADORPOS: process.env.AVALIADOR360POS_LINK,
+			MOD3_7DIAS: '',
+		},
+		11: {
+			MOD3_7DIAS: '',
+			AVALIADORPOS: process.env.AVALIADOR360POS_LINK,
+			MOD3_LASTDAY: '',
+		},
+		12: {
+			NUMBERWHATSAP: process.env.NUMBERWHATSAP,
+			MOD3_LASTDAY: '',
+		},
+		13: { AVALIACAO3: process.env.MODULO3_LINK },
+		14: { AVALIACAO3: process.env.MODULO3_LINK },
+		15: {
+			MODULOAVISAR: '', LOCAL: '', DATAHORA: '', ATIVIDADESCOMPLETAS: '',
+		},
+		16: {},
+	};
+}
+
 module.exports = {
-	getSendDate, notificationRules,
+	getSendDate, notificationRules, buildParametersRules,
 };

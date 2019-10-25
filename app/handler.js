@@ -187,7 +187,7 @@ module.exports = async (context) => {
 			await context.sendText(flow.mail6pt2.text1, await attach.getQR(flow.mail6pt2));
 			break;
 		case 'mail6pt3':
-			await context.sendText(flow.mail6pt3.text1.replace('<LINK_ANEXO>', process.env.ANEXO_MAIL06), await attach.getQR(flow.mail6pt3));
+			await context.sendText(flow.mail6pt3.text1.replace('<LINK_ANEXO>', await help.getTinyUrl(process.env.ANEXO_MAIL06)), await attach.getQR(flow.mail6pt3));
 			break;
 		case 'fim':
 			await context.sendText('fim');
@@ -201,7 +201,7 @@ module.exports = async (context) => {
 			break;
 		case 'inserirAlunas':
 			await context.sendText(flow.adminMenu.inserirAlunas.txt1);
-			await context.sendText(process.env.CSV_ALUNA_EXAMPLE_LINK);
+			await context.sendText(await help.getTinyUrl(process.env.CSV_ALUNA_EXAMPLE_LINK));
 			await context.sendText(flow.adminMenu.inserirAlunas.txt2, await attach.getQR(flow.adminMenu.inserirAlunas));
 			break;
 		case 'createAlunos': {
@@ -216,7 +216,7 @@ module.exports = async (context) => {
 			break;
 		case 'inserirAvaliadores':
 			await context.sendText(flow.adminMenu.inserirAvaliadores.txt1);
-			await context.sendText(process.env.CSV_AVALI_EXAMPLE_LINK);
+			await context.sendText(await help.getTinyUrl(process.env.CSV_AVALI_EXAMPLE_LINK));
 			await context.sendText(flow.adminMenu.inserirAvaliadores.txt2, await attach.getQR(flow.adminMenu.inserirAvaliadores));
 			break;
 		case 'createAvaliadores': {

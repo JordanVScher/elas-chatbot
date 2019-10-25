@@ -14,62 +14,6 @@ const { getModuloDates } = require('./DB_helper');
 const { getTurmaName } = require('./DB_helper');
 const rules = require('./notificationRules');
 
-const parametersRules = {
-	1: {
-		GRUPOWHATS: process.env.GRUPOWHATSAP,
-		LINKDONNA: process.env.LINK_DONNA,
-		MODULO1: '',
-		LOCAL: '',
-		FDSMOD1: '',
-		FDSMOD2: '',
-		FDSMOD3: '',
-	},
-	2: {
-		SONDAGEMPRE: process.env.SONDAGEM_PRE_LINK,
-		INDICACAO360: process.env.INDICACAO360_LINK,
-		DISC_LINK: process.env.DISC_LINK1,
-		LINKDONNA: process.env.LINK_DONNA,
-		TURMA: '',
-		MOD1_15DIAS: '',
-		MOD1_2DIAS: '',
-	},
-	3: { AVALIADORPRE: process.env.AVALIADOR360PRE_LINK, MOD1_2DIAS: '' },
-	4: { AVALIADORPRE: process.env.AVALIADOR360PRE_LINK, MOD1_2DIAS: '' },
-	5: { AVALIACAO1: process.env.MODULO1_LINK },
-	6: { LINKDONNA: process.env.LINK_DONNA },
-	7: {
-		EMAILMENTORIA: process.env.EMAILMENTORIA,
-		MOD3_LASTDAY: '',
-		MOD3_2DIAS: '',
-	},
-	8: { AVALIACAO2: process.env.MODULO2_LINK },
-	9: {
-		SONDAGEMPOS: process.env.SONDAGEM_POS_LINK,
-		DISC_LINK: process.env.DISC_LINK2,
-		TURMA: '',
-		MOD3_7DIAS: '',
-	},
-	10: {
-		AVALIADORPOS: process.env.AVALIADOR360POS_LINK,
-		MOD3_7DIAS: '',
-	},
-	11: {
-		MOD3_7DIAS: '',
-		AVALIADORPOS: process.env.AVALIADOR360POS_LINK,
-		MOD3_LASTDAY: '',
-	},
-	12: {
-		NUMBERWHATSAP: process.env.NUMBERWHATSAP,
-		MOD3_LASTDAY: '',
-	},
-	13: { AVALIACAO3: process.env.MODULO3_LINK },
-	14: { AVALIACAO3: process.env.MODULO3_LINK },
-	15: {
-		MODULOAVISAR: '', LOCAL: '', DATAHORA: '', ATIVIDADESCOMPLETAS: '',
-	},
-	16: {},
-};
-
 // uses each key in data to replace globally keywords/mask on the text with the correct data
 async function replaceDataText(original, data) {
 	let text = original;
@@ -378,6 +322,7 @@ async function buildAttachment(type, cpf) {
 }
 
 async function sendNotificationFromQueue() {
+	const parametersRules = await rules.buildParametersRules();
 	const moduleDates = await getModuloDates();
 	const today = new Date();
 
@@ -431,10 +376,9 @@ async function sendNotificationFromQueue() {
 }
 
 const sendNotificationCron = new CronJob(
-	'00 * 8-22/1 * * *', async () => {
-	// '00 00 8-22/1 * * *', async () => {
-		// console.log('Running sendNotificationCron');
-		// await sendNotificationFromQueue();
+	'00 00 8-22/1 * * *', async () => {
+		console.log('Running sendNotificationCron');
+		await sendNotificationFromQueue();
 	}, (() => {
 		console.log('Crontab sendNotificationCron stopped.');
 	}),
@@ -453,7 +397,6 @@ module.exports = {
 	getAluna,
 	getIndicado,
 	replaceParameters,
-	parametersRules,
 	buildAttachment,
 	fillMasks,
 };

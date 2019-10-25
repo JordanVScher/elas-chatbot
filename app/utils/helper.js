@@ -277,5 +277,5 @@ module.exports = {
 	sentryError,
 	findModuleToday,
 	getIndicacaoErrorText,
-	tinyUrl: TinyURL.shorten,
+	getTinyUrl: TinyURL.shorten,
 };
