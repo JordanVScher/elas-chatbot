@@ -175,9 +175,9 @@ module.exports = async (context) => {
 			await timers.createFalarDonnaTimer(context.session.user.id, context);
 			break;
 		case 'Atividade2':
-			await context.setState({ spreadsheet: await help.getFormatedSpreadsheet() });
-			await context.setState({ ourTurma: await context.state.spreadsheet.find(x => x.turma === context.state.gotAluna.turma) });
-			await context.setState({ mod1Date: context.state.ourTurma['módulo1'] });
+			await context.setState({ gotAluna: await db.getAlunaFromFBID(context.session.user.id) });
+			await context.setState({ ourTurma: await db.getTurmaFromID(context.state.gotAluna.turma_id) });
+			await context.setState({ mod1Date: context.state.ourTurma.horario_modulo1 });
 			await context.sendText(flow.Atividade2.text1.replace('[MOD1_15DIAS]', await help.formatDiasMod(context.state.mod1Date, -15)));
 			await attach.sendAtividade2Cards(context, flow.Atividade2.cards, context.state.cpf);
 			await context.sendText(flow.Atividade2.text2.replace('[MOD1_2DIAS]', await help.formatDiasMod(context.state.mod1Date, -2)), await attach.getQR(flow.Atividade2));

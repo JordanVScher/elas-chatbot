@@ -11,6 +11,18 @@ if (process.env.TEST !== 'true') {
 	});
 }
 
+async function getTurmaFromID(turmaID) {
+	const id = await sequelize.query(`
+	SELECT * FROM turma where id = '${turmaID}';
+	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
+		console.log('Got turma!');
+		return results && results[0] ? results[0] : false;
+	}).catch((err) => { sentryError('Erro em getTurmaFromID =>', err); });
+
+	return id;
+}
+
+
 async function getTurmaID(turmaName) {
 	const id = await sequelize.query(`
 	SELECT id FROM turma where nome = '${turmaName}';
@@ -568,4 +580,5 @@ module.exports = {
 	getAlunaRespostasWarning,
 	getIndicadoRespostasWarning,
 	getChatbotUser,
+	getTurmaFromID,
 };
