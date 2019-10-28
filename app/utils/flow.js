@@ -206,7 +206,7 @@ module.exports = {
 	},
 	missingAnswersWarning: {
 		mailSubject: 'Questionário não respondido',
-		mailText: 'Baixe o arquivo abaixo para visualizar quem não respondeu os questionários para a próxima aula',
+		mailText: 'Baixe o arquivo acima para visualizar quem não respondeu os questionários para a próxima aula',
 	},
 	pesquisa: {
 		textMsg: 'Olá, como você está? Responda: <LINK_PESQUISA>',

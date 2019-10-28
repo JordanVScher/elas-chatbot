@@ -3,6 +3,9 @@ require('dotenv').config();
 const { MessengerClient } = require('messaging-api-messenger');
 const { createReadStream } = require('fs');
 const { missingAnswersWarning } = require('./flow');
+const chatbotUsers = require('../server/models').chatbot_users;
+const sentryError = require('./helper');
+
 
 const config = require('../bottender.config').messenger;
 
@@ -96,14 +99,22 @@ async function sendFiles(USER_ID, pdf, png) {
 
 
 async function sendWarning(csv) {
-	const target = { custom_label_id: process.env.ADMIN_LABEL_ID, messaging_type: 'UPDATE', tag: 'ACCOUNT_UPDATE' };
-	const uploadedFile = await client.uploadFile(csv.content, { is_reusable: true, filename: csv.filename });
-	console.log('uploadedFile', uploadedFile);
-	const messageTextID = await client.createMessageCreative([{ text: missingAnswersWarning.mailText }]);
-	const result = await client.sendBroadcastMessage(messageTextID.message_creative_id);
-	console.log('result', result);
-	const resulta = await client.sendBroadcastMessage(uploadedFile.message_creative_id, target);
-	console.log('resulta', resulta);
+	const quickReply = {
+		quick_replies: [{
+			content_type: 'text',
+			title: 'Voltar',
+			payload: 'mainMenu',
+		}],
+	};
+
+	const adminUsers = await chatbotUsers.findAll({ where: { is_admin: true }, raw: true }).then(res => res).catch(err => sentryError('Erro em sendWarning.findAll', err));
+	for (let i = 0; i < adminUsers.length; i++) {
+		const e = adminUsers[i];
+		let res = await client.sendFile(e.fb_id, csv.content, { is_reusable: true, filename: csv.filename }).then(resp => resp).catch((err) => { sentryError('Erro ao sendWarning.text', err); });
+		if (res && res.message_id) {
+			res = await client.sendText(e.fb_id, missingAnswersWarning.mailText, quickReply).then(resp => resp).catch((err) => { sentryError('Erro ao sendWarning.text', err); });
+		}
+	}
 }
 
 

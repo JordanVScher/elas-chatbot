@@ -137,8 +137,7 @@ async function sendCSV() {
 }
 
 const sendMissingWarningCron = new CronJob(
-	'00 */2 * * * *', async () => {
-	// '00 * 10 * * *', async () => {
+	'00 */30 8-22 * * *', async () => {
 		console.log('Running sendMissingWarningCron');
 		await sendCSV();
 	}, (() => {
