@@ -9,7 +9,10 @@ const addQueue = require('./notificationAddQueue');
 const { turma } = require('../server/models');
 
 const surveysInfo = require('./sm_surveys');
-const surveysMaps = require('./sm_maps');
+const { surveysMaps } = require('./sm_maps');
+
+console.log(surveysMaps);
+
 
 // after a payement happens we send an e-mail to the buyer with the matricula/atividade 1 form
 async function sendMatricula(productID, pagamentoID, buyerEmail) {
@@ -289,9 +292,9 @@ async function newSurveyResponse(event) {
 	case surveysInfo.atividade1.id:
 		await handleAtividadeOne(responses);
 		break;
-	case surveysInfo.atividade2.id:
-		await handleAtividade(responses, 'atividade_2');
-		break;
+	// case surveysInfo.atividade2.id:
+	// 	await handleAtividade(responses, 'atividade_2');
+	// 	break;
 	case surveysInfo.module1.id:
 		await handleAtividade(responses, 'atividade_modulo1');
 		break;
