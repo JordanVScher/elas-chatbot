@@ -11,7 +11,7 @@ const { sendMissingWarningCron } = require('./utils/admin_menu/warn_admin');
 const { updateTurmasCron } = require('./utils/turma');
 const { addPesquisasCron } = require('./utils/pesquisa/add_aluno_pesquisa');
 const { sendPesquisasCron } = require('./utils/pesquisa/send_pesquisa_broadcast');
-const { associatesLabelToUser } = require('./utils/postback');
+const requests = require('../requests');
 
 const config = require('./bottender.config.js').messenger;
 
@@ -92,14 +92,12 @@ server.post('/pagamento', async (req, res) => {
 	res.send();
 });
 
-server.post('/add-admin', async (req, res) => {
-	console.log('chegou no add-admin');
-	const { user } = req.body;
-	const { labelID } = req.body;
+server.post('/add-label', async (req, res) => {
+	await requests.addLabel(req, res);
+});
 
-	const response = await associatesLabelToUser(user, labelID);
-	res.status(200);
-	res.send(response);
+server.get('/name-id', async (req, res) => {
+	await requests.getNameFBID(req, res);
 });
 
 

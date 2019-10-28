@@ -11,6 +11,13 @@ if (process.env.TEST !== 'true') {
 	});
 }
 
+async function changeAdminStatus(fbID, status) {
+	const updatedUser = await sequelize.query(`
+		UPDATE chatbot_users SET is_admin = '${status}' WHERE fb_id = '${fbID}' RETURNING *;
+		`).spread(results => (results && results[0] ? results[0] : false)).catch((err) => { sentryError('Erro em update changeAdminStatus =>', err); });
+	return updatedUser;
+}
+
 async function getTurmaFromID(turmaID) {
 	const id = await sequelize.query(`
 	SELECT * FROM turma where id = '${turmaID}';
@@ -581,4 +588,5 @@ module.exports = {
 	getIndicadoRespostasWarning,
 	getChatbotUser,
 	getTurmaFromID,
+	changeAdminStatus,
 };
