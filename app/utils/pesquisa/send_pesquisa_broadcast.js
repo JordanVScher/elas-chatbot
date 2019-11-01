@@ -1,7 +1,5 @@
 // pesquisa: for alunos in pesquisa, send message with links every PESQUISA_MONTHS months
 // everytime a pesquisa_broadcast is sent, the next date will be updated thanks to the increment on msgsEnviadas
-const { CronJob } = require('cron');
-// const { Op } = require('sequelize');
 const { readFileSync } = require('fs');
 const help = require('../helper');
 const flow = require('../flow');
@@ -121,22 +119,7 @@ async function sendPesquisa() {
 	await updatePesquisa(alunosToSend);
 }
 
-const sendPesquisasCron = new CronJob(
-	'00 30 00 * * *', async () => {
-		console.log('Running sendPesquisasCron');
-		try {
-			await sendPesquisa();
-		} catch (error) {
-			await help.sentryError('Error on sendPesquisasCron', error);
-		}
-	}, (() => {
-		console.log('Crontab sendPesquisasCron stopped.');
-	}),
-	true, /* Starts the job right now (no need for MissionTimer.start()) */
-	'America/Sao_Paulo', false,
-	false, // runOnInit = true useful only for tests
-);
 
 module.exports = {
-	sendPesquisasCron, checkSendPesquisa,
+	checkSendPesquisa, sendPesquisa,
 };

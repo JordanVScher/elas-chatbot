@@ -1,5 +1,4 @@
 // pesquisa: after the last module, alunos become part of the "pesquisa"
-const { CronJob } = require('cron');
 const { Op } = require('sequelize');
 const { alunos } = require('../../server/models');
 const { turma } = require('../../server/models');
@@ -33,22 +32,6 @@ async function addAlunosPesquisa() {
 	}
 }
 
-const addPesquisasCron = new CronJob(
-	'00 00 00 * * *', async () => {
-		console.log('Running addPesquisasCron');
-		try {
-			await addAlunosPesquisa();
-		} catch (error) {
-			await sentryError('Error on addPesquisasCron', error);
-		}
-	}, (() => {
-		console.log('Crontab addPesquisasCron stopped.');
-	}),
-	true, /* Starts the job right now (no need for MissionTimer.start()) */
-	'America/Sao_Paulo', false,
-	false, // runOnInit = true useful only for tests
-);
-
 module.exports = {
-	addPesquisasCron,
+	addAlunosPesquisa,
 };

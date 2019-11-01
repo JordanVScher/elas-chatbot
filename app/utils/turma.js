@@ -1,5 +1,3 @@
-const { CronJob } = require('cron');
-
 const { turma } = require('../server/models');
 const help = require('./helper');
 
@@ -76,18 +74,6 @@ async function updateTurmas() {
 	}
 }
 
-const updateTurmasCron = new CronJob(
-	'00 30 * * * *', async () => {
-		console.log('Running updateTurmas');
-		await updateTurmas();
-	}, (() => {
-		console.log('Crontab updateTurmas stopped.');
-	}),
-	true, /* Starts the job right now (no need for MissionTimer.start()) */
-	'America/Sao_Paulo', false,
-	false, // runOnInit = true useful only for tests
-);
-
 module.exports = {
-	updateTurmas, updateTurmasCron,
+	updateTurmas,
 };

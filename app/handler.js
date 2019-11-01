@@ -3,6 +3,7 @@ const MaAPI = require('./chatbot_api');
 const db = require('./utils/DB_helper');
 const { createIssue } = require('./utils/send_issue');
 const DF = require('./utils/dialogFlow');
+const { sendCSV } = require('./utils/admin_menu/warn_admin');
 const dialogs = require('./utils/dialogs');
 const attach = require('./utils/attach');
 const flow = require('./utils/flow');
@@ -231,6 +232,11 @@ module.exports = async (context) => {
 			break;
 		case 'verTurma':
 			await context.sendText(flow.adminMenu.verTurma.txt1, await attach.getQR(flow.adminMenu.verTurma));
+			break;
+		case 'avisoResposta':
+				await context.sendText(flow.adminMenu.avisoResposta.txt1);
+				await context.typing(3000);
+				await sendCSV();
 			break;
 		case 'alunosTurmaCSV':
 			for (let i = 0; i < Object.keys(flow.adminCSV).length; i++) {

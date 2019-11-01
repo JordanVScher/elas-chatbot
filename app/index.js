@@ -4,14 +4,11 @@ const { MessengerBot, FileSessionStore, withTyping } = require('bottender');
 const { createServer } = require('bottender/restify');
 const corsMiddleware = require('restify-cors-middleware');
 const restify = require('restify');
+const  handler  = require('./handler');
 const { newSurveyResponse } = require('./utils/sm_help');
 const pgAPI = require('./pg_api');
-const { sendNotificationCron } = require('./utils/notificationSendQueue');
-const { sendMissingWarningCron } = require('./utils/admin_menu/warn_admin');
-const { updateTurmasCron } = require('./utils/turma');
-const { addPesquisasCron } = require('./utils/pesquisa/add_aluno_pesquisa');
-const { sendPesquisasCron } = require('./utils/pesquisa/send_pesquisa_broadcast');
 const requests = require('../requests');
+const { cronLog } = require('./utils/cronjob');
 
 const config = require('./bottender.config.js').messenger;
 
@@ -34,8 +31,6 @@ const cors = corsMiddleware({
 
 const messageWaiting = eval(process.env.WITH_TYPING); // eslint-disable-line no-eval
 if (messageWaiting) { bot.use(withTyping({ delay: messageWaiting })); }
-
-const handler = require('./handler');
 
 bot.onEvent(handler);
 
@@ -105,9 +100,5 @@ server.listen(process.env.API_PORT, () => {
 	console.log(`Server is running on ${process.env.API_PORT} port...`);
 	console.log(`App: ${process.env.APP} & Page: ${process.env.PAGE}`);
 	console.log(`MA User: ${process.env.MA_USER}`);
-	console.log(`Crontab sendNotificationCron is running? => ${sendNotificationCron.running}`);
-	console.log(`Crontab updateTurmasCron is running? => ${updateTurmasCron.running}`);
-	console.log(`Crontab sendMissingWarningCron is running? => ${sendMissingWarningCron.running}`);
-	console.log(`Crontab addPesquisasCron is running? => ${addPesquisasCron.running}`);
-	console.log(`Crontab sendPesquisasCron is running? => ${sendPesquisasCron.running}`);
+	cronLog();
 });

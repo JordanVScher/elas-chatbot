@@ -11,9 +11,6 @@ const { turma } = require('../server/models');
 const surveysInfo = require('./sm_surveys');
 const { surveysMaps } = require('./sm_maps');
 
-console.log(surveysMaps);
-
-
 // after a payement happens we send an e-mail to the buyer with the matricula/atividade 1 form
 async function sendMatricula(productID, pagamentoID, buyerEmail) {
 	try {

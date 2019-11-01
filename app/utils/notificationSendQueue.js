@@ -1,4 +1,3 @@
-const { CronJob } = require('cron');
 const { createReadStream } = require('fs');
 const { readFileSync } = require('fs');
 const notificationTypes = require('../server/models').notification_types;
@@ -375,21 +374,7 @@ async function sendNotificationFromQueue() {
 	}
 }
 
-const sendNotificationCron = new CronJob(
-	'00 00 8-22/1 * * *', async () => {
-		console.log('Running sendNotificationCron');
-		await sendNotificationFromQueue();
-	}, (() => {
-		console.log('Crontab sendNotificationCron stopped.');
-	}),
-	true, /* Starts the job right now (no need for MissionTimer.start()) */
-	'America/Sao_Paulo', false,
-	false, // runOnInit = true useful only for tests
-);
-
-
 module.exports = {
-	sendNotificationCron,
 	checkShouldSendRecipient,
 	checkShouldSendNotification,
 	sendNotificationFromQueue,

@@ -1,4 +1,3 @@
-const { CronJob } = require('cron');
 const { parseAsync } = require('json2csv');
 const turmas = require('../../server/models').turma;
 const db = require('../DB_helper');
@@ -36,7 +35,7 @@ const atividadesRules = {
 };
 
 // get only modules that match the warnDaysBefore rule
-async function getValidModulos(warnDaysBefore = 2) {
+async function getValidModulos(warnDaysBefore = 2, test) {
 	const allTurmas = await turmas.findAll({ where: {}, raw: true }).then(res => res).catch(err => help.sentryError('Erro em turmas.findAll', err));
 	const result = [];
 	const today = new Date(); today.setHours(0, 0, 0, 0);
@@ -49,7 +48,7 @@ async function getValidModulos(warnDaysBefore = 2) {
 				aux.setHours(0, 0, 0, 0);
 				const b = help.moment(aux);
 				const diff = a.diff(b, 'days');
-				if (diff === warnDaysBefore) { // !== for easy testing
+				if (test || (!test && diff === warnDaysBefore)) {
 					result.push({
 						turmaID: turma.id,
 						moduloN,
@@ -125,8 +124,8 @@ async function GetWarningData(modulos) {
 	return formatDataToCSV(missingAnswers, columnCSV);
 }
 
-async function sendCSV() {
-	const modulos = await getValidModulos(2);
+async function sendCSV(test = false) {
+	const modulos = await getValidModulos(2, test);
 	const content = await GetWarningData(modulos);
 	if (content && content.length > 0) {
 		const result = await parseAsync(content, { includeEmptyRows: true }).then(csv => csv).catch(err => err);
@@ -136,16 +135,6 @@ async function sendCSV() {
 	}
 }
 
-const sendMissingWarningCron = new CronJob(
-	'00 */30 8-22 * * *', async () => {
-		console.log('Running sendMissingWarningCron');
-		await sendCSV();
-	}, (() => {
-		console.log('Crontab sendMissingWarningCron stopped.');
-	}),
-	true, /* Starts the job right now (no need for MissionTimer.start()) */
-	'America/Sao_Paulo', false,
-	false, // runOnInit = true useful only for tests
-);
 
-module.exports = { sendMissingWarningCron };
+
+module.exports = { sendCSV };

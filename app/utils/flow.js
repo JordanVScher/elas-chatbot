@@ -147,8 +147,8 @@ module.exports = {
 	adminMenu: {
 		firstMenu: {
 			txt1: 'Esse é o menu do admin. Clique em uma opção:',
-			menuOptions: ['Inserir Alunas', 'Inserir Avaliadores', 'Ver Turma', 'Mudar Turma'],
-			menuPostback: ['inserirAlunas', 'inserirAvaliadores', 'verTurma', 'mudarTurma'],
+			menuOptions: ['Inserir Alunas', 'Inserir Avaliadores', 'Ver Turma', 'Mudar Turma', 'Aviso Respostas'],
+			menuPostback: ['inserirAlunas', 'inserirAvaliadores', 'verTurma', 'mudarTurma', 'avisoResposta'],
 		},
 		inserirAlunas: {
 			txt1: 'Envie o CSV com os dados das novas alunas. As colunas devem estar formatadas como esse arquivo de exemplo:',
@@ -183,6 +183,9 @@ module.exports = {
 			turmaCount: 'Agora existem <COUNT> aluna(s) na turma <TURMA>.',
 			menuOptions: ['Voltar', 'Ver Turma'],
 			menuPostback: ['adminMenu', 'verTurma'],
+		},
+		avisoResposta: {
+			txt1: 'Aguarde, enviaremos o csv agora.',
 		},
 		notAdmin: 'Você não é admin!',
 		errorMsg: 'Escreva novamente ou escolha uma das opções!',
