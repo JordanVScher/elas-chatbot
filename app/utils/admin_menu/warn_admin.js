@@ -36,7 +36,7 @@ const atividadesRules = {
 
 // get only modules that match the warnDaysBefore rule
 async function getValidModulos(warnDaysBefore = 2, test) {
-	const allTurmas = await turmas.findAll({ where: {}, raw: true }).then(res => res).catch(err => help.sentryError('Erro em turmas.findAll', err));
+	const allTurmas = await turmas.findAll({ where: {}, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em turmas.findAll', err));
 	const result = [];
 	const today = new Date(); today.setHours(0, 0, 0, 0);
 	const a = help.moment();
@@ -128,13 +128,11 @@ async function sendCSV(test = false) {
 	const modulos = await getValidModulos(2, test);
 	const content = await GetWarningData(modulos);
 	if (content && content.length > 0) {
-		const result = await parseAsync(content, { includeEmptyRows: true }).then(csv => csv).catch(err => err);
+		const result = await parseAsync(content, { includeEmptyRows: true }).then((csv) => csv).catch((err) => err);
 		const csv = { content: await Buffer.from(result, 'utf8'), filename: `${await help.getTimestamp()}_FALTA_RESPONDER.csv`, contentType: 'text/csv' };
 		await sendHTMLMail(missingAnswersWarning.mailSubject, eMailToSend, missingAnswersWarning.mailText, [csv]);
 		await sendWarning(csv);
 	}
 }
-
-
 
 module.exports = { sendCSV };

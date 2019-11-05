@@ -15,10 +15,11 @@ const { checkUserOnLabel } = require('../../utils/postback');
 const { adminMenu } = require('../../utils/flow');
 const { notificationRules } = require('../notificationRules');
 const MaAPI = require('../../chatbot_api');
+const labels = require('../labels');
 
 async function buildCSV(data, texts) {
 	if (!data || !data.content || data.content.length === 0) { return { error: texts.error }; }
-	const result = await parseAsync(await CSVFormat.formatBoolean(data.content), { includeEmptyRows: true }).then(csv => csv).catch(err => err);
+	const result = await parseAsync(await CSVFormat.formatBoolean(data.content), { includeEmptyRows: true }).then((csv) => csv).catch((err) => err);
 	if (!result) { help.Sentry.captureMessage('Erro no parse!'); return { error: 'Erro no parse!' }; }
 	const newFilename = texts.filename.replace('<INPUT>', await db.getTurmaName(data.input));
 	return { csvData: await Buffer.from(result, 'utf8'), filename: `${await help.getTimestamp()}_${newFilename}.csv` };
@@ -79,28 +80,32 @@ async function getFeedbackMsgs(addedALunos, errors) {
 	return result;
 }
 
-async function alunaChangeTurmaLabel(politicianID, alunaID, oldTurma, newTurma) {
+async function alunaChangeTurmaLabel(politicianID, pageToken, alunaID, oldTurma, newTurma) {
 	const foundUser = await db.getChatbotUser(alunaID);
 	if (foundUser && foundUser.fb_id) {
-		await MaAPI.deleteRecipientLabel(politicianID, foundUser.fb_id, oldTurma);
+		if (oldTurma !== newTurma) {
+			await MaAPI.deleteRecipientLabel(politicianID, foundUser.fb_id, oldTurma);
+			await labels.unlinkUserToLabelByName(foundUser.fb_id, oldTurma, pageToken);
+		}
 		await MaAPI.postRecipientLabel(politicianID, foundUser.fb_id, newTurma);
+		await labels.linkUserToLabelByName(foundUser.fb_id, newTurma, pageToken, true);
 	}
 }
 
-async function SaveTurmaChange(politicianID, alunaID, turmaOriginal, turmaNova) {
+async function SaveTurmaChange(politicianID, pageToken, alunaID, turmaOriginal, turmaNova) {
 	if (!turmaOriginal) {
-		turmaOriginal = await alunos.findOne({ where: { id: alunaID }, raw: true }).then(res => res.turma_id).catch(err => help.sentryError('Erro em alunos.findOne', err)); // eslint-disable-line no-param-reassign
+		turmaOriginal = await alunos.findOne({ where: { id: alunaID }, raw: true }).then((res) => res.turma_id).catch((err) => help.sentryError('Erro em alunos.findOne', err)); // eslint-disable-line no-param-reassign
 	}
 
 	if (turmaOriginal !== turmaNova) {
-		const alunoTurmaOriginal = await turma.findOne({ where: { id: turmaOriginal }, raw: true }).then(res => res).catch(err => help.sentryError('Erro em turma.findOne', err));
+		const alunoTurmaOriginal = await turma.findOne({ where: { id: turmaOriginal }, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em turma.findOne', err));
 		const moduloOriginal = await help.findModuleToday(alunoTurmaOriginal);
-		const alunoTurmaNova = await turma.findOne({ where: { id: turmaNova }, raw: true }).then(res => res).catch(err => help.sentryError('Erro em turma.findOne', err));
+		const alunoTurmaNova = await turma.findOne({ where: { id: turmaNova }, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em turma.findOne', err));
 		const moduloNovo = await help.findModuleToday(alunoTurmaNova);
 		turmaChangelog.create({
 			alunoID: alunaID, turmaOriginal, turmaNova, moduloOriginal, moduloNovo,
-		}).then(res => res).catch(err => help.sentryError('Erro em turmaChangelog.create', err));
-		await alunaChangeTurmaLabel(politicianID, alunaID, alunoTurmaOriginal.nome, alunoTurmaNova.nome);
+		}).then((res) => res).catch((err) => help.sentryError('Erro em turmaChangelog.create', err));
+		await alunaChangeTurmaLabel(politicianID, pageToken, alunaID, alunoTurmaOriginal.nome, alunoTurmaNova.nome);
 	}
 }
 
@@ -108,14 +113,14 @@ async function SaveTurmaChange(politicianID, alunaID, turmaOriginal, turmaNova) 
 // updates (or creates) notifications in queue when the aluna changes the turma
 async function NotificationChangeTurma(alunaID, turmaID) {
 	try {
-		const userNotifications = await notificationQueue.findAll({ where: { aluno_id: alunaID }, raw: true }).then(res => res).catch(err => help.sentryError('Erro em notificationQueue.findAll', err));
+		const userNotifications = await notificationQueue.findAll({ where: { aluno_id: alunaID }, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em notificationQueue.findAll', err));
 		if (!userNotifications || userNotifications.length === 0) {
 			await addNewNotificationAlunas(alunaID, turmaID);
 		} else {
 			userNotifications.forEach((notification) => { // update notification only when it hasnt already been sent and the turma differs
 				if ((!notification.sent_at && !notification.error) && notification.turma_id !== turmaID) {
 					notificationQueue.update({ turma_id: turmaID }, { where: { id: notification.id } })
-						.then(rowsUpdated => rowsUpdated).catch(err => help.sentryError('Erro no update do notificationQueue', err));
+						.then((rowsUpdated) => rowsUpdated).catch((err) => help.sentryError('Erro no update do notificationQueue', err));
 				}
 			});
 		}
@@ -126,17 +131,17 @@ async function NotificationChangeTurma(alunaID, turmaID) {
 
 async function updateNotificationIndicados(indicados) {
 	try {
-		const rulesIndicados = await notificationRules.filter(x => x.indicado === true);
+		const rulesIndicados = await notificationRules.filter((x) => x.indicado === true);
 		for (let i = 0; i < indicados.length; i++) {
 			const indicado = indicados[i];
 
-			const userNotifications = await notificationQueue.findAll({ where: { indicado_id: indicado.id }, raw: true }).then(res => res).catch(err => help.sentryError('Erro em notificationQueue.findAll', err));
+			const userNotifications = await notificationQueue.findAll({ where: { indicado_id: indicado.id }, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em notificationQueue.findAll', err));
 			const turmaID = await db.getTurmaIdFromAluno(indicado.aluno_id);
 
 			for (let j = 0; j < rulesIndicados.length; j++) {
 				const rule = rulesIndicados[j];
 
-				const foundNotification = await userNotifications.find(x => x.notification_type === rule.notification_type);
+				const foundNotification = await userNotifications.find((x) => x.notification_type === rule.notification_type);
 				if (!foundNotification) { // add notification every only when it doesnt exist, even if user wasnt familiar before
 					await addAvaliadorOnQueue(rule, indicado, turmaID);
 				}
@@ -191,13 +196,13 @@ function buildColumnTurmaChange(log, turmaNames) {
 
 async function addTurmaTransferenceCSV(lines) {
 	const newLines = lines;
-	const allLogChange = await turmaChangelog.findAll({ where: {}, raw: true }).then(res => res).catch(err => help.sentryError('Erro em turmaChangelog.findAll', err));
+	const allLogChange = await turmaChangelog.findAll({ where: {}, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em turmaChangelog.findAll', err));
 	const turmaDictionary = await db.buildTurmaDictionary();
 	const columnTransferenciaText = 'Transferência de Turma';
 	let maxTransferences = 0;
 	// Add new lines for transferências
 	newLines.content.forEach((line) => {
-		const alunoTurmaLog = allLogChange.filter(x => x.alunoID === line.ID);
+		const alunoTurmaLog = allLogChange.filter((x) => x.alunoID === line.ID);
 		alunoTurmaLog.forEach((change, index) => {
 			line[`${columnTransferenciaText} ${index + 1}`] = buildColumnTurmaChange(change, turmaDictionary); // eslint-disable-line no-param-reassign
 			if (index > maxTransferences) maxTransferences = index + 1;

@@ -11,6 +11,7 @@ const help = require('./utils/helper');
 const timers = require('./utils/timers');
 const { checkUserOnLabel } = require('./utils/postback');
 const { updateTurmas } = require('./utils/turma');
+const labels = require('./utils/labels');
 
 module.exports = async (context) => {
 	try {
@@ -19,6 +20,7 @@ module.exports = async (context) => {
 			await context.setState({ dialog: 'greetings' });
 		}
 		await context.setState({ chatbotData: await MaAPI.getChatbotData(context.event.rawEvent.recipient.id) });
+		console.log('context.state.chatbotData', context.state.chatbotData);
 		// we update context data at every interaction that's not a comment or a post
 		await MaAPI.postRecipient(context.state.chatbotData.user_id, {
 			fb_id: context.session.user.id,
@@ -82,8 +84,9 @@ module.exports = async (context) => {
 			} else if (['CPFNotFound', 'invalidCPF', 'validCPF'].includes(context.state.dialog)) {
 				await dialogs.handleCPF(context);
 			} else if (context.state.whatWasTyped.toLowerCase() === process.env.RESET && process.env.ENV !== 'prod') {
-				await context.setState({ matricula: '', gotAluna: '' });
+				await labels.unlinkUserToLabelByName(context.session.user.id, context.state.gotAluna.turma, context.state.chatbotData.fb_access_token);
 				await context.setState({ recipient: await MaAPI.getRecipient(context.state.chatbotData.user_id, context.session.user.id) });
+				await context.setState({ matricula: '' });
 				if (context.state.recipient.extra_fields.labels) {
 					context.state.recipient.extra_fields.labels.forEach(async (element) => {
 						await MaAPI.deleteRecipientLabel(context.state.chatbotData.user_id, context.session.user.id, element.name);
@@ -92,7 +95,7 @@ module.exports = async (context) => {
 			} else if (context.state.dialog === 'mudarTurma') {
 				await dialogs.adminAlunaCPF(context);
 			} else if (context.state.dialog === 'mudarAskTurma') {
-				await dialogs.mudarAskTurma(context);
+				await dialogs.mudarAskTurma(context, context.state.chatbotData.fb_access_token);
 			} else {
 				await DF.dialogFlow(context);
 			}
@@ -154,6 +157,7 @@ module.exports = async (context) => {
 		case 'confirmaMatricula':
 			await db.linkUserToCPF(context.session.user.id, context.state.cpf);
 			await MaAPI.postRecipientLabel(context.state.chatbotData.user_id, context.session.user.id, context.state.gotAluna.turma);
+			await labels.linkUserToLabelByName(context.session.user.id, context.state.gotAluna.turma, context.state.chatbotData.fb_access_token, true);
 			await context.setState({ agendaData: await dialogs.getAgenda(context), matricula: true });
 			await context.sendText(flow.confirmaMatricula.text1);
 			await context.sendText(await dialogs.buildAgendaMsg(context.state.agendaData), await attach.getQR(flow.confirmaMatricula));
@@ -206,7 +210,7 @@ module.exports = async (context) => {
 			await context.sendText(flow.adminMenu.inserirAlunas.txt2, await attach.getQR(flow.adminMenu.inserirAlunas));
 			break;
 		case 'createAlunos': {
-			const result = await dialogs.receiveCSVAluno(context.state.csvLines, context.state.chatbotData.user_id);
+			const result = await dialogs.receiveCSVAluno(context.state.csvLines, context.state.chatbotData.user_id, context.state.chatbotData.fb_access_token);
 			if (result) {
 				await dialogs.sendFeedbackMsgs(context, result.errors);
 			} else {
@@ -234,9 +238,9 @@ module.exports = async (context) => {
 			await context.sendText(flow.adminMenu.verTurma.txt1, await attach.getQR(flow.adminMenu.verTurma));
 			break;
 		case 'avisoResposta':
-				await context.sendText(flow.adminMenu.avisoResposta.txt1);
-				await context.typing(3000);
-				await sendCSV();
+			await context.sendText(flow.adminMenu.avisoResposta.txt1);
+			await context.typing(3000);
+			await sendCSV();
 			break;
 		case 'alunosTurmaCSV':
 			for (let i = 0; i < Object.keys(flow.adminCSV).length; i++) {

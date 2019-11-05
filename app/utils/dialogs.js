@@ -37,8 +37,8 @@ module.exports.handleCPF = async (context) => {
 
 module.exports.getAgenda = async (context) => {
 	const result = {};
-	const spreadsheet = await help.reloadSpreadSheet(1, 6);
-	const onTheTurma = await spreadsheet.find(x => x.turma === context.state.gotAluna.turma);
+	const spreadsheet = await help.reloadSpreadSheet(0, 6);
+	const onTheTurma = await spreadsheet.find((x) => x.turma === context.state.gotAluna.turma);
 
 	if (onTheTurma) {
 		result.local = onTheTurma.local; // the local
@@ -120,15 +120,15 @@ module.exports.sendFeedbackMsgs = async (context, errors) => {
 };
 
 
-module.exports.receiveCSVAluno = async (csvLines, chatbotUserId) => { // createAlunos/ inserir
+module.exports.receiveCSVAluno = async (csvLines, chatbotUserId, pageToken) => { // createAlunos/ inserir
 	if (csvLines) {
-		const turmas = await turma.findAll({ where: {}, raw: true }).then(res => res).catch(err => help.sentryError('Erro em turma.findAll', err));
+		const turmas = await turma.findAll({ where: {}, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em turma.findAll', err));
 		const errors = []; // stores lines that presented an error
 
 		for (let i = 0; i < csvLines.length; i++) {
 			let element = csvLines[i];
 			if (element.Turma) {
-				element.Turma = await turmas.find(x => x.nome === element.Turma.toUpperCase()); // find the turma that has that name
+				element.Turma = await turmas.find((x) => x.nome === element.Turma.toUpperCase()); // find the turma that has that name
 				element.turma_id = element.Turma ? element.Turma.id : false; // get that turma id
 			} // convert turma as name to turma as id
 
@@ -140,9 +140,9 @@ module.exports.receiveCSVAluno = async (csvLines, chatbotUserId) => { // createA
 						errors.push({ line: i + 2, msg: 'CPF inválido!' });
 						help.sentryError('Erro em receiveCSVAluno => CPF inválido!', { element });
 					} else {
-						const oldAluno = await alunos.findOne({ where: { cpf: element.cpf }, raw: true }).then(res => res).catch(err => help.sentryError('Erro em alunos.findOne', err));
+						const oldAluno = await alunos.findOne({ where: { cpf: element.cpf }, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em alunos.findOne', err));
 						// if aluno existed before we save the turma and label change
-						if (oldAluno) { await admin.SaveTurmaChange(chatbotUserId, oldAluno.id, oldAluno.turma_id, element.turma_id); }
+						if (oldAluno) { await admin.SaveTurmaChange(chatbotUserId, pageToken, oldAluno.id, oldAluno.turma_id, element.turma_id); }
 						element.added_by_admin = true;
 						const newAluno = await db.upsertAlunoCadastro(element);
 						// const newAluno = await db.addAlunaFromCSV(element);
@@ -177,7 +177,7 @@ async function receiveCSVAvaliadores(csvLines) {
 			element = await admin.convertCSVToDB(element, admin.swap(admin.avaliadorCSV));
 
 			if (element.nome && element.email && element.aluno_cpf) {
-				const avaliadorAluno = await alunos.findOne({ where: { cpf: element.aluno_cpf.toString() }, raw: true }).then(res => res).catch(err => help.sentryError('Erro em avaliadorAluno.findOne', err));
+				const avaliadorAluno = await alunos.findOne({ where: { cpf: element.aluno_cpf.toString() }, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em avaliadorAluno.findOne', err));
 				if (avaliadorAluno) {
 					element.aluno_id = avaliadorAluno.id;
 					element = await admin.formatBooleanToDatabase(element, 'Sim', 'Não', ['familiar']);
@@ -220,20 +220,20 @@ module.exports.adminAlunaCPF = async (context) => {
 	}
 };
 
-module.exports.mudarAskTurma = async (context) => {
+module.exports.mudarAskTurma = async (context, pageToken) => {
 	await context.setState({ desiredTurma: context.state.whatWasTyped.toUpperCase() });
 	const validTurma = await db.getTurmaID(context.state.desiredTurma); // get the id that will be user for the transfer
 
 	if (!validTurma) { // if theres no id then it's not a valid turma
 		await context.sendText(flow.adminMenu.mudarTurma.turmaInvalida);
 	} else {
-		const transferedAluna = await alunos.update({ turma_id: validTurma }, { where: { cpf: context.state.adminAlunaFound.cpf } }).then(() => true).catch(err => sentryError('Erro em mudarAskTurma update', err));
+		const transferedAluna = await alunos.update({ turma_id: validTurma }, { where: { cpf: context.state.adminAlunaFound.cpf } }).then(() => true).catch((err) => sentryError('Erro em mudarAskTurma update', err));
 		if (transferedAluna) {
 			await admin.NotificationChangeTurma(context.state.adminAlunaFound.id, validTurma);
-			await admin.SaveTurmaChange(context.state.chatbotData.user_id, context.state.adminAlunaFound.id, context.state.adminAlunaFound.turma_id, validTurma);
+			await admin.SaveTurmaChange(context.state.chatbotData.user_id, pageToken, context.state.adminAlunaFound.id, context.state.adminAlunaFound.turma_id, validTurma);
 			await context.sendText(flow.adminMenu.mudarTurma.transferComplete.replace('<TURMA>', context.state.desiredTurma));
 			const count = await alunos.count({ where: { turma_id: validTurma } })
-				.then(alunas => alunas).catch(err => sentryError('Erro em mudarAskTurma getCount', err));
+				.then((alunas) => alunas).catch((err) => sentryError('Erro em mudarAskTurma getCount', err));
 			if (count !== false) { await context.sendText(flow.adminMenu.mudarTurma.turmaCount.replace('<COUNT>', count).replace('<TURMA>', context.state.desiredTurma)); }
 			await context.setState({
 				dialog: 'adminMenu', desiredTurma: '', adminAlunaFound: '', adminAlunaCPF: '',

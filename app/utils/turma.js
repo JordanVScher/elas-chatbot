@@ -62,11 +62,11 @@ async function updateTurmas() {
 				const found = await turma.findOrCreate({ where: { nome: query.nome }, defaults: query }).then(([data, created]) => {
 					if (created) { return created; }
 					return data.dataValues; // if a new turma wasn't created we might have to update it, so return it
-				}).catch(err => help.sentryError('turma findOrCreate', err));
+				}).catch((err) => help.sentryError('turma findOrCreate', err));
 				if (found.id) { // we might need to update it
 					const updateQuery = await buildUpdateQuery(query, found);
 					if (updateQuery) {
-						await turma.update(updateQuery, { where: { id: found.id } }).then(res => res).catch(err => help.sentryError('turma update', err));
+						await turma.update(updateQuery, { where: { id: found.id } }).then((res) => res).catch((err) => help.sentryError('turma update', err));
 					}
 				} else if (found === true) { console.log('Added new turma!'); }
 			}

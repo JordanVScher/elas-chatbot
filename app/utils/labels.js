@@ -35,7 +35,7 @@ async function deleteLabel(labelID, pageToken) {
 async function checkUserOnLabel(PSID, labelID, pageToken) {
 	try {
 		const userLabels = await getUserLabels(PSID, pageToken);
-		const theOneLabel = await userLabels.data.find(x => x.id === `${labelID}`); // find the one label with the same ID
+		const theOneLabel = await userLabels.data.find((x) => x.id === `${labelID}`); // find the one label with the same ID
 
 		if (theOneLabel) { return theOneLabel; }
 		return false;
@@ -49,7 +49,7 @@ async function checkUserOnLabel(PSID, labelID, pageToken) {
 async function checkUserOnLabelName(PSID, labelName, pageToken) {
 	try {
 		const userLabels = await getUserLabels(PSID, pageToken);
-		const theOneLabel = await userLabels.data.find(x => x.name === `${labelName}`); // find the one label with the same name
+		const theOneLabel = await userLabels.data.find((x) => x.name === `${labelName}`); // find the one label with the same name
 
 		if (theOneLabel) { return theOneLabel; }
 		return false;
@@ -63,7 +63,7 @@ async function checkUserOnLabelName(PSID, labelName, pageToken) {
 async function getLabelID(labelName, pageToken, create = true) {
 	try {
 		const labelList = await listAllLabels(pageToken);
-		const theOneLabel = await labelList.data.find(x => x.name === `${labelName}`);
+		const theOneLabel = await labelList.data.find((x) => x.name === `${labelName}`);
 		if (theOneLabel && theOneLabel.id) { return theOneLabel.id; }
 		if (create) {
 			const newLabel = await createNewLabel(labelName, pageToken);
@@ -84,6 +84,15 @@ async function linkUserToLabelByName(PSID, labelName, pageToken, create = true) 
 	return false;
 }
 
+// link user to a label by passing its name
+// created: create a new label if the one we want doesnt exist, turn off by passing false
+async function unlinkUserToLabelByName(PSID, labelName, pageToken) {
+	const labelID = await getLabelID(labelName, pageToken);
+
+	if (labelID) { return removeUserFromLabel(PSID, labelID, pageToken); }
+	return false;
+}
+
 
 module.exports = {
 	createNewLabel,
@@ -97,4 +106,5 @@ module.exports = {
 	checkUserOnLabelName,
 	getLabelID,
 	linkUserToLabelByName,
+	unlinkUserToLabelByName,
 };

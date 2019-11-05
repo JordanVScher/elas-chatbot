@@ -38,7 +38,7 @@ async function capQR(text) {
 }
 
 function toTitleCase(str) {
-	return str.replace(/\w\S*/g, txt => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
+	return str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
 }
 
 // week day dictionary
@@ -123,7 +123,7 @@ async function reloadSpreadSheet(worksheet, headerStart) {
 		// ignoreRow: [1, 2, 3, 4, 5],
 		headerStart: headerStart || '',
 		// hash: 'id',
-	}).then(result => result).catch((err) => {
+	}).then((result) => result).catch((err) => {
 		console.log(err.message);
 		console.log(err.stack);
 		Sentry.captureMessage('Erro no carregamento do spreadsheet');
@@ -138,7 +138,7 @@ async function reloadSpreadSheet(worksheet, headerStart) {
 // format excel dates to regular dates
 async function getFormatedSpreadsheet() {
 	const result = [];
-	const spreadsheet = await reloadSpreadSheet(1, 6); // console.log('spreadsheet', spreadsheet); // load spreadsheet
+	const spreadsheet = await reloadSpreadSheet(0, 6); // console.log('spreadsheet', spreadsheet); // load spreadsheet
 
 	for (let i = 0; i < spreadsheet.length; i++) {
 		const obj = spreadsheet[i];
