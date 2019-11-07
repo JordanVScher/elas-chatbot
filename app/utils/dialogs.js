@@ -221,7 +221,7 @@ module.exports.adminAlunaCPF = async (context) => {
 };
 
 module.exports.mudarAskTurma = async (context, pageToken) => {
-	await context.setState({ desiredTurma: context.state.whatWasTyped.toUpperCase() });
+	await context.setState({ desiredTurma: context.state.whatWasTyped });
 	const validTurma = await db.getTurmaID(context.state.desiredTurma); // get the id that will be user for the transfer
 
 	if (!validTurma) { // if theres no id then it's not a valid turma

@@ -14,7 +14,7 @@ if (process.env.TEST !== 'true') {
 async function changeAdminStatus(fbID, status) {
 	const updatedUser = await sequelize.query(`
 		UPDATE chatbot_users SET is_admin = '${status}' WHERE fb_id = '${fbID}' RETURNING *;
-		`).spread(results => (results && results[0] ? results[0] : false)).catch((err) => { sentryError('Erro em update changeAdminStatus =>', err); });
+		`).spread((results) => (results && results[0] ? results[0] : false)).catch((err) => { sentryError('Erro em update changeAdminStatus =>', err); });
 	return updatedUser;
 }
 
@@ -31,10 +31,11 @@ async function getTurmaFromID(turmaID) {
 
 
 async function getTurmaID(turmaName) {
+	turmaName = turmaName ? turmaName.toLowerCase() : '';
 	const id = await sequelize.query(`
-	SELECT id FROM turma where nome = '${turmaName}';
+	SELECT id FROM turma where LOWER(nome) = '${turmaName}';
 	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
-		console.log('Got turma id!');
+		console.log('Got turma id!', results);
 		return results && results[0] && results[0].id ? results[0].id : false;
 	}).catch((err) => { sentryError('Erro em getTurmaID =>', err); });
 
@@ -74,7 +75,7 @@ async function getAlunaRespostasWarning(turmaID) {
 		FROM alunos ALUNOS
 		LEFT JOIN alunos_respostas RESPOSTAS_ALUNOS ON ALUNOS.id = RESPOSTAS_ALUNOS.aluno_id
 		WHERE ALUNOS.turma_id = '${turmaID}';`;
-	const result = await sequelize.query(queryString).spread(results => results).catch(err => sentryError('Erro no getAlunaRespostasWarning =>', err));
+	const result = await sequelize.query(queryString).spread((results) => results).catch((err) => sentryError('Erro no getAlunaRespostasWarning =>', err));
 	return result;
 }
 async function getIndicadoRespostasWarning(turma) {
@@ -87,7 +88,7 @@ async function getIndicadoRespostasWarning(turma) {
 		LEFT JOIN indicados_respostas RESPOSTAS ON INDICADOS.id = RESPOSTAS.indicado_id
 		LEFT JOIN alunos ALUNOS ON alunos.id = INDICADOS.aluno_id
 		WHERE ALUNOS.turma_id = ${turma};`;
-	const result = await sequelize.query(queryString).spread(results => results).catch(err => sentryError('Erro no getIndicadoRespostasWarning =>', err));
+	const result = await sequelize.query(queryString).spread((results) => results).catch((err) => sentryError('Erro no getIndicadoRespostasWarning =>', err));
 	return result;
 }
 
@@ -95,7 +96,7 @@ async function getModuloDates() {
 	const result = await sequelize.query(`
 	SELECT id, nome, local, horario_modulo1 as modulo1, horario_modulo2 as modulo2, horario_modulo3 as modulo3 from turma
 	where local IS NOT NULL AND horario_modulo1 IS NOT NULL AND horario_modulo2 IS NOT NULL AND horario_modulo3 IS NOT NULL;
-	`).spread(results => (results || false)).catch((err) => { sentryError('Erro em getModuloDates =>', err); });
+	`).spread((results) => (results || false)).catch((err) => { sentryError('Erro em getModuloDates =>', err); });
 
 	return result;
 }
@@ -118,7 +119,7 @@ async function upsertAlunoCadastro(userAnswers) {
 
 	columns.push('created_at'); values.push(`'${date}'`);
 	columns.push('updated_at'); values.push(`'${date}'`); set.push(`${columns[columns.length - 1]} = ${values[values.length - 1]}`);
-	set = set.filter(e => !e.includes('added_by_admin')); // we must never update where the user was added from
+	set = set.filter((e) => !e.includes('added_by_admin')); // we must never update where the user was added from
 
 	const queryString = `INSERT INTO "alunos" (${columns.join(', ')})
 	VALUES(${values.join(', ')})
@@ -127,7 +128,7 @@ async function upsertAlunoCadastro(userAnswers) {
 	SET ${set.join(', ')}
 	RETURNING id;`;
 
-	const result = await sequelize.query(queryString).spread(results => (results && results[0] && results[0].id ? results[0] : false)).catch(err => sentryError('Erro no upsertAlunoCadastro =>', err));
+	const result = await sequelize.query(queryString).spread((results) => (results && results[0] && results[0].id ? results[0] : false)).catch((err) => sentryError('Erro no upsertAlunoCadastro =>', err));
 	if (result) result.turma_id = answers.turma_id;
 	return result;
 }
@@ -223,20 +224,20 @@ async function upsertIndicado(avaliador) {
 	const foundIndicado = await sequelize.query(`
 	SELECT * FROM indicacao_avaliadores
 	WHERE email = '${indicado.email}' AND aluno_id = '${indicado.aluno_id}' LIMIT 1;
-`).spread(results => (results && results[0] ? results[0] : false)).catch((err) => { sentryError('Erro em select indicacao_avaliadores =>', err); });
+`).spread((results) => (results && results[0] ? results[0] : false)).catch((err) => { sentryError('Erro em select indicacao_avaliadores =>', err); });
 
 	// if we found this indicado we have to update it
 	if (foundIndicado && foundIndicado.id) {
 		const updatedIndicado = await sequelize.query(`
 		UPDATE indicacao_avaliadores SET ${set.join(', ')} WHERE id = '${foundIndicado.id}' RETURNING *;
-		`).spread(results => (results && results[0] ? results[0] : false)).catch((err) => { sentryError('Erro em update indicacao_avaliadores =>', err); });
+		`).spread((results) => (results && results[0] ? results[0] : false)).catch((err) => { sentryError('Erro em update indicacao_avaliadores =>', err); });
 		return updatedIndicado;
 	}
 
 	// if avaliador wasnt found we insert it
 	const insertedIndicado = await sequelize.query(`
 	INSERT INTO indicacao_avaliadores(${columns.join(', ')}) VALUES(${values.join(', ')}) RETURNING *;
-	`).spread(results => (results && results[0] ? results[0] : false)).catch((err) => { sentryError('Erro em insert indicacao_avaliadores =>', err); });
+	`).spread((results) => (results && results[0] ? results[0] : false)).catch((err) => { sentryError('Erro em insert indicacao_avaliadores =>', err); });
 
 	return insertedIndicado;
 }
@@ -524,7 +525,7 @@ async function addAlunaFromCSV(aluno) {
 	SET ${set.join(', ')}
 	RETURNING id;`;
 
-	const result = await sequelize.query(queryString).spread(results => (results && results[0] ? results[0] : false)).catch(err => sentryError('Erro no addAlunaFromCSV =>', err));
+	const result = await sequelize.query(queryString).spread((results) => (results && results[0] ? results[0] : false)).catch((err) => sentryError('Erro no addAlunaFromCSV =>', err));
 
 	return result;
 }
@@ -542,7 +543,7 @@ async function buildTurmaDictionary() {
 
 async function getTurmaIdFromAluno(alunoID) {
 	const result = await sequelize.query(`SELECT turma_id FROM alunos	WHERE id = '${alunoID}';`)
-		.spread(results => (results && results[0] ? results[0].turma_id : false)).catch((err) => { sentryError('Error on getAlunasIndicadosReport => ', err); });
+		.spread((results) => (results && results[0] ? results[0].turma_id : false)).catch((err) => { sentryError('Error on getAlunasIndicadosReport => ', err); });
 	return result;
 }
 
@@ -551,7 +552,7 @@ async function updateIndicadoNotification(indicadoID, notificationType, msg) {
 	if (msg) error = `'${JSON.stringify({ msg })}'`;
 
 	const result = await sequelize.query(`UPDATE notification_queue SET error = ${error} WHERE indicado_id = '${indicadoID}' AND notification_type = '${notificationType}';`)
-		.spread(results => results).catch((err) => { sentryError('Error on getAlunasIndicadosReport => ', err); });
+		.spread((results) => results).catch((err) => { sentryError('Error on getAlunasIndicadosReport => ', err); });
 	return result;
 }
 
