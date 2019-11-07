@@ -15,20 +15,12 @@ const labels = require('./utils/labels');
 
 module.exports = async (context) => {
 	try {
-		// console.log(await MaAPI.getLogAction()); // print possible log actions
 		if (!context.state.dialog || context.state.dialog === '' || (context.event.postback && context.event.postback.payload === 'greetings')) { // because of the message that comes from the comment private-reply
 			await context.setState({ dialog: 'greetings' });
 		}
 		await context.setState({ chatbotData: await MaAPI.getChatbotData(context.event.rawEvent.recipient.id) });
-		console.log('context.state.chatbotData', context.state.chatbotData);
-		// we update context data at every interaction that's not a comment or a post
-		await MaAPI.postRecipient(context.state.chatbotData.user_id, {
-			fb_id: context.session.user.id,
-			name: `${context.session.user.first_name} ${context.session.user.last_name}`,
-			origin_dialog: 'greetings',
-			picture: context.session.user.profile_pic,
-			// session: JSON.stringify(context.state),
-		});
+		// console.log('context.state.chatbotData', context.state.chatbotData);
+		await MaAPI.postRecipient(context.state.chatbotData.user_id, await help.buildRecipientObj(context));
 		db.upsertUser(context.session.user.id, `${context.session.user.first_name} ${context.session.user.last_name}`);
 		// MaAPI.getRecipient(context.state.chatbotData.user_id, context.session.user.id);
 		await timers.deleteTimers(context.session.user.id);
@@ -256,6 +248,9 @@ module.exports = async (context) => {
 			break;
 		case 'mudarAskTurma':
 			await context.sendText(flow.adminMenu.mudarTurma.txt2.replace('<NOME>', context.state.adminAlunaFound.nome_completo.trim()).replace('<TURMA>', context.state.adminAlunaFound.turma), await attach.getQR(flow.adminMenu.verTurma));
+			break;
+		case 'updateTurma':
+			await dialogs.updateTurma(context);
 			break;
 		case 'notificationOn':
 			await MaAPI.updateBlacklistMA(context.session.user.id, 1);

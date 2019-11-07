@@ -52,12 +52,16 @@ async function buildUpdateQuery(newData, oldData) {
 	return result || false;
 }
 
+const offset = 6; // spreadsheet starts at line 6
 
 async function updateTurmas() {
+	const results = [];
 	const spreadsheet = await filerOutInvalidLines(await help.getFormatedSpreadsheet());
 	if (spreadsheet && spreadsheet.length > 0) {
-		for (const element of spreadsheet) { // eslint-disable-line no-restricted-syntax
-			const query = await buildQuery(element, turmaMap);
+		for (let i = 0; i < spreadsheet.length; i++) {
+			const e = spreadsheet[i];
+			console.log('query', e);
+			const query = await buildQuery(e, turmaMap);
 			if (query) {
 				const found = await turma.findOrCreate({ where: { nome: query.nome }, defaults: query }).then(([data, created]) => {
 					if (created) { return created; }
@@ -66,12 +70,15 @@ async function updateTurmas() {
 				if (found.id) { // we might need to update it
 					const updateQuery = await buildUpdateQuery(query, found);
 					if (updateQuery) {
-						await turma.update(updateQuery, { where: { id: found.id } }).then((res) => res).catch((err) => help.sentryError('turma update', err));
+						const update = await turma.update(updateQuery, { where: { id: found.id } }).then((res) => res).catch((err) => help.sentryError('turma update', err));
+						if (update) { results.push(`Linha ${i + 1 + offset} atualizada!`); }
 					}
-				} else if (found === true) { console.log('Added new turma!'); }
-			}
+				} else if (found === true) { results.push(`Linha ${i + 1 + offset} adicionada!`); }
+			} else { results.push(`Erro na linha ${i + 1 + offset}. Falta preencher algum dado.`); }
 		}
 	}
+
+	return results;
 }
 
 module.exports = {

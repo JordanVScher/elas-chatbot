@@ -1,7 +1,7 @@
 /* eslint camelcase: 0 */ // --> OFF
 /* eslint no-param-reassign: 0 */ // --> OFF
 const request = require('requisition');
-const queryString = require('query-string');
+const { handleRequestAnswer } = require('./utils/helper');
 
 const apiUri = process.env.MANDATOABERTO_API_URL;
 const security_token = process.env.SECURITY_TOKEN_MA;
@@ -21,12 +21,10 @@ module.exports = {
 		return pollData;
 	},
 
-	async postRecipient(user_id, recipient) {
-		const recipientData_qs = queryString.stringify(recipient);
-		const res = await request.post(`${apiUri}/api/chatbot/recipient?${recipientData_qs}&security_token=${security_token}&`).query({ politician_id: user_id });
-		const recipientData = await res.json();
-		// console.log('recipientData', recipientData);
-		return recipientData;
+	async postRecipient(politician_id, recipient) {
+		return handleRequestAnswer(
+			await request.post(`${apiUri}/api/chatbot/recipient?`).query({ politician_id, security_token, ...recipient }),
+		);
 	},
 
 	async postPollAnswer(fb_id, poll_question_option_id, origin) {
@@ -42,21 +40,15 @@ module.exports = {
 	},
 
 	async postRecipientLabel(politician_id, fb_id, label) {
-		const res = await request.post(`${apiUri}/api/chatbot/recipient?security_token=${security_token}`).query({
-			politician_id, fb_id, extra_fields: JSON.stringify({ system_labels: [{ name: label }] }),
-		});
-		const recipientData = await res.json();
-		console.log('postRecipientLabel', recipientData);
-		return recipientData;
+		return handleRequestAnswer(await request.post(`${apiUri}/api/chatbot/recipient?security_token=${security_token}`).query({
+			politician_id, fb_id, extra_fields: JSON.stringify({ system_labels: [{ name: `${label}` }] }),
+		}));
 	},
 
 	async deleteRecipientLabel(politician_id, fb_id, label) {
-		const res = await request.post(`${apiUri}/api/chatbot/recipient?security_token=${security_token}`).query({
+		return handleRequestAnswer(await request.post(`${apiUri}/api/chatbot/recipient?security_token=${security_token}`).query({
 			politician_id, fb_id, extra_fields: JSON.stringify({ system_labels: [{ name: `${label}`, deleted: 1 }] }),
-		});
-		const recipientData = await res.json();
-		console.log('deleteRecipientLabel', recipientData);
-		return recipientData;
+		}));
 	},
 
 	async getRecipient(politician_id, fb_id) {

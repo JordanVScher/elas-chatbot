@@ -9,6 +9,7 @@ const { alunos } = require('../server/models');
 const { turma } = require('../server/models');
 const { addNewNotificationAlunas } = require('./notificationAddQueue');
 const { addNewNotificationIndicados } = require('./notificationAddQueue');
+const { updateTurmas } = require('./turma');
 
 module.exports.sendMainMenu = async (context, txtMsg) => {
 	const text = txtMsg || flow.mainMenu.defaultText;
@@ -262,5 +263,11 @@ module.exports.mailTest = async (context) => {
 		await context.sendText('Não consegui estabelecer o vínculo entre seu usuário no chatbot e alguma aluna cadastrada. Tente se vincular através do seu PDF, entre no fluxo Já Sou Aluna e se cadastre.');
 	}
 };
+
+module.exports.updateTurma = async (context) => {
+	const result = await updateTurmas();
+	await context.sendText(result.join('\n'), await attach.getQR(flow.adminMenu.verTurma));
+};
+
 
 module.exports.checkReceivedFile = admin.checkReceivedFile;

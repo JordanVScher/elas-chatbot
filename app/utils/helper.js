@@ -259,7 +259,7 @@ async function handleErrorApi(options, res, err) {
 	if (res) msg += `\nResposta: ${JSON.stringify(res, null, 2)}`;
 	if (err) msg += `\nErro: ${err.stack}`;
 
-	// console.log('----------------------------------------------', `\n${msg}`, '\n\n');
+	console.log('----------------------------------------------', `\n${msg}`, '\n\n');
 
 	if ((res && (res.error || res.form_error)) || (!res && err)) {
 		if (process.env.ENV !== 'local') {
@@ -278,6 +278,20 @@ async function handleRequestAnswer(response) {
 		await handleErrorApi(response.options, false, error);
 		return {};
 	}
+}
+
+async function buildRecipientObj(context) {
+	const state = {
+		fb_id: context.session.user.id,
+		name: `${context.session.user.first_name} ${context.session.user.last_name}`,
+		picture: context.session.user.profile_pic,
+		// origin_dialog: 'greetings',
+		// session: JSON.stringify(context.state),
+	};
+
+	if (context.state.alunaMail) state.email = context.state.alunaMail;
+
+	return state;
 }
 
 
@@ -309,4 +323,5 @@ module.exports = {
 	getIndicacaoErrorText,
 	getTinyUrl: TinyURL.shorten,
 	handleRequestAnswer,
+	buildRecipientObj,
 };
