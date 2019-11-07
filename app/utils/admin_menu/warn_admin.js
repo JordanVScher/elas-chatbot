@@ -124,7 +124,7 @@ async function GetWarningData(modulos) {
 	return formatDataToCSV(missingAnswers, columnCSV);
 }
 
-async function sendCSV(test = false) {
+async function sendWarningCSV(test = false) {
 	const modulos = await getValidModulos(2, test);
 	const content = await GetWarningData(modulos);
 	if (content && content.length > 0) {
@@ -135,4 +135,4 @@ async function sendCSV(test = false) {
 	}
 }
 
-module.exports = { sendCSV };
+module.exports = { sendWarningCSV };

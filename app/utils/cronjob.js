@@ -1,6 +1,6 @@
 const { CronJob } = require('cron');
 const { sentryError } = require('./helper');
-const { sendCSV } = require('./admin_menu/warn_admin.js');
+const { sendWarningCSV } = require('./admin_menu/warn_admin');
 const { sendNotificationFromQueue } = require('./notificationSendQueue');
 const { updateTurmas } = require('./turma');
 const { addAlunosPesquisa } = require('./pesquisa/add_aluno_pesquisa');
@@ -11,7 +11,7 @@ const sendMissingWarningCron = new CronJob(
 	'00 */30 8-22 * * *', async () => {
 		console.log('Running sendMissingWarningCron');
 		try {
-			await sendCSV(false);
+			await sendWarningCSV(false);
 		} catch (error) {
 			await sentryError('Error on sendMissingWarningCron', error);
 		}
