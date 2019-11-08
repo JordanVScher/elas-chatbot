@@ -289,7 +289,8 @@ async function buildRecipientObj(context) {
 		// session: JSON.stringify(context.state),
 	};
 
-	if (context.state.alunaMail) state.email = context.state.alunaMail;
+	if (context.state.gotAluna && context.state.gotAluna.email) state.email = context.state.alunaMail;
+	if (context.state.gotAluna && context.state.gotAluna.cpf) state.cpf = context.state.alunaMail;
 
 	return state;
 }

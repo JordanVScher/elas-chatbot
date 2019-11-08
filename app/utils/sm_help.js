@@ -7,15 +7,22 @@ const { eMail } = require('./flow');
 const db = require('./DB_helper');
 const addQueue = require('./notificationAddQueue');
 const { turma } = require('../server/models');
-
+const { postRecipient } = require('../chatbot_api');
+const { getChatbotData } = require('../chatbot_api');
 const surveysInfo = require('./sm_surveys');
 const { surveysMaps } = require('./sm_maps');
+
+// Add new aluna as new recipient in the assistente. In this case, the recipient doesn't need an fb_id, the cpf doubles as a key
+async function sendAlunaToAssistente(email, cpf) {
+	const assistenteData = await getChatbotData(process.env.PAGE_ID);
+	await postRecipient(assistenteData.user_id, { email, cpf });
+}
 
 // after a payement happens we send an e-mail to the buyer with the matricula/atividade 1 form
 async function sendMatricula(productID, pagamentoID, buyerEmail) {
 	try {
 		// get turma that matches the product that was bought
-		const ourTurma = await turma.findOne({ where: { pagseguro_id: productID }, raw: true }).then(aluna => aluna).catch(err => sentryError('FindOne turma', err));
+		const ourTurma = await turma.findOne({ where: { pagseguro_id: productID }, raw: true }).then((aluna) => aluna).catch((err) => sentryError('FindOne turma', err));
 
 		let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Matricula.html`, 'utf-8'); // prepare the e-mail
 		html = await html.replace(/<link_atividade>/g, surveysInfo.atividade1.link); // add link to mail template
@@ -84,7 +91,7 @@ async function getSpecificAnswers(map, responses) {
 			page.questions = await formatAnswers(page.questions);
 			for (let j = 0; j < page.questions.length; j++) { // iterate through the questions
 				const question = page.questions[j]; // get question
-				const desiredQuestion = await map.find(x => x.questionID.toString() === question.id.toString()); // check if this question is one of the question we're looking for
+				const desiredQuestion = await map.find((x) => x.questionID.toString() === question.id.toString()); // check if this question is one of the question we're looking for
 				if (desiredQuestion) { // check if we found a desirable question
 					const theAnswer = await getAnswer(question); // get the actual answer from the question
 					if (theAnswer) { // check if we did find an answer
@@ -100,7 +107,7 @@ async function getSpecificAnswers(map, responses) {
 
 async function replaceChoiceId(answers, map, surveyID) {
 	const result = answers;
-	const findDropdown = map.filter(x => x.dropdown && x.dropdown.length > 0);
+	const findDropdown = map.filter((x) => x.dropdown && x.dropdown.length > 0);
 
 	if (findDropdown) { // check if we have an answer that needs replacement (choice.id isnt the actual answer)
 		const survey = await smAPI.getSurveyDetails(surveyID); // load survey and separate the questions (load the details noew because we know we will need them)
@@ -109,13 +116,13 @@ async function replaceChoiceId(answers, map, surveyID) {
 			const questionDetails = survey.pages[i].questions;
 			await findDropdown.forEach((element) => { // for each map element we should replace
 				if (result[element.paramName] && result[element.paramName].slice(0, 8) !== '<outros>') { // check if the answers array actually has that answer and it's not an "Others" option
-					const findQuestion = questionDetails.find(x => x.id.toString() === element.dropdown); // element.dropdown -> the ud
+					const findQuestion = questionDetails.find((x) => x.id.toString() === element.dropdown); // element.dropdown -> the ud
 					if (findQuestion && findQuestion.answers && findQuestion.answers.cols && findQuestion.answers.cols[0] && findQuestion.answers.cols[0].choices) {
 						// find the answer that has the same choice_id as the answer we have salved
-						const findAnswer = findQuestion.answers.cols[0].choices.find(x => x.id.toString() === result[element.paramName].toString());
+						const findAnswer = findQuestion.answers.cols[0].choices.find((x) => x.id.toString() === result[element.paramName].toString());
 						result[element.paramName] = findAnswer.text; // replace the choice_id saved with the actual text of the option
 					} else if (findQuestion && findQuestion.answers && findQuestion.answers.choices) {
-						const findAnswer = findQuestion.answers.choices.find(x => x.id.toString() === result[element.paramName].toString());
+						const findAnswer = findQuestion.answers.choices.find((x) => x.id.toString() === result[element.paramName].toString());
 						result[element.paramName] = findAnswer.text; // replace the choice_id saved with the actual text of the option
 					}
 				}
@@ -151,10 +158,11 @@ async function handleAtividadeOne(response) {
 		answers.turma_id = await db.getTurmaID(answers.turma);
 
 		const newUser = await db.upsertAlunoCadastro(answers);
-		if (newUser && newUser.id) { // if everything went right we update a ew things
+		if (newUser && newUser.id) { // if everything went right we update a few things
 			await db.updateAtividade(newUser.id, 'atividade_1', true);
 			await db.updateAlunoOnPagamento(answers.pgid, newUser.id);
 			await addQueue.addNewNotificationAlunas(newUser.id, newUser.turma_id);
+			await sendAlunaToAssistente(newUser.email, newUser.cpf);
 		} else {
 			sentryError('Erro em no salvamento de cadastro', { answers, newUser });
 		}
@@ -197,7 +205,7 @@ async function handleIndicacao(response) {
 
 	let indicados = {}; // could just as well be an array with the answers
 	await surveysMaps.indicacao360.forEach(async (element) => { // getting the answers for the indicados
-		const aux = baseAnswers.find(x => x.id === element.questionID);
+		const aux = baseAnswers.find((x) => x.id === element.questionID);
 		indicados[element.paramName] = aux && aux.text ? aux.text : '';
 	});
 
@@ -215,7 +223,7 @@ async function handleIndicacao(response) {
 	// getting the answers for the familiares
 	indicados = {}; // cleaning up
 	await surveysMaps.indicacao360_familiares.forEach(async (element) => {
-		const aux = baseAnswers.find(x => x.id === element.questionID);
+		const aux = baseAnswers.find((x) => x.id === element.questionID);
 		indicados[element.paramName] = aux && aux.text ? aux.text : '';
 	});
 
@@ -274,10 +282,9 @@ async function handleAvaliador(response, column, map) {
 	await db.upsertPrePos360(answers.indicaid, JSON.stringify(answers), column);
 }
 
-
 // what to do with the form that was just answered
 async function newSurveyResponse(event) {
-	console.log(event);
+	console.log('newSurveyResponse', event);
 	const responses = await smAPI.getResponseWithAnswers(event.filter_id, event.object_id); console.log('responses', JSON.stringify(responses, null, 2)); // get details of the event
 	switch (responses.survey_id) { // which survey was answered?
 	case surveysInfo.sondagemPre.id:
@@ -316,5 +323,5 @@ async function newSurveyResponse(event) {
 }
 
 module.exports = {
-	sendMatricula, newSurveyResponse,
+	sendMatricula, newSurveyResponse, sendAlunaToAssistente,
 };

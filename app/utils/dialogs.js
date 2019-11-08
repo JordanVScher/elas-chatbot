@@ -1,6 +1,7 @@
 const db = require('./DB_helper');
 const help = require('./helper');
 const { sentryError } = require('./helper');
+const { sendAlunaToAssistente } = require('./sm_help');
 const attach = require('./attach');
 const flow = require('./flow');
 const admin = require('./admin_menu/admin_helper');
@@ -142,6 +143,7 @@ module.exports.receiveCSVAluno = async (csvLines, chatbotUserId, pageToken) => {
 						const oldAluno = await alunos.findOne({ where: { cpf: element.cpf }, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em alunos.findOne', err));
 						// if aluno existed before we save the turma and label change
 						if (oldAluno) { await admin.SaveTurmaChange(chatbotUserId, pageToken, oldAluno.id, oldAluno.turma_id, element.turma_id); }
+						if (!oldAluno) { await sendAlunaToAssistente(element.email, element.cpf); }
 						element.added_by_admin = true;
 						const newAluno = await db.upsertAlunoCadastro(element);
 						// const newAluno = await db.addAlunaFromCSV(element);

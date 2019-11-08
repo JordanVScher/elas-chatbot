@@ -126,9 +126,9 @@ async function upsertAlunoCadastro(userAnswers) {
 	ON CONFLICT(cpf)
 	DO UPDATE
 	SET ${set.join(', ')}
-	RETURNING id;`;
+	RETURNING id, email, cpf;`;
 
-	const result = await sequelize.query(queryString).spread((results) => (results && results[0] && results[0].id ? results[0] : false)).catch((err) => sentryError('Erro no upsertAlunoCadastro =>', err));
+	const result = await sequelize.query(queryString).spread((results) => (results && results[0] ? results[0] : false)).catch((err) => sentryError('Erro no upsertAlunoCadastro =>', err));
 	if (result) result.turma_id = answers.turma_id;
 	return result;
 }
