@@ -36,30 +36,27 @@ module.exports.handleCPF = async (context) => {
 	}
 };
 
-module.exports.getAgenda = async (context) => {
+module.exports.getAgenda = async (context, userTurma) => {
 	const result = {};
-	const spreadsheet = await help.reloadSpreadSheet(0, 6);
-	const onTheTurma = await spreadsheet.find((x) => x.turma === context.state.gotAluna.turma);
+	if (!userTurma) return false;
+	const today = new Date();
+	result.turmaNome = userTurma.nome;
+	result.local = userTurma.local;
 
-	if (onTheTurma) {
-		result.local = onTheTurma.local; // the local
-		const today = new Date();
+	for (let i = 1; i <= 3; i++) { // loop through all 3 modules we have
+		const newDate = userTurma[`horario_modulo${i}`] || userTurma[`modulo${i}`]; // get date for the start of each module
 
-		for (let i = 1; i <= 3; i++) { // loop through all 3 modules we have
-			let newDate = onTheTurma[`módulo${i}`]; // get date for the start of each module
-			newDate = newDate ? await help.getJsDateFromExcel(newDate) : ''; // convert excel date if we have a date
-			if (newDate) {
-				if (await help.moment(newDate).format('YYYY-MM-DD') >= await help.moment(today).format('YYYY-MM-DD')) { // check if the date for this module is after today or today
-					result.currentModule = i; // we loop through the modules so this index is the same number as the module
-					i = 4; // we have the date already, leave the loop
-					// getting the day the module starts
-					result.newDate = newDate;
-					result.newDateDay = help.weekDayName[result.newDate.getDay()];
-					// getting the next day
-					result.nextDate = new Date(newDate);
-					result.nextDate.setDate(result.nextDate.getDate() + 1);
-					result.nextDateDay = help.weekDayName[result.nextDate.getDay()];
-				}
+		if (newDate) {
+			if (await help.moment(newDate).format('YYYY-MM-DD') >= await help.moment(today).format('YYYY-MM-DD')) { // check if the date for this module is after today or today
+				result.currentModule = i; // we loop through the modules so this index is the same number as the module
+				i = 4; // we have the date already, leave the loop
+				// getting the day the module starts
+				result.newDate = newDate;
+				result.newDateDay = help.weekDayName[result.newDate.getDay()];
+				// getting the next day
+				result.nextDate = new Date(newDate);
+				result.nextDate.setDate(result.nextDate.getDate() + 1);
+				result.nextDateDay = help.weekDayName[result.nextDate.getDay()];
 			}
 		}
 	}
@@ -69,9 +66,10 @@ module.exports.getAgenda = async (context) => {
 
 module.exports.buildAgendaMsg = async (data) => {
 	let msg = '';
-	if (data.currentModule) { msg += `📝 Você está no módulo ${data.currentModule} de 3\n`; }
-	if (data.newDate) { msg += `🗓️ Acontecerá ${data.newDateDay} dia ${await help.formatDate(data.newDate)} e ${data.nextDateDay} dia ${help.formatDate(data.nextDate)}\n`; }
-	if (data.local) { msg += `🏠 Local: ${await help.toTitleCase(data.local)}`; }
+	if (data.turmaNome) msg = `📝 Sua Turma: ${data.turmaNome}\n`;
+	if (data.currentModule) msg += `💡 Você está no módulo ${data.currentModule} de 3\n`;
+	if (data.newDate) msg += `🗓️ Sua aula acontecerá ${data.newDateDay} dia ${await help.formatDate(data.newDate)} e ${data.nextDateDay} dia ${help.formatDate(data.nextDate)}\n`;
+	if (data.local) msg += `🏠 Local: ${await help.toTitleCase(data.local)}`;
 
 	return msg;
 };

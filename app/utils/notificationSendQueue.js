@@ -134,7 +134,7 @@ async function fillMasks(replaceMap, recipientData) {
 async function extendRecipient(recipient, moduleDates, turmaID) {
 	const result = recipient;
 
-	const ourTurma = await moduleDates.find(x => x.id === turmaID);
+	const ourTurma = await moduleDates.find((x) => x.id === turmaID);
 	if (ourTurma.modulo1) { result.mod1 = ourTurma.modulo1; }
 	if (ourTurma.modulo2) { result.mod2 = ourTurma.modulo2; }
 	if (ourTurma.modulo3) { result.mod3 = ourTurma.modulo3; }
@@ -150,7 +150,7 @@ async function extendRecipient(recipient, moduleDates, turmaID) {
 
 async function getIndicado(id, moduleDates) {
 	const result = await indicadosAvaliadores.findByPk(id, { raw: true, include: ['respostas', 'aluna'] })
-		.then(res => res).catch(err => sentryError('Erro ao carregar indicado', err));
+		.then((res) => res).catch((err) => sentryError('Erro ao carregar indicado', err));
 
 	if (result && result.email) {
 		if (result['aluna.turma_id']) { result.turmaName = await getTurmaName(result['aluna.turma_id']); }
@@ -162,7 +162,7 @@ async function getIndicado(id, moduleDates) {
 
 async function getAluna(id, moduleDates) {
 	const result = await aluno.findByPk(id, { raw: true, include: ['chatbot'] })
-		.then(res => res).catch(err => sentryError('Erro ao carregar aluno', err));
+		.then((res) => res).catch((err) => sentryError('Erro ao carregar aluno', err));
 
 	if (result && (result.email || result['chatbot.fb_id'])) {
 		if (result.turma_id) { result.turmaName = await getTurmaName(result.turma_id); }
@@ -198,19 +198,19 @@ async function findCurrentModulo(turmaData, today = new Date()) {
 
 
 async function checkShouldSendNotification(notification, moduleDates, today) {
-	const ourTurma = moduleDates.find(x => x.id === notification.turma_id); // turma for this notification
+	const ourTurma = moduleDates.find((x) => x.id === notification.turma_id); // turma for this notification
 
 	let currentRule = ''; // depends on the notification_type, rule for the notification (and module)
 	if (notification.notification_type === 15) {
 		const currentModule = await findCurrentModulo(moduleDates, today);
-		currentRule = await rules.notificationRules.find(x => x.notification_type === notification.notification_type && x.modulo === currentModule);
+		currentRule = await rules.notificationRules.find((x) => x.notification_type === notification.notification_type && x.modulo === currentModule);
 	} else if (notification.notification_type === 16) {
 		const currentModule = await findCurrentModulo(moduleDates, today);
 		let sunday = false;
 		if (today.getDay() === 0) { sunday = true; }
-		currentRule = await rules.notificationRules.find(x => x.notification_type === notification.notification_type && x.modulo === currentModule && x.sunday === sunday);
+		currentRule = await rules.notificationRules.find((x) => x.notification_type === notification.notification_type && x.modulo === currentModule && x.sunday === sunday);
 	} else {
-		currentRule = await rules.notificationRules.find(x => x.notification_type === notification.notification_type);
+		currentRule = await rules.notificationRules.find((x) => x.notification_type === notification.notification_type);
 	}
 
 	const dateToSend = await rules.getSendDate(ourTurma, currentRule); // the date to send
@@ -249,7 +249,7 @@ async function checkShouldSendRecipient(recipient, notification) {
 		const answerPre = recipient['respostas.pre'];
 		if (answerPre && Object.keys(answerPre)) { // if pre was already answered, there's no need to resend this notification
 			await notificationQueue.update({ error: { misc: 'Indicado já respondeu pré' } }, { where: { id: notification.id } })
-				.then(rowsUpdated => rowsUpdated).catch(err => sentryError('Erro no update do erro check_answered & 3', err));
+				.then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do erro check_answered & 3', err));
 			return false;
 		}
 	}
@@ -258,7 +258,7 @@ async function checkShouldSendRecipient(recipient, notification) {
 		const answerPre = recipient['respostas.pre'];
 		if (!answerPre || Object.entries(answerPre).length === 0) {
 			await notificationQueue.update({ error: { misc: 'Indicado não respondeu pré-avaliação' } }, { where: { id: notification.id } })
-				.then(rowsUpdated => rowsUpdated).catch(err => sentryError('Erro no update do erro === 10', err));
+				.then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do erro === 10', err));
 			return false;
 		}
 
@@ -266,7 +266,7 @@ async function checkShouldSendRecipient(recipient, notification) {
 			const answerPos = recipient['respostas.pos'];
 			if (answerPos && Object.entries(answerPos).length !== 0) { // if pos was already answered, there's no need to resend this notification
 				await notificationQueue.update({ error: { misc: 'Indicado já respondeu pós' } }, { where: { id: notification.id } })
-					.then(rowsUpdated => rowsUpdated).catch(err => sentryError('Erro no update do erro check_answered & 10', err));
+					.then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do erro check_answered & 10', err));
 				return false;
 			}
 		}
@@ -325,11 +325,11 @@ async function sendNotificationFromQueue() {
 	const today = new Date();
 
 	const queue = await notificationQueue.findAll({ where: { sent_at: null, error: null }, raw: true })
-		.then(res => res).catch(err => sentryError('Erro ao carregar notification_queue', err));
+		.then((res) => res).catch((err) => sentryError('Erro ao carregar notification_queue', err));
 
 
 	const types = await notificationTypes.findAll({ where: {}, raw: true })
-		.then(res => res).catch(err => sentryError('Erro ao carregar notification_types', err));
+		.then((res) => res).catch((err) => sentryError('Erro ao carregar notification_types', err));
 
 	for (let i = 0; i < queue.length; i++) {
 		const notification = queue[i];
@@ -343,7 +343,7 @@ async function sendNotificationFromQueue() {
 			}
 
 			if (await checkShouldSendRecipient(recipient, notification) === true) {
-				const currentType = types.find(x => x.id === notification.notification_type); // get the correct kind of notification
+				const currentType = types.find((x) => x.id === notification.notification_type); // get the correct kind of notification
 				const map = parametersRules[currentType.id]; // get the respective map
 				const newText = await replaceParameters(currentType, await fillMasks(map, recipient), recipient);
 				const attachment = await buildAttachment(currentType, recipient.cpf);
@@ -364,10 +364,10 @@ async function sendNotificationFromQueue() {
 
 				if (!error.mailError && !error.chatbotError) { // if there wasn't any errors, we can update the queue succesfully
 					await notificationQueue.update({ sent_at: new Date() }, { where: { id: notification.id } })
-						.then(rowsUpdated => rowsUpdated).catch(err => sentryError('Erro no update do sendAt', err));
+						.then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do sendAt', err));
 				} else { // if there was any errors, we store what happened
 					await notificationQueue.update({ error }, { where: { id: notification.id } })
-						.then(rowsUpdated => rowsUpdated).catch(err => sentryError('Erro no update do erro', err));
+						.then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do erro', err));
 				}
 			}
 		}

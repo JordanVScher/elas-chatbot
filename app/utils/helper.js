@@ -138,7 +138,7 @@ async function reloadSpreadSheet(worksheet, headerStart) {
 // format excel dates to regular dates
 async function getFormatedSpreadsheet() {
 	const result = [];
-	const spreadsheet = await reloadSpreadSheet(0, 6); // console.log('spreadsheet', spreadsheet); // load spreadsheet
+	const spreadsheet = await reloadSpreadSheet(0, 6) || []; // console.log('spreadsheet', spreadsheet); // load spreadsheet
 
 	for (let i = 0; i < spreadsheet.length; i++) {
 		const obj = spreadsheet[i];

@@ -20,23 +20,23 @@ async function sendTestNotification(alunaID) {
 		distinct: 'notification_type',
 		order: [['notification_type', 'ASC']],
 		raw: true,
-	}).then(res => res).catch(err => help.sentryError('Erro em notificationQueue.findAll', err));
+	}).then((res) => res).catch((err) => help.sentryError('Erro em notificationQueue.findAll', err));
 
-	queue = Array.from(new Set(queue.map(a => a.notification_type)))
-		.map(notificatioType => queue.find(a => a.notification_type === notificatioType));
+	queue = Array.from(new Set(queue.map((a) => a.notification_type)))
+		.map((notificatioType) => queue.find((a) => a.notification_type === notificatioType));
 
 	const indicados = await indicadosAvaliadores.findAll({
 		where: { aluno_id: alunaID },
 		order: [['id', 'DESC']],
 		raw: true,
-	}).then(res => res).catch(err => help.sentryError('Erro em notificationQueue.findAll', err));
+	}).then((res) => res).catch((err) => help.sentryError('Erro em notificationQueue.findAll', err));
 
 	for (let i = 0; i < indicados.length; i++) {
 		const element = indicados[i];
 		const indiciadoNotification = await notificationQueue.findAll({
 			where: { indicado_id: element.id },
 			raw: true,
-		}).then(res => res).catch(err => help.sentryError('Erro em notificationQueue.findAll2', err));
+		}).then((res) => res).catch((err) => help.sentryError('Erro em notificationQueue.findAll2', err));
 		if (indiciadoNotification && indiciadoNotification.length > 0) {
 			indiciadoNotification.forEach((element3) => {
 				queue.push(element3);
@@ -48,7 +48,7 @@ async function sendTestNotification(alunaID) {
 		const moduleDates = await getModuloDates();
 		const aluna = await sendQueue.getAluna(alunaID, moduleDates);
 		const types = await notificationTypes.findAll({ where: {}, raw: true })
-			.then(res => res).catch(err => help.sentryError('Erro ao carregar notification_types', err));
+			.then((res) => res).catch((err) => help.sentryError('Erro ao carregar notification_types', err));
 
 		const turmaName = await getTurmaName(aluna.turma_id);
 
@@ -64,7 +64,7 @@ async function sendTestNotification(alunaID) {
 
 			recipient.turmaName = turmaName;
 			if (await sendQueue.checkShouldSendRecipient(recipient, notification) === true) {
-				const currentType = types.find(x => x.id === notification.notification_type); // get the correct kind of notification
+				const currentType = types.find((x) => x.id === notification.notification_type); // get the correct kind of notification
 				const map = sendQueue.parametersRules[currentType.id]; // get the respective map
 				const newText = await sendQueue.replaceParameters(currentType, await sendQueue.fillMasks(map, recipient), recipient);
 				const attachment = await sendQueue.buildAttachment(currentType, recipient.cpf);
