@@ -12,6 +12,8 @@ const timers = require('./utils/timers');
 const { checkUserOnLabel } = require('./utils/postback');
 const { updateTurmas } = require('./utils/turma');
 const labels = require('./utils/labels');
+const { sendTestNotification } = require('./utils/notificationTest');
+
 
 module.exports = async (context) => {
 	try {
@@ -254,6 +256,33 @@ module.exports = async (context) => {
 		case 'updateTurma':
 			await dialogs.updateTurma(context);
 			break;
+		case 'simularNotificacao':
+			await context.sendText(flow.adminMenu.simularNotificacao.intro, await attach.getQR(flow.adminMenu.simularNotificacao));
+			break;
+		case 'simularAll': {
+			const aluna = await db.getAlunaFromFBID(context.session.user.id);
+			await sendTestNotification(aluna.cpf);
+			await context.sendText('Aguarde', await attach.getQR(flow.adminMenu.verTurma));
+			break;
+		}
+		case 'simularIndicado': {
+			const aluna = await db.getAlunaFromFBID(context.session.user.id);
+			await sendTestNotification(aluna.cpf, false, true);
+			await context.sendText('Aguarde', await attach.getQR(flow.adminMenu.verTurma));
+			break;
+		}
+		case 'simular1H': {
+			const aluna = await db.getAlunaFromFBID(context.session.user.id);
+			await sendTestNotification(aluna.cpf, 15);
+			await context.sendText('Aguarde', await attach.getQR(flow.adminMenu.verTurma));
+			break;
+		}
+		case 'simular24H': {
+			const aluna = await db.getAlunaFromFBID(context.session.user.id);
+			await sendTestNotification(aluna.cpf, 16);
+			await context.sendText('Aguarde', await attach.getQR(flow.adminMenu.verTurma));
+			break;
+		}
 		case 'notificationOn':
 			await MaAPI.updateBlacklistMA(context.session.user.id, 1);
 			await MaAPI.logNotification(context.session.user.id, context.state.chatbotData.user_id, 3);

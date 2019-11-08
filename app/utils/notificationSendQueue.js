@@ -319,6 +319,47 @@ async function buildAttachment(type, cpf) {
 	return result;
 }
 
+
+async function actuallySendMessages(parametersRules, types, notification, recipient, test = false) {
+	const currentType = types.find((x) => x.id === notification.notification_type); // get the correct kind of notification
+	const map = parametersRules[currentType.id]; // get the respective map
+	const newText = await replaceParameters(currentType, await fillMasks(map, recipient), recipient);
+	const attachment = await buildAttachment(currentType, recipient.cpf);
+	const error = {};
+
+	if (newText.email_text) { // if there's an email to send, send it
+		let html = await readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
+		html = await html.replace('[CONTEUDO_MAIL]', newText.email_text); // add nome to mail template
+		const mailError = await mailer.sendHTMLMail(newText.email_subject, recipient.email, html, attachment.mail);
+		if (mailError) { error.mailError = mailError.toString(); } // save the error, if it happens
+	}
+
+	if (recipient['chatbot.fb_id'] && newText.chatbot_text) { // if aluna is linked with messenger we send a message to the bot
+		let chatbotError = await broadcast.sendBroadcastAluna(recipient['chatbot.fb_id'], newText.chatbot_text, newText.chatbot_quick_reply);
+		if (!chatbotError && newText.chatbot_cards) { chatbotError = await broadcast.sendCardAluna(recipient['chatbot.fb_id'], newText.chatbot_cards, recipient.cpf); }
+		if (!chatbotError && [attachment.chatbot.pdf || attachment.chatbot.png]) { chatbotError = await broadcast.sendFiles(recipient['chatbot.fb_id'], attachment.chatbot.pdf, attachment.chatbot.png); }
+		if (chatbotError) { error.chatbotError = chatbotError.toString(); } // save the error, if it happens
+	}
+
+	if (!error.mailError && !error.chatbotError && !test) { // if there wasn't any errors, we can update the queue succesfully
+		await notificationQueue.update({ sent_at: new Date() }, { where: { id: notification.id } })
+			.then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do sendAt', err));
+	} else { // if there was any errors, we store what happened
+		await notificationQueue.update({ error }, { where: { id: notification.id } })
+			.then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do erro', err));
+	}
+}
+
+async function getRecipient(notification, moduleDates) {
+	let recipient;
+	if (notification.aluno_id && !notification.indicado_id) { // if notification doesnt have indicado_id it's just an aluno notification
+		recipient = await getAluna(notification.aluno_id, moduleDates);
+	} else if (notification.indicado_id) {
+		recipient = await getIndicado(notification.indicado_id, moduleDates);
+	}
+
+	return recipient;
+}
 async function sendNotificationFromQueue() {
 	const parametersRules = await rules.buildParametersRules();
 	const moduleDates = await getModuloDates();
@@ -327,7 +368,6 @@ async function sendNotificationFromQueue() {
 	const queue = await notificationQueue.findAll({ where: { sent_at: null, error: null }, raw: true })
 		.then((res) => res).catch((err) => sentryError('Erro ao carregar notification_queue', err));
 
-
 	const types = await notificationTypes.findAll({ where: {}, raw: true })
 		.then((res) => res).catch((err) => sentryError('Erro ao carregar notification_types', err));
 
@@ -335,40 +375,10 @@ async function sendNotificationFromQueue() {
 		const notification = queue[i];
 
 		if (await checkShouldSendNotification(notification, moduleDates, today) === true) { // !== for easy testing
-			let recipient;
-			if (notification.aluno_id && !notification.indicado_id) { // if notification doesnt have indicado_id it's just an aluno notification
-				recipient = await getAluna(notification.aluno_id, moduleDates);
-			} else if (notification.indicado_id) {
-				recipient = await getIndicado(notification.indicado_id, moduleDates);
-			}
+			const recipient = await getRecipient(notification, moduleDates);
 
 			if (await checkShouldSendRecipient(recipient, notification) === true) {
-				const currentType = types.find((x) => x.id === notification.notification_type); // get the correct kind of notification
-				const map = parametersRules[currentType.id]; // get the respective map
-				const newText = await replaceParameters(currentType, await fillMasks(map, recipient), recipient);
-				const attachment = await buildAttachment(currentType, recipient.cpf);
-				const error = {};
-				if (newText.email_text) { // if there's an email to send, send it
-					let html = await readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
-					html = await html.replace('[CONTEUDO_MAIL]', newText.email_text); // add nome to mail template
-					const mailError = await mailer.sendHTMLMail(newText.email_subject, recipient.email, html, attachment.mail);
-					if (mailError) { error.mailError = mailError.toString(); } // save the error, if it happens
-				}
-
-				if (recipient['chatbot.fb_id'] && newText.chatbot_text) { // if aluna is linked with messenger we send a message to the bot
-					let chatbotError = await broadcast.sendBroadcastAluna(recipient['chatbot.fb_id'], newText.chatbot_text, newText.chatbot_quick_reply);
-					if (!chatbotError && newText.chatbot_cards) { chatbotError = await broadcast.sendCardAluna(recipient['chatbot.fb_id'], newText.chatbot_cards, recipient.cpf); }
-					if (!chatbotError && [attachment.chatbot.pdf || attachment.chatbot.png]) { chatbotError = await broadcast.sendFiles(recipient['chatbot.fb_id'], attachment.chatbot.pdf, attachment.chatbot.png); }
-					if (chatbotError) { error.chatbotError = chatbotError.toString(); } // save the error, if it happens
-				}
-
-				if (!error.mailError && !error.chatbotError) { // if there wasn't any errors, we can update the queue succesfully
-					await notificationQueue.update({ sent_at: new Date() }, { where: { id: notification.id } })
-						.then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do sendAt', err));
-				} else { // if there was any errors, we store what happened
-					await notificationQueue.update({ error }, { where: { id: notification.id } })
-						.then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do erro', err));
-				}
+				await actuallySendMessages(parametersRules, types, notification, recipient);
 			}
 		}
 	}
@@ -384,4 +394,6 @@ module.exports = {
 	replaceParameters,
 	buildAttachment,
 	fillMasks,
+	actuallySendMessages,
+	getRecipient,
 };
