@@ -76,7 +76,9 @@ module.exports = async (context) => {
 			} else if (['CPFNotFound', 'invalidCPF', 'validCPF'].includes(context.state.dialog)) {
 				await dialogs.handleCPF(context);
 			} else if (context.state.whatWasTyped.toLowerCase() === process.env.RESET && process.env.ENV !== 'prod') {
-				await labels.unlinkUserToLabelByName(context.session.user.id, context.state.gotAluna.turma, context.state.chatbotData.fb_access_token);
+				if (context.state.gotAluna && context.state.gotAluna.turma) {
+					await labels.unlinkUserToLabelByName(context.session.user.id, context.state.gotAluna.turma, context.state.chatbotData.fb_access_token);
+				}
 				await context.setState({ recipient: await MaAPI.getRecipient(context.state.chatbotData.user_id, context.session.user.id) });
 				await context.setState({ matricula: '' });
 				if (context.state.recipient.extra_fields.labels) {
