@@ -169,7 +169,7 @@ async function handleAtividadeOne(response) {
 
 		/* sending "Apresentação" mail */
 		let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Apresentar_Donna.html`, 'utf-8');
-		html = await html.replace('[nome]', answers.nome); // add nome to mail template
+		html = await html.replace('[nome]', answers.nome_completo); // add nome to mail template
 		html = await html.replace(/<link_donna>/g, process.env.LINK_DONNA); // add chatbot link to mail template
 		await mailer.sendHTMLMail(eMail.depoisMatricula.assunto, answers.email, html);
 	} catch (error) {	sentryError('Erro em handleAtividadeOne', error); }
