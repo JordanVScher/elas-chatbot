@@ -33,7 +33,7 @@ async function getTurmaFromID(turmaID) {
 async function getTurmaID(turmaName) {
 	turmaName = turmaName ? turmaName.toLowerCase() : '';
 	const id = await sequelize.query(`
-	SELECT id FROM turma where LOWER(nome) = '${turmaName}';
+	SELECT id FROM turma where lower(nome) LIKE '${turmaName}%';
 	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
 		console.log('Got turma id!', results);
 		return results && results[0] && results[0].id ? results[0].id : false;
