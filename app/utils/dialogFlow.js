@@ -53,6 +53,7 @@ async function checkPosition(context) {
 	switch (context.state.intentName) {
 	case 'Default Welcome Intent':
 	case 'Greetings': // add specific intents here
+		await context.setState({ dialog: 'greetings' });
 		break;
 	case 'Fallback': // didn't understand what was typed
 		await createIssue(context);

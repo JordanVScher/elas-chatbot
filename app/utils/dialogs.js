@@ -76,7 +76,7 @@ module.exports.buildAgendaMsg = async (data) => {
 };
 
 
-module.exports.sendCSV = async (context) => {
+module.exports.sendCSV = async (context) => { // verTurma
 	const turmaID = context.state.searchTurma;
 	let result = '';
 	switch (context.state.dialog) {

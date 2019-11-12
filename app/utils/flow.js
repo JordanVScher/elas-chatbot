@@ -179,6 +179,7 @@ module.exports = {
 		verTurma: {
 			txt1: 'Aqui você poderá baixar um CSV com os dados das alunas de uma turma. Digite a turma, exemplo: T1-SP.',
 			txt2: 'Se quiser os dados de outra turma basta digitar novamente.',
+			noTurma: 'Não encontrei essa turma. Tente novamente.',
 			menuOptions: ['Voltar'],
 			menuPostback: ['adminMenu'],
 		},

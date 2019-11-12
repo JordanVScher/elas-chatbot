@@ -71,7 +71,7 @@ module.exports = async (context) => {
 				await dialogs.handleCPF(context);
 			} else if (context.state.dialog === 'verTurma' || context.state.dialog === 'alunosTurmaCSV') {
 				if (await checkUserOnLabel(context.session.user.id, process.env.ADMIN_LABEL_ID)) {
-					await context.setState({ searchTurma: await db.getTurmaID(context.state.whatWasTyped.toUpperCase()), dialog: 'alunosTurmaCSV' });
+					await context.setState({ searchTurma: await db.getTurmaID(context.state.whatWasTyped.toLowerCase()), dialog: 'alunosTurmaCSV' });
 				} else {
 					await context.sendText(flow.adminMenu.notAdmin); await context.setState({ dialog: 'greetings' });
 				}
@@ -239,13 +239,17 @@ module.exports = async (context) => {
 			await sendWarningCSV(true);
 			break;
 		case 'alunosTurmaCSV':
-			for (let i = 0; i < Object.keys(flow.adminCSV).length; i++) {
-				const element = Object.keys(flow.adminCSV)[i];
-				await context.setState({ dialog: element });
-				await dialogs.sendCSV(context, 'T7-SP');
+			if (context.state.searchTurma) {
+				for (let i = 0; i < Object.keys(flow.adminCSV).length; i++) {
+					const element = Object.keys(flow.adminCSV)[i];
+					await context.setState({ dialog: element });
+					await dialogs.sendCSV(context, context.state.searchTurma);
+				}
+				await context.sendText(flow.adminMenu.verTurma.txt2, await attach.getQR(flow.adminMenu.verTurma));
+				await context.setState({ dialog: 'alunosTurmaCSV' });
+			} else {
+				await context.sendText(flow.adminMenu.verTurma.noTurma, await attach.getQR(flow.adminMenu.verTurma));
 			}
-			await context.sendText(flow.adminMenu.verTurma.txt2, await attach.getQR(flow.adminMenu.verTurma));
-			await context.setState({ dialog: 'alunosTurmaCSV' });
 			break;
 		case 'mudarTurma':
 			await context.sendText(flow.adminMenu.mudarTurma.txt1, await attach.getQR(flow.adminMenu.mudarTurma));
