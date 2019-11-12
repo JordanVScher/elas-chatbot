@@ -108,8 +108,8 @@ module.exports.sendCSV = async (context) => { // verTurma
 	}
 };
 
-module.exports.sendFeedbackMsgs = async (context, errors) => {
-	const feedbackMsgs = await admin.getFeedbackMsgs(context.state.csvLines.length - errors.length, errors);
+module.exports.sendFeedbackMsgs = async (context, errors, msgs) => {
+	const feedbackMsgs = await admin.getFeedbackMsgs(context.state.csvLines.length - errors.length, errors, msgs);
 	for (let i = 0; i < feedbackMsgs.length; i++) {
 		const element = feedbackMsgs[i];
 		if (i === 1) {
@@ -168,7 +168,7 @@ module.exports.receiveCSVAluno = async (csvLines, chatbotUserId, pageToken) => {
 };
 
 
-async function receiveCSVAvaliadores(csvLines) {
+module.exports.receiveCSVAvaliadores = async (csvLines) => {
 	if (csvLines) {
 		const errors = []; // stores lines that presented an error
 		const indicados = [];
@@ -202,8 +202,7 @@ async function receiveCSVAvaliadores(csvLines) {
 		return { errors };
 	}
 	return help.sentryError('Erro em receiveCSVAluno => CSV inválido!', { csvLines });
-}
-module.exports.receiveCSVAvaliadores = receiveCSVAvaliadores;
+};
 
 module.exports.adminAlunaCPF = async (context) => {
 	await context.setState({ adminAlunaCPF: await help.getCPFValid(context.state.whatWasTyped) });

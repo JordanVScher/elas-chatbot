@@ -176,6 +176,10 @@ module.exports = {
 			menuOptions: ['Voltar'],
 			menuPostback: ['adminMenu'],
 		},
+		feedback: {
+			aluna: ['Nenhuma aluna foi adicionada!', 'Uma aluna foi adicionada!', 'alunas foram adicionadas!'],
+			indicado: ['Nenhum indicado foi adicionado!', 'Um indicado foi adicionado!', 'indicados foram adicionados!'],
+		},
 		verTurma: {
 			txt1: 'Aqui você poderá baixar um CSV com os dados das alunas de uma turma. Digite a turma, exemplo: T1-SP.',
 			txt2: 'Se quiser os dados de outra turma basta digitar novamente.',

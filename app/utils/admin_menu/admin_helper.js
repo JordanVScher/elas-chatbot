@@ -53,16 +53,16 @@ async function checkReceivedFile(context) {
 	}
 }
 
-async function getFeedbackMsgs(addedALunos, errors) {
+async function getFeedbackMsgs(addedALunos, errors, msgs) {
 	// addedALunos => csvLines.length - errors.length
 	const result = [];
 
 	if (addedALunos === 0) {
-		result.push('Nenhuma aluna foi adicionada!');
+		result.push(msgs[0]);
 	} else if (addedALunos === 1) {
-		result.push('Uma aluna foi adicionada!');
+		result.push(msgs[1]);
 	} else {
-		result.push(`${addedALunos} alunas foram adicionadas!`);
+		result.push(`${addedALunos} ${msgs[2]}`);
 	}
 
 	let messageToSend;

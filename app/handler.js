@@ -211,7 +211,7 @@ module.exports = async (context) => {
 		case 'createAlunos': {
 			const result = await dialogs.receiveCSVAluno(context.state.csvLines, context.state.chatbotData.user_id, context.state.chatbotData.fb_access_token);
 			if (result) {
-				await dialogs.sendFeedbackMsgs(context, result.errors);
+				await dialogs.sendFeedbackMsgs(context, result.errors, flow.adminMenu.feedback.aluna);
 			} else {
 				await context.sendText(flow.adminMenu.inserirAlunas.invalidFile, await attach.getQR(flow.adminMenu.inserirAlunas));
 			}
@@ -226,7 +226,7 @@ module.exports = async (context) => {
 		case 'createAvaliadores': {
 			const result = await dialogs.receiveCSVAvaliadores(context.state.csvLines);
 			if (result) {
-				await dialogs.sendFeedbackMsgs(context, result.errors);
+				await dialogs.sendFeedbackMsgs(context, result.errors, flow.adminMenu.feedback.indicado);
 			} else {
 				await context.sendText(flow.adminMenu.inserirAvaliadores.invalidFile, await attach.getQR(flow.adminMenu.inserirAvaliadores));
 			}
