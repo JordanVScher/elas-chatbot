@@ -82,12 +82,13 @@ async function getFeedbackMsgs(addedALunos, errors, msgs) {
 
 async function alunaChangeTurmaLabel(politicianID, pageToken, alunaID, oldTurma, newTurma) {
 	const foundUser = await db.getChatbotUser(alunaID);
+	if (foundUser && foundUser.cpf) {
+		await MaAPI.deleteRecipientLabelCPF(politicianID, foundUser.cpf, oldTurma);
+		await MaAPI.postRecipientLabelCPF(politicianID, foundUser.cpf, newTurma);
+	}
+
 	if (foundUser && foundUser.fb_id) {
-		if (oldTurma !== newTurma) {
-			await MaAPI.deleteRecipientLabel(politicianID, foundUser.fb_id, oldTurma);
-			await labels.unlinkUserToLabelByName(foundUser.fb_id, oldTurma, pageToken);
-		}
-		await MaAPI.postRecipientLabel(politicianID, foundUser.fb_id, newTurma);
+		await labels.unlinkUserToLabelByName(foundUser.fb_id, oldTurma, pageToken);
 		await labels.linkUserToLabelByName(foundUser.fb_id, newTurma, pageToken, true);
 	}
 }

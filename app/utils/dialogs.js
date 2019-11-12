@@ -131,7 +131,6 @@ module.exports.receiveCSVAluno = async (csvLines, chatbotUserId, pageToken) => {
 				element.Turma = await turmas.find((x) => x.nome === element.Turma.toUpperCase()); // find the turma that has that name
 				element.turma_id = element.Turma ? element.Turma.id : false; // get that turma id
 			} // convert turma as name to turma as id
-
 			if (element.Turma && element.turma_id) { // check valid turma
 				element = await admin.convertCSVToDB(element, admin.swap(admin.alunaCSV));
 				if (element.nome_completo) { // check if aluno has the bare minumium to be added to the database
@@ -145,7 +144,7 @@ module.exports.receiveCSVAluno = async (csvLines, chatbotUserId, pageToken) => {
 						if (oldAluno) { await admin.SaveTurmaChange(chatbotUserId, pageToken, oldAluno.id, oldAluno.turma_id, element.turma_id); }
 						element.added_by_admin = true;
 						const newAluno = await db.upsertAlunoCadastro(element);
-						await sendAlunaToAssistente(element.nome_completo, element.email, element.cpf);
+						await sendAlunaToAssistente(element.nome_completo, element.email, element.cpf, element.Turma.nome);
 						if (!newAluno || newAluno.error || !newAluno.id) { // save line where error happended
 							errors.push({ line: i + 2, msg: 'Erro ao salvar no banco' });
 							help.sentryError('Erro em receiveCSVAluno => Erro ao salvar no banco', { element });

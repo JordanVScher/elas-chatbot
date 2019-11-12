@@ -7,14 +7,16 @@ const { eMail } = require('./flow');
 const db = require('./DB_helper');
 const addQueue = require('./notificationAddQueue');
 const { postRecipient } = require('../chatbot_api');
+const { postRecipientLabelCPF } = require('../chatbot_api');
 const { getChatbotData } = require('../chatbot_api');
 const surveysInfo = require('./sm_surveys');
 const { surveysMaps } = require('./sm_maps');
 
 // Add new aluna as new recipient in the assistente. In this case, the recipient doesn't need an fb_id, the cpf doubles as a key
-async function sendAlunaToAssistente(name, email, cpf) {
+async function sendAlunaToAssistente(name, email, cpf, turma) {
 	const assistenteData = await getChatbotData(process.env.PAGE_ID);
 	await postRecipient(assistenteData.user_id, { name, email, cpf });
+	await postRecipientLabelCPF(assistenteData.user_id, cpf, turma);
 }
 
 // after a payement happens we send an e-mail to the buyer with the matricula/atividade 1 form
@@ -158,7 +160,7 @@ async function handleAtividadeOne(response) {
 			await db.updateAtividade(newUser.id, 'atividade_1', true);
 			if (answers.pgid) await db.updateAlunoOnPagamento(answers.pgid, newUser.id);
 			await addQueue.addNewNotificationAlunas(newUser.id, newUser.turma_id);
-			await sendAlunaToAssistente(newUser.nome_completo, newUser.email, newUser.cpf);
+			await sendAlunaToAssistente(newUser.nome_completo, newUser.email, newUser.cpf, answers.turma);
 		} else {
 			sentryError('Erro em no salvamento de cadastro', { answers, newUser });
 		}

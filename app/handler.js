@@ -154,10 +154,11 @@ module.exports = async (context) => {
 			break;
 		case 'confirmaMatricula':
 			await db.linkUserToCPF(context.session.user.id, context.state.cpf);
+			await MaAPI.postRecipient(context.state.chatbotData.user_id, await help.buildRecipientObj(context));
 			await MaAPI.postRecipientLabel(context.state.chatbotData.user_id, context.session.user.id, context.state.gotAluna.turma);
 			await labels.linkUserToLabelByName(context.session.user.id, context.state.gotAluna.turma, context.state.chatbotData.fb_access_token, true);
+
 			await context.setState({ matricula: true, agendaData: await dialogs.getAgenda(context, await db.getTurmaFromID(context.state.gotAluna.turma_id)) });
-			await MaAPI.postRecipient(context.state.chatbotData.user_id, await help.buildRecipientObj(context));
 			await context.sendText(flow.confirmaMatricula.text1);
 			await context.sendText(await dialogs.buildAgendaMsg(context.state.agendaData), await attach.getQR(flow.confirmaMatricula));
 			break;

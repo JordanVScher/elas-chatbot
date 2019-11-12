@@ -51,6 +51,18 @@ module.exports = {
 		}));
 	},
 
+	async postRecipientLabelCPF(politician_id, cpf, label) {
+		return handleRequestAnswer(await request.post(`${apiUri}/api/chatbot/recipient?security_token=${security_token}`).query({
+			politician_id, cpf, extra_fields: JSON.stringify({ system_labels: [{ name: `${label}` }] }),
+		}));
+	},
+
+	async deleteRecipientLabelCPF(politician_id, cpf, label) {
+		return handleRequestAnswer(await request.post(`${apiUri}/api/chatbot/recipient?security_token=${security_token}`).query({
+			politician_id, cpf, extra_fields: JSON.stringify({ system_labels: [{ name: `${label}`, deleted: 1 }] }),
+		}));
+	},
+
 	async getRecipient(politician_id, fb_id) {
 		const res = await request.get(`${apiUri}/api/chatbot/recipient?fb_id=${fb_id}&security_token=${security_token}`).query({ politician_id });
 		const recipientData = await res.json();
