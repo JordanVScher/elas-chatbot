@@ -64,11 +64,11 @@ async function formatAnswers(question) {
 	answers.forEach((element) => {
 		element.answers.forEach((element2) => {
 			if (element2.row_id && element2.text && !element2.choice_id) {
-				result.push({ id: element2.row_id, text: element2.text });
+				result.push({ id: element2.row_id, text: element2.text.trim() });
 			} else if (element2.row_id && element2.choice_id && !element2.text) {
 				result.push({ id: element2.row_id, choice_id: element2.choice_id });
 			} else if (element.id && element2.text) { // element.id: questions that have only one answer so the id belongs to the question, not the subquestion
-				result.push({ id: element.id, text: element2.text });
+				result.push({ id: element.id, text: element2.text.trim() });
 			} else if (element.id && element2.choice_id) {
 				result.push({ id: element.id, choice_id: element2.choice_id });
 			} else if (element.id && element2.other_id) {
