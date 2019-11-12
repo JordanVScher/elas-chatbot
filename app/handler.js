@@ -22,7 +22,9 @@ module.exports = async (context) => {
 		}
 		await context.setState({ chatbotData: await MaAPI.getChatbotData(context.event.rawEvent.recipient.id) });
 		// console.log('context.state.chatbotData', context.state.chatbotData);
-		await MaAPI.postRecipient(context.state.chatbotData.user_id, await help.buildRecipientObj(context));
+		if (context.state.matricula === true) {
+			await MaAPI.postRecipient(context.state.chatbotData.user_id, await help.buildRecipientObj(context));
+		}
 		db.upsertUser(context.session.user.id, `${context.session.user.first_name} ${context.session.user.last_name}`);
 		// MaAPI.getRecipient(context.state.chatbotData.user_id, context.session.user.id);
 		await timers.deleteTimers(context.session.user.id);
@@ -82,12 +84,12 @@ module.exports = async (context) => {
 					await labels.unlinkUserToLabelByName(context.session.user.id, context.state.gotAluna.turma, context.state.chatbotData.fb_access_token);
 				}
 				await context.setState({ recipient: await MaAPI.getRecipient(context.state.chatbotData.user_id, context.session.user.id) });
-				await context.setState({ matricula: '' });
 				if (context.state.recipient.extra_fields.labels) {
 					context.state.recipient.extra_fields.labels.forEach(async (element) => {
 						await MaAPI.deleteRecipientLabel(context.state.chatbotData.user_id, context.session.user.id, element.name);
 					});
 				}
+				await context.setState({ matricula: '', gotAluna: '' });
 			} else if (context.state.dialog === 'mudarTurma') {
 				await dialogs.adminAlunaCPF(context);
 			} else if (context.state.dialog === 'mudarAskTurma') {
@@ -155,6 +157,7 @@ module.exports = async (context) => {
 			await MaAPI.postRecipientLabel(context.state.chatbotData.user_id, context.session.user.id, context.state.gotAluna.turma);
 			await labels.linkUserToLabelByName(context.session.user.id, context.state.gotAluna.turma, context.state.chatbotData.fb_access_token, true);
 			await context.setState({ matricula: true, agendaData: await dialogs.getAgenda(context, await db.getTurmaFromID(context.state.gotAluna.turma_id)) });
+			await MaAPI.postRecipient(context.state.chatbotData.user_id, await help.buildRecipientObj(context));
 			await context.sendText(flow.confirmaMatricula.text1);
 			await context.sendText(await dialogs.buildAgendaMsg(context.state.agendaData), await attach.getQR(flow.confirmaMatricula));
 			break;

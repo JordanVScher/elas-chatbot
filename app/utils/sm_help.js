@@ -6,27 +6,23 @@ const mailer = require('./mailer');
 const { eMail } = require('./flow');
 const db = require('./DB_helper');
 const addQueue = require('./notificationAddQueue');
-const { turma } = require('../server/models');
 const { postRecipient } = require('../chatbot_api');
 const { getChatbotData } = require('../chatbot_api');
 const surveysInfo = require('./sm_surveys');
 const { surveysMaps } = require('./sm_maps');
 
 // Add new aluna as new recipient in the assistente. In this case, the recipient doesn't need an fb_id, the cpf doubles as a key
-async function sendAlunaToAssistente(email, cpf) {
+async function sendAlunaToAssistente(name, email, cpf) {
 	const assistenteData = await getChatbotData(process.env.PAGE_ID);
-	await postRecipient(assistenteData.user_id, { email, cpf });
+	await postRecipient(assistenteData.user_id, { name, email, cpf });
 }
 
 // after a payement happens we send an e-mail to the buyer with the matricula/atividade 1 form
-async function sendMatricula(productID, pagamentoID, buyerEmail) {
+async function sendMatricula(turmaName, pagamentoID, buyerEmail) {
 	try {
-		// get turma that matches the product that was bought
-		const ourTurma = await turma.findOne({ where: { pagseguro_id: productID }, raw: true }).then((aluna) => aluna).catch((err) => sentryError('FindOne turma', err));
-
 		let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Matricula.html`, 'utf-8'); // prepare the e-mail
 		html = await html.replace(/<link_atividade>/g, surveysInfo.atividade1.link); // add link to mail template
-		html = await html.replace(/TURMARESPOSTA/g, ourTurma.nome); // update the turma
+		html = await html.replace(/TURMARESPOSTA/g, turmaName); // update the turma
 		html = await html.replace(/PSIDRESPOSTA/g, pagamentoID); // update the turma
 		await mailer.sendHTMLMail(eMail.atividade1.assunto, buyerEmail, html);
 	} catch (error) { sentryError('Erro sendMatricula', error); }
@@ -160,9 +156,9 @@ async function handleAtividadeOne(response) {
 		const newUser = await db.upsertAlunoCadastro(answers);
 		if (newUser && newUser.id) { // if everything went right we update a few things
 			await db.updateAtividade(newUser.id, 'atividade_1', true);
-			await db.updateAlunoOnPagamento(answers.pgid, newUser.id);
+			if (answers.pgid) await db.updateAlunoOnPagamento(answers.pgid, newUser.id);
 			await addQueue.addNewNotificationAlunas(newUser.id, newUser.turma_id);
-			await sendAlunaToAssistente(newUser.email, newUser.cpf);
+			await sendAlunaToAssistente(newUser.nome_completo, newUser.email, newUser.cpf);
 		} else {
 			sentryError('Erro em no salvamento de cadastro', { answers, newUser });
 		}

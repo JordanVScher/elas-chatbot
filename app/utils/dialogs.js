@@ -143,10 +143,9 @@ module.exports.receiveCSVAluno = async (csvLines, chatbotUserId, pageToken) => {
 						const oldAluno = await alunos.findOne({ where: { cpf: element.cpf }, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em alunos.findOne', err));
 						// if aluno existed before we save the turma and label change
 						if (oldAluno) { await admin.SaveTurmaChange(chatbotUserId, pageToken, oldAluno.id, oldAluno.turma_id, element.turma_id); }
-						if (!oldAluno) { await sendAlunaToAssistente(element.email, element.cpf); }
 						element.added_by_admin = true;
 						const newAluno = await db.upsertAlunoCadastro(element);
-						// const newAluno = await db.addAlunaFromCSV(element);
+						await sendAlunaToAssistente(element.nome_completo, element.email, element.cpf);
 						if (!newAluno || newAluno.error || !newAluno.id) { // save line where error happended
 							errors.push({ line: i + 2, msg: 'Erro ao salvar no banco' });
 							help.sentryError('Erro em receiveCSVAluno => Erro ao salvar no banco', { element });

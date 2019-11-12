@@ -290,7 +290,7 @@ async function buildRecipientObj(context) {
 	};
 
 	if (context.state.gotAluna && context.state.gotAluna.email) state.email = context.state.alunaMail;
-	if (context.state.gotAluna && context.state.gotAluna.cpf) state.cpf = context.state.alunaMail;
+	if (context.state.gotAluna && context.state.gotAluna.cpf) state.cpf = context.state.cpf;
 
 	return state;
 }

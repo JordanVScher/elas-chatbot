@@ -7,6 +7,7 @@ const { parseString } = require('xml2js');
 const smHelp = require('./utils/sm_help');
 const { pagamentos } = require('./server/models');
 const { sentryError } = require('./utils/helper');
+const { turma } = require('./server/models');
 
 const pagseguro = new PagSeguro({
 	email: process.env.PAG_SEGURO_EMAIL,
@@ -68,10 +69,8 @@ async function createVenda(itemId = 1) { // for testing only, creates a link to 
 // what to do after someone buys one of the products
 async function handlePagamento(notification) {
 	console.log('notification', notification);
-
 	await pagseguro.notification(notification.notificationCode, async (success, response) => { // get transaction details based on notificationCode
 		console.log('response', response);
-
 		if (success && !response.error) {
 			try {
 				const answer = await xmlParse(response); console.log('answer', JSON.stringify(answer, null, 2)); // parse xml to json
@@ -83,9 +82,12 @@ async function handlePagamento(notification) {
 						defaults: {
 							email: answer.transaction.sender[0].email[0], docType: 'cpf', docValue: '0', productID, transactionID: answer.transaction.code[0],
 						},
-					}).then(res => res[0].dataValues).catch(err => sentryError('upsert pagamento', err));
-					// we need the newPagamento id to send in the matrocilua mail
-					await smHelp.sendMatricula(productID, newPagamento.id, process.env.ENV === 'local' ? 'jordan@appcivico.com' : answer.transaction.sender[0].email[0]); // send email
+					}).then((res) => res[0].dataValues).catch((err) => sentryError('upsert pagamento', err));
+					// we need the newPagamento id to send in the matricula mail
+					// get turma that matches the product that was bought
+					const ourTurma = await turma.findOne({ where: { pagseguro_id: productID }, raw: true }).then((aluna) => aluna).catch((err) => sentryError('FindOne turma', err));
+					if (!ourTurma) sentryError(`Não foi encontrada turma para produto com id ${productID}`, response);
+					await smHelp.sendMatricula(ourTurma ? ourTurma.nome : '', newPagamento.id, process.env.ENV === 'local' ? 'jordan@appcivico.com' : answer.transaction.sender[0].email[0]); // send email
 				} else {
 					sentryError(`Status: ${code}.\nQuem comprou: ${answer.transaction.sender[0].email[0]}`, answer.transaction);
 				}
