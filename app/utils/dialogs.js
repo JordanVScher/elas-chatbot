@@ -2,6 +2,7 @@ const db = require('./DB_helper');
 const help = require('./helper');
 const { sentryError } = require('./helper');
 const { sendAlunaToAssistente } = require('./sm_help');
+const { sendMatricula } = require('./sm_help');
 const attach = require('./attach');
 const flow = require('./flow');
 const admin = require('./admin_menu/admin_helper');
@@ -138,10 +139,14 @@ module.exports.receiveCSVAluno = async (csvLines, chatbotUserId, pageToken) => {
 					if (!element.cpf) {
 						errors.push({ line: i + 2, msg: 'CPF inválido!' });
 						help.sentryError('Erro em receiveCSVAluno => CPF inválido!', { element });
+					} else if (!element.email) {
+						errors.push({ line: i + 2, msg: 'Email inválido!' });
+						help.sentryError('Erro em receiveCSVAluno => Email inválido!', { element });
 					} else {
 						const oldAluno = await alunos.findOne({ where: { cpf: element.cpf }, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em alunos.findOne', err));
 						// if aluno existed before we save the turma and label change
 						if (oldAluno) { await admin.SaveTurmaChange(chatbotUserId, pageToken, oldAluno.id, oldAluno.turma_id, element.turma_id); }
+						if (!oldAluno) { await sendMatricula(element.Turma.nome, '', element.email); }
 						element.added_by_admin = true;
 						const newAluno = await db.upsertAlunoCadastro(element);
 						await sendAlunaToAssistente(element.nome_completo, element.email, element.cpf, element.Turma.nome);

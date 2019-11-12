@@ -25,7 +25,7 @@ async function sendMatricula(turmaName, pagamentoID, buyerEmail) {
 		let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Matricula.html`, 'utf-8'); // prepare the e-mail
 		html = await html.replace(/<link_atividade>/g, surveysInfo.atividade1.link); // add link to mail template
 		html = await html.replace(/TURMARESPOSTA/g, turmaName); // update the turma
-		html = await html.replace(/PSIDRESPOSTA/g, pagamentoID); // update the turma
+		html = await html.replace(/PSIDRESPOSTA/g, pagamentoID);
 		await mailer.sendHTMLMail(eMail.atividade1.assunto, buyerEmail, html);
 	} catch (error) { sentryError('Erro sendMatricula', error); }
 }
