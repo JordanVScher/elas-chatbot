@@ -144,11 +144,11 @@ module.exports = async (context) => {
 			}
 			break;
 		case 'invalidCPF':
-			await context.sendText(flow.jaSouAluna.invalidCPF1);
-			await context.sendText(flow.jaSouAluna.invalidCPF2);
+			await context.sendText(flow.invalidCPF.text1);
+			await context.sendText(flow.invalidCPF.text2, await attach.getQR(flow.invalidCPF));
 			break;
 		case 'CPFNotFound':
-			await context.sendText('Ainda não tenho esse CPF! Digite de novo!');
+			await context.sendText(flow.CPFNotFound.text1, await attach.getQR(flow.CPFNotFound));
 			break;
 		case 'confirmaMatricula':
 			await db.linkUserToCPF(context.session.user.id, context.state.cpf);

@@ -25,6 +25,17 @@ module.exports = {
 		menuOptions: ['Sim 😎', 'Não 😕'],
 		menuPostback: ['confirmaMatricula', 'erradoMatricula'],
 	},
+	invalidCPF: {
+		text1: 'Esse CPF não é válido. Por favor, tente novamente.',
+		text2: 'Digite só números. Exemplo: 12345678911',
+		menuOptions: ['Voltar'],
+		menuPostback: ['mainMenu'],
+	},
+	CPFNotFound: {
+		text1: 'Ainda não tenho esse CPF! Digite de novo!',
+		menuOptions: ['Voltar'],
+		menuPostback: ['mainMenu'],
+	},
 	confirmaMatricula: {
 		text1: 'Já tenho as informações da sua próxima aula:',
 		after1: 'Por aqui vou te enviar todas as notificações importantes durante o curso, como as atividades pré e pós módulos, etc. Também te lembrarei as datas, horas, locais dos módulos, te enviarei os links importantes das atividades e se quiser bater um papo comigo, responderei o que souber 😍',
