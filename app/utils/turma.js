@@ -45,7 +45,7 @@ async function buildUpdateQuery(newData, oldData) {
 
 	Object.keys(newData).forEach((element) => {
 		if (newData[element].toString() !== oldData[element].toString()) {
-			result[element] = newData[element];
+			result[element] = newData[element].trim();
 		}
 	});
 

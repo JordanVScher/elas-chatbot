@@ -23,6 +23,7 @@ async function sendTestNotification(cpf, typeNumber, indicado = false) {
 		where.aluno_id = aluna.id;
 	}
 
+	let lastNotification = '';
 	if (typeNumber) { where.notification_type = typeNumber; }
 	if (indicado) { where.indicado_id = { [Op.ne]: null }; }
 
@@ -34,15 +35,16 @@ async function sendTestNotification(cpf, typeNumber, indicado = false) {
 
 	const types = await notificationTypes.findAll({ where: {}, raw: true })
 		.then((res) => res).catch((err) => sentryError('Erro ao carregar notification_types TEST', err));
-
 	for (let i = 0; i < queue.length; i++) {
 		const notification = queue[i];
+		if (lastNotification.notification_type !== notification.notification_type) {
+			const recipient = await sendQueue.getRecipient(notification, moduleDates);
 
-		const recipient = await sendQueue.getRecipient(notification, moduleDates);
-
-		setTimeout(async () => { // pass true to actuallySendMessages to not save anything on the database
-			await sendQueue.actuallySendMessages(parametersRules, types, notification, recipient, true);
-		}, time * (i));
+			setTimeout(async () => { // pass true to actuallySendMessages to not save anything on the database
+				await sendQueue.actuallySendMessages(parametersRules, types, notification, recipient, true);
+			}, i === 0 ? 3 * 1000 : time * (i));
+		}
+		lastNotification = notification;
 	}
 }
 

@@ -278,13 +278,13 @@ module.exports = async (context) => {
 			await context.sendText('Aguarde', await attach.getQR(flow.adminMenu.verTurma));
 			break;
 		}
-		case 'simular1H': {
+		case 'simular24H': {
 			const aluna = await db.getAlunaFromFBID(context.session.user.id);
 			await sendTestNotification(aluna.cpf, 15);
 			await context.sendText('Aguarde', await attach.getQR(flow.adminMenu.verTurma));
 			break;
 		}
-		case 'simular24H': {
+		case 'simular1H': {
 			const aluna = await db.getAlunaFromFBID(context.session.user.id);
 			await sendTestNotification(aluna.cpf, 16);
 			await context.sendText('Aguarde', await attach.getQR(flow.adminMenu.verTurma));
