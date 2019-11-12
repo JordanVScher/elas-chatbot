@@ -175,9 +175,9 @@ async function receiveCSVAvaliadores(csvLines) {
 		for (let i = 0; i < csvLines.length; i++) {
 			let element = csvLines[i];
 			element = await admin.convertCSVToDB(element, admin.swap(admin.avaliadorCSV));
-
+			element.aluno_cpf = await help.getCPFValid(element.aluno_cpf);
 			if (element.nome && element.email && element.aluno_cpf) {
-				const avaliadorAluno = await alunos.findOne({ where: { cpf: element.aluno_cpf.toString() }, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em avaliadorAluno.findOne', err));
+				const avaliadorAluno = await alunos.findOne({ where: { cpf: element.aluno_cpf }, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em avaliadorAluno.findOne', err));
 				if (avaliadorAluno) {
 					element.aluno_id = avaliadorAluno.id;
 					element = await admin.formatBooleanToDatabase(element, 'Sim', 'Não', ['familiar']);
