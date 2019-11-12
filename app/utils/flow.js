@@ -163,7 +163,7 @@ module.exports = {
 		},
 		inserirAlunas: {
 			txt1: 'Envie o CSV com os dados das novas alunas. As colunas devem estar formatadas como esse arquivo de exemplo:',
-			txt2: 'É necessário que cada aluna tenha o nome completo, o CPF e pertencer a uma turma válida! Se o CPF já estiver cadastrado, os dados da aluna serão atualizados com os valores no CSV (se houver algum).',
+			txt2: 'É necessário que cada aluna tenha o nome completo, o e-mail, o CPF e pertencer a uma turma válida! Se o CPF já estiver cadastrado, os dados da aluna serão atualizados com os valores no CSV (se houver algum).',
 			invalidFile: 'Erro! Verifique se o arquivo CSV está formatado corretamente e envie novamente!',
 			menuOptions: ['Voltar'],
 			menuPostback: ['adminMenu'],
