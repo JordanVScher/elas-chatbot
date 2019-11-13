@@ -110,7 +110,9 @@ module.exports.sendCSV = async (context) => { // verTurma
 };
 
 module.exports.sendFeedbackMsgs = async (context, errors, msgs) => {
-	const feedbackMsgs = await admin.getFeedbackMsgs(context.state.csvLines.length - errors.length, errors, msgs);
+	// because some erros can be ignored at the error count (but not on the error listing) we get the number of mandatory errors
+	const notIgnoredErrorsLength = errors.filter((x) => !x.ignore).length;
+	const feedbackMsgs = await admin.getFeedbackMsgs(context.state.csvLines.length - notIgnoredErrorsLength, errors, msgs);
 	for (let i = 0; i < feedbackMsgs.length; i++) {
 		const element = feedbackMsgs[i];
 		if (i === 1) {
@@ -190,6 +192,10 @@ module.exports.receiveCSVAvaliadores = async (csvLines) => {
 						errors.push({ line: i + 2, msg: 'Erro ao salvar no banco' });
 						help.sentryError('Erro em receiveCSV => Erro ao salvar no banco', { element });
 					} else {
+						if (newIndicado.email === avaliadorAluno.email) {
+							errors.push({ line: i + 2, msg: `Adicionado Indicado ${newIndicado.nome} com mesmo e-mail da aluna ${avaliadorAluno.nome_completo}: ${avaliadorAluno.email}`, ignore: true });
+							help.sentryError('Erro em receiveCSVAvaliadores => Avaliador com e-mail igual aluna', { element });
+						}
 						indicados.push(newIndicado);
 					}
 				} else {
