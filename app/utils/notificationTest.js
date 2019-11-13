@@ -8,7 +8,7 @@ const { getAluno } = require('./DB_helper');
 const notificationTypes = require('../server/models').notification_types;
 const notificationQueue = require('../server/models').notification_queue;
 
-const time = 10 * 1000;
+const time = 30 * 1000;
 
 /**
  * Envia as notificações por e-mail e chatbot desconsiderando as datas
