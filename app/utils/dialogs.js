@@ -156,6 +156,9 @@ module.exports.receiveCSVAluno = async (csvLines, chatbotUserId, pageToken) => {
 							errors.push({ line: i + 2, msg: 'Erro ao salvar no banco' });
 							help.sentryError('Erro em receiveCSVAluno => Erro ao salvar no banco', { element });
 						} else {
+							if (newAluno.email === newAluno.contato_emergencia_email) {
+								errors.push({ line: i + 2, msg: `Contato de emergência tem o mesmo e-mail da aluna ${newAluno.nome_completo}: ${newAluno.contato_emergencia_email}`, ignore: true });
+							}
 							await admin.NotificationChangeTurma(newAluno.id, element.turma_id);
 						}
 					}
