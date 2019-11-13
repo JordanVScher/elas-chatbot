@@ -1,6 +1,7 @@
 const fs = require('fs');
 const { sentryError } = require('./helper');
 const { getIndicacaoErrorText } = require('./helper');
+const { getSameContatoEmailErrorText } = require('./helper');
 const smAPI = require('../sm_api');
 const mailer = require('./mailer');
 const { eMail } = require('./flow');
@@ -148,6 +149,7 @@ async function handleAtividadeOne(response) {
 	try {
 		// response.custom_variables = { turma: 'T7-SP', cpf: '99999999990', pgid: '17' };
 		// console.log('custom_variables', response.custom_variables);
+		let sameContatoEmail = false;
 		let answers = await getSpecificAnswers(surveysMaps.atividade1, response.pages);
 		answers = await replaceChoiceId(answers, surveysMaps.atividade1, response.survey_id);
 		answers = await addCustomParametersToAnswer(answers, response.custom_variables);
@@ -161,6 +163,7 @@ async function handleAtividadeOne(response) {
 			if (answers.pgid) await db.updateAlunoOnPagamento(answers.pgid, newUser.id);
 			await addQueue.addNewNotificationAlunas(newUser.id, newUser.turma_id);
 			await sendAlunaToAssistente(newUser.nome_completo, newUser.email, newUser.cpf, answers.turma);
+			if (newUser.email === newUser.contato_emergencia_email) sameContatoEmail = true;
 		} else {
 			sentryError('Erro em no salvamento de cadastro', { answers, newUser });
 		}
@@ -170,6 +173,14 @@ async function handleAtividadeOne(response) {
 		html = await html.replace('[nome]', answers.nome_completo); // add nome to mail template
 		html = await html.replace(/<link_donna>/g, process.env.LINK_DONNA); // add chatbot link to mail template
 		await mailer.sendHTMLMail(eMail.depoisMatricula.assunto, answers.email, html);
+
+		if (sameContatoEmail) {
+			const eMailToSend = process.env.ENV === 'prod' ? process.env.EMAILMENTORIA : process.env.MAILDEV;
+			const eMailText = await getSameContatoEmailErrorText(newUser);
+			let html2 = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
+			html2 = await html2.replace('[CONTEUDO_MAIL]', eMailText);
+			await mailer.sendHTMLMail(`Alerta no cadastro da Aluna ${newUser.nome_completo}`, eMailToSend, html2);
+		}
 	} catch (error) {	sentryError('Erro em handleAtividadeOne', error); }
 }
 

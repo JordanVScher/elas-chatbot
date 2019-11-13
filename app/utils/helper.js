@@ -250,6 +250,25 @@ async function getIndicacaoErrorText(errors, aluna) {
 	return text;
 }
 
+async function getSameContatoEmailErrorText(aluna) {
+	let text = 'Aluna cadastrou o mesmo e-mail para o contato de emergência:\n';
+
+	if (aluna.nome_completo) text += `\nNome da Aluna: ${aluna.nome_completo}`;
+	if (aluna.email) text += `\nE-mail: ${aluna.email}`;
+	if (aluna.cpf) text += `\nCPF: ${aluna.cpf}`;
+	if (aluna.telefone) text += `\nTelefone: ${aluna.telefone}`;
+
+	text += '\n\nDados do Contato:';
+	if (aluna.contato_emergencia_nome) text += `\nNome: ${aluna.contato_emergencia_nome}`;
+	if (aluna.contato_emergencia_email) text += `\nE-mail: ${aluna.contato_emergencia_email}`;
+	if (aluna.contato_emergencia_fone) text += `\nTelefone: ${aluna.contato_emergencia_fone}`;
+	if (aluna.contato_emergencia_relacao) text += `\nRelação com Aluna: ${aluna.contato_emergencia_relacao}`;
+
+	text += '\n\nQualquer administrador pode arrumar isso atualizando o e-mail do contato na opção Inserir Alunas.';
+
+	return text;
+}
+
 async function handleErrorApi(options, res, err) {
 	let msg = `Endereço: ${options.host}`;
 	msg += `\nPath: ${options.path}`;
@@ -328,6 +347,7 @@ module.exports = {
 	sentryError,
 	findModuleToday,
 	getIndicacaoErrorText,
+	getSameContatoEmailErrorText,
 	getTinyUrl,
 	handleRequestAnswer,
 	buildRecipientObj,
