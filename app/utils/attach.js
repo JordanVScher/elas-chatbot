@@ -95,6 +95,34 @@ module.exports.sendSequenceMsgs = async (context, msgs, buttonTitle) => {
 	}
 };
 
+module.exports.sendCards = async (context, msgs, buttonTitle) => {
+	const elements = [];
+	for (let i = 0; i < msgs.length; i++) {
+		const e = msgs[i];
+		elements.push({
+			title: e.title,
+			subtitle: e.subtitle,
+			image_url: e.image_url,
+			default_action: {
+				type: 'web_url',
+				url: e.url,
+				messenger_extensions: 'false',
+				webview_height_ratio: 'full',
+			},
+			buttons: [
+				{ type: 'web_url', url: e.url, title: buttonTitle }],
+		});
+	}
+
+	await context.sendAttachment({
+		type: 'template',
+		payload: {
+			template_type: 'generic',
+			elements,
+		},
+	});
+};
+
 // get quick_replies opject with elements array
 // supossed to be used with menuOptions and menuPostback for each dialog on flow.js
 

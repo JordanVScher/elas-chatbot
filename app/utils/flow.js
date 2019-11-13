@@ -39,8 +39,6 @@ module.exports = {
 	confirmaMatricula: {
 		text1: 'Já tenho as informações da sua próxima aula:',
 		after1: 'Por aqui vou te enviar todas as notificações importantes durante o curso, como as atividades pré e pós módulos, etc. Também te lembrarei as datas, horas, locais dos módulos, te enviarei os links importantes das atividades e se quiser bater um papo comigo, responderei o que souber 😍',
-		// text2: '📝 Você está no módulo {módulo} de 3\n🗓️ Acontecerá no sábado dia {dia} e no domingo dia {dia}\n⏰ Das {horas1} às {horas2} '
-		// + '\n🏠 Será no {local}. Endereço: {endereço}',
 		menuOptions: ['Entendi'],
 		menuPostback: ['afterConfirma'],
 	},
@@ -62,35 +60,35 @@ module.exports = {
 	// 	siteURL: 'https://www.facebook.com/Elas-homol-287066982237234/',
 	// },
 	queroSerAluna: {
-		text1: 'Uau!! Então vamos lá, vou enviar o que ELAS oferece 😉 Lá vai textão ...',
+		text1: 'Uau!! Então vamos lá, vou enviar o que ELAS oferece 😉',
 		text2: 'Espero que você venha aqui novamente me contando que é aluna do ELAS, hein.',
 		text3: 'Enquanto isso, no menu há os serviços que você pode acessar 🤗',
 		menuOptions: ['Já sou aluna 😘', 'Sobre ELAS 💁‍♀️'],
 		menuPostback: ['jaSouAluna', 'sobreElas'],
 		cards: [
 			{
-				text: 'Programa ELAS:\nÉ um treinamento intensivo de 54 horas, um programa completo de aprendizado ao longo de 3 meses. Além dos conteúdos, as alunas são mentoradas durante todo o período por meio de uma comunidade secreta exclusiva para elas. O conteúdo é extremamente prático e vivencial, dividido em 3 módulos, dentro de um ambiente exclusivo e seguro para COMPARTILHAR INFORMAÇÕES e para PROMOVER UMA EXPERIÊNCIA MEMORÁVEL no desenvolvimento comportamental das alunas.',
+				title: 'Programa Elas',
+				subtitle: 'Treinamento intensivo de 54 horas, um programa completo de aprendizado ao longo de 3 meses. Extremamente prático e vivencial.',
+				image_url: 'https://programaelas.com.br/wp-content/uploads/2018/05/logo-elas-retangular-p-min.png',
 				url: 'https://programaelas.com.br/programa-elas/',
 			},
 			{
-				text: 'Imersão em Autoconfiança: \nO treinamento de 6 horas tem como objetivo levar informações sobre a participação de mulheres em altos cargos de liderança, bem como gerar profunda reflexão nas participantes para mergulharem em seu autoconhecimento e terem um despertar para a autoconfiança, se desafiarem a crescer, assumindo uma posição de destaque profissional.',
-				url: 'https://programaelas.com.br/imersao-autoconfianca/',
-			},
-			{
-				text: 'Imersão em Influência:\nO treinamento de 6 horas tem como objetivo sensibilizar as mulheres quanto a sua capacidade de gerar influência e assertividade em sua comunicação, bem como estimular ações efetivas que permitam uma postura com mais segurança para exercer autoridade com empatia.',
-				url: 'https://programaelas.com.br/imersao-influencia/',
-			},
-			{
-				text: 'Workshop: Exercendo seu poder de Influência e Autoridade:\nO Workshop “Exercendo o Seu Poder de Influência e Autoridade” é uma vivência de 2h30 focada em despertar a consciência de como podemos nos comunicar melhor e gerar mais influência no ambiente de trabalho e em outros contextos de vida.O objetivo é gerar um desconforto positivo para que cada participante possa aplicar imediatamente o que vai aprender e já obter resultados diferentes no seu dia-a-dia.',
+				title: 'Influência e Autoridade',
+				subtitle: 'O Workshop “Exercendo o Seu Poder de Influência e Autoridade” é uma vivência de 2h30.',
+				image_url: 'https://programaelas.com.br/wp-content/uploads/2018/05/WORKSHOP-INFLUENCIA-AUTORIDADE-PROGRAMA-ELAS.jpg',
 				url: 'https://programaelas.com.br/workshop-influencia-e-autoridade/',
 			},
 			{
-				text: 'Workshop: Autoconfiança para Conquistar o Mundo:\nO Workshop “Autoconfiança para Conquistar o Mundo” é uma vivência de 2h30 que mexe com as pessoas.O objetivo é gerar reflexões importantes e aumentar o poder pessoal das participantes.Mais de 3300 mulheres já vivenciaram essa experiência e tiveram resultados importantes em suas vidas.',
+				title: ' Autoconfiança',
+				subtitle: 'O Workshop “Autoconfiança para Conquistar o Mundo” é uma vivência de 2h30 que mexe com as pessoas.',
+				image_url: 'https://dev-staging-lw-attachments-paperclip-attachments.s3.amazonaws.com/000/000/668/original/8fa6433b117f53827f3f04b2d2b90bec7f26f960.jpg?1468383781',
 				url: 'https://programaelas.com.br/workshop-autoconfianca/',
 			},
 			{
-				text: 'Para empresas:\nCom o objetivo de oferecer ao grupo de colaboradoras de empresas uma formação completa capaz de desenvolver a autoconfiança para assumirem posições de liderança, tivemos treinamentos de sucessos em grandes empresas.',
-				url: 'https://programaelas.com.br/lideranca-feminina-nas-empresas/casos-de-sucesso/',
+				title: ' Para empresas',
+				subtitle: 'Oferecer aos colaboradores uma formação completa capaz de desenvolver a autoconfiança para assumirem posições de liderança',
+				image_url: 'https://programaelas.com.br/wp-content/uploads/2018/05/workshop-lideranca-feminina-empresa-elas-escola-de-lideranca-1024x711.png',
+				url: 'https://programaelas.com.br/lideranca-feminina-nas-empresas/',
 			},
 		],
 	},
