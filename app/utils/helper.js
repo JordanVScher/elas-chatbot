@@ -295,6 +295,12 @@ async function buildRecipientObj(context) {
 	return state;
 }
 
+async function getTinyUrl(originalUrl) {
+	const res = await TinyURL.shorten(originalUrl);
+	if (res.includes('<')) return originalUrl;
+	return res;
+}
+
 
 module.exports = {
 	Sentry,
@@ -322,7 +328,7 @@ module.exports = {
 	sentryError,
 	findModuleToday,
 	getIndicacaoErrorText,
-	getTinyUrl: TinyURL.shorten,
+	getTinyUrl,
 	handleRequestAnswer,
 	buildRecipientObj,
 };

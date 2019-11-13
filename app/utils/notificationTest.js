@@ -8,14 +8,14 @@ const { getAluno } = require('./DB_helper');
 const notificationTypes = require('../server/models').notification_types;
 const notificationQueue = require('../server/models').notification_queue;
 
-const time = 30 * 1000;
+const time = 10 * 1000;
 
 /**
  * Envia as notificações por e-mail e chatbot desconsiderando as datas
  * @param {number} cpf o cpf da aluna que irá receber (vazio = todos recebem)
  * @param {number} typeNumber o tipo de notificação (obs: em notificações como a 15 e 16 o texto ficará sempre igual)
  */
-async function sendTestNotification(cpf, typeNumber, indicado = false) {
+async function sendTestNotification(cpf, typeNumber, indicado = false, ignore = []) {
 	console.log('Running sendTestNotification');
 	const where = {};
 	if (cpf) {
@@ -38,11 +38,12 @@ async function sendTestNotification(cpf, typeNumber, indicado = false) {
 	for (let i = 0; i < queue.length; i++) {
 		const notification = queue[i];
 		if (lastNotification.notification_type !== notification.notification_type) {
-			const recipient = await sendQueue.getRecipient(notification, moduleDates);
-
-			setTimeout(async () => { // pass true to actuallySendMessages to not save anything on the database
-				await sendQueue.actuallySendMessages(parametersRules, types, notification, recipient, true);
-			}, i === 0 ? 3 * 1000 : time * (i));
+			if (!ignore.includes(notification.notification_type)) {
+				const recipient = await sendQueue.getRecipient(notification, moduleDates);
+				setTimeout(async () => { // pass true to actuallySendMessages to not save anything on the database
+					await sendQueue.actuallySendMessages(parametersRules, types, notification, recipient, true);
+				}, i === 0 ? 3 * 1000 : time * (i));
+			}
 		}
 		lastNotification = notification;
 	}

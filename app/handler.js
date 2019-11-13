@@ -94,6 +94,18 @@ module.exports = async (context) => {
 				await dialogs.adminAlunaCPF(context);
 			} else if (context.state.dialog === 'mudarAskTurma') {
 				await dialogs.mudarAskTurma(context, context.state.chatbotData.fb_access_token);
+			} else if (context.state.dialog === 'simularAskCPF') {
+				await context.setState({ simuladorCPF: await help.getCPFValid(context.state.whatWasTyped) });
+				if (context.state.simuladorCPF) {
+					await context.setState({ simuladorAluna: await db.getAlunaFromPDF(context.state.simuladorCPF) });
+					if (context.state.simuladorAluna) {
+						await context.setState({ dialog: 'simularNotificacao' });
+					} else {
+						await context.sendText(`Aluna com CPF ${context.state.simuladorCPF} não encontrada`);
+					}
+				} else {
+					await context.sendText('CPF inválido.');
+				}
 			} else {
 				await DF.dialogFlow(context);
 			}
@@ -267,30 +279,29 @@ module.exports = async (context) => {
 		case 'simularNotificacao':
 			await context.sendText(flow.adminMenu.simularNotificacao.intro, await attach.getQR(flow.adminMenu.simularNotificacao));
 			break;
-		case 'simularAll': {
-			const aluna = await db.getAlunaFromFBID(context.session.user.id);
-			await sendTestNotification(aluna.cpf);
+		case 'simularAskCPF':
+			await context.sendText(flow.adminMenu.simularNotificacao.askCPF, await attach.getQR(flow.adminMenu.verTurma));
+			break;
+		case 'simularAll':
+			await sendTestNotification(context.state.simuladorAluna.cpf);
 			await context.sendText('Aguarde', await attach.getQR(flow.adminMenu.verTurma));
 			break;
-		}
-		case 'simularIndicado': {
-			const aluna = await db.getAlunaFromFBID(context.session.user.id);
-			await sendTestNotification(aluna.cpf, false, true);
+		case 'simularTrilha':
+			await sendTestNotification('41734249811', false, false, [3, 10, 12, 15, 16]);
 			await context.sendText('Aguarde', await attach.getQR(flow.adminMenu.verTurma));
 			break;
-		}
-		case 'simular24H': {
-			const aluna = await db.getAlunaFromFBID(context.session.user.id);
-			await sendTestNotification(aluna.cpf, 15);
+		case 'simularIndicado':
+			await sendTestNotification(context.state.simuladorAluna.cpf, false, true);
 			await context.sendText('Aguarde', await attach.getQR(flow.adminMenu.verTurma));
 			break;
-		}
-		case 'simular1H': {
-			const aluna = await db.getAlunaFromFBID(context.session.user.id);
-			await sendTestNotification(aluna.cpf, 16);
+		case 'simular24H':
+			await sendTestNotification(context.state.simuladorAluna.cpf, 15);
 			await context.sendText('Aguarde', await attach.getQR(flow.adminMenu.verTurma));
 			break;
-		}
+		case 'simular1H':
+			await sendTestNotification(context.state.simuladorAluna.cpf, 16);
+			await context.sendText('Aguarde', await attach.getQR(flow.adminMenu.verTurma));
+			break;
 		case 'notificationOn':
 			await MaAPI.updateBlacklistMA(context.session.user.id, 1);
 			await MaAPI.logNotification(context.session.user.id, context.state.chatbotData.user_id, 3);
