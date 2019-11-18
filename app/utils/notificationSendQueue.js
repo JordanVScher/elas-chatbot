@@ -199,7 +199,7 @@ async function findCurrentModulo(turmaData, today = new Date()) {
 
 async function checkShouldSendNotification(notification, moduleDates, today, notificationRules) {
 	const ourTurma = moduleDates.find((x) => x.id === notification.turma_id); // turma for this notification
-
+	if (!ourTurma) return false;
 	let currentRule = ''; // depends on the notification_type, rule for the notification (and module)
 	if (notification.notification_type === 15) {
 		const currentModule = await findCurrentModulo(moduleDates, today);
@@ -212,7 +212,6 @@ async function checkShouldSendNotification(notification, moduleDates, today, not
 	} else {
 		currentRule = await notificationRules.find((x) => x.notification_type === notification.notification_type);
 	}
-
 
 	const dateToSend = await rules.getSendDate(ourTurma, currentRule); // the date to send
 	const moduloDate = new Date(ourTurma[`modulo${currentRule.modulo}`]);
@@ -377,7 +376,10 @@ async function sendNotificationFromQueue() {
 		if (lastNotification.notification_type !== notification.notification_type) {
 			if (await checkShouldSendNotification(notification, moduleDates, today, notificationRules) === true) { // !== for easy testing
 				const recipient = await getRecipient(notification, moduleDates);
+				console.log('\n\nnotification que passou', notification);
+				console.log('recipient', recipient);
 				if (await checkShouldSendRecipient(recipient, notification) === true) {
+					console.log('Deve enviar');
 					await actuallySendMessages(parametersRules, types, notification, recipient);
 				}
 			}
