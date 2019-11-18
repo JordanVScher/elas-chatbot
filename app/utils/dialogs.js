@@ -240,12 +240,13 @@ module.exports.mudarAskTurma = async (context, pageToken) => {
 	} else {
 		const transferedAluna = await alunos.update({ turma_id: validTurma }, { where: { cpf: context.state.adminAlunaFound.cpf } }).then(() => true).catch((err) => sentryError('Erro em mudarAskTurma update', err));
 		if (transferedAluna) {
+			const turmaNome = await db.getTurmaName(validTurma);
 			await admin.NotificationChangeTurma(context.state.adminAlunaFound.id, validTurma);
 			await admin.SaveTurmaChange(context.state.chatbotData.user_id, pageToken, context.state.adminAlunaFound.id, context.state.adminAlunaFound.turma_id, validTurma);
-			await context.sendText(flow.adminMenu.mudarTurma.transferComplete.replace('<TURMA>', validTurma.nome));
+			await context.sendText(flow.adminMenu.mudarTurma.transferComplete.replace('<TURMA>', turmaNome));
 			const count = await alunos.count({ where: { turma_id: validTurma } })
 				.then((alunas) => alunas).catch((err) => sentryError('Erro em mudarAskTurma getCount', err));
-			if (count !== false) { await context.sendText(flow.adminMenu.mudarTurma.turmaCount.replace('<COUNT>', count).replace('<TURMA>', validTurma.nome)); }
+			if (count !== false) { await context.sendText(flow.adminMenu.mudarTurma.turmaCount.replace('<COUNT>', count).replace('<TURMA>', turmaNome)); }
 			await context.setState({
 				dialog: 'adminMenu', desiredTurma: '', adminAlunaFound: '', adminAlunaCPF: '',
 			});
