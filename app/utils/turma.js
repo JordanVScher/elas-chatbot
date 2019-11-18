@@ -12,19 +12,6 @@ const turmaMap = {
 	datahora3: 'modulo3',
 };
 
-// remove spreadsheet lines that don't match the real turma criteria (we can filter columns here)
-async function filerOutInvalidLines(spreadsheet) {
-	const validLines = [];
-	spreadsheet.forEach((element) => {
-		const newElement = element;
-		if (newElement.turma && newElement.datahora1 && newElement.datahora2 && newElement.datahora3) {
-			validLines.push(newElement);
-		}
-	});
-
-	return validLines;
-}
-
 // adapt the spreadsheet keys to match the model
 async function buildQuery(data, map) {
 	const result = {};
@@ -56,31 +43,36 @@ const offset = 6; // spreadsheet starts at line 6
 
 async function updateTurmas() {
 	const results = [];
-	const spreadsheet = await filerOutInvalidLines(await help.getFormatedSpreadsheet());
+	const errors = [];
+	const spreadsheet = await help.getFormatedSpreadsheet();
 	if (spreadsheet && spreadsheet.length > 0) {
 		for (let i = 0; i < spreadsheet.length; i++) {
 			const e = spreadsheet[i];
-			console.log('query', e);
-			const query = await buildQuery(e, turmaMap);
-			if (query) {
-				const found = await turma.findOrCreate({ where: { nome: query.nome }, defaults: query }).then(([data, created]) => {
-					if (created) { return created; }
-					return data.dataValues; // if a new turma wasn't created we might have to update it, so return it
-				}).catch((err) => help.sentryError('turma findOrCreate', err));
-				if (found.id) { // we might need to update it
-					const updateQuery = await buildUpdateQuery(query, found);
-					if (updateQuery) {
-						const update = await turma.update(updateQuery, { where: { id: found.id } }).then((res) => res).catch((err) => help.sentryError('turma update', err));
-						if (update) { results.push(`Linha ${i + 1 + offset} atualizada!`); }
-					}
-				} else if (found === true) { results.push(`Linha ${i + 1 + offset} adicionada!`); }
-			} else { results.push(`Erro na linha ${i + 1 + offset}. Falta preencher algum dado.`); }
+			if (!e.datahora1 || !e.datahora2 || !e.datahora3) {
+				errors.push({ line: i + 1 + offset, msg: 'datas não estão preenchidas corretamente!' });
+			} else if (!e.turma) {
+				errors.push({ line: i + 1 + offset, msg: 'falta preencher turma!' });
+			} else {
+				const query = await buildQuery(e, turmaMap);
+				if (query) {
+					const found = await turma.findOrCreate({ where: { nome: query.nome }, defaults: query }).then(([data, created]) => {
+						if (created) { return created; }
+						return data.dataValues; // if a new turma wasn't created we might have to update it, so return it
+					}).catch((err) => help.sentryError('turma findOrCreate', err));
+					if (found.id) { // we might need to update it
+						const updateQuery = await buildUpdateQuery(query, found);
+						if (updateQuery) {
+							const update = await turma.update(updateQuery, { where: { id: found.id } }).then((res) => res).catch((err) => help.sentryError('turma update', err));
+							if (update) { results.push(`Linha ${i + 1 + offset} atualizada!`); }
+						}
+					} else if (found === true) { results.push(`Linha ${i + 1 + offset} adicionada!`); }
+				} else { results.push(`Erro na linha ${i + 1 + offset}. Falta preencher algum dado.`); }
+			}
 		}
 	}
 
-	return results;
+	return { results, errors };
 }
 
-module.exports = {
-	updateTurmas,
-};
+
+module.exports = { updateTurmas };

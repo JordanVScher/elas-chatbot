@@ -273,9 +273,11 @@ module.exports = async (context) => {
 		case 'mudarAskTurma':
 			await context.sendText(flow.adminMenu.mudarTurma.txt2.replace('<NOME>', context.state.adminAlunaFound.nome_completo.trim()).replace('<TURMA>', context.state.adminAlunaFound.turma), await attach.getQR(flow.adminMenu.verTurma));
 			break;
-		case 'updateTurma':
-			await dialogs.updateTurma(context);
-			break;
+		case 'updateTurma': {
+			const feedback = await updateTurmas();
+			if (feedback && feedback.results) await context.sendText(feedback.results.join('\n'), await attach.getQR(flow.adminMenu.verTurma));
+			if (feedback && feedback.errors) await dialogs.sendFeedbackMsgs(context, feedback.errors);
+		} break;
 		case 'simularNotificacao':
 			await context.sendText(flow.adminMenu.simularNotificacao.intro, await attach.getQR(flow.adminMenu.simularNotificacao));
 			break;
