@@ -24,7 +24,7 @@ const sendMissingWarningCron = new CronJob(
 );
 
 const sendNotificationCron = new CronJob(
-	'00 00 8-22/1 * * *', async () => {
+	'00 00 10-22/1 * * *', async () => {
 		console.log('Running sendNotificationCron');
 		try {
 			await sendNotificationFromQueue();

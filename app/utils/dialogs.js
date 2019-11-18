@@ -242,10 +242,10 @@ module.exports.mudarAskTurma = async (context, pageToken) => {
 		if (transferedAluna) {
 			await admin.NotificationChangeTurma(context.state.adminAlunaFound.id, validTurma);
 			await admin.SaveTurmaChange(context.state.chatbotData.user_id, pageToken, context.state.adminAlunaFound.id, context.state.adminAlunaFound.turma_id, validTurma);
-			await context.sendText(flow.adminMenu.mudarTurma.transferComplete.replace('<TURMA>', context.state.desiredTurma));
+			await context.sendText(flow.adminMenu.mudarTurma.transferComplete.replace('<TURMA>', validTurma.nome));
 			const count = await alunos.count({ where: { turma_id: validTurma } })
 				.then((alunas) => alunas).catch((err) => sentryError('Erro em mudarAskTurma getCount', err));
-			if (count !== false) { await context.sendText(flow.adminMenu.mudarTurma.turmaCount.replace('<COUNT>', count).replace('<TURMA>', context.state.desiredTurma)); }
+			if (count !== false) { await context.sendText(flow.adminMenu.mudarTurma.turmaCount.replace('<COUNT>', count).replace('<TURMA>', validTurma.nome)); }
 			await context.setState({
 				dialog: 'adminMenu', desiredTurma: '', adminAlunaFound: '', adminAlunaCPF: '',
 			});

@@ -197,21 +197,22 @@ async function findCurrentModulo(turmaData, today = new Date()) {
 }
 
 
-async function checkShouldSendNotification(notification, moduleDates, today) {
+async function checkShouldSendNotification(notification, moduleDates, today, notificationRules) {
 	const ourTurma = moduleDates.find((x) => x.id === notification.turma_id); // turma for this notification
 
 	let currentRule = ''; // depends on the notification_type, rule for the notification (and module)
 	if (notification.notification_type === 15) {
 		const currentModule = await findCurrentModulo(moduleDates, today);
-		currentRule = await rules.notificationRules.find((x) => x.notification_type === notification.notification_type && x.modulo === currentModule);
+		currentRule = await notificationRules.find((x) => x.notification_type === notification.notification_type && x.modulo === currentModule);
 	} else if (notification.notification_type === 16) {
 		const currentModule = await findCurrentModulo(moduleDates, today);
 		let sunday = false;
 		if (today.getDay() === 0) { sunday = true; }
-		currentRule = await rules.notificationRules.find((x) => x.notification_type === notification.notification_type && x.modulo === currentModule && x.sunday === sunday);
+		currentRule = await notificationRules.find((x) => x.notification_type === notification.notification_type && x.modulo === currentModule && x.sunday === sunday);
 	} else {
-		currentRule = await rules.notificationRules.find((x) => x.notification_type === notification.notification_type);
+		currentRule = await notificationRules.find((x) => x.notification_type === notification.notification_type);
 	}
+
 
 	const dateToSend = await rules.getSendDate(ourTurma, currentRule); // the date to send
 	const moduloDate = new Date(ourTurma[`modulo${currentRule.modulo}`]);
@@ -344,7 +345,7 @@ async function actuallySendMessages(parametersRules, types, notification, recipi
 	if (!error.mailError && !error.chatbotError && !test) { // if there wasn't any errors, we can update the queue succesfully
 		await notificationQueue.update({ sent_at: new Date() }, { where: { id: notification.id } })
 			.then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do sendAt', err));
-	} else { // if there was any errors, we store what happened
+	} else if (Object.entries(error).length > 0) { // if there was any errors, we store what happened
 		await notificationQueue.update({ error }, { where: { id: notification.id } })
 			.then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do erro', err));
 	}
@@ -364,23 +365,24 @@ async function sendNotificationFromQueue() {
 	const parametersRules = await rules.buildParametersRules();
 	const moduleDates = await getModuloDates();
 	const today = new Date();
-
+	const notificationRules = await rules.getNotificationRules();
 	const queue = await notificationQueue.findAll({ where: { sent_at: null, error: null }, raw: true })
 		.then((res) => res).catch((err) => sentryError('Erro ao carregar notification_queue', err));
 
 	const types = await notificationTypes.findAll({ where: {}, raw: true })
 		.then((res) => res).catch((err) => sentryError('Erro ao carregar notification_types', err));
-
+	let lastNotification = '';
 	for (let i = 0; i < queue.length; i++) {
 		const notification = queue[i];
-
-		if (await checkShouldSendNotification(notification, moduleDates, today) === true) { // !== for easy testing
-			const recipient = await getRecipient(notification, moduleDates);
-
-			if (await checkShouldSendRecipient(recipient, notification) === true) {
-				await actuallySendMessages(parametersRules, types, notification, recipient);
+		if (lastNotification.notification_type !== notification.notification_type) {
+			if (await checkShouldSendNotification(notification, moduleDates, today, notificationRules) === true) { // !== for easy testing
+				const recipient = await getRecipient(notification, moduleDates);
+				if (await checkShouldSendRecipient(recipient, notification) === true) {
+					await actuallySendMessages(parametersRules, types, notification, recipient);
+				}
 			}
 		}
+		lastNotification = notification;
 	}
 }
 
