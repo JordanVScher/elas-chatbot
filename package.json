@@ -5,7 +5,10 @@
   "scripts": {
     "dev": "nodemon app/index.js",
     "start": "node app/index.js",
-    "test": "jest --detectOpenHandles"
+    "test": "jest --detectOpenHandles",
+    "pm2_add": "pm2 start app/index.js  --name \"elas-homol\"",
+    "restart": "pm2 restart \"elas-homol\" --update-env",
+    "logs": "pm2 logs \"elas-homol\" --lines 1000"
   },
   "dependencies": {
     "@sentry/node": "^4.2.3",
