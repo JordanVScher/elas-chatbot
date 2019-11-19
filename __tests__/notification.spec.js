@@ -3,6 +3,7 @@ const { sequelize } = require('../app/server/models/index');
 const sendNotificationQueue = require('../app/utils/notificationSendQueue');
 const data = require('./mock_data');
 
+const { notificationRules } = data;
 process.env.ENV = 'prod';
 
 it('checkShouldSendRecipient - no recipient', async () => {
@@ -106,7 +107,7 @@ it('checkShouldSendNotification - alunaNotificationBefore- dont send before send
 	const { moduleDates } = data;
 	const today = new Date('2018-12-16T12:30:00.000Z');
 
-	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today, notificationRules);
 	await expect(result).toBeFalsy();
 });
 
@@ -115,7 +116,7 @@ it('checkShouldSendNotification - alunaNotificationBefore- send on exact sendDat
 	const { moduleDates } = data;
 	const today = new Date('2018-12-17T12:30:00.000Z');
 
-	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today, notificationRules);
 	await expect(result).toBeTruthy();
 });
 
@@ -124,7 +125,7 @@ it('checkShouldSendNotification - alunaNotificationBefore - send between dates',
 	const { moduleDates } = data;
 	const today = new Date('2019-01-01T12:30:00.000Z');
 
-	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today, notificationRules);
 	await expect(result).toBeTruthy();
 });
 
@@ -133,7 +134,7 @@ it('checkShouldSendNotification - alunaNotificationBefore- send on exact moduleD
 	const { moduleDates } = data;
 	const today = new Date('2019-01-05T00:30:00.000Z');
 
-	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today, notificationRules);
 	await expect(result).toBeTruthy();
 });
 
@@ -142,7 +143,7 @@ it('checkShouldSendNotification - alunaNotificationBefore - dont send after modu
 	const { moduleDates } = data;
 	const today = new Date('2019-01-06T12:30:00.000Z');
 
-	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today, notificationRules);
 	await expect(result).toBeFalsy();
 });
 
@@ -151,7 +152,7 @@ it('checkShouldSendNotification - alunaNotificationAfter - dont send before send
 	const { moduleDates } = data;
 	const today = new Date('2019-01-06T12:30:00.000Z');
 
-	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today, notificationRules);
 	await expect(result).toBeFalsy();
 });
 
@@ -160,7 +161,7 @@ it('checkShouldSendNotification - alunaNotificationAfter - send on exact sendDat
 	const { moduleDates } = data;
 	const today = new Date('2019-01-10T12:30:00.000Z');
 
-	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today, notificationRules);
 	await expect(result).toBeTruthy();
 });
 
@@ -169,7 +170,7 @@ it('checkShouldSendNotification - alunaNotificationAfter - send between dates', 
 	const { moduleDates } = data;
 	const today = new Date('2019-02-10T12:30:00.000Z');
 
-	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today, notificationRules);
 	await expect(result).toBeTruthy();
 });
 
@@ -178,7 +179,7 @@ it('checkShouldSendNotification - alunaNotificationAfter - send on exact moduleD
 	const { moduleDates } = data;
 	const today = new Date('2019-03-05T12:30:00.000Z');
 
-	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today, notificationRules);
 	await expect(result).toBeTruthy();
 });
 
@@ -187,7 +188,7 @@ it('checkShouldSendNotification - alunaNotificationAfter - dont send after modul
 	const { moduleDates } = data;
 	const today = new Date('2019-03-06T12:30:00.000Z');
 
-	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today, notificationRules);
 	await expect(result).toBeFalsy();
 });
 
@@ -196,7 +197,7 @@ it('checkShouldSendNotification - alunaNotificationAfterMod3 - dont send before 
 	const { moduleDates } = data;
 	const today = new Date('2019-05-09T18:50:00.000Z');
 
-	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today, notificationRules);
 	await expect(result).toBeFalsy();
 });
 
@@ -205,7 +206,7 @@ it('checkShouldSendNotification - alunaNotificationAfterMod3 - send on exact sen
 	const { moduleDates } = data;
 	const today = new Date('2019-05-10T18:50:00.000Z');
 
-	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today, notificationRules);
 	await expect(result).toBeTruthy();
 });
 
@@ -214,7 +215,7 @@ it('checkShouldSendNotification - alunaNotificationAfterMod3 - send between date
 	const { moduleDates } = data;
 	const today = new Date('2019-05-15T18:50:00.000Z');
 
-	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today, notificationRules);
 	await expect(result).toBeTruthy();
 });
 
@@ -223,7 +224,7 @@ it('checkShouldSendNotification - alunaNotificationAfterMod3 - send on exact mod
 	const { moduleDates } = data;
 	const today = new Date('2019-05-20T18:50:00.000Z');
 
-	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today, notificationRules);
 	await expect(result).toBeTruthy();
 });
 
@@ -232,7 +233,7 @@ it('checkShouldSendNotification - alunaNotificationAfterMod3 - dont send after m
 	const { moduleDates } = data;
 	const today = new Date('2019-05-21T18:50:00.000Z');
 
-	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today, notificationRules);
 	await expect(result).toBeFalsy();
 });
 
@@ -243,7 +244,7 @@ it('checkShouldSendNotification - type15notification - dont send before sendDate
 	const { moduleDates } = data;
 	const today = new Date('2019-01-03T18:50:00.000Z');
 
-	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today, notificationRules);
 	await expect(result).toBeFalsy();
 });
 
@@ -252,7 +253,7 @@ it('checkShouldSendNotification - type15notification - send', async () => {
 	const { moduleDates } = data;
 	const today = new Date('2019-01-04T15:50:00.000Z');
 
-	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today, notificationRules);
 	await expect(result).toBeTruthy();
 });
 
@@ -261,7 +262,7 @@ it('checkShouldSendNotification - type15notification - dont send after moduleDat
 	const { moduleDates } = data;
 	const today = new Date('2019-05-06T15:50:00.000Z');
 
-	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today, notificationRules);
 	await expect(result).toBeFalsy();
 });
 
@@ -270,7 +271,7 @@ it('checkShouldSendNotification - type16notification - saturday - dont send befo
 	const { moduleDates } = data;
 	const today = new Date('2019-01-04T15:50:00.000Z');
 
-	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today, notificationRules);
 	await expect(result).toBeFalsy();
 });
 
@@ -279,7 +280,7 @@ it('checkShouldSendNotification - type16notification - saturday - send exactly o
 	const { moduleDates } = data;
 	const today = new Date('2019-01-05T09:00:00.000Z');
 
-	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today, notificationRules);
 	await expect(result).toBeTruthy();
 });
 
@@ -288,7 +289,7 @@ it('checkShouldSendNotification - type16notification - saturday - send between d
 	const { moduleDates } = data;
 	const today = new Date('2019-01-05T09:30:00.000Z');
 
-	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today, notificationRules);
 	await expect(result).toBeTruthy();
 });
 
@@ -297,7 +298,7 @@ it('checkShouldSendNotification - type16notification - saturday - dont send afte
 	const { moduleDates } = data;
 	const today = new Date('2019-01-05T12:30:00.000Z');
 
-	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today, notificationRules);
 	await expect(result).toBeFalsy();
 });
 
@@ -306,7 +307,7 @@ it('checkShouldSendNotification - type16notification - sunday - dont send before
 	const { moduleDates } = data;
 	const today = new Date('2019-01-06T03:50:00.000Z');
 
-	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today, notificationRules);
 	await expect(result).toBeFalsy();
 });
 
@@ -315,7 +316,7 @@ it('checkShouldSendNotification - type16notification - sunday - send between', a
 	const { moduleDates } = data;
 	const today = new Date('2019-01-06T13:50:00.000Z');
 
-	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today, notificationRules);
 	await expect(result).toBeTruthy();
 });
 
@@ -324,7 +325,7 @@ it('checkShouldSendNotification - type16notification - sunday - dont send after 
 	const { moduleDates } = data;
 	const today = new Date('2019-01-06T23:50:00.000Z');
 
-	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today, notificationRules);
 	await expect(result).toBeTruthy();
 });
 
@@ -335,7 +336,7 @@ it('checkShouldSendNotification - indicadoNotification 3 - no check_answer - don
 	const { moduleDates } = data;
 	const today = new Date('2018-12-25T23:50:00.000Z');
 
-	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today, notificationRules);
 	await expect(result).toBeFalsy();
 });
 
@@ -344,7 +345,7 @@ it('checkShouldSendNotification - indicadoNotification 3 - no check_answer - sen
 	const { moduleDates } = data;
 	const today = new Date('2018-12-30T23:50:00.000Z');
 
-	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today, notificationRules);
 	await expect(result).toBeTruthy();
 });
 
@@ -353,7 +354,7 @@ it('checkShouldSendNotification - indicadoNotification 3 - no check_answer - don
 	const { moduleDates } = data;
 	const today = new Date('2019-01-06T23:50:00.000Z');
 
-	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today, notificationRules);
 	await expect(result).toBeFalsy();
 });
 
@@ -362,7 +363,7 @@ it('checkShouldSendNotification - indicadoNotification 10 - no check_answer - do
 	const { moduleDates } = data;
 	const today = new Date('2019-04-25T23:50:00.000Z');
 
-	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today, notificationRules);
 	await expect(result).toBeFalsy();
 });
 
@@ -371,7 +372,7 @@ it('checkShouldSendNotification - indicadoNotification 10 - no check_answer - se
 	const { moduleDates } = data;
 	const today = new Date('2019-05-01T23:50:00.000Z');
 
-	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today, notificationRules);
 	await expect(result).toBeTruthy();
 });
 
@@ -380,7 +381,7 @@ it('checkShouldSendNotification - indicadoNotification 10 - no check_answer - do
 	const { moduleDates } = data;
 	const today = new Date('2019-05-06T23:50:00.000Z');
 
-	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today, notificationRules);
 	await expect(result).toBeFalsy();
 });
 
@@ -391,7 +392,7 @@ it('checkShouldSendNotification - indicadoNotification 3 - with check_answer - d
 	const { moduleDates } = data;
 	const today = new Date('2019-01-31T23:50:00.000Z');
 
-	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today, notificationRules);
 	await expect(result).toBeFalsy();
 });
 
@@ -400,7 +401,7 @@ it('checkShouldSendNotification - indicadoNotification 3 - with check_answer - s
 	const { moduleDates } = data;
 	const today = new Date('2019-01-04T23:50:00.000Z');
 
-	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today, notificationRules);
 	await expect(result).toBeTruthy();
 });
 
@@ -409,7 +410,7 @@ it('checkShouldSendNotification - indicadoNotification 3 - with check_answer - d
 	const { moduleDates } = data;
 	const today = new Date('2019-01-06T23:50:00.000Z');
 
-	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today, notificationRules);
 	await expect(result).toBeFalsy();
 });
 
@@ -418,7 +419,7 @@ it('checkShouldSendNotification - indicadoNotification 10 - with check_answer - 
 	const { moduleDates } = data;
 	const today = new Date('2019-04-22T23:50:00.000Z');
 
-	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today, notificationRules);
 	await expect(result).toBeFalsy();
 });
 
@@ -427,7 +428,7 @@ it('checkShouldSendNotification - indicadoNotification 10 - with check_answer - 
 	const { moduleDates } = data;
 	const today = new Date('2019-05-01T23:50:00.000Z');
 
-	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today, notificationRules);
 	await expect(result).toBeTruthy();
 });
 
@@ -436,7 +437,7 @@ it('checkShouldSendNotification - indicadoNotification 10 - with check_answer - 
 	const { moduleDates } = data;
 	const today = new Date('2019-05-06T23:50:00.000Z');
 
-	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today);
+	const result = await sendNotificationQueue.checkShouldSendNotification(notification, moduleDates, today, notificationRules);
 	await expect(result).toBeFalsy();
 });
 
