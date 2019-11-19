@@ -27,8 +27,8 @@ async function createVenda(itemId = 1) { // for testing only, creates a link to 
 	pagseguro.addItem({
 		id: itemId,
 		description: 'Item Foobar',
-		amount: '100.00',
-		quantity: '10',
+		amount: '5.00',
+		quantity: '1',
 	});
 
 	pagseguro.sender({
@@ -55,10 +55,11 @@ async function createVenda(itemId = 1) { // for testing only, creates a link to 
 
 	pagseguro.checkout(async (success, response) => {
 		if (success) {
-			console.log(response);
+			console.log('response', response);
 			const answer = await xmlParse(response);
 			console.log(answer);
-			console.log(`https://sandbox.pagseguro.uol.com.br/v2/checkout/payment.html?code=${answer.checkout.code}`);
+			console.log(`https://pagseguro.uol.com.br/v2/checkout/payment.html?code=${answer.checkout.code}`);
+			// console.log(`https://sandbox.pagseguro.uol.com.br/v2/checkout/payment.html?code=${answer.checkout.code}`);
 		} else {
 			console.error(response);
 		}
@@ -99,13 +100,6 @@ async function handlePagamento(notification) {
 		}
 	});
 }
-
-// const mock = {
-// 	notificationCode: 'A8B88B-E1ABDCABDC33-D6643ECF9FEF-A7957F',
-// 	notificationType: 'transaction',
-// };
-
-// handlePagamento(mock);
 
 
 module.exports = {
