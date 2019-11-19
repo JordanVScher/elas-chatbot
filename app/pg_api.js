@@ -76,7 +76,7 @@ async function handlePagamento(notification) {
 			try {
 				const answer = await xmlParse(response); console.log('answer', JSON.stringify(answer, null, 2)); // parse xml to json
 				const code = answer.transaction.status.toString() || false;
-				if ((process.env.ENV === 'prod' && code === '3') || (process.env.ENV !== 'prod' && code)) { // 3 -> accepted transaction
+				if ((['homol', 'prod'].includes(process.env.ENV) && code === '3') || (!['homol', 'prod'].includes(process.env.ENV) && code)) { // 3 -> accepted transaction
 					const productID = answer.transaction.items[0].item[0].id[0]; console.log('productID', productID); // productID
 					const newPagamento = await pagamentos.findOrCreate({ // saving new payment
 						where: { id_transacao: answer.transaction.code[0] },
@@ -100,7 +100,6 @@ async function handlePagamento(notification) {
 		}
 	});
 }
-
 
 module.exports = {
 	createVenda, handlePagamento,
