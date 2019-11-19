@@ -316,7 +316,7 @@ async function buildRecipientObj(context) {
 
 async function getTinyUrl(originalUrl) {
 	const res = await TinyURL.shorten(originalUrl);
-	if (res.includes('<')) return originalUrl;
+	if (res.includes('<') || res === 'Error' || !res) return originalUrl;
 	return res;
 }
 

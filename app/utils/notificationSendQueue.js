@@ -77,8 +77,8 @@ async function fillMasks(replaceMap, recipientData) {
 			let newData = '';
 			switch (currentKey) {
 			case 'NOMEUM':
-				if (recipientData['aluna.nome_completo']) { newData = recipientData['aluna.nome_completo'];	}
-				if (recipientData.nome_completo) { newData = recipientData.nome_completo;	}
+				if (recipientData['aluna.nome_completo']) { newData = recipientData['aluna.nome_completo']; }
+				if (recipientData.nome_completo) { newData = recipientData.nome_completo; }
 				break;
 			case 'MODULO1':
 				newData = await help.formatModulo1(recipientData.mod1);
@@ -141,9 +141,9 @@ async function extendRecipient(recipient, moduleDates, turmaID) {
 	if (ourTurma.local) { result.local = ourTurma.local; }
 
 	const now = new Date(); // figure out which module the aluna is on
-	if (ourTurma.modulo1 >= now) { result.moduloAvisar = 1;	}
-	if (ourTurma.modulo2 >= now) { result.moduloAvisar = 2;	}
-	if (ourTurma.modulo3 >= now) { result.moduloAvisar = 3;	}
+	if (ourTurma.modulo1 >= now) { result.moduloAvisar = 1; }
+	if (ourTurma.modulo2 >= now) { result.moduloAvisar = 2; }
+	if (ourTurma.modulo3 >= now) { result.moduloAvisar = 3; }
 
 	return result;
 }
@@ -220,9 +220,8 @@ async function checkShouldSendNotification(notification, moduleDates, today, not
 		dateToSend.setDate(dateToSend.getDate() + currentRule.reminderDate);
 	}
 
-
 	const min = dateToSend;
-	let	max;
+	let max;
 
 	if (dateToSend < moduloDate) { // notification will be sent before the moduloDate, today needs to be between the notification date and the moduleDate
 		max = moduloDate;
@@ -236,6 +235,17 @@ async function checkShouldSendNotification(notification, moduleDates, today, not
 		}
 	}
 
+	// ignore hours for most notifications
+	if (notification.notification_type !== 15 && notification.notification_type !== 16) {
+		max.setHours(0, 0, 0, 0);
+		min.setHours(0, 0, 0, 0);
+		today.setHours(0, 0, 0, 0);
+	}
+
+	console.log('max', max);
+	console.log('min', min);
+	console.log('today', today);
+
 	if (today >= min && today <= max) { // if today is inside the date range we can send the notification
 		return true;
 	}
@@ -244,7 +254,7 @@ async function checkShouldSendNotification(notification, moduleDates, today, not
 }
 
 async function checkShouldSendRecipient(recipient, notification) {
-	if (!recipient) { return false;	}
+	if (!recipient) { return false; }
 	if (notification.notification_type === 3 && notification.check_answered === true) {
 		const answerPre = recipient['respostas.pre'];
 		if (answerPre && Object.keys(answerPre)) { // if pre was already answered, there's no need to resend this notification
@@ -365,18 +375,22 @@ async function sendNotificationFromQueue() {
 	const moduleDates = await getModuloDates();
 	const today = new Date();
 	const notificationRules = await rules.getNotificationRules();
+
 	const queue = await notificationQueue.findAll({ where: { sent_at: null, error: null }, raw: true })
 		.then((res) => res).catch((err) => sentryError('Erro ao carregar notification_queue', err));
 
 	const types = await notificationTypes.findAll({ where: {}, raw: true })
 		.then((res) => res).catch((err) => sentryError('Erro ao carregar notification_types', err));
-	let lastNotification = '';
+	let lastNotification = {};
+
 	for (let i = 0; i < queue.length; i++) {
 		const notification = queue[i];
 		if (lastNotification.notification_type !== notification.notification_type) {
+			console.log('notification', notification);
+			console.log('await checkShouldSendNotification(notification, moduleDates, today, notificationRules', await checkShouldSendNotification(notification, moduleDates, today, notificationRules));
 			if (await checkShouldSendNotification(notification, moduleDates, today, notificationRules) === true) { // !== for easy testing
 				const recipient = await getRecipient(notification, moduleDates);
-				console.log('\n\nnotification que passou', notification);
+				console.log('notification que passou', notification);
 				console.log('recipient', recipient);
 				if (await checkShouldSendRecipient(recipient, notification) === true) {
 					console.log('Deve enviar');
