@@ -8,7 +8,9 @@
     "test": "jest --detectOpenHandles",
     "pm2_add": "pm2 start app/index.js  --name \"elas-homol\"",
     "restart": "pm2 restart \"elas-homol\" --update-env",
-    "logs": "pm2 logs \"elas-homol\" --lines 1000"
+    "logs": "pm2 logs \"elas-homol\" --lines 1000",
+    "stop": "pm2 stop \"elas-homol\"",
+    "remove": "pm2 remove \"elas-homol\""
   },
   "dependencies": {
     "@sentry/node": "^4.2.3",
