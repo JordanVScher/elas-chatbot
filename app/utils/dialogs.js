@@ -108,7 +108,7 @@ module.exports.sendCSV = async (context) => { // verTurma
 	}
 };
 
-module.exports.sendFeedbackMsgs = async (context, errors, msgs) => {
+module.exports.sendFeedbackMsgs = async (context, errors, msgs, quickReplies) => {
 	// because some erros can be ignored at the error count (but not on the error listing) we get the number of mandatory errors
 	const notIgnoredErrorsLength = errors.filter((x) => !x.ignore).length;
 	const feedbackMsgs = await admin.getFeedbackMsgs(context.state.csvLines.length - notIgnoredErrorsLength, errors, msgs);
@@ -117,7 +117,7 @@ module.exports.sendFeedbackMsgs = async (context, errors, msgs) => {
 		if (i === 1) {
 			await context.sendText('Aconteceram alguns erros, o número da linha exibido abaixo é contando com o header do CSV/Planilha');
 		}
-		await context.sendText(element, await attach.getQR(flow.adminMenu.inserirAlunas));
+		await context.sendText(element, await attach.getQR(quickReplies || flow.adminMenu.inserirAlunas));
 	}
 };
 

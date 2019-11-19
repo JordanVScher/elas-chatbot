@@ -275,8 +275,8 @@ module.exports = async (context) => {
 			break;
 		case 'updateTurma': {
 			const feedback = await updateTurmas();
-			if (feedback && feedback.results) await context.sendText(feedback.results.join('\n'), await attach.getQR(flow.adminMenu.verTurma));
-			if (feedback && feedback.errors) await dialogs.sendFeedbackMsgs(context, feedback.errors);
+			if (feedback && feedback.results) await context.sendText(feedback.results.join('\n'), await attach.getQR(flow.adminMenu.atualizarTurma));
+			if (feedback && feedback.errors) await dialogs.sendFeedbackMsgs(context, feedback.errors, '', flow.adminMenu.atualizarTurma);
 		} break;
 		case 'simularNotificacao':
 			await context.sendText(flow.adminMenu.simularNotificacao.intro, await attach.getQR(flow.adminMenu.simularNotificacao));

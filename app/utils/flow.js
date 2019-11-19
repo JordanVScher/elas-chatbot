@@ -198,6 +198,10 @@ module.exports = {
 			menuOptions: ['Voltar', 'Ver Turma'],
 			menuPostback: ['adminMenu', 'verTurma'],
 		},
+		atualizarTurma: {
+			menuOptions: ['Voltar', 'Atualizar Novamente'],
+			menuPostback: ['adminMenu', 'updateTurma'],
+		},
 		avisoResposta: {
 			txt1: 'Aguarde, enviaremos o csv agora.',
 		},
