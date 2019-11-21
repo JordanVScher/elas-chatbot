@@ -11,7 +11,7 @@ Dropdown for sondagem is found on this part of the details, after the answers an
 
 let surveysMaps = '';
 
-if (process.env.ENV === 'prod') {
+if (process.env.ENV === 'prod_final') {
 	surveysMaps = {
 		indicacao360: [
 			{ questionID: '1129089330', paramName: 'nome1' },
