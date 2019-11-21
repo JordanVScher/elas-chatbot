@@ -1,6 +1,7 @@
 const { getTinyUrl } = require('./helper');
 
 async function getNotificationRules(turmaName) {
+	if (turmaName) turmaName = turmaName.toString().trim();
 	if (turmaName === 'Teste') {
 		return [
 			{ notification_type: 1, modulo: 1, timeChange: [{ qtd: -2, type: 'days' }] },
@@ -31,7 +32,7 @@ async function getNotificationRules(turmaName) {
 		];
 	}
 
-	if (turmaName === 'Teste2') {
+	if (turmaName === 'Simulação-1') {
 		return [
 			{ notification_type: 1, modulo: 1, timeChange: [{ qtd: -4, type: 'days' }] },
 			{ notification_type: 2, modulo: 1, timeChange: [{ qtd: -4, type: 'days' }] },
