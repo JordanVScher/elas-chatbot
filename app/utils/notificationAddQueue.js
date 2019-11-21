@@ -3,10 +3,11 @@ const indicadosAvaliadores = require('../server/models').indicacao_avaliadores;
 const { turma } = require('../server/models');
 const { sentryError } = require('./helper');
 const rules = require('./notificationRules');
+const { getTurmaName } = require('./DB_helper');
 
 async function addNewNotificationAlunas(alunaId, turmaID) {
 	try {
-		const notificationRules = await rules.getNotificationRules();
+		const notificationRules = await rules.getNotificationRules(await getTurmaName(turmaID));
 		const ourTurma = await turma.findOne({ where: { id: turmaID }, raw: true }).then((res) => res).catch((err) => sentryError('Erro em turmaFindOne', err));
 		const rulesAlunos = await notificationRules.filter((x) => x.indicado !== true);
 		if (ourTurma) {
@@ -44,7 +45,7 @@ async function addAvaliadorOnQueue(rule, indicado, turmaID) {
 }
 
 async function addNewNotificationIndicados(alunaId, turmaID) {
-	const notificationRules = await rules.getNotificationRules();
+	const notificationRules = await rules.getNotificationRules(await getTurmaName(turmaID));
 	const indicados = await indicadosAvaliadores.findAll({ where: { aluno_id: alunaId }, raw: true }) // // get every indicado from aluna
 		.then((res) => res).catch((err) => sentryError('Erro em indicadosAvaliadores.findAll', err));
 	const rulesIndicados = await notificationRules.filter((x) => x.indicado === true);

@@ -1,4 +1,3 @@
-const { readFileSync } = require('fs');
 const { parseAsync } = require('json2csv');
 const turmas = require('../../server/models').turma;
 const db = require('../DB_helper');
@@ -136,50 +135,5 @@ async function sendWarningCSV(test = false) {
 	}
 }
 
-async function buildAlunaMail(aluna) {
-	if (!aluna || !aluna['E-mail Aluna'] || !aluna['E-mail Aluna'].trim()) return false;
 
-	let res = 'Olá';
-
-	if (aluna['Nome Aluna']) {
-		res += `, ${aluna['Nome Aluna']}`;
-	} else {
-		res += '.';
-	}
-
-	res += '\nParece que falta você preencher alguns formulários para a nossa aula dessa semana:\n';
-
-	const questionarios = [
-		'Indicação de Avaliadores (Avaliação 360)',
-		'Pré Sondagem de foco',
-		'Pós Sondagem de foco',
-		'Pré Avaliação 360 (Avaliador)',
-		'Pós Avaliação 360 (Avaliador)',
-	];
-
-	questionarios.forEach((e) => {
-		if (aluna[e] === 'Não Respondido') {
-			res += `\n${e}`;
-		}
-	});
-
-
-	return res;
-}
-
-async function sendWarningAlunas() {
-	const modulos = await getValidModulos();
-	const content = await GetWarningData(modulos);
-	for (let i = 0; i < content.length; i++) {
-		const e = content[i];
-		const mailText = await buildAlunaMail(e);
-		if (mailText) {
-			let html = await readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
-			html = await html.replace('[CONTEUDO_MAIL]', mailText);
-			await sendHTMLMail('Lembrete: Responda os questionários', e['E-mail Aluna'], html);
-		}
-	}
-}
-
-
-module.exports = { sendWarningCSV, sendWarningAlunas };
+module.exports = { sendWarningCSV };

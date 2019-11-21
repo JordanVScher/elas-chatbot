@@ -374,7 +374,6 @@ async function sendNotificationFromQueue() {
 	const parametersRules = await rules.buildParametersRules();
 	const moduleDates = await getModuloDates();
 	const today = new Date();
-	const notificationRules = await rules.getNotificationRules();
 
 	const queue = await notificationQueue.findAll({ where: { sent_at: null, error: null }, raw: true })
 		.then((res) => res).catch((err) => sentryError('Erro ao carregar notification_queue', err));
@@ -386,7 +385,9 @@ async function sendNotificationFromQueue() {
 	for (let i = 0; i < queue.length; i++) {
 		const notification = queue[i];
 		if (lastNotification.notification_type !== notification.notification_type) {
-			console.log('notification', notification);
+			const turmaName = await getTurmaName(notification.turma_id);
+			const notificationRules = await rules.getNotificationRules(turmaName);
+			console.log('notification', notification, 'turmaName', turmaName);
 			console.log('await checkShouldSendNotification(notification, moduleDates, today, notificationRules', await checkShouldSendNotification(notification, moduleDates, today, notificationRules));
 			if (await checkShouldSendNotification(notification, moduleDates, today, notificationRules) === true) { // !== for easy testing
 				const recipient = await getRecipient(notification, moduleDates);
