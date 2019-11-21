@@ -1,7 +1,7 @@
 const { getTinyUrl } = require('./helper');
 
 async function getNotificationRules() {
-	if (process.env.ENV === 'homol') {
+	if (process.env.ENV === 'homol' || process.env.ENV === 'prod') {
 		return [
 			{ notification_type: 1, modulo: 1, timeChange: [{ qtd: -2, type: 'days' }] },
 			{ notification_type: 2, modulo: 1, timeChange: [{ qtd: -2, type: 'days' }] },
