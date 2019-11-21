@@ -1,6 +1,7 @@
 const { CronJob } = require('cron');
 const { sentryError } = require('./helper');
 const { sendWarningCSV } = require('./admin_menu/warn_admin');
+const { sendWarningAlunas } = require('./admin_menu/warn_aluna');
 const { sendNotificationFromQueue } = require('./notificationSendQueue');
 const { updateTurmas } = require('./turma');
 const { addAlunosPesquisa } = require('./pesquisa/add_aluno_pesquisa');
@@ -17,6 +18,22 @@ const sendMissingWarningCron = new CronJob(
 		}
 	}, (() => {
 		console.log('Crontab sendMissingWarningCron stopped.');
+	}),
+	true, /* Starts the job right now (no need for MissionTimer.start()) */
+	'America/Sao_Paulo', false,
+	false, // runOnInit = true useful only for tests
+);
+
+const sendWarningAlunasCron = new CronJob(
+	'00 */40 8-22 * * *', async () => {
+		console.log('Running sendWarningAlunasCron');
+		try {
+			await sendWarningAlunas(false);
+		} catch (error) {
+			await sentryError('Error on sendWarningAlunasCron', error);
+		}
+	}, (() => {
+		console.log('Crontab sendWarningAlunasCron stopped.');
 	}),
 	true, /* Starts the job right now (no need for MissionTimer.start()) */
 	'America/Sao_Paulo', false,
@@ -90,6 +107,7 @@ const sendPesquisasCron = new CronJob(
 
 async function cronLog() {
 	console.log(`Crontab sendNotificationCron is running? => ${sendNotificationCron.running}`);
+	console.log(`Crontab sendWarningAlunasCron is running? => ${sendWarningAlunasCron.running}`);
 	console.log(`Crontab updateTurmasCron is running? => ${updateTurmasCron.running}`);
 	console.log(`Crontab sendMissingWarningCron is running? => ${sendMissingWarningCron.running}`);
 	console.log(`Crontab addPesquisasCron is running? => ${addPesquisasCron.running}`);

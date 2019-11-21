@@ -20,7 +20,7 @@ async function sendBroadcastAluna(USER_ID, textMsg, buttons) {
 		let quickReply = [];
 		if (newButtons && newButtons.length > 0) { quickReply = { quick_replies: newButtons }; }
 
-		const error = await client.sendText(USER_ID, textMsg, quickReply).then(resp => false).catch((err) => { // eslint-disable-line no-unused-vars
+		const error = await client.sendText(USER_ID, textMsg, quickReply).then((resp) => false).catch((err) => { // eslint-disable-line no-unused-vars
 			if (err.stack) { console.log(err.stack); return err.stack; }
 			console.log(err); return err;
 		});
@@ -58,7 +58,7 @@ async function sendCardAluna(USER_ID, cards, cpf) {
 				template_type: 'generic',
 				elements,
 			},
-		}).then(resp => false).catch((err) => { // eslint-disable-line no-unused-vars
+		}).then((resp) => false).catch((err) => { // eslint-disable-line no-unused-vars
 			if (err.stack) { console.log(err.stack); return err.stack; }
 			console.log(err); return err;
 		});
@@ -75,7 +75,7 @@ async function sendFiles(USER_ID, pdf, png) {
 		const error = {};
 		if (pdf) {
 			error.pdf = await client.sendFile(USER_ID, createReadStream(pdf.content), { filename: pdf.filename })
-				.then(resp => false).catch((err) => { // eslint-disable-line no-unused-vars
+				.then((resp) => false).catch((err) => { // eslint-disable-line no-unused-vars
 					if (err.stack) { console.log(err.stack); return err.stack; }
 					console.log(err); return err;
 				});
@@ -83,7 +83,7 @@ async function sendFiles(USER_ID, pdf, png) {
 		}
 		if (png) {
 			error.png = await client.sendFile(USER_ID, png.content, { filename: png.filename })
-				.then(resp => false).catch((err) => { // eslint-disable-line no-unused-vars
+				.then((resp) => false).catch((err) => { // eslint-disable-line no-unused-vars
 					if (err.stack) { console.log(err.stack); return err.stack; }
 					console.log(err); return err;
 				});
@@ -107,12 +107,12 @@ async function sendWarning(csv) {
 		}],
 	};
 
-	const adminUsers = await chatbotUsers.findAll({ where: { is_admin: true }, raw: true }).then(res => res).catch(err => sentryError('Erro em sendWarning.findAll', err));
+	const adminUsers = await chatbotUsers.findAll({ where: { is_admin: true }, raw: true }).then((res) => res).catch((err) => sentryError('Erro em sendWarning.findAll', err));
 	for (let i = 0; i < adminUsers.length; i++) {
 		const e = adminUsers[i];
-		let res = await client.sendFile(e.fb_id, csv.content, { is_reusable: true, filename: csv.filename }).then(resp => resp).catch((err) => { sentryError('Erro ao sendWarning.text', err); });
+		let res = await client.sendFile(e.fb_id, csv.content, { is_reusable: true, filename: csv.filename }).then((resp) => resp).catch((err) => { sentryError('Erro ao sendWarning.text', err); });
 		if (res && res.message_id) {
-			res = await client.sendText(e.fb_id, missingAnswersWarning.mailText, quickReply).then(resp => resp).catch((err) => { sentryError('Erro ao sendWarning.text', err); });
+			res = await client.sendText(e.fb_id, missingAnswersWarning.mailText, quickReply).then((resp) => resp).catch((err) => { sentryError('Erro ao sendWarning.text', err); });
 		}
 	}
 }

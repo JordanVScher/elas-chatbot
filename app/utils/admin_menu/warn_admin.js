@@ -35,14 +35,17 @@ const atividadesRules = {
 };
 
 // get only modules that match the warnDaysBefore rule
-async function getValidModulos(warnDaysBefore = 2, test) {
+async function getValidModulos(warnDaysBefore = 2, test, module) {
+	let modules = [1, 2, 3];
+
+	if (test && modules.includes(module)) { modules = [module]; }
 	const allTurmas = await turmas.findAll({ where: {}, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em turmas.findAll', err));
 	const result = [];
 	const today = new Date(); today.setHours(0, 0, 0, 0);
 	const a = help.moment();
 
 	allTurmas.forEach((turma) => {
-		[1, 2, 3].forEach((moduloN) => {
+		modules.forEach((moduloN) => {
 			const aux = turma[`modulo${moduloN}`];
 			if (aux) {
 				aux.setHours(0, 0, 0, 0);
@@ -136,4 +139,4 @@ async function sendWarningCSV(test = false) {
 }
 
 
-module.exports = { sendWarningCSV };
+module.exports = { sendWarningCSV, getValidModulos, GetWarningData };

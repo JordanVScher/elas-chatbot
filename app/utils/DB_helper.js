@@ -42,6 +42,20 @@ async function getTurmaID(turmaName) {
 	return id;
 }
 
+async function getFBIDFromAlunaID(AlunaID) {
+	const id = await sequelize.query(`
+	SELECT fb_id
+	FROM chatbot_users BOT_USER
+	LEFT JOIN alunos ALUNO ON BOT_USER.cpf = ALUNO.cpf
+	WHERE ALUNO.id = '${AlunaID}';
+	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
+		console.log('Got turma id!', results);
+		return results && results[0] && results[0].fb_id ? results[0].fb_id : false;
+	}).catch((err) => { sentryError('Erro em getTurmaID =>', err); });
+
+	return id;
+}
+
 async function getTurmaName(turmaID) {
 	const nome = await sequelize.query(`
 	SELECT nome FROM turma where id = '${turmaID}';
@@ -590,4 +604,5 @@ module.exports = {
 	getChatbotUser,
 	getTurmaFromID,
 	changeAdminStatus,
+	getFBIDFromAlunaID,
 };
