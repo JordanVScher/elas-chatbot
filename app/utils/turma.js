@@ -18,7 +18,7 @@ async function buildQuery(data, map) {
 
 	Object.keys(data).forEach((element) => {
 		const queryInput = map[element];
-		if (queryInput.toString() && data[element].toString()) {
+		if (queryInput && queryInput.toString() && data[element] && data[element].toString()) {
 			result[queryInput] = data[element].toString().trim();
 		}
 	});
