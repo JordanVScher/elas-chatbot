@@ -41,7 +41,6 @@ async function getValidModulos(warnDaysBefore = 2, test, module) {
 	if (test && modules.includes(module)) { modules = [module]; }
 	const allTurmas = await turmas.findAll({ where: {}, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em turmas.findAll', err));
 	const result = [];
-	const today = new Date(); today.setHours(0, 0, 0, 0);
 	const a = help.moment();
 
 	allTurmas.forEach((turma) => {

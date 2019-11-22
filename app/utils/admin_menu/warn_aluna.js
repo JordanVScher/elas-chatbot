@@ -2,8 +2,9 @@ const { readFileSync } = require('fs');
 const { sendHTMLMail } = require('../mailer');
 const { getFBIDFromAlunaID } = require('../DB_helper');
 const { sendBroadcastAluna } = require('../broadcast');
-
 const warn = require('./warn_admin');
+
+const goBackButton = [{ content_type: 'text', title: 'Voltar', payload: 'mainMenu' }];
 
 async function buildAlunaMail(aluna) {
 	let res = 'Olá';
@@ -51,9 +52,8 @@ async function sendWarningAlunas() {
 			}
 
 			const fbID = await getFBIDFromAlunaID(e['ID Aluna']);
-			console.log('fbID', fbID);
 			if (fbID) {
-				await sendBroadcastAluna(fbID, mailText);
+				await sendBroadcastAluna(fbID, mailText, JSON.stringify(goBackButton));
 			}
 		}
 	}
