@@ -70,7 +70,7 @@ async function sendCardAluna(USER_ID, cards, cpf) {
 	return 'error: no USER_ID';
 }
 
-async function sendFiles(USER_ID, pdf, png) {
+async function sendFiles(USER_ID, pdf, pdf2) {
 	if (USER_ID) {
 		const error = {};
 		if (pdf) {
@@ -81,16 +81,24 @@ async function sendFiles(USER_ID, pdf, png) {
 				});
 			if (!error.pdf) { console.log('sent resPdf');	}
 		}
-		if (png) {
-			error.png = await client.sendFile(USER_ID, png.content, { filename: png.filename })
+		if (pdf2) {
+			error.pdf2 = await client.sendFile(USER_ID, createReadStream(pdf2.content), { filename: pdf2.filename })
 				.then((resp) => false).catch((err) => { // eslint-disable-line no-unused-vars
 					if (err.stack) { console.log(err.stack); return err.stack; }
 					console.log(err); return err;
 				});
-			if (!error.png) { console.log('sent resPng'); }
+			if (!error.pdf2) { console.log('sent resPdf2');	}
 		}
+		// if (png) {
+		// 	error.png = await client.sendFile(USER_ID, png.content, { filename: png.filename })
+		// 		.then((resp) => false).catch((err) => { // eslint-disable-line no-unused-vars
+		// 			if (err.stack) { console.log(err.stack); return err.stack; }
+		// 			console.log(err); return err;
+		// 		});
+		// 	if (!error.png) { console.log('sent resPng'); }
+		// }
 
-		if (error.pdf || error.png) { return JSON.stringify(error); }
+		if (error.pdf || error.pdf2) { return JSON.stringify(error); }
 		return false;
 	}
 

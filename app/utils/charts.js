@@ -35,7 +35,7 @@ async function separateIndicadosData(cpf) {
 
 	for (let i = 1; i <= size; i++) {
 		const aux = {};
-		aux.titlePre = newMap.find(x => x.paramName === `${commomKeys[0]}${i}`); aux.titlePre = `Q${i}. ${aux.titlePre.questionName}`;
+		aux.titlePre = newMap.find((x) => x.paramName === `${commomKeys[0]}${i}`); aux.titlePre = `Q${i}. ${aux.titlePre.questionName}`;
 		commomKeys.forEach((element) => {
 			aux[`${element}Pre`] = indicado.reduce((prev, cur) => `${prev} ${cur.pre && cur.pre[`${element}${i}`] ? `--${cur.pre[`${element}${i}`]}` : ''}`, '');
 		});
@@ -49,7 +49,7 @@ async function separateIndicadosData(cpf) {
 
 	for (let i = 1; i <= size; i++) {
 		const aux = data[i - 1]; // getting aux from the previous array
-		aux.titlePos = newMap.find(x => x.paramName === `${commomKeys[0]}${i}`); aux.titlePos = `Q${i}. ${aux.titlePos.questionName}`;
+		aux.titlePos = newMap.find((x) => x.paramName === `${commomKeys[0]}${i}`); aux.titlePos = `Q${i}. ${aux.titlePos.questionName}`;
     commomKeys.forEach((element) => { // eslint-disable-line
 			aux[`${element}Pos`] = indicado.reduce((prev, cur) => `${prev} ${cur.pos && cur.pos[`${element}${i}`] ? `--${cur.pos[`${element}${i}`]}` : ''}`, '');
 		});
@@ -104,13 +104,42 @@ async function buildIndicadoChart(cpf) {
 
 
 		const createPDFAsync = promisify(helper.pdf.create);
-		const result = await createPDFAsync(html).then(tmp => tmp).catch(err => console.log(err));
+		const result = await createPDFAsync(html).then((tmp) => tmp).catch((err) => console.log(err));
 
 		return result;
 	}
 	return [];
 }
 
+async function formatSondagemPDF(buffer, name) {
+	const img = buffer.toString('base64');
+
+	const config = {
+		border: {
+			top: '10px', // default is 0, units: mm, cm, in, px
+			right: '20px',
+			bottom: '20px',
+			left: '20px',
+		},
+	};
+	// const styleDiv = 'font-size:10pt;margin: 100px 25px 30px 25px; ';
+	const html = `<!DOCTYPE html>
+	<body  style="background-color:white;">
+	<div id="chart">
+	<img src="${process.cwd()}/mail_template/header.jpg">
+		<h1>Resultado - ${name}</h1>
+		<img style='height: 100%; width: 100%' src="data:image/jpg;base64,${img}">
+		</div>
+	</body>
+	</html>`;
+
+
+	const createPDFAsync = promisify(helper.pdf.create);
+	const result = await createPDFAsync(html, config).then((tmp) => tmp).catch((err) => console.log(err));
+	return result.filename;
+}
+
+
 module.exports = {
-	buildAlunoChart, separateIndicadosData, buildIndicadoChart,
+	buildAlunoChart, separateIndicadosData, buildIndicadoChart, formatSondagemPDF,
 };

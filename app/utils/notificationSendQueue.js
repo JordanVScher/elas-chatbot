@@ -285,7 +285,7 @@ async function checkShouldSendRecipient(recipient, notification) {
 	return true;
 }
 
-async function buildAttachment(type, cpf) {
+async function buildAttachment(type, cpf, name) {
 	const result = { mail: [], chatbot: {} };
 
 	if (type.attachment_name) {
@@ -297,10 +297,11 @@ async function buildAttachment(type, cpf) {
 	}
 
 	if (type.id.toString() === '13' && cpf) {
-		const pdf = { filename: `${cpf}_360Results.pdf` };
+		const pdf = { filename: `${name}_360Results.pdf` };
 		const { filename } = await charts.buildIndicadoChart(cpf); // actually path
 		pdf.content = filename || false;
 
+		console.log('filename', filename);
 		if (pdf && pdf.content) {
 			result.mail.push({
 				filename: pdf.filename,
@@ -311,17 +312,31 @@ async function buildAttachment(type, cpf) {
 			result.chatbot.pdf = pdf;
 		}
 
-		const png = { filename: `${cpf}_sondagem.png` };
-		png.content = await charts.buildAlunoChart(cpf); // actually buffer
+		// const png = { filename: `${cpf}_sondagem.png` };
+		// png.content = await charts.buildAlunoChart(cpf); // actually buffer
 
-		if (png && png.content) {
+		// if (png && png.content) {
+		// 	result.mail.push({
+		// 		filename: png.filename,
+		// 		content: png.content,
+		// 		contentType: 'image/png',
+		// 	});
+
+		// 	result.chatbot.png = png;
+		// }
+
+		const pdf2 = { filename: `${name}_sondagem.pdf` };
+		pdf2.content = await charts.buildAlunoChart(cpf); // actually buffer
+		pdf2.content = await charts.formatSondagemPDF(pdf2.content, name);
+
+		if (pdf2 && pdf2.content) {
 			result.mail.push({
-				filename: png.filename,
-				content: png.content,
-				contentType: 'image/png',
+				filename: pdf2.filename,
+				content: createReadStream(pdf2.content),
+				contentType: 'application/pdf',
 			});
 
-			result.chatbot.png = png;
+			result.chatbot.pdf2 = pdf2;
 		}
 	}
 
@@ -334,7 +349,7 @@ async function actuallySendMessages(parametersRules, types, notification, recipi
 	const currentType = types.find((x) => x.id === notification.notification_type); // get the correct kind of notification
 	const map = parametersRules[currentType.id]; // get the respective map
 	const newText = await replaceParameters(currentType, await fillMasks(map, recipient), recipient);
-	const attachment = await buildAttachment(currentType, recipient.cpf);
+	const attachment = await buildAttachment(currentType, recipient.cpf, recipient.nome_completo);
 	const error = {};
 
 	if (newText.email_text) { // if there's an email to send, send it
@@ -347,7 +362,7 @@ async function actuallySendMessages(parametersRules, types, notification, recipi
 	if (recipient['chatbot.fb_id'] && newText.chatbot_text) { // if aluna is linked with messenger we send a message to the bot
 		let chatbotError = await broadcast.sendBroadcastAluna(recipient['chatbot.fb_id'], newText.chatbot_text, newText.chatbot_quick_reply);
 		if (!chatbotError && newText.chatbot_cards) { chatbotError = await broadcast.sendCardAluna(recipient['chatbot.fb_id'], newText.chatbot_cards, recipient.cpf); }
-		if (!chatbotError && [attachment.chatbot.pdf || attachment.chatbot.png]) { chatbotError = await broadcast.sendFiles(recipient['chatbot.fb_id'], attachment.chatbot.pdf, attachment.chatbot.png); }
+		if (!chatbotError && [attachment.chatbot.pdf || attachment.chatbot.png]) { chatbotError = await broadcast.sendFiles(recipient['chatbot.fb_id'], attachment.chatbot.pdf, attachment.chatbot.pdf2); }
 		if (chatbotError) { error.chatbotError = chatbotError.toString(); } // save the error, if it happens
 	}
 

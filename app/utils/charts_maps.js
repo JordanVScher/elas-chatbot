@@ -25,7 +25,7 @@ module.exports = {
 		{ questionName: 'Comunicar Apoio', paramName: 'comunicar_apoio' },
 		{ questionName: 'Expressão Segura', paramName: 'expressar_segura' },
 		{ questionName: 'Energia Perseguir', paramName: 'energua_perseguir' },
-		{ questionName: 'Enteder Decisão', paramName: 'entender_decisao' },
+		{ questionName: 'Entender Decisão', paramName: 'entender_decisao' },
 		{ questionName: 'Analisar Pressão', paramName: 'analisar_pressao' },
 		{ questionName: 'Decisão Consequencia', paramName: 'decisao_consequencia' },
 		{ questionName: 'Objetivos Pessoal', paramName: 'objetivos_pessoal' },
