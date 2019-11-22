@@ -79,7 +79,7 @@ if (process.env.ENV === 'prod_final') {
 			{ questionID: '160190868', paramName: 'contato_emergencia_relacao' },
 		],
 		sondagemPre: [
-			{ questionID: '1092002522', dropdown: '154477535', paramName: 'obetivos_perseguidos' },
+			{ questionID: '1092002522', dropdown: '154477535', paramName: 'objetivos_perseguidos' },
 			{ questionID: '1092002523', dropdown: '154477535', paramName: 'identificar_plano' },
 			{ questionID: '1092002524', dropdown: '154477535', paramName: 'plano_fim' },
 			{ questionID: '1092002525', dropdown: '154477535', paramName: 'objetivos_foco' },
@@ -128,7 +128,7 @@ if (process.env.ENV === 'prod_final') {
 			{ questionID: '1092002567', dropdown: '154477535', paramName: 'conhecimento_resolucao' },
 		],
 		sondagemPos: [
-			{ questionID: '1306953528', dropdown: '188349594', paramName: 'obetivos_perseguidos' },
+			{ questionID: '1306953528', dropdown: '188349594', paramName: 'objetivos_perseguidos' },
 			{ questionID: '1306953529', dropdown: '188349594', paramName: 'identificar_plano' },
 			{ questionID: '1306953530', dropdown: '188349594', paramName: 'plano_fim' },
 			{ questionID: '1306953531', dropdown: '188349594', paramName: 'objetivos_foco' },
@@ -304,7 +304,7 @@ if (process.env.ENV === 'prod_final') {
 			{ questionID: '294966533', paramName: 'contato_emergencia_relacao' },
 		],
 		sondagemPre: [
-			{ questionID: '1989850599', dropdown: '298300398', paramName: 'obetivos_perseguidos' },
+			{ questionID: '1989850599', dropdown: '298300398', paramName: 'objetivos_perseguidos' },
 			{ questionID: '1989850600', dropdown: '298300398', paramName: 'identificar_plano' },
 			{ questionID: '1989850601', dropdown: '298300398', paramName: 'plano_fim' },
 			{ questionID: '1989850602', dropdown: '298300398', paramName: 'objetivos_foco' },
@@ -353,7 +353,7 @@ if (process.env.ENV === 'prod_final') {
 			{ questionID: '1989850644', dropdown: '298300398', paramName: 'conhecimento_resolucao' },
 		],
 		sondagemPos: [
-			{ questionID: '1989860243', dropdown: '298302163', paramName: 'obetivos_perseguidos' },
+			{ questionID: '1989860243', dropdown: '298302163', paramName: 'objetivos_perseguidos' },
 			{ questionID: '1989860244', dropdown: '298302163', paramName: 'identificar_plano' },
 			{ questionID: '1989860245', dropdown: '298302163', paramName: 'plano_fim' },
 			{ questionID: '1989860246', dropdown: '298302163', paramName: 'objetivos_foco' },

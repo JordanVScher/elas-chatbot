@@ -1,6 +1,6 @@
 module.exports = {
 	sondagem: [
-		{ questionName: 'Define Objetivos', paramName: 'obetivos_perseguidos' },
+		{ questionName: 'Define Objetivos', paramName: 'objetivos_perseguidos' },
 		{ questionName: 'Cria Plano Viável', paramName: 'identificar_plano' },
 		{ questionName: 'Leva o Plano até o Fim', paramName: 'plano_fim' },
 		{ questionName: 'Persegue Objetivos com Foco', paramName: 'objetivos_foco' },
