@@ -84,10 +84,12 @@ async function getAlunaFromPDF(cpf) {
 
 async function getAlunaRespostasWarning(turmaID) {
 	const queryString = `
-		SELECT ALUNOS.id as "aluno_id", ALUNOS.nome_completo as "nome_aluno", ALUNOS.telefone, ALUNOS.email, ALUNOS.cpf, ALUNOS.turma_id as "turma",
-		RESPOSTAS_ALUNOS.pre as "atividade_aluno_pre", RESPOSTAS_ALUNOS.pos as "atividade_aluno_pos", RESPOSTAS_ALUNOS.atividade_indicacao
+		SELECT ALUNOS.id as "aluno_id", ALUNOS.nome_completo as "nome_aluno", ALUNOS.telefone, ALUNOS.email, ALUNOS.cpf, 
+		ALUNOS.turma_id as "turma",	CHATBOT.fb_id as "fb_id_aluno", RESPOSTAS_ALUNOS.pre as "atividade_aluno_pre", 
+		RESPOSTAS_ALUNOS.pos as "atividade_aluno_pos", RESPOSTAS_ALUNOS.atividade_indicacao
 		FROM alunos ALUNOS
 		LEFT JOIN alunos_respostas RESPOSTAS_ALUNOS ON ALUNOS.id = RESPOSTAS_ALUNOS.aluno_id
+		LEFT JOIN chatbot_users CHATBOT ON ALUNOS.cpf = CHATBOT.cpf
 		WHERE ALUNOS.turma_id = '${turmaID}';`;
 	const result = await sequelize.query(queryString).spread((results) => results).catch((err) => sentryError('Erro no getAlunaRespostasWarning =>', err));
 	return result;

@@ -16,6 +16,7 @@ const columnCSV = {
 	telefone: 'Telefone Aluna',
 	email: 'E-mail Aluna',
 	cpf: 'CPF Aluna ',
+	fb_id_aluno: 'FB da Aluna',
 	indicado_id: 'ID Avaliador',
 	indicado_nome: 'Nome Avaliador',
 	indicado_telefone: 'Telefone Avaliador',
@@ -35,21 +36,22 @@ const atividadesRules = {
 };
 
 // get only modules that match the warnDaysBefore rule
-async function getValidModulos(warnDaysBefore = 2, test, module) {
+async function getValidModulos(today, allTurmas, warnDaysBefore = 2, test, module) {
+	today.setHours(0, 0, 0, 0);
+	today = help.moment(today);
+
 	let modules = [1, 2, 3];
 
 	if (test && modules.includes(module)) { modules = [module]; }
-	const allTurmas = await turmas.findAll({ where: {}, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em turmas.findAll', err));
 	const result = [];
-	const a = help.moment();
 
 	allTurmas.forEach((turma) => {
 		modules.forEach((moduloN) => {
-			const aux = turma[`modulo${moduloN}`];
-			if (aux) {
-				aux.setHours(0, 0, 0, 0);
-				const b = help.moment(aux);
-				const diff = a.diff(b, 'days');
+			let modDate = turma[`modulo${moduloN}`];
+			if (modDate) {
+				modDate.setHours(0, 0, 0, 0);
+				modDate = help.moment(modDate);
+				const diff = today.diff(modDate, 'days');
 				if (test || (!test && diff === warnDaysBefore)) {
 					result.push({
 						turmaID: turma.id,
@@ -108,7 +110,7 @@ async function formatDataToCSV(lines, CSV) {
 	return lines;
 }
 
-async function GetWarningData(modulos) {
+async function GetWarningData(modulos, columnCSVRule = columnCSV) {
 	let missingAnswers = [];
 
 	for (let i = 0; i < modulos.length; i++) {
@@ -123,12 +125,15 @@ async function GetWarningData(modulos) {
 		}
 	}
 
-	return formatDataToCSV(missingAnswers, columnCSV);
+	return formatDataToCSV(missingAnswers, columnCSVRule);
 }
 
-async function sendWarningCSV(test = false) {
-	const modulos = await getValidModulos(2, test);
-	const content = await GetWarningData(modulos);
+async function sendWarningCSV(test, mod) {
+	const today = new Date();
+	const allTurmas = await turmas.findAll({ where: {}, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em turmas.findAll', err));
+	delete columnCSV.fb_id_aluno; // not part of the CSV
+	const modulos = await getValidModulos(today, allTurmas, 2, test, mod);
+	const content = await GetWarningData(modulos, columnCSV);
 	if (content && content.length > 0) {
 		const result = await parseAsync(content, { includeEmptyRows: true }).then((csv) => csv).catch((err) => err);
 		const csv = { content: await Buffer.from(result, 'utf8'), filename: `${await help.getTimestamp()}_FALTA_RESPONDER.csv`, contentType: 'text/csv' };
@@ -136,6 +141,5 @@ async function sendWarningCSV(test = false) {
 		await sendWarning(csv);
 	}
 }
-
 
 module.exports = { sendWarningCSV, getValidModulos, GetWarningData };
