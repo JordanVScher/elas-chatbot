@@ -77,6 +77,27 @@ module.exports.buildAgendaMsg = async (data) => {
 	return msg;
 };
 
+async function warnAlunaTroca(alunaData) {
+	const subject = flow.trocarTurma.mailSubject.replace('<NOME>', alunaData.nome_completo);
+	let mailText = flow.trocarTurma.mailText.replace('<TURMA>', alunaData.turma).replace('<NOME>', alunaData.nome_completo);
+	let aux = '';
+
+	if (alunaData.nome_completo) aux += `\nNome: ${alunaData.nome_completo}`;
+	if (alunaData.turma) aux += `\nTurma: ${alunaData.turma}`;
+	if (alunaData.telefone) aux += `\nTelefone: ${alunaData.telefone}`;
+	if (alunaData.email) aux += `\nE-mail: ${alunaData.email}`;
+	if (alunaData.cpf) aux += `\nCPF: ${alunaData.cpf}`;
+
+	if (aux) mailText += `\nDados da aluna: \n${aux}`;
+
+	let html = await readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
+	html = await html.replace('[CONTEUDO_MAIL]', mailText);
+
+	await sendHTMLMail(subject, alunaData.email, html);
+}
+
+module.exports.warnAlunaTroca = warnAlunaTroca;
+
 async function warnAlunaRemocao(alunaData) {
 	const subject = flow.adminMenu.removerAlunaFim.mailSubject.replace('<TURMA>', alunaData.turma);
 	const mailText = flow.adminMenu.removerAlunaFim.mailText.replace('<TURMA>', alunaData.turma).replace('<NOME>', alunaData.nome_completo);

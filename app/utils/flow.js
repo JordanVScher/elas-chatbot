@@ -11,8 +11,17 @@ module.exports = {
 	},
 	mainMenu: {
 		defaultText: 'O que deseja fazer?',
-		menuOptions: ['Falar com Donna 💻', 'Sobre ELAS 💁‍♀️'],
-		menuPostback: ['falarDonna', 'sobreElas'],
+		menuOptions: ['Falar com Donna 💻', 'Sobre ELAS 💁‍♀️', 'Troca de Turma 👩‍🏫'],
+		menuPostback: ['falarDonna', 'sobreElas', 'trocarTurma'],
+	},
+	trocarTurma: {
+		text1: 'Aqui você poderá pedir para a equipe ELAS te transferir de turma.',
+		text2: 'Deseja continuar?',
+		text3: 'Tudo bem, um e-mail foi enviado para a equipe avisando da sua transferência.',
+		mailSubject: 'ELAS - <NOME> quer trocar de turma!',
+		mailText: 'A Aluna <NOME>, atualmente na turma <TURMA>, solicitou uma transferência de turma.\n',
+		menuOptions: ['Quero Trocar', 'Voltar'],
+		menuPostback: ['queroTrocar', 'mainMenu'],
 	},
 	jaSouAluna: {
 		text1: '❤️',

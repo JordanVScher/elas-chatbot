@@ -139,6 +139,15 @@ module.exports = async (context) => {
 				await context.sendText(flow.greetings.text3, await attach.getQR(flow.sobreElas));
 			}
 			break;
+		case 'trocarTurma':
+			await context.sendText(flow.trocarTurma.text1);
+			await context.sendText(flow.trocarTurma.text2, await attach.getQR(flow.trocarTurma));
+			break;
+		case 'queroTrocar':
+			await context.sendText(flow.trocarTurma.text3);
+			await dialogs.warnAlunaTroca(context.state.gotAluna);
+			await dialogs.sendMainMenu(context);
+			break;
 		case 'queroSerAluna':
 			await context.sendText(flow.queroSerAluna.text1);
 			await attach.sendCards(context, flow.queroSerAluna.cards, 'Ver Mais');
