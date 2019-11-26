@@ -156,8 +156,8 @@ module.exports = {
 	adminMenu: {
 		firstMenu: {
 			txt1: 'Esse é o menu do admin. Clique em uma opção:',
-			menuOptions: ['Inserir Alunas', 'Inserir Avaliadores', 'Ver Turma', 'Mudar Turma', 'Atualizar Turma', 'Aviso Respostas', 'Simular Notificação'],
-			menuPostback: ['inserirAlunas', 'inserirAvaliadores', 'verTurma', 'mudarTurma', 'updateTurma', 'avisoResposta', 'simularAskCPF'],
+			menuOptions: ['Inserir Alunas', 'Inserir Avaliadores', 'Ver Turma', 'Remover Aluna', 'Mudar Turma', 'Atualizar Turma', 'Aviso Respostas', 'Simular Notificação'],
+			menuPostback: ['inserirAlunas', 'inserirAvaliadores', 'verTurma', 'removerAluna', 'mudarTurma', 'updateTurma', 'avisoResposta', 'simularAskCPF'],
 		},
 		inserirAlunas: {
 			txt1: 'Envie o CSV com os dados das novas alunas. As colunas devem estar formatadas como esse arquivo de exemplo:',
@@ -184,6 +184,25 @@ module.exports = {
 			noTurma: 'Não encontrei essa turma. Tente novamente.',
 			menuOptions: ['Voltar'],
 			menuPostback: ['adminMenu'],
+		},
+		removerAluna: {
+			txt1: 'Entre com o CPF da Aluna que deseja remover de turma. Pode ser só números. \nSe não souber o CPF, baixe o CSV com as informações da turma clicando no botão abaixo.',
+			invalidCPF: 'CPF inválido. Tente novamente.',
+			alunaNotFound: 'Não encontrei nenhuma aluna com esse CPF. Tente novemente.',
+			alunaFound: 'Aluna encontrada:\n\n',
+			menuOptions: ['Voltar', 'Ver Turma'],
+			menuPostback: ['adminMenu', 'verTurma'],
+		},
+		removerAlunaConfirma: {
+			txt1: 'Tem certeza que deseja remover a aluna dessa turma? Hoje, <NOME> está na turma <TURMA>.',
+			menuOptions: ['Sim', 'Cancelar', 'Mudar de Aluna'],
+			menuPostback: ['removerAlunaFim', 'adminMenu', 'removerAluna'],
+		},
+		removerAlunaFim: {
+			success: '<NOME> foi removida da turma <TURMA>.',
+			erro: 'Obs, aconteceu um erro, não foi possível remover <NOME> da turma <TURMA>.',
+			menuOptions: ['Cancelar', 'Tentar Novamente', 'Mudar de Aluna'],
+			menuPostback: ['adminMenu', 'removerAlunaFim', 'removerAluna'],
 		},
 		mudarTurma: {
 			txt1: 'Entre o CPF da Aluna que deseja mudar de turma. Pode ser só números. \nSe não souber o CPF, baixe o CSV com as informações da turma clicando no botão abaixo.',

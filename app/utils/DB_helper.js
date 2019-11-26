@@ -56,6 +56,13 @@ async function getFBIDFromAlunaID(AlunaID) {
 	return id;
 }
 
+async function removeAlunaFromTurma(alunaID) {
+	const updatedUser = await sequelize.query(`
+		UPDATE alunos SET turma_id = null WHERE id = '${alunaID}' returning *;
+		`).spread((results) => (results && results[0] ? results[0] : false)).catch((err) => { sentryError('Erro em update removeAlunaFromTurma =>', err); });
+	return updatedUser;
+}
+
 async function getTurmaName(turmaID) {
 	const nome = await sequelize.query(`
 	SELECT nome FROM turma where id = '${turmaID}';
@@ -607,4 +614,5 @@ module.exports = {
 	getTurmaFromID,
 	changeAdminStatus,
 	getFBIDFromAlunaID,
+	removeAlunaFromTurma,
 };

@@ -216,7 +216,7 @@ module.exports.receiveCSVAvaliadores = async (csvLines) => {
 	return help.sentryError('Erro em receiveCSVAluno => CSV inválido!', { csvLines });
 };
 
-module.exports.adminAlunaCPF = async (context) => {
+module.exports.adminAlunaCPF = async (context, nextDialog) => {
 	await context.setState({ adminAlunaCPF: await help.getCPFValid(context.state.whatWasTyped) });
 	if (!context.state.adminAlunaCPF) {
 		await context.sendText(flow.adminMenu.mudarTurma.invalidCPF);
@@ -226,7 +226,7 @@ module.exports.adminAlunaCPF = async (context) => {
 			await context.sendText(flow.adminMenu.mudarTurma.alunaNotFound);
 		} else {
 			await context.sendText(flow.adminMenu.mudarTurma.alunaFound + await help.buildAlunaMsg(context.state.adminAlunaFound));
-			await context.setState({ dialog: 'mudarAskTurma' });
+			await context.setState({ dialog: nextDialog });
 		}
 	}
 };
