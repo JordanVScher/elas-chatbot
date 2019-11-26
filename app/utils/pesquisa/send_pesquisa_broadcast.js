@@ -19,13 +19,18 @@ const broadcastStep = process.env.PESQUISA_MONTHS;
  */
 async function checkSendPesquisa(today, pAluno) {
 	const nextMessage = pAluno.msgsEnviadas + 1; // number of PESQUISA_MONTHS steps to take after the dataInicial
-	const dateToSend = new Date(pAluno.dataInicial);
-	dateToSend.setMonth(dateToSend.getMonth() + (broadcastStep * nextMessage)); // next date
+	const dateToSend = new Date(pAluno.dataInicial); dateToSend.setHours(0, 0, 0, 0);
+
+	if (process.env.ENV === 'homol') {
+		dateToSend.setDate(dateToSend.getDate() + (2 * nextMessage)); // next date
+	} else {
+		dateToSend.setMonth(dateToSend.getMonth() + (broadcastStep * nextMessage)); // next date
+	}
+
 	const todayMoment = help.moment(today);
 	const dateToSendMoment = help.moment(dateToSend);
 
 	// if msgsEnviadas is the same length as the amount of links we have actually sent, there's no more more links to send
-
 	const linksSent = Object.values(pAluno.linksEnviados);
 	if (pAluno.msgsEnviadas >= linksSent.length) return false;
 	if (todayMoment.diff(dateToSendMoment, 'days') >= 0) return true; // if today happens at or after the next date
@@ -39,13 +44,15 @@ async function checkSendPesquisa(today, pAluno) {
 async function getAlunosToSend() {
 	const alunosToSend = [];
 	const today = new Date();
-	const alunosMightSend = await pesquisa.findAll({ where: {}, raw: true }).then(res => res).catch(err => help.sentryError('Erro em getAlunosToSend.findAll', err));
+	const alunosMightSend = await pesquisa.findAll({ where: {}, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em getAlunosToSend.findAll', err));
 
-	alunosMightSend.forEach((aluno) => {
-		if (checkSendPesquisa(today, aluno) === true) { // !== for easy testing
+	for (let i = 0; i < alunosMightSend.length; i++) {
+		const aluno = alunosMightSend[i];
+		if (await checkSendPesquisa(today, aluno) === true) { // !== for easy testing
 			alunosToSend.push(aluno);
 		}
-	});
+	}
+
 
 	return alunosToSend;
 }
@@ -59,13 +66,10 @@ async function prepareAlunosToSend(alunosToSend) {
 	const result = [];
 	for (let i = 0; i < alunosToSend.length; i++) {
 		const e = alunosToSend[i];
-		const aluno = await alunos.findByPk(e.alunoID, { raw: true, include: ['chatbot'] }).then(res => res).catch(err => help.sentryError('Erro em prepareAlunosToSend.findOne', err));
+		const aluno = await alunos.findByPk(e.alunoID, { raw: true, include: ['chatbot'] }).then((res) => res).catch((err) => help.sentryError('Erro em prepareAlunosToSend.findOne', err));
 		aluno.newMessage = e.msgsEnviadas + 1; // the new number to update on msgsEnviadas
 		aluno.text = flow.pesquisa.textMsg.replace('<LINK_PESQUISA>', pData.pesquisaLinksObj[aluno.newMessage]); // the text to be sent
-		console.log('e.linksEnviados', e.linksEnviados);
 		aluno.links = await pData.updateLinksObj(e.linksEnviados, pData.pesquisaLinksObj[aluno.newMessage]);
-		console.log('aluno.links', aluno.links);
-
 		result.push(aluno);
 	}
 	return result;
@@ -73,7 +77,7 @@ async function prepareAlunosToSend(alunosToSend) {
 
 /**
  * sends the e-mail and facebook broadcasts
- * @param {array} sent - alunos with pesquisa details
+ * @param {array} toSend - alunos with pesquisa details
  */
 async function broadcastPesquisa(toSend) {
 	const result = [];
@@ -81,16 +85,24 @@ async function broadcastPesquisa(toSend) {
 	for (let i = 0; i < toSend.length; i++) {
 		const e = toSend[i];
 		e.error = {};
-		const html = baseHtml.replace('[CONTEUDO_MAIL]', e.text);
-		const mailError = await mailer.sendHTMLMail(`Pesquisa ${e.newMessage}`, e.email, html);
-		if (mailError) e.error.mail = mailError.toString();
-
-		if (e['chatbot.fb_id']) {
-			const chatbotError = await broadcast.sendBroadcastAluna(e['chatbot.fb_id'], e.text);
-			if (chatbotError) e.error.chatbot = `\n${chatbotError.toString()}`;
+		if (e.email && e.email.trim()) {
+			const html = baseHtml.replace('[CONTEUDO_MAIL]', e.text);
+			const mailError = await mailer.sendHTMLMail(`Pesquisa ${e.newMessage}`, e.email, html);
+			if (mailError) e.error.mail = mailError.toString();
+		} else {
+			e.error.mail = 'Aluno não tem e-mail';
 		}
 
-		result.push(e);
+		if (e['chatbot.fb_id'] && e['chatbot.fb_id'].length > 0) {
+			const chatbotError = await broadcast.sendBroadcastAluna(e['chatbot.fb_id'], e.text);
+			if (chatbotError) e.error.chatbot = `\n${chatbotError.toString()}`;
+		} else {
+			e.error.chatbot = 'Aluno não tem fb_id';
+		}
+
+		if (Object.keys(e.error).length === 0) {
+			result.push(e);
+		}
 	}
 
 	return result;
@@ -107,7 +119,7 @@ async function updatePesquisa(sent) { // eslint-disable-line
 		if (e.error && e.error.mail && e.error.chatbot) delete toUpdate.msgsEnviadas;
 
 		await pesquisa.update(toUpdate, { where: { alunoID: e.id } })
-			.then(rowsUpdated => rowsUpdated).catch(err => help.sentryError('Erro no updatePesquisa2', err));
+			.then((rowsUpdated) => rowsUpdated).catch((err) => help.sentryError('Erro no updatePesquisa2', err));
 	}
 }
 
@@ -118,7 +130,6 @@ async function sendPesquisa() {
 	alunosToSend = await broadcastPesquisa(alunosToSend);
 	await updatePesquisa(alunosToSend);
 }
-
 
 module.exports = {
 	checkSendPesquisa, sendPesquisa,

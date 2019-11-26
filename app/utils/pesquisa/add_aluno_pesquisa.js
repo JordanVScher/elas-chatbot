@@ -3,7 +3,6 @@ const { Op } = require('sequelize');
 const { alunos } = require('../../server/models');
 const { turma } = require('../../server/models');
 const pesquisa = require('../../server/models').aluno_pesquisa;
-const { sentryError } = require('../helper');
 const pData = require('./pesquisa_data');
 
 
@@ -11,7 +10,12 @@ const pData = require('./pesquisa_data');
 async function addAlunosPesquisa() {
 	const today = new Date();
 	const limitDate = new Date();
-	limitDate.setMonth(limitDate.getMonth() + pData.limitMonths);
+	if (process.env.ENV === 'homol') {
+		limitDate.setDate(limitDate.getDate() + 2);
+	} else {
+		limitDate.setMonth(limitDate.getMonth() + pData.limitMonths);
+	}
+
 	// get turmas that end between today and the first broadcast
 	const turmas = await turma.findAll({ where: { modulo3: { [Op.gte]: today, [Op.lte]: limitDate } }, raw: true });
 	if (turmas && turmas.length > 0) {

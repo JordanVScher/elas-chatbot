@@ -73,7 +73,7 @@ const updateTurmasCron = new CronJob(
 );
 
 const addPesquisasCron = new CronJob(
-	'00 00 00 * * *', async () => {
+	'00 00 09 * * *', async () => {
 		console.log('Running addPesquisasCron');
 		try {
 			await addAlunosPesquisa();
@@ -89,7 +89,7 @@ const addPesquisasCron = new CronJob(
 );
 
 const sendPesquisasCron = new CronJob(
-	'00 30 00 * * *', async () => {
+	'00 30 09 * * *', async () => {
 		console.log('Running sendPesquisasCron');
 		try {
 			await sendPesquisa();
