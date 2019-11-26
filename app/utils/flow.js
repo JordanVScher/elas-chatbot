@@ -201,6 +201,8 @@ module.exports = {
 		removerAlunaFim: {
 			success: '<NOME> foi removida da turma <TURMA>.',
 			erro: 'Obs, aconteceu um erro, não foi possível remover <NOME> da turma <TURMA>.',
+			mailSubject: 'ELAS - Você foi removida da turma <TURMA>',
+			mailText: 'Olá, <NOME>.\n\nVocê foi removida da turma <TURMA>.',
 			menuOptions: ['Cancelar', 'Tentar Novamente', 'Mudar de Aluna'],
 			menuPostback: ['adminMenu', 'removerAlunaFim', 'removerAluna'],
 		},

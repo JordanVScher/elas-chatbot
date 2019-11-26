@@ -1,3 +1,5 @@
+const { readFileSync } = require('fs');
+const { sendHTMLMail } = require('./mailer');
 const db = require('./DB_helper');
 const help = require('./helper');
 const { sentryError } = require('./helper');
@@ -73,6 +75,16 @@ module.exports.buildAgendaMsg = async (data) => {
 	if (data.local) msg += `🏠 Local: ${await help.toTitleCase(data.local)}`;
 
 	return msg;
+};
+
+module.exports.warnAlunaRemocao = async (alunaData) => {
+	const subject = flow.adminMenu.removerAlunaFim.mailSubject.replace('<TURMA>', alunaData.turma);
+	const mailText = flow.adminMenu.removerAlunaFim.mailText.replace('<TURMA>', alunaData.turma).replace('<NOME>', alunaData.nome_completo);
+
+	let html = await readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
+	html = await html.replace('[CONTEUDO_MAIL]', mailText);
+
+	await sendHTMLMail(subject, alunaData.email, html);
 };
 
 
