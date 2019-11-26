@@ -286,16 +286,9 @@ module.exports = async (context) => {
 		case 'removerAlunaConfirma':
 			await context.sendText(flow.adminMenu.removerAlunaConfirma.txt1.replace('<NOME>', context.state.adminAlunaFound.nome_completo.trim()).replace('<TURMA>', context.state.adminAlunaFound.turma), await attach.getQR(flow.adminMenu.removerAlunaConfirma));
 			break;
-		case 'removerAlunaFim': {
-			const feedback = await db.removeAlunaFromTurma(context.state.adminAlunaFound.id);
-			if (!feedback) {
-				await context.sendText(flow.adminMenu.removerAlunaFim.erro.replace('<NOME>', context.state.adminAlunaFound.nome_completo.trim()).replace('<TURMA>', context.state.adminAlunaFound.turma), await attach.getQR(flow.adminMenu.removerAlunaFim));
-			} else {
-				if (context.state.adminAlunaFound.email) await dialogs.warnAlunaRemocao(context.state.adminAlunaFound);
-				await context.sendText(flow.adminMenu.removerAlunaFim.success.replace('<NOME>', context.state.adminAlunaFound.nome_completo.trim()).replace('<TURMA>', context.state.adminAlunaFound.turma));
-				await context.sendText(flow.adminMenu.firstMenu.txt1, await attach.getQR(flow.adminMenu.firstMenu));
-			}
-		} break;
+		case 'removerAlunaFim':
+			await dialogs.removerAluna(context);
+			break;
 		case 'simularNotificacao':
 			await context.sendText(flow.adminMenu.simularNotificacao.intro, await attach.getQR(flow.adminMenu.simularNotificacao));
 			break;

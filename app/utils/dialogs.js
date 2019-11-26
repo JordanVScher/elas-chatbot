@@ -77,7 +77,7 @@ module.exports.buildAgendaMsg = async (data) => {
 	return msg;
 };
 
-module.exports.warnAlunaRemocao = async (alunaData) => {
+async function warnAlunaRemocao(alunaData) {
 	const subject = flow.adminMenu.removerAlunaFim.mailSubject.replace('<TURMA>', alunaData.turma);
 	const mailText = flow.adminMenu.removerAlunaFim.mailText.replace('<TURMA>', alunaData.turma).replace('<NOME>', alunaData.nome_completo);
 
@@ -85,8 +85,21 @@ module.exports.warnAlunaRemocao = async (alunaData) => {
 	html = await html.replace('[CONTEUDO_MAIL]', mailText);
 
 	await sendHTMLMail(subject, alunaData.email, html);
-};
+}
 
+module.exports.removerAluna = async (context) => {
+	const feedback = await db.removeAlunaFromTurma(context.state.adminAlunaFound.id);
+	if (!feedback) {
+		await context.sendText(flow.adminMenu.removerAlunaFim.erro.replace('<NOME>', context.state.adminAlunaFound.nome_completo.trim()).replace('<TURMA>', context.state.adminAlunaFound.turma), await attach.getQR(flow.adminMenu.removerAlunaFim));
+	} else {
+		if (context.state.adminAlunaFound.email) await warnAlunaRemocao(context.state.adminAlunaFound);
+		// await admin.NotificationChangeTurma(context.state.adminAlunaFound.id, null);
+		// await admin.SaveTurmaChange(
+		// context.state.chatbotData.user_id, context.state.chatbotData.fb_access_token, context.state.adminAlunaFound.id, context.state.adminAlunaFound.turma_id, null);
+		await context.sendText(flow.adminMenu.removerAlunaFim.success.replace('<NOME>', context.state.adminAlunaFound.nome_completo.trim()).replace('<TURMA>', context.state.adminAlunaFound.turma));
+		await context.sendText(flow.adminMenu.firstMenu.txt1, await attach.getQR(flow.adminMenu.firstMenu));
+	}
+};
 
 module.exports.sendCSV = async (context) => { // verTurma
 	const turmaID = context.state.searchTurma;
