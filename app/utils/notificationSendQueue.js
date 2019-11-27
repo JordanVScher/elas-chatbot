@@ -134,16 +134,18 @@ async function fillMasks(replaceMap, recipientData) {
 async function extendRecipient(recipient, moduleDates, turmaID) {
 	const result = recipient;
 
-	const ourTurma = await moduleDates.find((x) => x.id === turmaID);
-	if (ourTurma.modulo1) { result.mod1 = ourTurma.modulo1; }
-	if (ourTurma.modulo2) { result.mod2 = ourTurma.modulo2; }
-	if (ourTurma.modulo3) { result.mod3 = ourTurma.modulo3; }
-	if (ourTurma.local) { result.local = ourTurma.local; }
+	if (moduleDates && turmaID) {
+		const ourTurma = await moduleDates.find((x) => x.id === turmaID);
+		if (ourTurma.modulo1) { result.mod1 = ourTurma.modulo1; }
+		if (ourTurma.modulo2) { result.mod2 = ourTurma.modulo2; }
+		if (ourTurma.modulo3) { result.mod3 = ourTurma.modulo3; }
+		if (ourTurma.local) { result.local = ourTurma.local; }
 
-	const now = new Date(); // figure out which module the aluna is on
-	if (ourTurma.modulo1 >= now) { result.moduloAvisar = 1; }
-	if (ourTurma.modulo2 >= now) { result.moduloAvisar = 2; }
-	if (ourTurma.modulo3 >= now) { result.moduloAvisar = 3; }
+		const now = new Date(); // figure out which module the aluna is on
+		if (ourTurma.modulo1 >= now) { result.moduloAvisar = 1; }
+		if (ourTurma.modulo2 >= now) { result.moduloAvisar = 2; }
+		if (ourTurma.modulo3 >= now) { result.moduloAvisar = 3; }
+	}
 
 	return result;
 }
@@ -352,7 +354,7 @@ async function actuallySendMessages(parametersRules, types, notification, recipi
 	const attachment = await buildAttachment(currentType, recipient.cpf, recipient.nome_completo);
 	const error = {};
 
-	if (newText.email_text) { // if there's an email to send, send it
+	if (newText.email_text && recipient.email && recipient.email.trim()) { // if there's an email to send, send it
 		let html = await readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
 		html = await html.replace('[CONTEUDO_MAIL]', newText.email_text); // add nome to mail template
 		const mailError = await mailer.sendHTMLMail(newText.email_subject, recipient.email, html, attachment.mail);

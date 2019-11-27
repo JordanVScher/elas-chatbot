@@ -165,8 +165,8 @@ module.exports = {
 	adminMenu: {
 		firstMenu: {
 			txt1: 'Esse é o menu do admin. Clique em uma opção:',
-			menuOptions: ['Inserir Alunas', 'Inserir Avaliadores', 'Ver Turma', 'Remover Aluna', 'Mudar Turma', 'Atualizar Turma', 'Aviso Respostas', 'Simular Notificação'],
-			menuPostback: ['inserirAlunas', 'inserirAvaliadores', 'verTurma', 'removerAluna', 'mudarTurma', 'updateTurma', 'avisoResposta', 'simularAskCPF'],
+			menuOptions: ['Inserir Alunas', 'Inserir Avaliadores', 'Ver Turma', 'Remover Aluna', 'Mudar Turma', 'Atualizar Turma', 'Enviar evolução', 'Aviso Respostas', 'Simular Notificação'],
+			menuPostback: ['inserirAlunas', 'inserirAvaliadores', 'verTurma', 'removerAluna', 'mudarTurma', 'updateTurma', 'sendFeedback', 'avisoResposta', 'simularAskCPF'],
 		},
 		inserirAlunas: {
 			txt1: 'Envie o CSV com os dados das novas alunas. As colunas devem estar formatadas como esse arquivo de exemplo:',
@@ -193,6 +193,16 @@ module.exports = {
 			noTurma: 'Não encontrei essa turma. Tente novamente.',
 			menuOptions: ['Voltar'],
 			menuPostback: ['adminMenu'],
+		},
+		sendFeedback: {
+			askTurma: 'Entre com o nome da turma que você deseja enviar os arquivos de evolução e feedback.',
+			turmaInvalida: 'Turma não encontrada! Tente novamente.',
+			turmaFound: 'Nome da Turma: <NOME>\nQuantas Alunas: <COUNT>',
+			confirma: 'Prosseguir com o envio?',
+			fim: 'Arquivos enviados.',
+			menuOptions: ['Sim', 'Cancelar', 'Trocar de Turma'],
+			menuPostback: ['sendFeedbackFim', 'adminMenu', 'sendFeedback'],
+			noCount: 'Turma não tem nenhuma aluna. Tente novamente.',
 		},
 		removerAluna: {
 			txt1: 'Entre com o CPF da Aluna que deseja remover de turma. Pode ser só números. \nSe não souber o CPF, baixe o CSV com as informações da turma clicando no botão abaixo.',

@@ -12,7 +12,11 @@ const { sendTestNotification } = require('./notificationTest');
 const { alunos } = require('../server/models');
 const { turma } = require('../server/models');
 const { addNewNotificationAlunas } = require('./notificationAddQueue');
+const { getAluna } = require('./notificationSendQueue');
+const { actuallySendMessages } = require('./notificationSendQueue');
 const { addNewNotificationIndicados } = require('./notificationAddQueue');
+const notificationTypes = require('../server/models').notification_types;
+const { buildParametersRules } = require('./notificationRules');
 
 module.exports.sendMainMenu = async (context, txtMsg) => {
 	const text = txtMsg || flow.mainMenu.defaultText;
@@ -273,6 +277,39 @@ module.exports.adminAlunaCPF = async (context, nextDialog) => {
 		} else {
 			await context.sendText(flow.adminMenu.mudarTurma.alunaFound + await help.buildAlunaMsg(context.state.adminAlunaFound));
 			await context.setState({ dialog: nextDialog });
+		}
+	}
+};
+
+module.exports.sendFeedbackFim = async (feedbackTurmaID) => {
+	// const notification = await notificationTypes.findOne({ where: { id: 13 }, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em notification.findOne', err));
+	const types = await notificationTypes.findAll({ where: {}, raw: true }).then((res) => res).catch((err) => sentryError('Erro ao carregar notification_types', err));
+	const parametersRules = await buildParametersRules();
+	const notification = { notification_type: 13 };
+	const alunosToSend = await alunos.findAll({ where: { turma_id: feedbackTurmaID }, raw: true }).then((res) => res).catch((err) => help.sentryError('alunos em turma.findAll', err));
+
+	for (let i = 0; i < alunosToSend.length; i++) {
+		const e = alunosToSend[i];
+		const aluna = await getAluna(e.id);
+		await actuallySendMessages(parametersRules, types, notification, aluna, true);
+	}
+};
+
+module.exports.sendFeedbackConfirm = async (context) => {
+	await context.setState({ desiredTurma: context.state.whatWasTyped });
+	const validTurma = await db.getTurmaID(context.state.desiredTurma);
+	if (!validTurma) { // if theres no id then it's not a valid turma
+		await context.sendText(flow.adminMenu.sendFeedback.turmaInvalida);
+	} else {
+		const turmaData = await turma.findOne({ where: { id: validTurma }, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em turma.findOne', err));
+		const count = await alunos.count({ where: { turma_id: validTurma }, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em alunos.count', err));
+		if (count) {
+			await context.setState({ feedbackTurmaID: validTurma });
+			await context.sendText(flow.adminMenu.sendFeedback.turmaFound.replace('<NOME>', turmaData.nome).replace('<COUNT>', count));
+			await context.sendText(flow.adminMenu.sendFeedback.confirma, await attach.getQR(flow.adminMenu.sendFeedback));
+		} else {
+			await context.sendText(flow.adminMenu.sendFeedback.turmaInvalida);
+			await context.sendText(flow.adminMenu.firstMenu.txt1, await attach.getQR(flow.adminMenu.firstMenu));
 		}
 	}
 };

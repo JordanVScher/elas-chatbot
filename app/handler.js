@@ -108,6 +108,8 @@ module.exports = async (context) => {
 				} else {
 					await context.sendText('CPF inválido.');
 				}
+			} else if (['sendFeedback', 'sendFeedbackConfirm'].includes(context.state.dialog)) {
+				await context.setState({ dialog: 'sendFeedbackConfirm' });
 			} else {
 				await DF.dialogFlow(context);
 			}
@@ -297,6 +299,17 @@ module.exports = async (context) => {
 			break;
 		case 'removerAlunaFim':
 			await dialogs.removerAluna(context);
+			break;
+		case 'sendFeedback':
+			await context.sendText(flow.adminMenu.sendFeedback.askTurma);
+			break;
+		case 'sendFeedbackConfirm':
+			await dialogs.sendFeedbackConfirm(context);
+			break;
+		case 'sendFeedbackFim':
+			await dialogs.sendFeedbackFim(context.state.feedbackTurmaID);
+			await context.sendText(flow.adminMenu.sendFeedback.fim);
+			await context.sendText(flow.adminMenu.firstMenu.txt1, await attach.getQR(flow.adminMenu.firstMenu));
 			break;
 		case 'simularNotificacao':
 			await context.sendText(flow.adminMenu.simularNotificacao.intro, await attach.getQR(flow.adminMenu.simularNotificacao));
