@@ -1,6 +1,6 @@
 module.exports = {
-	avatarImage: 'https://www.telegraph.co.uk/content/dam/news/2016/09/08/107667228_beech-tree-NEWS_trans_NvBQzQNjv4BqplGOf-dgG3z4gg9owgQTXEmhb5tXCQRHAvHRWfzHzHk.jpg?imwidth=450',
-	getStarted: 'oi sou o bot',
+	avatarImage: 'https://gallery.mailchimp.com/926cb477483bcd8122304bc56/images/88a30bf9-4f94-4bf4-b51e-1f325a6a1000.png',
+	getStarted: 'Sou Donna, a assistente digital da ELAS (Escola de Liderança e Desenvolvimento). Converse comigo clicando em Começar!',
 	greetings: {
 		text1: 'Olá, <first_name>! Que bom te ver por aqui 🥰',
 		text2: 'Sou Donna, a assistente digital da ELAS (Escola de Liderança e Desenvolvimento). Estou aqui para ajudar você aluna ou futura aluna durante seu curso, '
