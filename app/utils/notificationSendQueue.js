@@ -1,5 +1,6 @@
 const { createReadStream } = require('fs');
 const { readFileSync } = require('fs');
+const { Sequelize } = require('sequelize');
 const notificationTypes = require('../server/models').notification_types;
 const notificationQueue = require('../server/models').notification_queue;
 const indicadosAvaliadores = require('../server/models').indicacao_avaliadores;
@@ -12,6 +13,8 @@ const charts = require('./charts');
 const { getModuloDates } = require('./DB_helper');
 const { getTurmaName } = require('./DB_helper');
 const rules = require('./notificationRules');
+
+const { Op } = Sequelize;
 
 async function replaceCustomParameters(original, recipient) {
 	const alunaTurma = recipient.turmaName ? recipient.turmaName : await getTurmaName(recipient.turma_id);
@@ -387,12 +390,12 @@ async function getRecipient(notification, moduleDates) {
 
 	return recipient;
 }
-async function sendNotificationFromQueue() {
+async function sendNotificationFromQueue(test = false) {
 	const parametersRules = await rules.buildParametersRules();
 	const moduleDates = await getModuloDates();
 	const today = new Date();
 
-	const queue = await notificationQueue.findAll({ where: { sent_at: null, error: null }, raw: true })
+	const queue = await notificationQueue.findAll({ where: { sent_at: null, error: null, turma_id: { [Op.not]: null } }, raw: true })
 		.then((res) => res).catch((err) => sentryError('Erro ao carregar notification_queue', err));
 
 	const types = await notificationTypes.findAll({ where: {}, raw: true })
@@ -406,13 +409,13 @@ async function sendNotificationFromQueue() {
 			const notificationRules = await rules.getNotificationRules(turmaName);
 			console.log('notification', notification, 'turmaName', turmaName);
 			console.log('await checkShouldSendNotification(notification, moduleDates, today, notificationRules', await checkShouldSendNotification(notification, moduleDates, today, notificationRules));
-			if (await checkShouldSendNotification(notification, moduleDates, today, notificationRules) === true) { // !== for easy testing
+			if (test || await checkShouldSendNotification(notification, moduleDates, today, notificationRules) === true) { // !== for easy testing
 				const recipient = await getRecipient(notification, moduleDates);
 				console.log('notification que passou', notification);
 				console.log('recipient', recipient);
-				if (await checkShouldSendRecipient(recipient, notification) === true) {
+				if (test || await checkShouldSendRecipient(recipient, notification) === true) {
 					console.log('Deve enviar');
-					await actuallySendMessages(parametersRules, types, notification, recipient);
+					await actuallySendMessages(parametersRules, types, notification, recipient, test);
 				}
 			}
 		}

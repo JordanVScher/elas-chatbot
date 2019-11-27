@@ -103,8 +103,15 @@ async function SaveTurmaChange(politicianID, pageToken, alunaID, turmaOriginal, 
 	if (turmaOriginal !== turmaNova) {
 		const alunoTurmaOriginal = await turma.findOne({ where: { id: turmaOriginal }, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em turma.findOne', err));
 		const moduloOriginal = await help.findModuleToday(alunoTurmaOriginal);
-		const alunoTurmaNova = await turma.findOne({ where: { id: turmaNova }, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em turma.findOne', err));
-		const moduloNovo = await help.findModuleToday(alunoTurmaNova);
+		let alunoTurmaNova = '';
+		let moduloNovo = '';
+		if (turmaNova) {
+			alunoTurmaNova = await turma.findOne({ where: { id: turmaNova }, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em turma.findOne', err));
+			moduloNovo = await help.findModuleToday(alunoTurmaNova);
+		} else {
+			alunoTurmaNova = await db.getTurmaFromID(turmaNova);
+			moduloNovo = null;
+		}
 		turmaChangelog.create({
 			alunoID: alunaID, turmaOriginal, turmaNova, moduloOriginal, moduloNovo,
 		}).then((res) => res).catch((err) => help.sentryError('Erro em turmaChangelog.create', err));
@@ -117,7 +124,7 @@ async function SaveTurmaChange(politicianID, pageToken, alunaID, turmaOriginal, 
 async function NotificationChangeTurma(alunaID, turmaID) {
 	try {
 		const userNotifications = await notificationQueue.findAll({ where: { aluno_id: alunaID }, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em notificationQueue.findAll', err));
-		if (!userNotifications || userNotifications.length === 0) {
+		if ((!userNotifications || userNotifications.length === 0) && turmaID) {
 			await addNewNotificationAlunas(alunaID, turmaID);
 		} else {
 			userNotifications.forEach((notification) => { // update notification only when it hasnt already been sent and the turma differs
@@ -145,7 +152,7 @@ async function updateNotificationIndicados(indicados) {
 				const rule = rulesIndicados[j];
 
 				const foundNotification = await userNotifications.find((x) => x.notification_type === rule.notification_type);
-				if (!foundNotification) { // add notification every only when it doesnt exist, even if user wasnt familiar before
+				if (!foundNotification && turmaID) { // add notification every only when it doesnt exist, even if user wasnt familiar before
 					await addAvaliadorOnQueue(rule, indicado, turmaID);
 				}
 			}
@@ -188,10 +195,18 @@ async function formatRespostasCSV(lines, replament) {
 function buildColumnTurmaChange(log, turmaNames) {
 	let result = '';
 
-	if (log.turmaOriginal) result += turmaNames[log.turmaOriginal] || `ID ${log.turmaOriginal}`;
+	if (log.turmaOriginal) {
+		result += turmaNames[log.turmaOriginal] || `ID ${log.turmaOriginal}`;
+	} else {
+		result += 'Sem Turma';
+	}
 	if (log.moduloOriginal) result += ` (Módulo ${log.moduloOriginal})`;
 	result += ' => ';
-	if (log.turmaNova) result += turmaNames[log.turmaNova] || `ID ${log.turmaNova}`;
+	if (log.turmaNova) {
+		result += turmaNames[log.turmaNova] || `ID ${log.turmaNova}`;
+	} else {
+		result += 'Sem Turma';
+	}
 	if (log.moduloNovo) result += ` (Módulo ${log.moduloNovo})`;
 
 	return result;

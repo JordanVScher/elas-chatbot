@@ -19,6 +19,7 @@ async function changeAdminStatus(fbID, status) {
 }
 
 async function getTurmaFromID(turmaID) {
+	if (!turmaID) return { nome: 'Nenhuma' };
 	const id = await sequelize.query(`
 	SELECT * FROM turma where id = '${turmaID}';
 	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
@@ -31,6 +32,7 @@ async function getTurmaFromID(turmaID) {
 
 
 async function getTurmaID(turmaName) {
+	if (!turmaName || turmaName === 'Nenhuma') return 0;
 	turmaName = turmaName ? turmaName.toLowerCase() : '';
 	const id = await sequelize.query(`
 	SELECT id FROM turma where lower(nome) LIKE '${turmaName}%';
@@ -49,9 +51,9 @@ async function getFBIDFromAlunaID(AlunaID) {
 	LEFT JOIN alunos ALUNO ON BOT_USER.cpf = ALUNO.cpf
 	WHERE ALUNO.id = '${AlunaID}';
 	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
-		console.log('Got turma id!', results);
+		console.log('Got fb_id!', results);
 		return results && results[0] && results[0].fb_id ? results[0].fb_id : false;
-	}).catch((err) => { sentryError('Erro em getTurmaID =>', err); });
+	}).catch((err) => { sentryError('Erro em getFBIDFromAlunaID =>', err); });
 
 	return id;
 }
@@ -64,6 +66,7 @@ async function removeAlunaFromTurma(alunaID) {
 }
 
 async function getTurmaName(turmaID) {
+	if (!turmaID) return 'Nenhuma';
 	const nome = await sequelize.query(`
 	SELECT nome FROM turma where id = '${turmaID}';
 	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
@@ -74,13 +77,13 @@ async function getTurmaName(turmaID) {
 	return nome;
 }
 
-async function getAlunaFromPDF(cpf) {
+async function getAlunaFromCPF(cpf) {
 	const aluna = await sequelize.query(`
 	SELECT * from alunos WHERE cpf = '${cpf}';
 	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
 		console.log(`Got ${cpf} successfully!`);
-		return results && results[0] && results[0].turma_id ? results[0] : false;
-	}).catch((err) => { sentryError('Erro em getAlunaFromPDF =>', err); });
+		return results && results[0] ? results[0] : false;
+	}).catch((err) => { sentryError('Erro em getAlunaFromCPF =>', err); });
 
 	if (aluna.turma_id) {
 		aluna.turma = await getTurmaName(aluna.turma_id);
@@ -581,7 +584,7 @@ async function updateIndicadoNotification(indicadoID, notificationType, msg) {
 
 module.exports = {
 	upsertUser,
-	getAlunaFromPDF,
+	getAlunaFromCPF,
 	upsertAlunoCadastro,
 	linkUserToCPF,
 	checkCPF,

@@ -38,7 +38,7 @@ module.exports.handleCPF = async (context) => {
 	} else if (await db.checkCPF(cpf) === false) { // check if this cpf exists
 		await context.setState({ dialog: 'CPFNotFound' });
 	} else {
-		await context.setState({ cpf, gotAluna: await db.getAlunaFromPDF(cpf) });
+		await context.setState({ cpf, gotAluna: await db.getAlunaFromCPF(cpf) });
 		await context.setState({ dialog: 'validCPF' });
 	}
 };
@@ -118,9 +118,10 @@ module.exports.removerAluna = async (context) => {
 		await context.sendText(flow.adminMenu.removerAlunaFim.erro.replace('<NOME>', context.state.adminAlunaFound.nome_completo.trim()).replace('<TURMA>', context.state.adminAlunaFound.turma), await attach.getQR(flow.adminMenu.removerAlunaFim));
 	} else {
 		if (context.state.adminAlunaFound.email) await warnAlunaRemocao(context.state.adminAlunaFound);
-		// await admin.NotificationChangeTurma(context.state.adminAlunaFound.id, null);
-		// await admin.SaveTurmaChange(
-		// context.state.chatbotData.user_id, context.state.chatbotData.fb_access_token, context.state.adminAlunaFound.id, context.state.adminAlunaFound.turma_id, null);
+		await admin.NotificationChangeTurma(context.state.adminAlunaFound.id, null);
+		await admin.SaveTurmaChange(
+			context.state.chatbotData.user_id, context.state.chatbotData.fb_access_token, context.state.adminAlunaFound.id, context.state.adminAlunaFound.turma_id, null,
+		);
 		await context.sendText(flow.adminMenu.removerAlunaFim.success.replace('<NOME>', context.state.adminAlunaFound.nome_completo.trim()).replace('<TURMA>', context.state.adminAlunaFound.turma));
 		await context.sendText(flow.adminMenu.firstMenu.txt1, await attach.getQR(flow.adminMenu.firstMenu));
 	}
@@ -271,7 +272,7 @@ module.exports.adminAlunaCPF = async (context, nextDialog) => {
 	if (!context.state.adminAlunaCPF) {
 		await context.sendText(flow.adminMenu.mudarTurma.invalidCPF);
 	} else {
-		await context.setState({ adminAlunaFound: await db.getAlunaFromPDF(context.state.adminAlunaCPF) });
+		await context.setState({ adminAlunaFound: await db.getAlunaFromCPF(context.state.adminAlunaCPF) });
 		if (!context.state.adminAlunaFound) {
 			await context.sendText(flow.adminMenu.mudarTurma.alunaNotFound);
 		} else {

@@ -14,7 +14,6 @@ const { updateTurmas } = require('./utils/turma');
 const labels = require('./utils/labels');
 const { sendTestNotification } = require('./utils/notificationTest');
 
-
 module.exports = async (context) => {
 	try {
 		if (!context.state.dialog || context.state.dialog === '' || (context.event.postback && context.event.postback.payload === 'greetings')) { // because of the message that comes from the comment private-reply
@@ -99,7 +98,7 @@ module.exports = async (context) => {
 			} else if (context.state.dialog === 'simularAskCPF') {
 				await context.setState({ simuladorCPF: await help.getCPFValid(context.state.whatWasTyped) });
 				if (context.state.simuladorCPF) {
-					await context.setState({ simuladorAluna: await db.getAlunaFromPDF(context.state.simuladorCPF) });
+					await context.setState({ simuladorAluna: await db.getAlunaFromCPF(context.state.simuladorCPF) });
 					if (context.state.simuladorAluna) {
 						await context.setState({ dialog: 'simularNotificacao' });
 					} else {
