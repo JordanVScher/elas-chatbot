@@ -11,16 +11,18 @@ async function addAlunosPesquisa() {
 	const today = new Date();
 	const limitDate = new Date();
 	if (process.env.ENV === 'homol') {
-		limitDate.setDate(limitDate.getDate() + 2);
+		limitDate.setDate(limitDate.getDate() + 30);
 	} else {
 		limitDate.setMonth(limitDate.getMonth() + pData.limitMonths);
 	}
 
 	// get turmas that end between today and the first broadcast
 	const turmas = await turma.findAll({ where: { modulo3: { [Op.gte]: today, [Op.lte]: limitDate } }, raw: true });
+
 	if (turmas && turmas.length > 0) {
 		for (let i = 0; i < turmas.length; i++) {
 			const t = turmas[i];
+			if (process.env.ENV === 'homol') { t.modulo3.setDate(t.modulo3.getDate() + 6); }
 			const alunas = await alunos.findAll({ where: { turma_id: t.id }, raw: true });
 			for (let j = 0; j < alunas.length; j++) {
 				const a = alunas[j];
