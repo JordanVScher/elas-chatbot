@@ -99,10 +99,13 @@ module.exports = async (context) => {
 				await context.setState({ simuladorCPF: await help.getCPFValid(context.state.whatWasTyped) });
 				if (context.state.simuladorCPF) {
 					await context.setState({ simuladorAluna: await db.getAlunaFromCPF(context.state.simuladorCPF) });
-					if (context.state.simuladorAluna) {
-						await context.setState({ dialog: 'simularNotificacao' });
-					} else {
+					if (!context.state.simuladorAluna) {
 						await context.sendText(`Aluna com CPF ${context.state.simuladorCPF} não encontrada`);
+					} else if (context.state.simuladorAluna && !context.state.simuladorAluna.turma_id) {
+						await context.sendText(`Aluna ${context.state.simuladorAluna.nome_completo} não está em nenhuma turma. Ela não pode receber as notificações.`);
+						await context.setState({ dialog: 'adminMenu' });
+					} else {
+						await context.setState({ dialog: 'simularNotificacao' });
 					}
 				} else {
 					await context.sendText('CPF inválido.');
@@ -282,9 +285,11 @@ module.exports = async (context) => {
 		case 'mudarTurma':
 			await context.sendText(flow.adminMenu.mudarTurma.txt1, await attach.getQR(flow.adminMenu.mudarTurma));
 			break;
-		case 'mudarAskTurma':
-			await context.sendText(flow.adminMenu.mudarTurma.txt2.replace('<NOME>', context.state.adminAlunaFound.nome_completo.trim()).replace('<TURMA>', context.state.adminAlunaFound.turma), await attach.getQR(flow.adminMenu.verTurma));
-			break;
+		case 'mudarAskTurma': {
+			let text = flow.adminMenu.mudarTurma.txt2;
+			if (context.state.adminAlunaFound.turma) text += flow.adminMenu.mudarTurma.txt3.replace('<NOME>', context.state.adminAlunaFound.nome_completo.trim()).replace('<TURMA>', context.state.adminAlunaFound.turma);
+			await context.sendText(text, await attach.getQR(flow.adminMenu.verTurma));
+		} break;
 		case 'updateTurma': {
 			const feedback = await updateTurmas();
 			if (feedback && feedback.results) await context.sendText(feedback.results.join('\n'), await attach.getQR(flow.adminMenu.atualizarTurma));
@@ -294,7 +299,13 @@ module.exports = async (context) => {
 			await context.sendText(flow.adminMenu.removerAluna.txt1, await attach.getQR(flow.adminMenu.removerAluna));
 			break;
 		case 'removerAlunaConfirma':
-			await context.sendText(flow.adminMenu.removerAlunaConfirma.txt1.replace('<NOME>', context.state.adminAlunaFound.nome_completo.trim()).replace('<TURMA>', context.state.adminAlunaFound.turma), await attach.getQR(flow.adminMenu.removerAlunaConfirma));
+			if (context.state.adminAlunaFound.turma) {
+				let text = flow.adminMenu.removerAlunaConfirma.txt1;
+				text += flow.adminMenu.removerAlunaConfirma.txt2.replace('<NOME>', context.state.adminAlunaFound.nome_completo.trim()).replace('<TURMA>', context.state.adminAlunaFound.turma);
+				await context.sendText(text, await attach.getQR(flow.adminMenu.removerAlunaConfirma));
+			} else {
+				await context.sendText(flow.adminMenu.removerAlunaConfirma.noTurma.replace('<NOME>', context.state.adminAlunaFound.nome_completo.trim()), await attach.getQR(flow.adminMenu.firstMenu));
+			}
 			break;
 		case 'removerAlunaFim':
 			await dialogs.removerAluna(context);

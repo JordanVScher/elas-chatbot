@@ -207,11 +207,13 @@ function getPercentageChange(oldNumber, newNumber) {
 function buildAlunaMsg(aluna) {
 	let result = '';
 
-	if (aluna.id) { result += `ID: ${aluna.id}\n`;	}
-	if (aluna.nome_completo) { result += `Nome: ${aluna.nome_completo}\n`;	}
-	if (aluna.cpf) { result += `CPF: ${aluna.cpf}\n`;	}
-	if (aluna.email) { result += `E-mail: ${aluna.email}\n`;	}
-	if (aluna.turma) { result += `Turma: ${aluna.turma}\n`;	}
+	if (aluna.id) result += `ID: ${aluna.id}\n`;
+	if (aluna.nome_completo) result += `Nome: ${aluna.nome_completo}\n`;
+	if (aluna.cpf) result += `CPF: ${aluna.cpf}\n`;
+	if (aluna.email) result += `E-mail: ${aluna.email}\n`;
+	if (aluna.turma) { result += `Turma: ${aluna.turma}\n`;	} else {
+		result += 'Turma: Nenhuma Turma\n';
+	}
 
 	return result;
 }
