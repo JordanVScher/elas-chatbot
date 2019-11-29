@@ -12,6 +12,7 @@ const { postRecipientLabelCPF } = require('../chatbot_api');
 const { getChatbotData } = require('../chatbot_api');
 const surveysInfo = require('./sm_surveys');
 const { surveysMaps } = require('./sm_maps');
+const { getMailAdmin } = require('./admin_menu/warn_admin');
 
 // Add new aluna as new recipient in the assistente. In this case, the recipient doesn't need an fb_id, the cpf doubles as a key
 async function sendAlunaToAssistente(name, email, cpf, turma) {
@@ -175,7 +176,7 @@ async function handleAtividadeOne(response) {
 		await mailer.sendHTMLMail(eMail.depoisMatricula.assunto, answers.email, html);
 
 		if (sameContatoEmail) {
-			const eMailToSend = process.env.ENV === 'prod' ? process.env.EMAILMENTORIA : process.env.MAILDEV;
+			const eMailToSend = await getMailAdmin(answers.turma);
 			const eMailText = await getSameContatoEmailErrorText(newUser);
 			let html2 = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
 			html2 = await html2.replace('[CONTEUDO_MAIL]', eMailText);
@@ -205,8 +206,7 @@ async function separateAnswer(respostas, elementos) {
 }
 
 async function handleIndicacao(response) {
-	// response.custom_variables = { turma: 'T7-SP', cpf: '12345678911' };
-	console.log('custom_variables', response.custom_variables);
+	// console.log('custom_variables', response.custom_variables);
 	const errors = [];
 	const baseAnswers = await formatAnswers(response.pages[0].questions);
 	const aluna = await db.getAluno(response.custom_variables.cpf);
@@ -254,7 +254,7 @@ async function handleIndicacao(response) {
 
 	await db.updateAtividade(aluna.id, 'atividade_indicacao', JSON.stringify(answers));
 	if (errors && errors.length > 0) {
-		const eMailToSend = process.env.ENV === 'prod' ? process.env.EMAILMENTORIA : process.env.MAILDEV;
+		const eMailToSend = await getMailAdmin(aluna.turma);
 		const eMailText = await getIndicacaoErrorText(errors, aluna);
 		let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
 		html = await html.replace('[CONTEUDO_MAIL]', eMailText);
@@ -263,8 +263,7 @@ async function handleIndicacao(response) {
 }
 
 async function handleSondagem(response, column, map) {
-	// response.custom_variables = { turma: 'T7-SP', cpf: '12345678911' };
-	console.log('custom_variables', response.custom_variables);
+	// console.log('custom_variables', response.custom_variables);
 
 	let answers = await getSpecificAnswers(map, response.pages);
 	answers = await replaceChoiceId(answers, map, response.survey_id);
@@ -283,7 +282,7 @@ async function handleSondagem(response, column, map) {
 
 async function handleAvaliador(response, column, map) {
 	// response.custom_variables = { indicaid: '1' };
-	console.log('custom_variables', response.custom_variables);
+	// console.log('custom_variables', response.custom_variables);
 
 	let answers = await getSpecificAnswers(map, response.pages);
 	answers = await replaceChoiceId(answers, map, response.survey_id);

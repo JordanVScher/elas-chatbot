@@ -6,7 +6,11 @@ const { missingAnswersWarning } = require('../flow');
 const { sendHTMLMail } = require('../mailer');
 const { sendWarning } = require('../broadcast');
 
-const eMailToSend = process.env.ENV === 'prod' ? process.env.EMAILMENTORIA : process.env.MAILDEV;
+async function getMailAdmin(turmaNome) {
+	let mails = process.env.ENV === 'prod' ? process.env.EMAILMENTORIA : process.env.MAILDEV;
+	if (turmaNome === 'Simulação-1') mails += `, ${process.env.MAILELAS}`;
+	return mails;
+}
 
 const columnCSV = {
 	turma: 'Turma',
@@ -135,6 +139,7 @@ async function sendWarningCSV(test, mod) {
 	const modulos = await getValidModulos(today, allTurmas, 2, test, mod);
 	const content = await GetWarningData(modulos, columnCSV);
 	if (content && content.length > 0) {
+		const eMailToSend = await getMailAdmin('Simulação-1'); // leave this text here for now.
 		const result = await parseAsync(content, { includeEmptyRows: true }).then((csv) => csv).catch((err) => err);
 		const csv = { content: await Buffer.from(result, 'utf8'), filename: `${await help.getTimestamp()}_FALTA_RESPONDER.csv`, contentType: 'text/csv' };
 		await sendHTMLMail(missingAnswersWarning.mailSubject, eMailToSend, missingAnswersWarning.mailText, [csv]);
@@ -142,4 +147,10 @@ async function sendWarningCSV(test, mod) {
 	}
 }
 
-module.exports = { sendWarningCSV, getValidModulos, GetWarningData };
+
+module.exports = {
+	sendWarningCSV,
+	getValidModulos,
+	GetWarningData,
+	getMailAdmin,
+};
