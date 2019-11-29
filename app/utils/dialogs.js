@@ -8,6 +8,7 @@ const { sendMatricula } = require('./sm_help');
 const attach = require('./attach');
 const flow = require('./flow');
 const admin = require('./admin_menu/admin_helper');
+const { getMailAdmin } = require('./admin_menu/warn_admin');
 const { sendTestNotification } = require('./notificationTest');
 const { alunos } = require('../server/models');
 const { turma } = require('../server/models');
@@ -97,7 +98,8 @@ async function warnAlunaTroca(alunaData) {
 	let html = await readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
 	html = await html.replace('[CONTEUDO_MAIL]', mailText);
 
-	await sendHTMLMail(subject, alunaData.email, html);
+	const eMailToSend = await getMailAdmin(alunaData.turma);
+	await sendHTMLMail(subject, eMailToSend, html);
 }
 
 module.exports.warnAlunaTroca = warnAlunaTroca;
