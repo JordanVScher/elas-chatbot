@@ -9,7 +9,7 @@ const { sendPesquisa } = require('./pesquisa/send_pesquisa_broadcast');
 
 
 const sendMissingWarningCron = new CronJob(
-	'00 */30 8-22 * * *', async () => {
+	'00 30 8 * * *', async () => {
 		console.log('Running sendMissingWarningCron');
 		try {
 			await sendWarningCSV(false);
@@ -25,7 +25,7 @@ const sendMissingWarningCron = new CronJob(
 );
 
 const sendWarningAlunasCron = new CronJob(
-	'00 */40 8-22 * * *', async () => {
+	'00 40 8 * * *', async () => {
 		console.log('Running sendWarningAlunasCron');
 		try {
 			await sendWarningAlunas(false);
