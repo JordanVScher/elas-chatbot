@@ -2,7 +2,7 @@ const { promisify } = require('util');
 const { readFileSync } = require('fs');
 const chart = require('../simple_chart');
 const chartsMaps = require('./charts_maps');
-const helper = require('./helper');
+const help = require('./helper');
 const db = require('./DB_helper');
 
 
@@ -13,7 +13,7 @@ async function buildAlunoChart(cpf) {
 	if (aluna && aluna.pre && aluna.pos) {
 		chartsMaps.sondagem.forEach(async (element) => { // this map contains only the necessary answers
 			if (aluna.pre[element.paramName] && aluna.pos[element.paramName]) { // build obj with param_name and the number variation
-				data[element.questionName] = helper.getPercentageChange(aluna.pre[element.paramName], aluna.pos[element.paramName]);
+				data[element.questionName] = help.getPercentageChange(aluna.pre[element.paramName], aluna.pos[element.paramName]);
 			}
 		});
 	}
@@ -104,19 +104,30 @@ async function buildIndicadoChart(cpf) {
 		html += `<p style="${styleDiv}"><h5>Onde houve evolução?</h5></p> <div> ${data[0].ondeEvolucao} </div>`;
 
 
-		const createPDFAsync = promisify(helper.pdf.create);
+		const createPDFAsync = promisify(help.pdf.create);
 		const result = await createPDFAsync(html).then((tmp) => tmp).catch((err) => console.log(err));
 
 		return result;
 	}
 	return [];
 }
-
+// async function gambiarra(char, value = 0.57) {
+// 	return char * value;
+// }
 async function formatSondagemPDF(buffer, name) {
 	const img = buffer.toString('base64');
 
 	const config = {
 		base: `file://${process.cwd()}/mail_template/`,
+		// header: {
+		// 	height: '10mm',
+		// 	contents: {
+		// 		// first: '',
+		// 		2: 'Second page', // Any page number is working. 1-based index
+		// 		default: '', // fallback value
+		// 		// last: 'Last Page',
+		// 	},
+		// },
 		// type: 'png', // allowed file types: png, jpeg, pdf
 		// quality: '100',
 		// border: {
@@ -130,12 +141,14 @@ async function formatSondagemPDF(buffer, name) {
 	let html = await readFileSync(`${process.cwd()}/mail_template/chart.html`, 'utf-8');
 	html = html.replace('{{name}}', name);
 	html = html.replace('{{img}}', img);
+	const size = 50 - ((name.length - 1) * 0.95);
+	html = html.replace('{{size}}', size);
 
-	const createPDFAsync = promisify(helper.pdf.create);
+	const createPDFAsync = promisify(help.pdf.create);
 	const result = await createPDFAsync(html, config).then((tmp) => tmp).catch((err) => console.log(err));
+
 	return result.filename;
 }
-
 
 module.exports = {
 	buildAlunoChart, separateIndicadosData, buildIndicadoChart, formatSondagemPDF,

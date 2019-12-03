@@ -322,6 +322,20 @@ async function getTinyUrl(originalUrl) {
 	return res;
 }
 
+async function cutName(name) {
+	let aux = name;
+	const array = aux.split(' ');
+
+	while (aux.length > 30) {
+		array.pop();
+		if (['de', 'e', 'da', 'do', 'des', 'das', 'dos'].includes(array[array.length - 1].toLowerCase())) {
+			array.pop();
+		}
+		aux = array.join(' ');
+	}
+
+	return aux;
+}
 
 module.exports = {
 	Sentry,
@@ -353,4 +367,5 @@ module.exports = {
 	getTinyUrl,
 	handleRequestAnswer,
 	buildRecipientObj,
+	cutName,
 };
