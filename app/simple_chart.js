@@ -11,7 +11,8 @@ const colors = {
 };
 
 const width = 1500;
-const height = 3000;
+const height = 1700;
+// const heightOneBigGraph = 3000;
 
 const canvas = createCanvas(width, height);
 const ctxBar = canvas.getContext('2d');

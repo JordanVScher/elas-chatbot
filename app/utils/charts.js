@@ -5,21 +5,30 @@ const chartsMaps = require('./charts_maps');
 const help = require('./helper');
 const db = require('./DB_helper');
 
-
 async function buildAlunoChart(cpf) {
 	const aluna = await db.getAlunoRespostas(cpf);
-	const data = {};
+	const result = [];
+
+	const secondHalf = [...chartsMaps.sondagem];
+	const firstHalf = secondHalf.splice(0, 23);
+	const charts = [firstHalf, secondHalf];
 
 	if (aluna && aluna.pre && aluna.pos) {
-		chartsMaps.sondagem.forEach(async (element) => { // this map contains only the necessary answers
-			if (aluna.pre[element.paramName] && aluna.pos[element.paramName]) { // build obj with param_name and the number variation
-				data[element.questionName] = help.getPercentageChange(aluna.pre[element.paramName], aluna.pos[element.paramName]);
-			}
-		});
-	}
+		for (let i = 0; i < charts.length; i++) {
+			const e = charts[i];
 
-	if (data && Object.keys(data) && Object.keys(data).length > 0) {
-		const result = await chart.createChart(Object.keys(data), Object.values(data), cpf, `Resultado auto-avaliação ${aluna.nome}`);
+			const data = {};
+			e.forEach(async (element) => { // this map contains only the necessary answers
+				if (aluna.pre[element.paramName] && aluna.pos[element.paramName]) { // build obj with param_name and the number variation
+					data[element.questionName] = help.getPercentageChange(aluna.pre[element.paramName], aluna.pos[element.paramName]);
+				}
+			});
+
+			if (data && Object.keys(data) && Object.keys(data).length > 0) {
+				const res = await chart.createChart(Object.keys(data), Object.values(data), cpf, `Resultado auto-avaliação ${aluna.nome}`);
+				result.push(res);
+			}
+		}
 		return result;
 	}
 
@@ -115,32 +124,19 @@ async function buildIndicadoChart(cpf) {
 // 	return char * value;
 // }
 async function formatSondagemPDF(buffer, name) {
-	const img = buffer.toString('base64');
+	const img = [];
+	for (let i = 0; i < buffer.length; i++) {
+		img.push(buffer[i].toString('base64'));
+	}
 
 	const config = {
 		base: `file://${process.cwd()}/mail_template/`,
-		// header: {
-		// 	height: '10mm',
-		// 	contents: {
-		// 		// first: '',
-		// 		2: 'Second page', // Any page number is working. 1-based index
-		// 		default: '', // fallback value
-		// 		// last: 'Last Page',
-		// 	},
-		// },
-		// type: 'png', // allowed file types: png, jpeg, pdf
-		// quality: '100',
-		// border: {
-		// top: '10px', // default is 0, units: mm, cm, in, px
-		// 	right: '20px',
-		// bottom: '20px',
-		// 	left: '20px',
-		// },
 	};
 
 	let html = await readFileSync(`${process.cwd()}/mail_template/chart.html`, 'utf-8');
 	html = html.replace('{{name}}', name);
-	html = html.replace('{{img}}', img);
+	html = html.replace('{{img0}}', img[0]);
+	html = html.replace('{{img1}}', img[1]);
 	const size = 50 - ((name.length - 1) * 0.95);
 	html = html.replace('{{size}}', size);
 
