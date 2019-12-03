@@ -1,4 +1,5 @@
 const { promisify } = require('util');
+const { readFileSync } = require('fs');
 const chart = require('../simple_chart');
 const chartsMaps = require('./charts_maps');
 const helper = require('./helper');
@@ -115,24 +116,20 @@ async function formatSondagemPDF(buffer, name) {
 	const img = buffer.toString('base64');
 
 	const config = {
-		border: {
-			top: '10px', // default is 0, units: mm, cm, in, px
-			right: '20px',
-			bottom: '20px',
-			left: '20px',
-		},
+		base: `file://${process.cwd()}/mail_template/`,
+		// type: 'png', // allowed file types: png, jpeg, pdf
+		// quality: '100',
+		// border: {
+		// top: '10px', // default is 0, units: mm, cm, in, px
+		// 	right: '20px',
+		// bottom: '20px',
+		// 	left: '20px',
+		// },
 	};
-	// const styleDiv = 'font-size:10pt;margin: 100px 25px 30px 25px; ';
-	const html = `<!DOCTYPE html>
-	<body  style="background-color:white;">
-	<div id="chart">
-	<img src="${process.cwd()}/mail_template/header.jpg">
-		<h1>Resultado - ${name}</h1>
-		<img style='height: 100%; width: 100%' src="data:image/jpg;base64,${img}">
-		</div>
-	</body>
-	</html>`;
 
+	let html = await readFileSync(`${process.cwd()}/mail_template/chart.html`, 'utf-8');
+	html = html.replace('{{name}}', name);
+	html = html.replace('{{img}}', img);
 
 	const createPDFAsync = promisify(helper.pdf.create);
 	const result = await createPDFAsync(html, config).then((tmp) => tmp).catch((err) => console.log(err));

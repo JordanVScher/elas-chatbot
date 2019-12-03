@@ -113,7 +113,7 @@ module.exports.createChart = async (labels, data, id, title) => {
 	conf.data.datasets[0].data = Object.values(finalData);
 	conf.options.scales.xAxes[0].ticks.min = Math.min(...Object.values(finalData)) - 15;
 	if (title) {
-		conf.options.title.display = true;
+		conf.options.title.display = false; // true
 		conf.options.title.text = title;
 	}
 

@@ -69,9 +69,9 @@ async function replaceDataText(original, data, recipient) {
 	Used in the mail handlers below.
 */
 async function fillMasks(replaceMap, recipientData) {
-	const result = replaceMap;
+	const result = JSON.parse(JSON.stringify(replaceMap));
 	result.NOMEUM = ''; // alsways add NOMEUM because it appears on most notifications
-	const mapKeys = Object.keys(replaceMap);
+	const mapKeys = Object.keys(result);
 
 	for (let i = 0; i < mapKeys.length; i++) {
 		const currentKey = mapKeys[i];
@@ -351,9 +351,11 @@ async function buildAttachment(type, cpf, name) {
 
 
 async function actuallySendMessages(parametersRules, types, notification, recipient, test = false) {
-	const currentType = types.find((x) => x.id === notification.notification_type); // get the correct kind of notification
+	let currentType = types.find((x) => x.id === notification.notification_type); // get the correct kind of notification
+	currentType = JSON.parse(JSON.stringify(currentType)); // makes an actual copy
 	const map = parametersRules[currentType.id]; // get the respective map
-	const newText = await replaceParameters(currentType, await fillMasks(map, recipient), recipient);
+	const masks = await fillMasks(map, recipient);
+	const newText = await replaceParameters(currentType, masks, recipient);
 	const attachment = await buildAttachment(currentType, recipient.cpf, recipient.nome_completo);
 	const error = {};
 
@@ -378,6 +380,7 @@ async function actuallySendMessages(parametersRules, types, notification, recipi
 		await notificationQueue.update({ error }, { where: { id: notification.id } })
 			.then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do erro', err));
 	}
+	return false;
 }
 
 async function getRecipient(notification, moduleDates) {
@@ -404,7 +407,7 @@ async function sendNotificationFromQueue(test = false) {
 
 	for (let i = 0; i < queue.length; i++) {
 		const notification = queue[i];
-		if (lastNotification.notification_type !== notification.notification_type) {
+		if (lastNotification.aluno_id !== notification.aluno_id || lastNotification.notification_type !== notification.notification_type) {
 			const turmaName = await getTurmaName(notification.turma_id);
 			const notificationRules = await rules.getNotificationRules(turmaName);
 			console.log('notification', notification, 'turmaName', turmaName);
