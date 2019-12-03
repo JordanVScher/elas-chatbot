@@ -86,7 +86,6 @@ google-secret-key.json
 # for random testing
 test.js
 test2.js
-*.png
 *.svg
 
 /exemplo_de_respostas/*
