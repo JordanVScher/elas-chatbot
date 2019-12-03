@@ -29,6 +29,16 @@ zoom: 0.55
   transform: translate(-50%, -50%);
 }
 
+.bottom-right {
+  position: absolute;
+  color: #122161;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 20px;
+  font-weight: bold;
+  bottom: 1%;
+  right: 5%;
+}
+
 .name {
   position: absolute;
   font-family: Arial, Helvetica, sans-serif;
@@ -72,10 +82,12 @@ zoom: 0.55
 <div class="container">
   <img src="./chart_header.png" alt="Header" style="width:100%;height:100%">
   <div class="result">Resultados das Avaliações</div>
+  <div class="bottom-right">02/03</div>
   <img src="data:image/jpg;base64,{{img0}}", class="chart" style="width:90%;">
 </div>
 <div class="container">
   <img src="./chart_header.png" alt="Header" style="width:100%;height:100%">
+  <div class="bottom-right">03/03</div>
   <img src="data:image/jpg;base64,{{img1}}", class="chart" style="width:90%;top: 10%">
 </div>
 </body>
