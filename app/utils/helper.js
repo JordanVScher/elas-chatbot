@@ -199,9 +199,10 @@ async function formatDialogFlow(text) {
 }
 
 function getPercentageChange(oldNumber, newNumber) {
-	const decreaseValue = oldNumber - newNumber;
-	const result = ((decreaseValue / oldNumber) * 100) * -1; // invert progression, if the number went up show a positive percentage
-	return parseFloat(result.toFixed(2), 10);
+	const difference = newNumber - oldNumber;
+	let result = difference / oldNumber;
+	result *= 100;
+	return +result.toFixed(2);
 }
 
 function buildAlunaMsg(aluna) {

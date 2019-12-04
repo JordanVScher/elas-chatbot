@@ -326,6 +326,7 @@ async function newSurveyResponse(event) {
 		await handleAvaliador(responses, 'pos', surveysMaps.avaliacao360Pos);
 		break;
 	default:
+		console.log('Wrong ID', responses.survey_id);
 		break;
 	}
 }
