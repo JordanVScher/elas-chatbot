@@ -10,16 +10,32 @@ const turmaMap = {
 	datahora1: 'modulo1',
 	datahora2: 'modulo2',
 	datahora3: 'modulo3',
+	inCompany: 'inCompany',
 };
+
+async function handleInCompany(queryInput, aux) {
+	if (queryInput === 'inCompany') {
+		if (aux.toLowerCase() === 'sim') {
+			aux = true;
+		} else if (['nao', 'não'].includes(aux.toLowerCase())) {
+			aux = false;
+		} else {
+			aux = 'ignore_me';
+		}
+	}
+	return aux;
+}
 
 // adapt the spreadsheet keys to match the model
 async function buildQuery(data, map) {
 	const result = {};
 
-	Object.keys(data).forEach((element) => {
+	Object.keys(data).forEach(async (element) => {
 		const queryInput = map[element];
 		if (queryInput && queryInput.toString() && data[element] && data[element].toString()) {
-			result[queryInput] = data[element].toString().trim();
+			let aux = data[element].toString().trim();
+			aux = await handleInCompany(queryInput, aux);
+			result[queryInput] = aux;
 		}
 	});
 
@@ -31,7 +47,7 @@ async function buildUpdateQuery(newData, oldData) {
 	const result = {};
 
 	Object.keys(newData).forEach((element) => {
-		if (newData[element].toString() !== oldData[element].toString()) {
+		if (newData[element] !== 'ignore_me' && newData[element].toString() !== oldData[element].toString()) {
 			result[element] = newData[element].toString().trim();
 		}
 	});
@@ -59,8 +75,10 @@ async function updateTurmas() {
 						if (created) { return created; }
 						return data.dataValues; // if a new turma wasn't created we might have to update it, so return it
 					}).catch((err) => help.sentryError('turma findOrCreate', err));
+
 					if (found.id) { // we might need to update it
 						const updateQuery = await buildUpdateQuery(query, found);
+						console.log('updateQuery', updateQuery);
 						if (updateQuery) {
 							const update = await turma.update(updateQuery, { where: { id: found.id } }).then((res) => res).catch((err) => help.sentryError('turma update', err));
 							if (update) { results.push(`Linha ${i + 1 + offset} atualizada!`); }
@@ -73,6 +91,5 @@ async function updateTurmas() {
 
 	return { results, errors };
 }
-
 
 module.exports = { updateTurmas };
