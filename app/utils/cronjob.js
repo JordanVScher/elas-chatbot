@@ -7,6 +7,16 @@ const { updateTurmas } = require('./turma');
 const { addAlunosPesquisa } = require('./pesquisa/add_aluno_pesquisa');
 const { sendPesquisa } = require('./pesquisa/send_pesquisa_broadcast');
 
+const { getChatbotData } = require('../chatbot_api');
+const { sendHTMLMail } = require('./mailer');
+
+async function checkAPI() {
+	const res = await getChatbotData(process.env.PAGE_ID);
+	if (!res || !res.id) {
+		const txt = `Chatbot: Elas\n\nAmbiente: ${process.env.ENV}\n\nErro: A api do Assistente Cívico CAIU\n\nEndereço: ${process.env.MANDATOABERTO_API_URL}`;
+		if (process.env.ENV !== 'local') await sendHTMLMail(`ERRO - API do Assistente Cívico CAIU ${process.env.ENV}`, process.env.MAILDEV, txt);
+	}
+}
 
 const sendMissingWarningCron = new CronJob(
 	'00 30 8 * * *', async () => {
@@ -104,6 +114,22 @@ const sendPesquisasCron = new CronJob(
 	false, // runOnInit = true useful only for tests
 );
 
+const checkAPICron = new CronJob(
+	'00 30 * * * *', async () => {
+		console.log('Running checkAPICron');
+		try {
+			await checkAPI();
+		} catch (error) {
+			await sentryError('Error on checkAPICron', error);
+		}
+	}, (() => {
+		console.log('Crontab checkAPICron stopped.');
+	}),
+	true, /* Starts the job right now (no need for MissionTimer.start()) */
+	'America/Sao_Paulo', false,
+	false, // runOnInit = true useful only for tests
+);
+
 
 async function cronLog() {
 	console.log(`Crontab sendNotificationCron is running? => ${sendNotificationCron.running}`);
@@ -112,6 +138,7 @@ async function cronLog() {
 	console.log(`Crontab sendMissingWarningCron is running? => ${sendMissingWarningCron.running}`);
 	console.log(`Crontab addPesquisasCron is running? => ${addPesquisasCron.running}`);
 	console.log(`Crontab sendPesquisasCron is running? => ${sendPesquisasCron.running}`);
+	console.log(`Crontab checkAPICron is running? => ${checkAPICron.running}`);
 }
 
 module.exports = { cronLog };
