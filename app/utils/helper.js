@@ -4,6 +4,7 @@ const accents = require('remove-accents');
 const moment = require('moment');
 const pdf = require('html-pdf');
 const TinyURL = require('tinyurl');
+const { sendHTMLMail } = require('./mailer');
 
 moment.locale('pt-BR');
 // Sentry - error reporting
@@ -220,9 +221,13 @@ function buildAlunaMsg(aluna) {
 }
 
 
-function sentryError(msg, err) {
+async function sentryError(msg, err) {
 	console.log(msg, err || '');
-	if (process.env.ENV !== 'local') { Sentry.captureMessage(msg); console.log('Error sent!\n'); }
+	if (process.env.ENV !== 'local') {
+		Sentry.captureMessage(msg);
+		await sendHTMLMail(`Erro no bot do ELAS - ${process.env.ENV || ''}`, process.env.MAILDEV, `${msg || ''}\n\n${err}`);
+		console.log('Error sent!\n');
+	}
 	return false;
 }
 
