@@ -279,7 +279,7 @@ module.exports = {
 		mailText: 'Baixe o arquivo acima para visualizar quem não respondeu os questionários para a próxima aula',
 	},
 	pesquisa: {
-		textMsg: 'Olá, como você está? Responda: <LINK_PESQUISA>',
+		textMsg: 'Olá como você está? Acreditamos que o seu processo de evolução não termina no módulo 3 e por isso gostaríamos de continuar te acompanhando. Por isso é muito importante que você responda essa atividade para continuarmos medindo sua evolução.\nResponda: <LINK_PESQUISA>',
 	},
 	notifications: {
 		on: 'Legal! Estarei te interando das novidades! Se quiser parar de receber nossas novidades, clique na opção "Parar Notificações 🛑" no menu abaixo. ⬇️',

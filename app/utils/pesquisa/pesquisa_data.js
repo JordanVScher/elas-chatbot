@@ -1,10 +1,10 @@
 const limitMonths = process.env.PESQUISA_MONTHS ? parseInt(process.env.PESQUISA_MONTHS, 10) : 0;
 
 const pesquisaLinksObj = {
-	1: 'www.testelink1.com',
-	2: 'www.testelink2.com',
-	3: 'www.testelink3.com',
-	4: 'www.testelink4.com',
+	1: 'www.surveymonkey.com/pesquisa-1',
+	2: 'www.surveymonkey.com/pesquisa-2',
+	3: 'www.surveymonkey.com/pesquisa-3',
+	4: 'www.surveymonkey.com/pesquisa-4',
 };
 
 /**
