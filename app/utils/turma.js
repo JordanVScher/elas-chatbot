@@ -72,7 +72,7 @@ async function updateTurmas() {
 				if (e.inCompany) {
 					let inCompany = e.inCompany.toString(); inCompany = inCompany ? inCompany.trim() : '';
 					if (!inCompany || !['sim', 'não', 'nao'].includes(inCompany.toLowerCase())) {
-						errors.push(`Erro na linha ${i + 1 + offset}. Valores da coluna 'In Company' só podem ser "Sim" ou "Não".`);
+						errors.push({ line: i + 1 + offset, msg: 'Valores da coluna "In Company" só podem ser "Sim" ou "Não".' });
 					}
 				}
 				const query = await buildQuery(e, turmaMap);
