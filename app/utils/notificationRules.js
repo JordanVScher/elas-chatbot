@@ -41,8 +41,10 @@ async function buildQuery(data, map) {
 }
 
 // build the regular rule set, based on the spreadsheet
-async function buildNotificationRules() {
-	const spreadsheet = await reloadSpreadSheet(1);
+async function buildNotificationRules(isInCompany) {
+	let aba = 1;
+	if (isInCompany === true) { aba = 2; }
+	const spreadsheet = await reloadSpreadSheet(aba);
 	const rules = [];
 	if (spreadsheet && spreadsheet.length > 0) {
 		for (let i = 0; i < spreadsheet.length; i++) {
@@ -51,7 +53,6 @@ async function buildNotificationRules() {
 			if (query) rules.push(query);
 		}
 	}
-
 	return rules;
 }
 

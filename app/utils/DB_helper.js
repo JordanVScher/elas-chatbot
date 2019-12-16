@@ -77,6 +77,17 @@ async function getTurmaName(turmaID) {
 	return nome;
 }
 
+async function getTurmaInCompany(turmaID) {
+	const InCompany = await sequelize.query(`
+	SELECT in_company FROM turma where id = '${turmaID}';
+	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
+		console.log('Got turma InCompany!');
+		return results && results[0] ? results[0].in_company : false;
+	}).catch((err) => { sentryError('Erro em getTurmaInCompany =>', err); });
+
+	return InCompany;
+}
+
 async function getAlunaFromCPF(cpf) {
 	const aluna = await sequelize.query(`
 	SELECT * from alunos WHERE cpf = '${cpf}';
@@ -605,6 +616,7 @@ module.exports = {
 	getAlunasIndicadosReport,
 	getTurmaID,
 	getTurmaName,
+	getTurmaInCompany,
 	getModuloDates,
 	getAlunaFromFBID,
 	buildTurmaDictionary,

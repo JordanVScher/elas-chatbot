@@ -12,6 +12,7 @@ const broadcast = require('./broadcast');
 const charts = require('./charts');
 const { getModuloDates } = require('./DB_helper');
 const { getTurmaName } = require('./DB_helper');
+const { getTurmaInCompany } = require('./DB_helper');
 const rules = require('./notificationRules');
 
 const { Op } = Sequelize;
@@ -409,8 +410,9 @@ async function sendNotificationFromQueue(test = false) {
 		const notification = queue[i];
 		if (lastNotification.aluno_id !== notification.aluno_id || lastNotification.notification_type !== notification.notification_type) {
 			const turmaName = await getTurmaName(notification.turma_id);
-			const notificationRules = await rules.getNotificationRules(turmaName);
-			console.log('notification', notification, 'turmaName', turmaName);
+			const turmaInCompany = await getTurmaInCompany(notification.turma_id);
+			const regularRules = await rules.buildNotificationRules(turmaInCompany);
+			const notificationRules = await rules.getNotificationRules(turmaName, regularRules);
 			console.log('await checkShouldSendNotification(notification, moduleDates, today, notificationRules', await checkShouldSendNotification(notification, moduleDates, today, notificationRules));
 			if (test || await checkShouldSendNotification(notification, moduleDates, today, notificationRules) === true) { // !== for easy testing
 				const recipient = await getRecipient(notification, moduleDates);
