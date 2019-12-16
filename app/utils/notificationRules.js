@@ -1,6 +1,62 @@
 const { getTinyUrl } = require('./helper');
+const { reloadSpreadSheet } = require('./helper');
 
-async function getNotificationRules(turmaName) {
+// relation of keys from the spreadsheet and the model attributes
+const turmaMap = {
+	tipo: 'notification_type',
+	modulo: 'modulo',
+	dias: 'days',
+	horas: 'hours',
+	minutos: 'minutes',
+	lembrete: 'reminderDate',
+	indicado: 'indicado',
+	familiar: 'familiar',
+	sunday: 'sunday',
+};
+
+// adapt the spreadsheet keys to match the model
+async function buildQuery(data, map) {
+	const result = {};
+
+	Object.keys(data).forEach(async (element) => {
+		const queryInput = map[element];
+		if (queryInput && queryInput.toString() && data[element] && data[element].toString()) {
+			let aux = data[element].toString().trim();
+			if (parseInt(aux, 10)) aux = parseInt(aux, 10);
+			if (aux === 'true') aux = true;
+			if (aux === 'false') aux = false;
+			result[queryInput] = aux;
+		}
+	});
+
+	if (result) {
+		const timeChange = [];
+		if (result.days) { timeChange.push({ qtd: result.days, type: 'days' }); delete result.days; }
+		if (result.hours) { timeChange.push({ qtd: result.hours, type: 'hours' }); delete result.hours; }
+		if (result.minutes) { timeChange.push({ qtd: result.minutes, type: 'minutes' }); delete result.minutes; }
+
+		result.timeChange = timeChange;
+	}
+	return result || false;
+}
+
+// build the regular rule set, based on the spreadsheet
+async function buildNotificationRules() {
+	const spreadsheet = await reloadSpreadSheet(1);
+	const rules = [];
+	if (spreadsheet && spreadsheet.length > 0) {
+		for (let i = 0; i < spreadsheet.length; i++) {
+			const e = spreadsheet[i];
+			const query = await buildQuery(e, turmaMap);
+			if (query) rules.push(query);
+		}
+	}
+
+	return rules;
+}
+
+
+async function getNotificationRules(turmaName, regularRules) {
 	if (turmaName) turmaName = turmaName.toString().trim();
 	if (turmaName === 'Teste') {
 		return [
@@ -62,35 +118,9 @@ async function getNotificationRules(turmaName) {
 		];
 	}
 
-	return [
-		{ notification_type: 1, modulo: 1, timeChange: [{ qtd: -12, type: 'days' }] },
-		{ notification_type: 2, modulo: 1, timeChange: [{ qtd: -10, type: 'days' }] },
-		{ notification_type: 3, modulo: 1, timeChange: [{ qtd: -9, type: 'days' }], indicado: true, reminderDate: 6 }, // eslint-disable-line object-curly-newline
-		{ notification_type: 4, modulo: 1, timeChange: [{ qtd: -6, type: 'days' }] },
-		{ notification_type: 5, modulo: 1, timeChange: [{ qtd: 1, type: 'days' }, { qtd: 20, type: 'hours' }] }, // 20 hours after the second day of class
-		{ notification_type: 6, modulo: 2, timeChange: [{ qtd: -12, type: 'days' }] },
-		{ notification_type: 7, modulo: 2, timeChange: [{ qtd: 1, type: 'days' }] }, // on the second class
-		{ notification_type: 8, modulo: 2, timeChange: [{ qtd: 1, type: 'days' }, { qtd: 20, type: 'hours' }] }, // 20 hours after the second day of class
-		{ notification_type: 9, modulo: 3, timeChange: [{ qtd: -12, type: 'days' }] },
-		{ notification_type: 10, modulo: 3, timeChange: [{ qtd: -12, type: 'days' }], indicado: true, reminderDate: 3 }, // eslint-disable-line object-curly-newline
-		{ notification_type: 11, modulo: 3, timeChange: [{ qtd: -12, type: 'days' }] },
-		{ notification_type: 12, modulo: 3, timeChange: [{ qtd: -7, type: 'days' }], indicado: true, familiar: true }, // eslint-disable-line object-curly-newline
-		{ notification_type: 13, modulo: 3, timeChange: [{ qtd: 1, type: 'days' }, { qtd: 20, type: 'hours' }] }, // 20 hours after the second day of class
-		{ notification_type: 14, modulo: 3, timeChange: [{ qtd: 5, type: 'days' }] },
-		// Receive notification 24h before every class
-		{ notification_type: 15, modulo: 1, timeChange: [{ qtd: 0, type: 'days' }, { qtd: -24, type: 'hours' }] },
-		{ notification_type: 15, modulo: 2, timeChange: [{ qtd: 0, type: 'days' }, { qtd: -24, type: 'hours' }] },
-		{ notification_type: 15, modulo: 3, timeChange: [{ qtd: 0, type: 'days' }, { qtd: -24, type: 'hours' }] },
-		// Receive notification 1h before every class, on saturday (-1h) and sunday (saturday + 23h)
-		{ notification_type: 16, modulo: 1, timeChange: [{ qtd: 0, type: 'days' }, { qtd: -1, type: 'hours' }], sunday: false }, // eslint-disable-line object-curly-newline
-		{ notification_type: 16, modulo: 2, timeChange: [{ qtd: 0, type: 'days' }, { qtd: -1, type: 'hours' }], sunday: false }, // eslint-disable-line object-curly-newline
-		{ notification_type: 16, modulo: 3, timeChange: [{ qtd: 0, type: 'days' }, { qtd: -1, type: 'hours' }], sunday: false }, // eslint-disable-line object-curly-newline
-		{ notification_type: 16, modulo: 1, timeChange: [{ qtd: 0, type: 'days' }, { qtd: 23, type: 'hours' }], sunday: true }, // eslint-disable-line object-curly-newline
-		{ notification_type: 16, modulo: 2, timeChange: [{ qtd: 0, type: 'days' }, { qtd: 23, type: 'hours' }], sunday: true }, // eslint-disable-line object-curly-newline
-		{ notification_type: 16, modulo: 3, timeChange: [{ qtd: 0, type: 'days' }, { qtd: 23, type: 'hours' }], sunday: true }, // eslint-disable-line object-curly-newline
-	];
+	// if current turma isn't a special case, use the regular rules from the spreadsheet
+	return regularRules;
 }
-
 
 // return the sum of the module date (from the turma) with the notification rule
 async function getSendDate(ourTurma, currentRule) {
@@ -173,5 +203,5 @@ async function buildParametersRules() {
 }
 
 module.exports = {
-	getSendDate, buildParametersRules, getNotificationRules,
+	getSendDate, buildParametersRules, getNotificationRules, buildNotificationRules,
 };
