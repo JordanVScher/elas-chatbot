@@ -69,6 +69,12 @@ async function updateTurmas() {
 			} else if (!e.turma) {
 				errors.push({ line: i + 1 + offset, msg: 'falta preencher turma!' });
 			} else {
+				if (e.inCompany) {
+					let inCompany = e.inCompany.toString(); inCompany = inCompany ? inCompany.trim() : '';
+					if (!inCompany || !['sim', 'não', 'nao'].includes(inCompany.toLowerCase())) {
+						errors.push(`Erro na linha ${i + 1 + offset}. Valores da coluna 'In Company' só podem ser "Sim" ou "Não".`);
+					}
+				}
 				const query = await buildQuery(e, turmaMap);
 				if (query) {
 					const found = await turma.findOrCreate({ where: { nome: query.nome }, defaults: query }).then(([data, created]) => {
