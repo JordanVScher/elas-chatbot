@@ -200,6 +200,59 @@ async function buildParametersRules() {
 			MODULOAVISAR: '', LOCAL: '', DATAHORA: '', ATIVIDADESCOMPLETAS: '',
 		},
 		16: {},
+		17: {
+			GRUPOWHATS: await getTinyUrl(process.env.GRUPOWHATSAP),
+			LINKDONNA: await getTinyUrl(process.env.LINK_DONNA),
+			MODULO1: '',
+			LOCAL: '',
+			FDSMOD1: '',
+			FDSMOD2: '',
+			FDSMOD3: '',
+		},
+		18: {
+			SONDAGEMPRE: process.env.SONDAGEM_PRE_LINK,
+			INDICACAO360: process.env.INDICACAO360_LINK,
+			DISC_LINK: await getTinyUrl(process.env.DISC_LINK1),
+			LINKDONNA: await getTinyUrl(process.env.LINK_DONNA),
+			TURMA: '',
+			MOD1_15DIAS: '',
+			MOD1_2DIAS: '',
+		},
+		19: { AVALIADORPRE: process.env.AVALIADOR360PRE_LINK, MOD1_2DIAS: '' },
+		20: { AVALIADORPRE: process.env.AVALIADOR360PRE_LINK, MOD1_2DIAS: '' },
+		21: { AVALIACAO1: process.env.MODULO1_LINK },
+		22: { LINKDONNA: await getTinyUrl(process.env.LINK_DONNA) },
+		23: {
+			EMAILMENTORIA: process.env.EMAILMENTORIA,
+			MOD3_LASTDAY: '',
+			MOD3_2DIAS: '',
+		},
+		24: { AVALIACAO2: process.env.MODULO2_LINK },
+		25: {
+			SONDAGEMPOS: process.env.SONDAGEM_POS_LINK,
+			DISC_LINK: await getTinyUrl(process.env.DISC_LINK2),
+			TURMA: '',
+			MOD3_7DIAS: '',
+		},
+		26: {
+			AVALIADORPOS: process.env.AVALIADOR360POS_LINK,
+			MOD3_7DIAS: '',
+		},
+		27: {
+			MOD3_7DIAS: '',
+			AVALIADORPOS: process.env.AVALIADOR360POS_LINK,
+			MOD3_LASTDAY: '',
+		},
+		28: {
+			NUMBERWHATSAP: process.env.NUMBERWHATSAP,
+			MOD3_LASTDAY: '',
+		},
+		29: { AVALIACAO3: process.env.MODULO3_LINK },
+		30: { AVALIACAO3: process.env.MODULO3_LINK },
+		31: {
+			MODULOAVISAR: '', LOCAL: '', DATAHORA: '', ATIVIDADESCOMPLETAS: '',
+		},
+		32: {},
 	};
 }
 
