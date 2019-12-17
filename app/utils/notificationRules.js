@@ -11,7 +11,7 @@ const turmaMap = {
 	lembrete: 'reminderDate',
 	indicado: 'indicado',
 	familiar: 'familiar',
-	sunday: 'sunday',
+	domingo: 'sunday',
 };
 
 // adapt the spreadsheet keys to match the model
@@ -20,7 +20,7 @@ async function buildQuery(data, map) {
 
 	Object.keys(data).forEach(async (element) => {
 		const queryInput = map[element];
-		if (queryInput && queryInput.toString() && data[element] && data[element].toString()) {
+		if (queryInput && queryInput.toString() && ((data[element] && data[element].toString()) || typeof data[element] === 'boolean')) {
 			let aux = data[element].toString().trim();
 			if (parseInt(aux, 10)) aux = parseInt(aux, 10);
 			if (aux === 'true') aux = true;
