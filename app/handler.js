@@ -318,7 +318,7 @@ module.exports = async (context) => {
 			await dialogs.sendFeedbackConfirm(context);
 			break;
 		case 'sendFeedbackFim':
-			await dialogs.sendFeedbackFim(context.state.feedbackTurmaID);
+			await dialogs.sendFeedbackFim(context.state.feedbackTurmaID, await db.getTurmaInCompany(context.state.feedbackTurmaID));
 			await context.sendText(flow.adminMenu.sendFeedback.fim);
 			await context.sendText(flow.adminMenu.firstMenu.txt1, await attach.getQR(flow.adminMenu.firstMenu));
 			break;
