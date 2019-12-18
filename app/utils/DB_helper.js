@@ -309,8 +309,6 @@ async function getIndicadoFromAluna(AlunaID, familiar, pre, pos) {
 	if (pre === true) { queryComplement += 'AND RESPOSTAS.pre IS NOT NULL '; } else if (pre === false) { queryComplement += 'AND RESPOSTAS.pre IS NULL ';	}
 	if (pos === true) { queryComplement += 'AND RESPOSTAS.pos IS NOT NULL '; } else if (pos === false) { queryComplement += 'AND RESPOSTAS.pos IS NULL '; }
 
-	console.log(`SELECT * FROM indicacao_avaliadores INDICADOS INNER JOIN indicados_respostas RESPOSTAS ON INDICADOS.id = RESPOSTAS.indicado_id
-	WHERE INDICADOS.aluno_id = '${AlunaID}' ${queryComplement};`);
 
 	const indicado = await sequelize.query(`
 	SELECT * FROM 
@@ -593,6 +591,12 @@ async function updateIndicadoNotification(indicadoID, notificationType, msg) {
 	return result;
 }
 
+async function getAllIndicadosFromAlunaID(alunoID) {
+	const result = await sequelize.query(`SELECT * FROM indicacao_avaliadores	WHERE aluno_id = '${alunoID}';`)
+		.spread((results) => results).catch((err) => { sentryError('Error on getAllIndicadosFromAlunaID => ', err); });
+	return result;
+}
+
 module.exports = {
 	upsertUser,
 	getAlunaFromCPF,
@@ -630,4 +634,5 @@ module.exports = {
 	changeAdminStatus,
 	getFBIDFromAlunaID,
 	removeAlunaFromTurma,
+	getAllIndicadosFromAlunaID,
 };

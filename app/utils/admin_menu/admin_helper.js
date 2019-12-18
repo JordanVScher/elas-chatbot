@@ -13,7 +13,7 @@ const { turma } = require('../../server/models');
 const { alunos } = require('../../server/models');
 const { checkUserOnLabel } = require('../../utils/postback');
 const { adminMenu } = require('../../utils/flow');
-const { notificationRules } = require('../notificationRules');
+const { buildNotificationRules } = require('../notificationRules');
 const MaAPI = require('../../chatbot_api');
 const labels = require('../labels');
 
@@ -141,12 +141,16 @@ async function NotificationChangeTurma(alunaID, turmaID) {
 
 async function updateNotificationIndicados(indicados) {
 	try {
-		const rulesIndicados = await notificationRules.filter((x) => x.indicado === true);
 		for (let i = 0; i < indicados.length; i++) {
 			const indicado = indicados[i];
 
 			const userNotifications = await notificationQueue.findAll({ where: { indicado_id: indicado.id }, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em notificationQueue.findAll', err));
 			const turmaID = await db.getTurmaIdFromAluno(indicado.aluno_id);
+
+			const inCompany = await db.getTurmaInCompany(turmaID);
+			const familiarType = inCompany ? 28 : 12;
+			let rulesIndicados = await buildNotificationRules(inCompany);
+			rulesIndicados = await rulesIndicados.filter((x) => x.indicado === true);
 
 			for (let j = 0; j < rulesIndicados.length; j++) {
 				const rule = rulesIndicados[j];
@@ -159,9 +163,9 @@ async function updateNotificationIndicados(indicados) {
 
 			if (indicado.familiar !== true) { // if user is no longer familiar we update the error column
 				// obs: postgresql wont update a collumn that doesnt exist so we won't "update" the notification of an user that wasnt a familiar in the first place
-				await db.updateIndicadoNotification(indicado.id, 12, 'Não é mais familiar, foi atualizado no csv do admin');
+				await db.updateIndicadoNotification(indicado.id, familiarType, 'Não é mais familiar, foi atualizado no csv do admin');
 			} else if (indicado.familiar === true) {
-				await db.updateIndicadoNotification(indicado.id, 12, null);
+				await db.updateIndicadoNotification(indicado.id, familiarType, null);
 			}
 		}
 	} catch (error) {
