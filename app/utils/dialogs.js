@@ -17,7 +17,6 @@ const { getAluna } = require('./notificationSendQueue');
 const { actuallySendMessages } = require('./notificationSendQueue');
 const { addNewNotificationIndicados } = require('./notificationAddQueue');
 const notificationTypes = require('../server/models').notification_types;
-const { buildParametersRules } = require('./notificationRules');
 
 module.exports.sendMainMenu = async (context, txtMsg) => {
 	const text = txtMsg || flow.mainMenu.defaultText;
@@ -286,7 +285,6 @@ module.exports.adminAlunaCPF = async (context, nextDialog) => {
 
 module.exports.sendFeedbackFim = async (feedbackTurmaID, inCompany) => {
 	const types = await notificationTypes.findAll({ where: {}, raw: true }).then((res) => res).catch((err) => sentryError('Erro ao carregar notification_types', err));
-	const parametersRules = await buildParametersRules();
 	const notification = {};
 	if (inCompany === true) {
 		notification.notification_type = 29;
@@ -298,7 +296,7 @@ module.exports.sendFeedbackFim = async (feedbackTurmaID, inCompany) => {
 	for (let i = 0; i < alunosToSend.length; i++) {
 		const e = alunosToSend[i];
 		const aluna = await getAluna(e.id);
-		await actuallySendMessages(parametersRules, types, notification, aluna, true);
+		await actuallySendMessages(types, notification, aluna, true);
 	}
 };
 

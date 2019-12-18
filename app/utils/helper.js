@@ -85,7 +85,7 @@ async function findModuleToday(turma) {
 	return result;
 }
 
-async function formatModulo1(date) {
+async function formatModulo(date) {
 	return `dia ${moment(date).utcOffset('+0000').format('DD')} de ${moment(date).utcOffset('+0000').format('MMMM')}`;
 }
 async function formatModuloHora(date) {
@@ -358,7 +358,7 @@ module.exports = {
 	getPercentageChange,
 	pdf,
 	getJsDateFromExcel,
-	formatModulo1,
+	formatModulo,
 	formatModuloHora,
 	formatFdsMod,
 	formatDiasMod,

@@ -1,7 +1,6 @@
 const { Op } = require('sequelize');
 const { sentryError } = require('./helper');
 const sendQueue = require('./notificationSendQueue');
-const { buildParametersRules } = require('./notificationRules');
 const { getModuloDates } = require('./DB_helper');
 const { getAluno } = require('./DB_helper');
 
@@ -27,7 +26,6 @@ async function sendTestNotification(cpf, typeNumber, indicado = false, ignore = 
 	if (typeNumber) { where.notification_type = typeNumber; }
 	if (indicado) { where.indicado_id = { [Op.ne]: null }; }
 
-	const parametersRules = await buildParametersRules();
 	const moduleDates = await getModuloDates();
 
 	const queue = await notificationQueue.findAll({ where, order: [['notification_type', 'ASC']], raw: true })
@@ -41,7 +39,7 @@ async function sendTestNotification(cpf, typeNumber, indicado = false, ignore = 
 			if (!ignore.includes(notification.notification_type)) {
 				const recipient = await sendQueue.getRecipient(notification, moduleDates);
 				setTimeout(async () => { // pass true to actuallySendMessages to not save anything on the database
-					await sendQueue.actuallySendMessages(parametersRules, types, notification, recipient, true);
+					await sendQueue.actuallySendMessages(types, notification, recipient, true);
 				}, i === 0 ? 3 * 1000 : time * (i));
 			}
 		}

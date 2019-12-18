@@ -40,9 +40,7 @@ async function replaceCustomParameters(original, recipient) {
 
 	// if url has only one param, remove & from query string
 	if (url.match(/=/g).length === 1) url.replace('&', '');
-
 	url = await help.getTinyUrl(url);
-
 	return url;
 }
 
@@ -70,13 +68,9 @@ async function replaceDataText(original, data, recipient) {
 	Used in the mail handlers below.
 */
 async function fillMasks(replaceMap, recipientData) {
-	const result = JSON.parse(JSON.stringify(replaceMap));
-	result.NOMEUM = ''; // alsways add NOMEUM because it appears on most notifications
-	const mapKeys = Object.keys(result);
-
-	for (let i = 0; i < mapKeys.length; i++) {
-		const currentKey = mapKeys[i];
-
+	const result = {};
+	for (let i = 0; i < replaceMap.length; i++) {
+		const currentKey = replaceMap[i];
 		if (!result[currentKey]) { // check if that key has no value already
 			let newData = '';
 			switch (currentKey) {
@@ -85,7 +79,13 @@ async function fillMasks(replaceMap, recipientData) {
 				if (recipientData.nome_completo) { newData = recipientData.nome_completo; }
 				break;
 			case 'MODULO1':
-				newData = await help.formatModulo1(recipientData.mod1);
+				newData = await help.formatModulo(recipientData.mod1);
+				break;
+			case 'MODULO2':
+				newData = await help.formatModulo(recipientData.mod2);
+				break;
+			case 'MODULO3':
+				newData = await help.formatModulo(recipientData.mod3);
 				break;
 			case 'LOCAL':
 				newData = recipientData.local;
@@ -124,7 +124,46 @@ async function fillMasks(replaceMap, recipientData) {
 				newData = await help.formatModuloHora(recipientData.dataHora);
 				break;
 			case 'ATIVIDADESCOMPLETAS':
-				newData = help.atividadesCompletas[recipientData.moduloAvisar];
+				newData = help.atividadesCompletas[recipientData.moduloAvisar || 3];
+				break;
+			case 'EMAILMENTORIA':
+				newData = process.env.EMAILMENTORIA;
+				break;
+			case 'NUMBERWHATSAP':
+				newData = process.env.NUMBERWHATSAP;
+				break;
+			case 'GRUPOWHATS':
+				newData = await help.getTinyUrl(process.env.GRUPOWHATSAP);
+				break;
+			case 'LINKDONNA':
+				newData = await help.getTinyUrl(process.env.LINK_DONNA);
+				break;
+			case 'DISC_LINK':
+				newData = await help.getTinyUrl(process.env.DISC_LINK1);
+				break;
+			case 'SONDAGEMPRE':
+				newData = process.env.SONDAGEM_PRE_LINK;
+				break;
+			case 'SONDAGEMPOS':
+				newData = process.env.SONDAGEM_POS_LINK;
+				break;
+			case 'INDICACAO360':
+				newData = process.env.INDICACAO360_LINK;
+				break;
+			case 'AVALIADORPRE':
+				newData = process.env.AVALIADOR360PRE_LINK;
+				break;
+			case 'AVALIADORPOS':
+				newData = process.env.AVALIADOR360POS_LINK;
+				break;
+			case 'AVALIACAO1':
+				newData = process.env.MODULO1_LINK;
+				break;
+			case 'AVALIACAO2':
+				newData = process.env.MODULO2_LINK;
+				break;
+			case 'AVALIACAO3':
+				newData = process.env.MODULO3_LINK;
 				break;
 			default:
 				break;
@@ -342,6 +381,7 @@ async function buildAttachment(type, cpf, name) {
  * Send notifications that need the feedback attachments only if we have said attachments for the e-mail.
  * @param {integer} notificationType the type of the notification
  * @param {json} attachment the attachment object
+ * @returns {boolean} is allowed to send the notification?
  */
 async function verifyFeedbackMail(notificationType, attachment) {
 	if (['13', '29'].includes(notificationType.toString()) === false) return true; // other notification types dont need this verification
@@ -353,6 +393,7 @@ async function verifyFeedbackMail(notificationType, attachment) {
  * Send notifications that need the feedback attachments only if we have said attachments for the chatbot.
  * @param {integer} notificationType the type of the notification
  * @param {json} attachment the attachment object
+ * @returns {boolean} is allowed to send the notification?
  */
 async function verifyFeedbackChatbot(notificationType, attachment) {
 	if (['13', '29'].includes(notificationType.toString()) === false) return true;
@@ -360,14 +401,12 @@ async function verifyFeedbackChatbot(notificationType, attachment) {
 	return false;
 }
 
-// } if (attachment && (attachment.chatbot || attachment.mail)
-// && ((attachment.chatbot.pdf && attachment.mail.pdf) || (attachment.chatbot.pdf2 && attachment.mail.pdf2))) {
-
-async function actuallySendMessages(parametersRules, types, notification, recipient, test = false) {
+async function actuallySendMessages(types, notification, recipient, test = false) {
 	let currentType = types.find((x) => x.id === notification.notification_type); // get the correct kind of notification
 	currentType = JSON.parse(JSON.stringify(currentType)); // makes an actual copy
-	const map = parametersRules[currentType.id]; // get the respective map
-	const masks = await fillMasks(map, recipient);
+	const parametersMap = await rules.buildParametersRules(currentType);
+	const masks = await fillMasks(parametersMap, recipient);
+
 	const newText = await replaceParameters(currentType, masks, recipient);
 	const attachment = await buildAttachment(currentType, recipient.cpf, recipient.nome_completo);
 	const HasFeedbackMail = await verifyFeedbackMail(notification.notification_type, attachment);
@@ -413,16 +452,10 @@ async function getRecipient(notification, moduleDates) {
 	return recipient;
 }
 async function sendNotificationFromQueue(test = false) {
-	const parametersRules = await rules.buildParametersRules();
 	const moduleDates = await getModuloDates();
 	const today = new Date();
 
-	const queue = await notificationQueue.findAll({
-		where: {
-			sent_at: null, error: null, turma_id: { [Op.not]: null },
-		},
-		raw: true,
-	})
+	const queue = await notificationQueue.findAll({ where: { turma_id: { [Op.not]: null }, sent_at: null, error: null }, raw: true }) // eslint-disable-line
 		.then((res) => res).catch((err) => sentryError('Erro ao carregar notification_queue', err));
 
 	const types = await notificationTypes.findAll({ where: {}, raw: true })
@@ -436,14 +469,15 @@ async function sendNotificationFromQueue(test = false) {
 			const turmaInCompany = await getTurmaInCompany(notification.turma_id);
 			const regularRules = await rules.buildNotificationRules(turmaInCompany);
 			const notificationRules = await rules.getNotificationRules(turmaName, regularRules);
-			// console.log('await checkShouldSendNotification(notification, moduleDates, today, notificationRules', await checkShouldSendNotification(notification, moduleDates, today, notificationRules));
+			// console.log('await checkShouldSendNotification(notification, moduleDates, today, notificationRules',
+			// await checkShouldSendNotification(notification, moduleDates, today, notificationRules));
 			if (test || await checkShouldSendNotification(notification, moduleDates, today, notificationRules) === true) { // !== for easy testing
 				const recipient = await getRecipient(notification, moduleDates);
 				// console.log('notification que passou', notification);
 				// console.log('recipient', recipient);
 				if (test || await checkShouldSendRecipient(recipient, notification) === true) {
 					// console.log('Deve enviar');
-					await actuallySendMessages(parametersRules, types, notification, recipient, test);
+					await actuallySendMessages(types, notification, recipient, test);
 				}
 			}
 		}
