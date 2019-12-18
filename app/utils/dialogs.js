@@ -285,12 +285,16 @@ module.exports.adminAlunaCPF = async (context, nextDialog) => {
 };
 
 module.exports.sendFeedbackFim = async (feedbackTurmaID) => {
-	// const notification = await notificationTypes.findOne({ where: { id: 13 }, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em notification.findOne', err));
 	const types = await notificationTypes.findAll({ where: {}, raw: true }).then((res) => res).catch((err) => sentryError('Erro ao carregar notification_types', err));
 	const parametersRules = await buildParametersRules();
-	const notification = { notification_type: 13 };
+	const inCompany = await db.getTurmaInCompany(feedbackTurmaID);
+	const notification = {};
+	if (inCompany === true) {
+		notification.notification_type = 29;
+	} else {
+		notification.notification_type = 13;
+	}
 	const alunosToSend = await alunos.findAll({ where: { turma_id: feedbackTurmaID }, raw: true }).then((res) => res).catch((err) => help.sentryError('alunos em turma.findAll', err));
-
 	for (let i = 0; i < alunosToSend.length; i++) {
 		const e = alunosToSend[i];
 		const aluna = await getAluna(e.id);

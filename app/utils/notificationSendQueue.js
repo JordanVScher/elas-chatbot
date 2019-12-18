@@ -305,12 +305,11 @@ async function buildAttachment(type, cpf, name) {
 		});
 	}
 
-	if (type.id.toString() === '13' && cpf) {
+	if (['13', '29'].includes(type.id.toString()) && cpf) {
 		const pdf = { filename: `${name}_360Results.pdf` };
-		const { filename } = await charts.buildIndicadoChart(cpf); // actually path
-		pdf.content = filename || false;
+		const { content } = await charts.buildIndicadoChart(cpf); // actually path
+		pdf.content = content || false;
 
-		console.log('filename', filename);
 		if (pdf && pdf.content) {
 			result.mail.push({
 				filename: pdf.filename,
@@ -321,24 +320,11 @@ async function buildAttachment(type, cpf, name) {
 			result.chatbot.pdf = pdf;
 		}
 
-		// const png = { filename: `${cpf}_sondagem.png` };
-		// png.content = await charts.buildAlunoChart(cpf); // actually buffer
-
-		// if (png && png.content) {
-		// 	result.mail.push({
-		// 		filename: png.filename,
-		// 		content: png.content,
-		// 		contentType: 'image/png',
-		// 	});
-
-		// 	result.chatbot.png = png;
-		// }
-
 		const pdf2 = { filename: `${name}_sondagem.pdf` };
 		pdf2.content = await charts.buildAlunoChart(cpf); // actually buffer
-		pdf2.content = await charts.formatSondagemPDF(pdf2.content, name);
 
 		if (pdf2 && pdf2.content) {
+			pdf2.content = await charts.formatSondagemPDF(pdf2.content, name);
 			result.mail.push({
 				filename: pdf2.filename,
 				content: createReadStream(pdf2.content),
@@ -349,10 +335,33 @@ async function buildAttachment(type, cpf, name) {
 		}
 	}
 
-
 	return result;
 }
 
+/**
+ * Send notifications that need the feedback attachments only if we have said attachments for the e-mail.
+ * @param {integer} notificationType the type of the notification
+ * @param {json} attachment the attachment object
+ */
+async function verifyFeedbackMail(notificationType, attachment) {
+	if (['13', '29'].includes(notificationType.toString()) === false) return true; // other notification types dont need this verification
+	if (attachment && attachment.mail && attachment.mail.length > 0) return true;
+	return false;
+}
+
+/**
+ * Send notifications that need the feedback attachments only if we have said attachments for the chatbot.
+ * @param {integer} notificationType the type of the notification
+ * @param {json} attachment the attachment object
+ */
+async function verifyFeedbackChatbot(notificationType, attachment) {
+	if (['13', '29'].includes(notificationType.toString()) === false) return true;
+	if (attachment && attachment.chatbot && (attachment.chatbot.pdf || attachment.chatbot.pdf2)) return true;
+	return false;
+}
+
+// } if (attachment && (attachment.chatbot || attachment.mail)
+// && ((attachment.chatbot.pdf && attachment.mail.pdf) || (attachment.chatbot.pdf2 && attachment.mail.pdf2))) {
 
 async function actuallySendMessages(parametersRules, types, notification, recipient, test = false) {
 	let currentType = types.find((x) => x.id === notification.notification_type); // get the correct kind of notification
@@ -361,20 +370,26 @@ async function actuallySendMessages(parametersRules, types, notification, recipi
 	const masks = await fillMasks(map, recipient);
 	const newText = await replaceParameters(currentType, masks, recipient);
 	const attachment = await buildAttachment(currentType, recipient.cpf, recipient.nome_completo);
+	const HasFeedbackMail = await verifyFeedbackMail(notification.notification_type, attachment);
+	const HasFeedbackChatbot = await verifyFeedbackChatbot(notification.notification_type, attachment);
 	const error = {};
 
 	if (newText.email_text && recipient.email && recipient.email.trim()) { // if there's an email to send, send it
-		let html = await readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
-		html = await html.replace('[CONTEUDO_MAIL]', newText.email_text); // add nome to mail template
-		const mailError = await mailer.sendHTMLMail(newText.email_subject, recipient.email, html, attachment.mail);
-		if (mailError) { error.mailError = mailError.toString(); } // save the error, if it happens
+		if (HasFeedbackMail === true) {
+			let html = await readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
+			html = await html.replace('[CONTEUDO_MAIL]', newText.email_text); // add nome to mail template
+			const mailError = await mailer.sendHTMLMail(newText.email_subject, recipient.email, html, attachment.mail);
+			if (mailError) { error.mailError = mailError.toString(); } // save the error, if it happens
+		}
 	}
 
 	if (recipient['chatbot.fb_id'] && newText.chatbot_text) { // if aluna is linked with messenger we send a message to the bot
-		let chatbotError = await broadcast.sendBroadcastAluna(recipient['chatbot.fb_id'], newText.chatbot_text, newText.chatbot_quick_reply);
-		if (!chatbotError && newText.chatbot_cards) { chatbotError = await broadcast.sendCardAluna(recipient['chatbot.fb_id'], newText.chatbot_cards, recipient.cpf); }
-		if (!chatbotError && [attachment.chatbot.pdf || attachment.chatbot.png]) { chatbotError = await broadcast.sendFiles(recipient['chatbot.fb_id'], attachment.chatbot.pdf, attachment.chatbot.pdf2); }
-		if (chatbotError) { error.chatbotError = chatbotError.toString(); } // save the error, if it happens
+		if (HasFeedbackChatbot === true) {
+			let chatbotError = await broadcast.sendBroadcastAluna(recipient['chatbot.fb_id'], newText.chatbot_text, newText.chatbot_quick_reply);
+			if (!chatbotError && newText.chatbot_cards) { chatbotError = await broadcast.sendCardAluna(recipient['chatbot.fb_id'], newText.chatbot_cards, recipient.cpf); }
+			if (!chatbotError && [attachment.chatbot.pdf || attachment.chatbot.png]) { chatbotError = await broadcast.sendFiles(recipient['chatbot.fb_id'], attachment.chatbot.pdf, attachment.chatbot.pdf2); }
+			if (chatbotError) { error.chatbotError = chatbotError.toString(); } // save the error, if it happens
+		}
 	}
 
 	if (!error.mailError && !error.chatbotError && !test) { // if there wasn't any errors, we can update the queue succesfully
@@ -402,7 +417,12 @@ async function sendNotificationFromQueue(test = false) {
 	const moduleDates = await getModuloDates();
 	const today = new Date();
 
-	const queue = await notificationQueue.findAll({ where: { sent_at: null, error: null, turma_id: { [Op.not]: null } }, raw: true })
+	const queue = await notificationQueue.findAll({
+		where: {
+			sent_at: null, error: null, turma_id: { [Op.not]: null },
+		},
+		raw: true,
+	})
 		.then((res) => res).catch((err) => sentryError('Erro ao carregar notification_queue', err));
 
 	const types = await notificationTypes.findAll({ where: {}, raw: true })
@@ -416,13 +436,13 @@ async function sendNotificationFromQueue(test = false) {
 			const turmaInCompany = await getTurmaInCompany(notification.turma_id);
 			const regularRules = await rules.buildNotificationRules(turmaInCompany);
 			const notificationRules = await rules.getNotificationRules(turmaName, regularRules);
-			console.log('await checkShouldSendNotification(notification, moduleDates, today, notificationRules', await checkShouldSendNotification(notification, moduleDates, today, notificationRules));
+			// console.log('await checkShouldSendNotification(notification, moduleDates, today, notificationRules', await checkShouldSendNotification(notification, moduleDates, today, notificationRules));
 			if (test || await checkShouldSendNotification(notification, moduleDates, today, notificationRules) === true) { // !== for easy testing
 				const recipient = await getRecipient(notification, moduleDates);
-				console.log('notification que passou', notification);
-				console.log('recipient', recipient);
+				// console.log('notification que passou', notification);
+				// console.log('recipient', recipient);
 				if (test || await checkShouldSendRecipient(recipient, notification) === true) {
-					console.log('Deve enviar');
+					// console.log('Deve enviar');
 					await actuallySendMessages(parametersRules, types, notification, recipient, test);
 				}
 			}
