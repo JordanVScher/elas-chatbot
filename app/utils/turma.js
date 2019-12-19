@@ -1,5 +1,6 @@
 const { turma } = require('../server/models');
 const help = require('./helper');
+const { updateNotificationTurma } = require('./admin_menu/admin_helper');
 
 // relation of keys from the spreadsheet and the model attributes
 const turmaMap = {
@@ -48,7 +49,7 @@ async function buildUpdateQuery(newData, oldData) {
 
 	Object.keys(newData).forEach((element) => {
 		if (newData[element] !== 'ignore_me' && newData[element].toString() !== oldData[element].toString()) {
-			result[element] = newData[element].toString().trim();
+			result[element] = newData[element];
 		}
 	});
 
@@ -81,13 +82,14 @@ async function updateTurmas() {
 						if (created) { return created; }
 						return data.dataValues; // if a new turma wasn't created we might have to update it, so return it
 					}).catch((err) => help.sentryError('turma findOrCreate', err));
-
 					if (found.id) { // we might need to update it
 						const updateQuery = await buildUpdateQuery(query, found);
-						console.log('updateQuery', updateQuery);
 						if (updateQuery) {
 							const update = await turma.update(updateQuery, { where: { id: found.id } }).then((res) => res).catch((err) => help.sentryError('turma update', err));
 							if (update) { results.push(`Linha ${i + 1 + offset} atualizada!`); }
+							if (typeof updateQuery.inCompany === 'boolean') { // if this element exists, the type of turma has been updated and we need to update the notifications
+								await updateNotificationTurma(found.id);
+							}
 						}
 					} else if (found === true) { results.push(`Linha ${i + 1 + offset} adicionada!`); }
 				} else { results.push(`Erro na linha ${i + 1 + offset}. Falta preencher algum dado.`); }

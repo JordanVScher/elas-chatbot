@@ -283,6 +283,35 @@ async function putColumnsLast(lines, columns) {
 	return lines;
 }
 
+// Turma was updated and changed types, every notification from this turma gets turned off with an error msg
+// Every aluno and indicado from the turma get new notifications
+async function updateNotificationTurma(turmaID) {
+	const inCompany = await db.getTurmaInCompany(turmaID);
+
+	let msg = '';
+	if (inCompany === true) {
+		msg = 'Turma changed type from regular turma to In Company';
+	} else {
+		msg = 'Turma changed type from In Company to regular turma';
+	}
+
+	const turmaNotifications = await notificationQueue.findAll({ where: { turma_id: turmaID, error: null, sent_at: null }, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em notificationQueue.findAll', err));
+	for (let i = 0; i < turmaNotifications.length; i++) {
+		const n = turmaNotifications[i];
+		notificationQueue.update({ error: { msg } }, { where: { id: n.id } })
+			.then((rowsUpdated) => rowsUpdated).catch((err) => help.sentryError('Erro no update do notificationQueue-turma', err));
+	}
+
+	const turmaAlunos = await alunos.findAll({ where: { turma_id: turmaID }, raw: true }).then((r) => r).catch((err) => help.sentryError('Erro no findAll do alunos', err));
+
+	for (let i = 0; i < turmaAlunos.length; i++) {
+		const a = turmaAlunos[i];
+		await queue.addNewNotificationAlunas(a.id, turmaID);
+		await queue.addNewNotificationIndicados(a.id, turmaID);
+	}
+}
+
+
 module.exports = {
 	buildCSV,
 	getJsonFromURL,
@@ -295,4 +324,5 @@ module.exports = {
 	...CSVFormat,
 	checkReceivedFile,
 	updateNotificationIndicados,
+	updateNotificationTurma,
 };
