@@ -364,6 +364,7 @@ module.exports = async (context) => {
 		const date = new Date();
 		const errorMsg = `Parece que aconteceu um erro as ${date.toLocaleTimeString('pt-BR')} de ${date.getDate()}/${date.getMonth() + 1} com ${context.session.user.name} => \n${error.stack}`;
 		if (process.env.ENV !== 'local') await sendHTMLMail(`Erro no bot do ELAS - ${process.env.ENV || ''}`, process.env.MAILDEV, errorMsg);
+		console.log('errorMsg', errorMsg);
 		await help.Sentry.configureScope(async (scope) => { // sending to sentry
 			scope.setUser({ username: context.session.user.first_name });
 			scope.setExtra('state', context.state);

@@ -166,6 +166,7 @@ async function NotificationChangeTurma(alunaID, oldTurmaID, newturmaID) {
 	}
 }
 
+// from the CSV, adds notification for new indicados and updates status of familiar notifications
 async function updateNotificationIndicados(indicados) {
 	try {
 		for (let i = 0; i < indicados.length; i++) {
@@ -174,22 +175,22 @@ async function updateNotificationIndicados(indicados) {
 			const userNotifications = await notificationQueue.findAll({ where: { indicado_id: indicado.id }, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em notificationQueue.findAll', err));
 			const turmaID = await db.getTurmaIdFromAluno(indicado.aluno_id);
 
+			// load the correct notification rules, based on the In Company turma status
 			const inCompany = await db.getTurmaInCompany(turmaID);
-			const familiarType = inCompany ? 28 : 12;
+			const familiarType = inCompany ? 28 : 12; // the type_id of the familiar notification
 			let rulesIndicados = await buildNotificationRules(inCompany);
-			rulesIndicados = await rulesIndicados.filter((x) => x.indicado === true);
+			rulesIndicados = await rulesIndicados.filter((x) => x.indicado === true); // only rules for indicados
 
 			for (let j = 0; j < rulesIndicados.length; j++) {
 				const rule = rulesIndicados[j];
-
 				const foundNotification = await userNotifications.find((x) => x.notification_type === rule.notification_type);
-				if (!foundNotification && turmaID) { // add notification only when it doesnt exist, even if user wasnt familiar before
+				if (!foundNotification && turmaID) { // add new notification only when it doesnt exist, even if user wasnt familiar before
 					await queue.addAvaliadorOnQueue(rule, indicado, turmaID);
 				}
 			}
 
 			if (indicado.familiar !== true) { // if user is no longer familiar we update the error column
-				// obs: postgresql wont update a collumn that doesnt exist so we won't "update" the notification of an user that wasnt a familiar in the first place
+				// obs: postgresql wont update a column that doesnt exist so we won't "update" the notification of an user that wasnt a familiar in the first place
 				await db.updateIndicadoNotification(indicado.id, familiarType, 'Não é mais familiar, foi atualizado no csv do admin');
 			} else if (indicado.familiar === true) {
 				await db.updateIndicadoNotification(indicado.id, familiarType, null);

@@ -186,7 +186,7 @@ module.exports.receiveCSVAluno = async (csvLines, chatbotUserId, pageToken) => {
 				element.turma_id = element.Turma ? element.Turma.id : false; // get that turma id
 			} // convert turma as name to turma as id
 			if (element.Turma && element.turma_id) { // check valid turma
-				element = await admin.convertCSVToDB(element, await admin.swap(admin.alunaCSV));
+				element = await admin.convertCSVToDB(element, admin.swap(admin.alunaCSV));
 				if (element.nome_completo) { // check if aluno has the bare minumium to be added to the database
 					element.cpf = await help.getCPFValid(element.cpf); // format cpf
 					if (!element.cpf) {

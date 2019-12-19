@@ -51,7 +51,7 @@ async function getMissingDataAvaliadoresCSV(element) {
 	return missing.join(', ').replace(/,(?=[^,]*$)/, ' e');
 }
 
-async function swap(json) {
+function swap(json) {
 	const ret = {};
 	for (const key in json) { // eslint-disable-line
 		ret[json[key]] = key;
