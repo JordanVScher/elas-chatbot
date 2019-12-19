@@ -119,7 +119,7 @@ module.exports.removerAluna = async (context) => {
 		await context.sendText(flow.adminMenu.removerAlunaFim.erro.replace('<NOME>', context.state.adminAlunaFound.nome_completo.trim()).replace('<TURMA>', context.state.adminAlunaFound.turma), await attach.getQR(flow.adminMenu.removerAlunaFim));
 	} else {
 		if (context.state.adminAlunaFound.email) await warnAlunaRemocao(context.state.adminAlunaFound);
-		await admin.NotificationChangeTurma(context.state.adminAlunaFound.id, null);
+		await admin.NotificationChangeTurma(context.state.adminAlunaFound.id, context.state.adminAlunaFound.turma_id, null);
 		await admin.SaveTurmaChange(
 			context.state.chatbotData.user_id, context.state.chatbotData.fb_access_token, context.state.adminAlunaFound.id, context.state.adminAlunaFound.turma_id, null,
 		);
@@ -186,7 +186,7 @@ module.exports.receiveCSVAluno = async (csvLines, chatbotUserId, pageToken) => {
 				element.turma_id = element.Turma ? element.Turma.id : false; // get that turma id
 			} // convert turma as name to turma as id
 			if (element.Turma && element.turma_id) { // check valid turma
-				element = await admin.convertCSVToDB(element, admin.swap(admin.alunaCSV));
+				element = await admin.convertCSVToDB(element, await admin.swap(admin.alunaCSV));
 				if (element.nome_completo) { // check if aluno has the bare minumium to be added to the database
 					element.cpf = await help.getCPFValid(element.cpf); // format cpf
 					if (!element.cpf) {
@@ -210,7 +210,7 @@ module.exports.receiveCSVAluno = async (csvLines, chatbotUserId, pageToken) => {
 							if (newAluno.email === newAluno.contato_emergencia_email) {
 								errors.push({ line: i + 2, msg: `Contato de emergência tem o mesmo e-mail da aluna ${newAluno.nome_completo}: ${newAluno.contato_emergencia_email}`, ignore: true });
 							}
-							await admin.NotificationChangeTurma(newAluno.id, element.turma_id);
+							await admin.NotificationChangeTurma(newAluno.id, oldAluno.turma_id, element.turma_id);
 						}
 					}
 				} else {
@@ -329,7 +329,7 @@ module.exports.mudarAskTurma = async (context, pageToken) => {
 		const transferedAluna = await alunos.update({ turma_id: validTurma }, { where: { cpf: context.state.adminAlunaFound.cpf } }).then(() => true).catch((err) => sentryError('Erro em mudarAskTurma update', err));
 		if (transferedAluna) {
 			const turmaNome = await db.getTurmaName(validTurma);
-			await admin.NotificationChangeTurma(context.state.adminAlunaFound.id, validTurma);
+			await admin.NotificationChangeTurma(context.state.adminAlunaFound.id, context.state.adminAlunaFound.turma_id, validTurma);
 			await admin.SaveTurmaChange(context.state.chatbotData.user_id, pageToken, context.state.adminAlunaFound.id, context.state.adminAlunaFound.turma_id, validTurma);
 			await context.sendText(flow.adminMenu.mudarTurma.transferComplete.replace('<TURMA>', turmaNome));
 			const count = await alunos.count({ where: { turma_id: validTurma } })

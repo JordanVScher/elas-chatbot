@@ -5,8 +5,7 @@ const { csv2json } = require('csvjson-csv2json');
 const help = require('../helper');
 const CSVFormat = require('./CSV_format');
 const db = require('./../DB_helper');
-const { addNewNotificationAlunas } = require('./../notificationAddQueue');
-const { addAvaliadorOnQueue } = require('./../notificationAddQueue');
+const queue = require('./../notificationAddQueue');
 const notificationQueue = require('../../server/models').notification_queue;
 const turmaChangelog = require('../../server/models').aluno_turma_changelog;
 const { turma } = require('../../server/models');
@@ -119,23 +118,51 @@ async function SaveTurmaChange(politicianID, pageToken, alunaID, turmaOriginal, 
 	}
 }
 
-
 // updates (or creates) notifications in queue when the aluna changes the turma
-async function NotificationChangeTurma(alunaID, turmaID) {
-	try {
-		const userNotifications = await notificationQueue.findAll({ where: { aluno_id: alunaID }, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em notificationQueue.findAll', err));
-		if ((!userNotifications || userNotifications.length === 0) && turmaID) {
-			await addNewNotificationAlunas(alunaID, turmaID);
+async function NotificationChangeTurma(alunaID, oldTurmaID, newturmaID) {
+	// check if aluno was on a regular turma and was transered to in company or the opposite
+	const oldInCompany = await db.getTurmaInCompany(oldTurmaID);
+	const newInCompany = await db.getTurmaInCompany(newturmaID);
+
+	if (oldInCompany === newInCompany || !newturmaID || !oldTurmaID) { // aluna didnt change turma type or aluna was removed (newturmaID || oldTurmaID = null)
+		const userNotifications = await notificationQueue.findAll({ where: { aluno_id: alunaID, error: null, sent_at: null }, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em notificationQueue.findAll', err));
+		if ((!userNotifications || userNotifications.length === 0) && newturmaID) { // if aluna doesnt have any notification to be sent we add them in like normal
+			await queue.addNewNotificationAlunas(alunaID, newturmaID);
+			await queue.addNewNotificationIndicados(alunaID, newturmaID);
 		} else {
-			userNotifications.forEach((notification) => { // update notification only when it hasnt already been sent and the turma differs
-				if ((!notification.sent_at && !notification.error) && notification.turma_id !== turmaID) {
-					notificationQueue.update({ turma_id: turmaID }, { where: { id: notification.id } })
+			userNotifications.forEach((n) => { // update notification only when it hasnt already been sent and the turma differs
+				if ((!n.error && !n.sent_at) && n.turma_id !== newturmaID) { // simply update the turma_id of the ones that havent been sent yet
+					let error = null;
+					if (!newturmaID) { error = { msg: 'Removida da turma' }; }
+					notificationQueue.update({ turma_id: newturmaID, error }, { where: { id: n.id } })
 						.then((rowsUpdated) => rowsUpdated).catch((err) => help.sentryError('Erro no update do notificationQueue', err));
 				}
 			});
 		}
-	} catch (error) {
-		help.Sentry.captureMessage('Erro no NotificationChangeTurma!', error);
+	} else { // aluna changed type of turma!
+		const userNotifications = await notificationQueue.findAll({ where: { aluno_id: alunaID, error: null, sent_at: null }, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em notificationQueue.findAll', err));
+		if ((!userNotifications || userNotifications.length === 0) && newturmaID) { // if aluna doesnt have any notifications we add them in like normal
+			await queue.addNewNotificationAlunas(alunaID, newturmaID);
+			await queue.addNewNotificationIndicados(alunaID, newturmaID);
+		} else {
+			let shouldAdd = true;
+			for (let i = 0; i < userNotifications.length; i++) {
+				const n = userNotifications[i]; // update notification only when it hasnt already been sent and the turma differs, adding an error msg
+				if ((!n.error && !n.sent_at) && n.turma_id !== newturmaID) { // which turns OFF notification of the older turma
+					notificationQueue.update({ error: { msg: `User changed from ${oldInCompany ? '"in company"' : '"regular turma"'} to ${newInCompany ? '"in company"' : '"regular turma"'}` } }, { where: { id: n.id } })
+						.then((rowsUpdated) => rowsUpdated).catch((err) => help.sentryError('Erro no update do notificationQueue', err));
+				}
+
+				// after "turning off" the notifications from the older turma, we must add all notifications for the newer turma
+				if ((!n.error && !n.sent_at) && n.turma_id === newturmaID) { // if we find at least one notification from the new turma that hasn't been sent
+					shouldAdd = false; // DONT add new notification for the newer turma
+				}
+			}
+			if (shouldAdd) {
+				await queue.addNewNotificationAlunas(alunaID, newturmaID);
+				await queue.addNewNotificationIndicados(alunaID, newturmaID);
+			}
+		}
 	}
 }
 
@@ -156,8 +183,8 @@ async function updateNotificationIndicados(indicados) {
 				const rule = rulesIndicados[j];
 
 				const foundNotification = await userNotifications.find((x) => x.notification_type === rule.notification_type);
-				if (!foundNotification && turmaID) { // add notification every only when it doesnt exist, even if user wasnt familiar before
-					await addAvaliadorOnQueue(rule, indicado, turmaID);
+				if (!foundNotification && turmaID) { // add notification only when it doesnt exist, even if user wasnt familiar before
+					await queue.addAvaliadorOnQueue(rule, indicado, turmaID);
 				}
 			}
 

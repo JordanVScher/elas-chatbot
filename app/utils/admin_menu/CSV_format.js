@@ -51,7 +51,7 @@ async function getMissingDataAvaliadoresCSV(element) {
 	return missing.join(', ').replace(/,(?=[^,]*$)/, ' e');
 }
 
-function swap(json) {
+async function swap(json) {
 	const ret = {};
 	for (const key in json) { // eslint-disable-line
 		ret[json[key]] = key;
@@ -69,10 +69,10 @@ const alunaCSV = {
 	rg: 'RG',
 	endereco: 'Endereço',
 	data_nascimento: 'Data de Nascimento',
-	contato_emergencia_nome: 'Nome Contado de Emergência',
-	contato_emergencia_email: 'E-mail do Contado',
-	contato_emergencia_fone: 'Telefone do Contado',
-	contato_emergencia_relacao: 'Relação com Contado',
+	contato_emergencia_nome: 'Nome Contato de Emergência',
+	contato_emergencia_email: 'E-mail do Contato',
+	contato_emergencia_fone: 'Telefone do Contato',
+	contato_emergencia_relacao: 'Relação com Contato',
 };
 
 const avaliadorCSV = {
