@@ -246,10 +246,10 @@ async function checkShouldSendNotification(notification, moduleDates, today, not
 	const ourTurma = moduleDates.find((x) => x.id === notification.turma_id); // turma for this notification
 	if (!ourTurma) return false;
 	let currentRule = ''; // depends on the notification_type, rule for the notification (and module)
-	if (notification.notification_type === 15) {
+	if ([15, 31].includes(notification.notification_type)) {
 		const currentModule = await findCurrentModulo(moduleDates, today);
 		currentRule = await notificationRules.find((x) => x.notification_type === notification.notification_type && x.modulo === currentModule);
-	} else if (notification.notification_type === 16) {
+	} else if ([16, 32].includes(notification.notification_type)) {
 		const currentModule = await findCurrentModulo(moduleDates, today);
 		let sunday = false;
 		if (today.getDay() === 0) { sunday = true; }
@@ -284,7 +284,7 @@ async function checkShouldSendNotification(notification, moduleDates, today, not
 	}
 
 	// ignore hours for most notifications
-	if (notification.notification_type !== 15 && notification.notification_type !== 16) {
+	if ([15, 16, 31, 32].includes(notification.notification_type) !== true) {
 		max.setHours(0, 0, 0, 0);
 		min.setHours(0, 0, 0, 0);
 		today.setHours(0, 0, 0, 0);
@@ -485,6 +485,7 @@ async function sendNotificationFromQueue(test = false) {
 	}
 }
 
+sendNotificationFromQueue(true);
 module.exports = {
 	checkShouldSendRecipient,
 	checkShouldSendNotification,
