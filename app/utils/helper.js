@@ -150,7 +150,7 @@ async function reloadSpreadSheet(worksheet, headerStart) {
 async function getFormatedSpreadsheet() {
 	const result = [];
 	const spreadsheet = await reloadSpreadSheet(0, 6) || []; // console.log('spreadsheet', spreadsheet); // load spreadsheet
-	if (spreadsheet) { sentryError('Couldnt load spreadsheet', spreadsheet); return []; }
+	if (!spreadsheet) { sentryError('Couldnt load spreadsheet', spreadsheet); return []; }
 	for (let i = 0; i < spreadsheet.length; i++) {
 		const obj = spreadsheet[i];
 		const aux = {};
