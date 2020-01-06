@@ -30,6 +30,16 @@ async function getJsDateFromExcel(excelDate) {
 	return date;
 }
 
+async function sentryError(msg, err) {
+	console.log(msg, err || '');
+	if (process.env.ENV !== 'local') {
+		Sentry.captureMessage(msg);
+		await sendHTMLMail(`Erro no bot do ELAS - ${process.env.ENV || ''}`, process.env.MAILDEV, `${msg || ''}\n\n${err}`);
+		console.log('Error sent!\n');
+	}
+	return false;
+}
+
 async function capQR(text) {
 	let s = text;
 	if (s.length > 20) {
@@ -140,7 +150,7 @@ async function reloadSpreadSheet(worksheet, headerStart) {
 async function getFormatedSpreadsheet() {
 	const result = [];
 	const spreadsheet = await reloadSpreadSheet(0, 6) || []; // console.log('spreadsheet', spreadsheet); // load spreadsheet
-
+	if (spreadsheet) { sentryError('Couldnt load spreadsheet', spreadsheet); return []; }
 	for (let i = 0; i < spreadsheet.length; i++) {
 		const obj = spreadsheet[i];
 		const aux = {};
@@ -164,7 +174,6 @@ async function getFormatedSpreadsheet() {
 
 	return result;
 }
-
 
 // separates string in the first dot on the second half of the string
 async function separateString(someString) {
@@ -218,17 +227,6 @@ function buildAlunaMsg(aluna) {
 	}
 
 	return result;
-}
-
-
-async function sentryError(msg, err) {
-	console.log(msg, err || '');
-	if (process.env.ENV !== 'local') {
-		Sentry.captureMessage(msg);
-		await sendHTMLMail(`Erro no bot do ELAS - ${process.env.ENV || ''}`, process.env.MAILDEV, `${msg || ''}\n\n${err}`);
-		console.log('Error sent!\n');
-	}
-	return false;
 }
 
 const indicacaoErro = {
