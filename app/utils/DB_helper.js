@@ -384,16 +384,18 @@ async function getAlunaFromFBID(FBID) {
 	return aluna;
 }
 
-async function updateAtividade(userID, column, answered) {
+async function updateAtividade(userID, column, answers) {
+	let answer = answers;
+	if (typeof answer === 'object' && answer !== null) { answer = JSON.stringify(answers); }
+
 	let date = new Date();
 	date = await moment(date).format('YYYY-MM-DD HH:mm:ss');
-
 	await sequelize.query(`
 	INSERT INTO "alunos_respostas" (aluno_id, ${column}, created_at, updated_at)
-	VALUES ('${userID}', '${answered}', '${date}', '${date}')
+	VALUES ('${userID}', '${answer}', '${date}', '${date}')
 	ON CONFLICT (aluno_id)
   DO UPDATE
-		SET aluno_id = '${userID}', ${column} = '${answered}', updated_at = '${date}';;
+		SET aluno_id = '${userID}', ${column} = '${answer}', updated_at = '${date}';;
 	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
 		console.log(`Added ${userID}'s ${column} successfully!`);
 	}).catch((err) => { sentryError('Erro em updateAtividade =>', err); });
@@ -495,7 +497,8 @@ async function getAlunasRespostasReport(turma) {
 	const result = await sequelize.query(`
 	SELECT RESPOSTA.id as "RESPOSTA ID", ALUNO.nome_completo as "Nome Completo", ALUNO.cpf as "ALUNA CPF", ALUNO.email as "ALUNA E-MAIL",
 	RESPOSTA.pre as "Sondagem Pré", RESPOSTA.pos as "Sondagem Pós", RESPOSTA.atividade_1 as "Cadastro",
-	RESPOSTA.atividade_modulo1 as "Avaliação Módulo 1", RESPOSTA.atividade_modulo2 as "Avaliação Módulo 2", RESPOSTA.atividade_modulo3 as "Avaliação Módulo 3"
+	RESPOSTA.atividade_modulo1 as "Avaliação Módulo 1X", RESPOSTA.atividade_modulo2 as "Avaliação Módulo 2X", RESPOSTA.atividade_modulo3 as "Avaliação Módulo 3X",
+	RESPOSTA.avaliacao_modulo1 as "Avaliação Módulo 1", RESPOSTA.avaliacao_modulo2 as "Avaliação Módulo 2", RESPOSTA.avaliacao_modulo3 as "Avaliação Módulo 3"
 	FROM alunos_respostas RESPOSTA
 	LEFT JOIN alunos ALUNO ON ALUNO.id = RESPOSTA.aluno_id
 	WHERE ALUNO.turma_id = '${turma}'

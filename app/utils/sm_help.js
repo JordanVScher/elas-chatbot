@@ -139,10 +139,32 @@ async function replaceChoiceId(answers, map, surveyID) {
 	return result;
 }
 
-async function handleAtividade(response, column) {
+async function buildPseudoMap(surveyID) {
+	const details = await smAPI.getSurveyDetails(surveyID);
+	const results = [];
+	details.pages.forEach((page) => {
+		page.questions.forEach((question) => {
+			if (question.answers && question.answers.rows) {
+				question.answers.rows.forEach((answer) => {
+					results.push({ questionID: answer.id, dropdown: question.id, paramName: answer.text });
+				});
+			} else if (question.headings[0] && question.headings[0].heading) {
+				results.push({ questionID: question.id, paramName: question.headings[0].heading });
+			}
+		});
+	});
+
+	return results;
+}
+
+async function handleAvaliacao(response, column) {
+	const map = await buildPseudoMap(response.survey_id);
+	let answers = await getSpecificAnswers(map, response.pages);
+	answers = await replaceChoiceId(answers, map, response.survey_id);
+	answers = await addCustomParametersToAnswer(answers, response.custom_variables);
 	const aluno = await db.getAluno(response.custom_variables.cpf);
 	if (aluno) {
-		await db.updateAtividade(aluno.id, column, true);
+		await db.updateAtividade(aluno.id, column, answers);
 	}
 }
 
@@ -206,7 +228,6 @@ async function separateAnswer(respostas, elementos) {
 }
 
 async function handleIndicacao(response) {
-	// console.log('custom_variables', response.custom_variables);
 	const errors = [];
 	const baseAnswers = await formatAnswers(response.pages[0].questions);
 	const aluna = await db.getAluno(response.custom_variables.cpf);
@@ -252,7 +273,7 @@ async function handleIndicacao(response) {
 	let answers = indicacao.concat(familiar);
 	answers = await addCustomParametersToAnswer(answers, response.custom_variables);
 
-	await db.updateAtividade(aluna.id, 'atividade_indicacao', JSON.stringify(answers));
+	await db.updateAtividade(aluna.id, 'atividade_indicacao', answers);
 	if (errors && errors.length > 0) {
 		const eMailToSend = await getMailAdmin(aluna.turma);
 		const eMailText = await getIndicacaoErrorText(errors, aluna);
@@ -292,8 +313,9 @@ async function handleAvaliador(response, column, map) {
 
 // what to do with the form that was just answered
 async function newSurveyResponse(event) {
-	console.log('newSurveyResponse', event);
-	const responses = await smAPI.getResponseWithAnswers(event.filter_id, event.object_id); console.log('responses', JSON.stringify(responses, null, 2)); // get details of the event
+	console.log('newSurveyResponse', JSON.stringify(event, null, 2));
+	const responses = await smAPI.getResponseWithAnswers(event.filter_id, event.object_id);
+	console.log('responses', JSON.stringify(responses, null, 2)); // get details of the event
 	switch (responses.survey_id) { // which survey was answered?
 	case surveysInfo.sondagemPre.id:
 		await handleSondagem(responses, 'pre', surveysMaps.sondagemPre);
@@ -304,17 +326,14 @@ async function newSurveyResponse(event) {
 	case surveysInfo.atividade1.id:
 		await handleAtividadeOne(responses);
 		break;
-	// case surveysInfo.atividade2.id:
-	// 	await handleAtividade(responses, 'atividade_2');
-	// 	break;
 	case surveysInfo.module1.id:
-		await handleAtividade(responses, 'atividade_modulo1');
+		await handleAvaliacao(responses, 'avaliacao_modulo1');
 		break;
 	case surveysInfo.module2.id:
-		await handleAtividade(responses, 'atividade_modulo2');
+		await handleAvaliacao(responses, 'avaliacao_modulo2');
 		break;
 	case surveysInfo.module3.id:
-		await handleAtividade(responses, 'atividade_modulo3');
+		await handleAvaliacao(responses, 'avaliacao_modulo3');
 		break;
 	case surveysInfo.indicacao360.id:
 		await handleIndicacao(responses);
@@ -326,7 +345,7 @@ async function newSurveyResponse(event) {
 		await handleAvaliador(responses, 'pos', surveysMaps.avaliacao360Pos);
 		break;
 	default:
-		console.log('Wrong ID', responses.survey_id);
+		await sentryError('Received unknown survey ID after answer!', responses);
 		break;
 	}
 }
