@@ -182,7 +182,7 @@ async function handleAtividadeOne(response) {
 
 		const newUser = await db.upsertAlunoCadastro(answers);
 		if (newUser && newUser.id) { // if everything went right we update a few things
-			await db.updateAtividade(newUser.id, 'atividade_1', true);
+			await db.updateAtividade(newUser.id, 'atividade_1', answers);
 			if (answers.pgid) await db.updateAlunoOnPagamento(answers.pgid, newUser.id);
 			await addQueue.addNewNotificationAlunas(newUser.id, newUser.turma_id);
 			await sendAlunaToAssistente(newUser.nome_completo, newUser.email, newUser.cpf, answers.turma);

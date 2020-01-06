@@ -210,6 +210,7 @@ async function formatRespostasCSV(lines, replament) {
 		if (line['Avaliação Módulo 1']) line['Avaliação Módulo 1'] = true;
 		if (line['Avaliação Módulo 2']) line['Avaliação Módulo 2'] = true;
 		if (line['Avaliação Módulo 3']) line['Avaliação Módulo 3'] = true;
+		if (line.Cadastro) line.Cadastro = true;
 
 		const newLine = {};
 		await Object.keys(line).forEach(async (element) => {
