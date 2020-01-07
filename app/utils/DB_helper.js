@@ -302,6 +302,7 @@ async function getIndicadoRespostasAnswerNull(alunoID, column) {
 	const indicado = await sequelize.query(`
 	SELECT
 			INDICADOS.id,
+			INDICADOS.nome,
 			RESPOSTAS.pre pre,
 			RESPOSTAS.pos pos
 	FROM

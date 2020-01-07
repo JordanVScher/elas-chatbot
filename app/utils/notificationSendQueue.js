@@ -61,6 +61,20 @@ async function replaceDataText(original, data, recipient) {
 	return text;
 }
 
+async function buildIndicadosLinks(alunaID, turma, column, link) {
+	const indicados = await DB.getIndicadoRespostasAnswerNull(alunaID, column);
+	if (!indicados || indicados.length === 0) return link;
+	let result = '';
+	for (let i = 0; i < indicados.length; i++) {
+		const e = indicados[i];
+		let aux = `${e.nome}:\n${link}`;
+		aux = aux.replace('IDRESPOSTA', e.id);
+		aux = aux.replace('TURMARESPOSTA', turma);
+		result += `\n${aux}\n`;
+	}
+	return result;
+}
+
 /*
 	fillMasks: checks which data is empty so that we can fill with dynamic data.
 	Used in the mail handlers below.
@@ -149,10 +163,10 @@ async function fillMasks(replaceMap, recipientData) {
 				newData = process.env.INDICACAO360_LINK;
 				break;
 			case 'AVALIADORPRE':
-				newData = process.env.AVALIADOR360PRE_LINK;
+				newData = await buildIndicadosLinks(recipientData.id, recipientData.turmaName, 'pre', process.env.AVALIADOR360PRE_LINK);
 				break;
 			case 'AVALIADORPOS':
-				newData = process.env.AVALIADOR360POS_LINK;
+				newData = await buildIndicadosLinks(recipientData.id, recipientData.turmaName, 'pos', process.env.AVALIADOR360POS_LINK);
 				break;
 			case 'AVALIACAO1':
 				newData = process.env.MODULO1_LINK;
@@ -328,9 +342,9 @@ async function checkShouldSendRecipient(recipient, notification) {
 		}
 
 		// these two notifications are for alunos only, check if any of their indicados havent answered the pre/pos quiz already
-		if (notification.notification_type === 4 || notification.notification_type === 11) {
-			const type = notification.notification_type === 4 ? 'pre' : 'pos';
-			const indicados = await DB.getIndicadoRespostasAnswerNull(120, type);
+		if ([4, 11, 20, 27].includes(notification.notification_type)) {
+			const column = [4, 20].includes(notification.notification_type) ? 'pre' : 'pos';
+			const indicados = await DB.getIndicadoRespostasAnswerNull(recipient.id, column);
 			if (!indicados || indicados.length === 0) {
 				return false;
 			}
@@ -492,7 +506,7 @@ async function sendNotificationFromQueue(test = false) {
 	}
 }
 
-sendNotificationFromQueue(true);
+
 module.exports = {
 	checkShouldSendRecipient,
 	checkShouldSendNotification,
