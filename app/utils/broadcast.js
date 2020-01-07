@@ -89,14 +89,6 @@ async function sendFiles(USER_ID, pdf, pdf2) {
 				});
 			if (!error.pdf2) { console.log('sent resPdf2');	}
 		}
-		// if (png) {
-		// 	error.png = await client.sendFile(USER_ID, png.content, { filename: png.filename })
-		// 		.then((resp) => false).catch((err) => { // eslint-disable-line no-unused-vars
-		// 			if (err.stack) { console.log(err.stack); return err.stack; }
-		// 			console.log(err); return err;
-		// 		});
-		// 	if (!error.png) { console.log('sent resPng'); }
-		// }
 
 		if (error.pdf || error.pdf2) { return JSON.stringify(error); }
 		return false;

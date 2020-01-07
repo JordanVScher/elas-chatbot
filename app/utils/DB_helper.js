@@ -298,6 +298,24 @@ async function getIndicadoRespostas(cpf) {
 	return indicado;
 }
 
+async function getIndicadoRespostasAnswerNull(alunoID, column) {
+	const indicado = await sequelize.query(`
+	SELECT
+			INDICADOS.id,
+			RESPOSTAS.pre pre,
+			RESPOSTAS.pos pos
+	FROM
+			alunos ALUNOS INNER JOIN indicacao_avaliadores INDICADOS ON ALUNOS.id = INDICADOS.aluno_id
+			INNER JOIN indicados_respostas RESPOSTAS ON RESPOSTAS.indicado_id = INDICADOS.id
+	WHERE ALUNOS.id = '${alunoID}' AND RESPOSTAS.${column} IS NULL;
+`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
+		console.log(`Got ${alunoID}'s respostas successfully!`);
+		return results || false;
+	}).catch((err) => { sentryError('Erro em getIndicadoRespostasWhereAnswerNull =>', err); });
+
+	return indicado;
+}
+
 // 3 booleans, each refine the search.
 // familiar = select only indicados that are familiar
 // preEmpty = if true, select only users that have answered pre already
@@ -613,6 +631,7 @@ module.exports = {
 	getAluno,
 	getAlunoRespostas,
 	getIndicadoRespostas,
+	getIndicadoRespostasAnswerNull,
 	getAlunasFromTurma,
 	getIndicadoFromAluna,
 	updateAlunoOnPagamento,

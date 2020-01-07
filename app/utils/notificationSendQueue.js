@@ -10,15 +10,13 @@ const { sentryError } = require('./helper');
 const mailer = require('./mailer');
 const broadcast = require('./broadcast');
 const charts = require('./charts');
-const { getModuloDates } = require('./DB_helper');
-const { getTurmaName } = require('./DB_helper');
-const { getTurmaInCompany } = require('./DB_helper');
+const DB = require('./DB_helper');
 const rules = require('./notificationRules');
 
 const { Op } = Sequelize;
 
 async function replaceCustomParameters(original, recipient) {
-	const alunaTurma = recipient.turmaName ? recipient.turmaName : await getTurmaName(recipient.turma_id);
+	const alunaTurma = recipient.turmaName ? recipient.turmaName : await DB.getTurmaName(recipient.turma_id);
 	const alunaCPF = recipient.cpf;
 	const indicadoID = recipient.id && recipient.aluno_id ? recipient.id : 0;
 	const customParamRules = [
@@ -198,7 +196,7 @@ async function getIndicado(id, moduleDates) {
 		.then((res) => res).catch((err) => sentryError('Erro ao carregar indicado', err));
 
 	if (result && result.email) {
-		if (result['aluna.turma_id']) { result.turmaName = await getTurmaName(result['aluna.turma_id']); }
+		if (result['aluna.turma_id']) { result.turmaName = await DB.getTurmaName(result['aluna.turma_id']); }
 		return extendRecipient(result, moduleDates, result['aluna.turma_id']);
 	}
 
@@ -210,7 +208,7 @@ async function getAluna(id, moduleDates) {
 		.then((res) => res).catch((err) => sentryError('Erro ao carregar aluno', err));
 
 	if (result && (result.email || result['chatbot.fb_id'])) {
-		if (result.turma_id) { result.turmaName = await getTurmaName(result.turma_id); }
+		if (result.turma_id) { result.turmaName = await DB.getTurmaName(result.turma_id); }
 		return extendRecipient(result, moduleDates, result.turma_id);
 	}
 
@@ -325,6 +323,15 @@ async function checkShouldSendRecipient(recipient, notification) {
 			if (answerPos && Object.entries(answerPos).length !== 0) { // if pos was already answered, there's no need to resend this notification
 				await notificationQueue.update({ error: { misc: 'Indicado já respondeu pós' } }, { where: { id: notification.id } })
 					.then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do erro check_answered & 10', err));
+				return false;
+			}
+		}
+
+		// these two notifications are for alunos only, check if any of their indicados havent answered the pre/pos quiz already
+		if (notification.notification_type === 4 || notification.notification_type === 11) {
+			const type = notification.notification_type === 4 ? 'pre' : 'pos';
+			const indicados = await DB.getIndicadoRespostasAnswerNull(120, type);
+			if (!indicados || indicados.length === 0) {
 				return false;
 			}
 		}
@@ -452,7 +459,7 @@ async function getRecipient(notification, moduleDates) {
 	return recipient;
 }
 async function sendNotificationFromQueue(test = false) {
-	const moduleDates = await getModuloDates();
+	const moduleDates = await DB.getModuloDates();
 	const today = new Date();
 
 	const queue = await notificationQueue.findAll({ where: { turma_id: { [Op.not]: null }, sent_at: null, error: null }, raw: true }) // eslint-disable-line
@@ -465,8 +472,8 @@ async function sendNotificationFromQueue(test = false) {
 	for (let i = 0; i < queue.length; i++) {
 		const notification = queue[i];
 		if (lastNotification.aluno_id !== notification.aluno_id || lastNotification.notification_type !== notification.notification_type) {
-			const turmaName = await getTurmaName(notification.turma_id);
-			const turmaInCompany = await getTurmaInCompany(notification.turma_id);
+			const turmaName = await DB.getTurmaName(notification.turma_id);
+			const turmaInCompany = await DB.getTurmaInCompany(notification.turma_id);
 			const regularRules = await rules.buildNotificationRules(turmaInCompany);
 			const notificationRules = await rules.getNotificationRules(turmaName, regularRules);
 			// console.log('await checkShouldSendNotification(notification, moduleDates, today, notificationRules',
