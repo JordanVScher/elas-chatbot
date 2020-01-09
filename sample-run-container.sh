@@ -10,7 +10,7 @@ export DOCKER_LAN_IP=$(ifconfig docker0 | grep 'inet addr:' | awk '{ split($2,a,
 # porta que sera feito o bind
 export LISTEN_PORT=2002
 
-docker run --name prep-chatbot \
+docker run --name elas-chatbot \
  -v $SOURCE_DIR:/src -v $DATA_DR:/data \
  -p $DOCKER_LAN_IP:$LISTEN_PORT:2700 \
  --cpu-shares=512 \
