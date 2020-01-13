@@ -210,7 +210,7 @@ module.exports.receiveCSVAluno = async (csvLines, chatbotUserId, pageToken) => {
 							if (newAluno.email === newAluno.contato_emergencia_email) {
 								errors.push({ line: i + 2, msg: `Contato de emergência tem o mesmo e-mail da aluna ${newAluno.nome_completo}: ${newAluno.contato_emergencia_email}`, ignore: true });
 							}
-							await admin.NotificationChangeTurma(newAluno.id, oldAluno.turma_id, element.turma_id);
+							if (oldAluno) await admin.NotificationChangeTurma(newAluno.id, oldAluno.turma_id, element.turma_id);
 						}
 					}
 				} else {
