@@ -98,13 +98,16 @@ async function sendFiles(USER_ID, pdf, pdf2) {
 }
 
 
+// for admin only
 async function sendWarning(csv) {
 	const quickReply = {
-		quick_replies: [{
-			content_type: 'text',
-			title: 'Voltar',
-			payload: 'mainMenu',
-		}],
+		quick_replies: [
+			{
+				content_type: 'text',
+				title: 'Voltar',
+				payload: 'adminMenu',
+			},
+		],
 	};
 
 	const adminUsers = await chatbotUsers.findAll({ where: { is_admin: true }, raw: true }).then((res) => res).catch((err) => sentryError('Erro em sendWarning.findAll', err));

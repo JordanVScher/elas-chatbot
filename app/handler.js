@@ -32,7 +32,7 @@ module.exports = async (context) => {
 		if (context.event.isPostback) {
 			await context.setState({ lastPBpayload: context.event.postback.payload });
 			if (context.state.lastPBpayload === 'teste') {
-				await context.setState({ dialog: 'adminMenu' });
+				// await context.setState({ dialog: 'adminMenu' });
 				// await context.setState({ dialog: 'sendFirst' });
 			} else {
 				await context.setState({ dialog: context.state.lastPBpayload });
@@ -47,6 +47,12 @@ module.exports = async (context) => {
 				await MaAPI.logAnsweredPoll(context.session.user.id, context.state.chatbotData.user_id, context.state.answer);
 				await context.sendText('Agradecemos sua resposta.');
 				await context.setState({ answer: '', dialog: 'mainMenu' });
+			} else if (context.state.lastQRpayload === 'adminMenu') {
+				if (await checkUserOnLabel(context.session.user.id, process.env.ADMIN_LABEL_ID)) {
+					await context.setState({ dialog: 'adminMenu' });
+				} else {
+					await context.sendText(flow.adminMenu.notAdmin); await context.setState({ dialog: 'greetings' });
+				}
 			} else {
 				await context.setState({ dialog: context.state.lastQRpayload });
 				await MaAPI.logFlowChange(context.session.user.id, context.state.chatbotData.user_id,
