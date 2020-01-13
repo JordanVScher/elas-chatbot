@@ -182,7 +182,7 @@ module.exports.receiveCSVAluno = async (csvLines, chatbotUserId, pageToken) => {
 		for (let i = 0; i < csvLines.length; i++) {
 			let element = csvLines[i];
 			if (element.Turma) {
-				element.Turma = await turmas.find((x) => (x.nome ? x.nome.toUpperCase() : x.nome === element.Turma.toUpperCase())); // find the turma that has that name
+				element.Turma = await turmas.find((x) => (x.nome.toUpperCase() === element.Turma.toUpperCase())); // find the turma that has that name
 				element.turma_id = element.Turma ? element.Turma.id : false; // get that turma id
 			} // convert turma as name to turma as id
 			if (element.Turma && element.turma_id) { // check valid turma
