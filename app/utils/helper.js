@@ -31,10 +31,13 @@ async function getJsDateFromExcel(excelDate) {
 }
 
 async function sentryError(msg, err) {
-	console.log(msg, err || '');
+	let erro = err;
+	if (typeof err === 'object' && err !== null) {
+		erro = JSON.stringify(err, null, 2);
+	}
 	if (process.env.ENV !== 'local') {
 		Sentry.captureMessage(msg);
-		await sendHTMLMail(`Erro no bot do ELAS - ${process.env.ENV || ''}`, process.env.MAILDEV, `${msg || ''}\n\n${err}`);
+		await sendHTMLMail(`Erro no bot do ELAS - ${process.env.ENV || ''}`, process.env.MAILDEV, `${msg || ''}\n\n${erro}`);
 		console.log('Error sent!\n');
 	}
 	return false;
