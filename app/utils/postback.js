@@ -59,7 +59,7 @@ async function buildMenu() { // eslint-disable-line
 
 async function checkUserOnLabel(UserID, labelID) { // checks if user is on the label
 	const userLabels = await client.getAssociatedLabels(UserID);
-	const theOneLabel = await userLabels.data.find(x => x.id === `${labelID}`); // find the one label with the same ID
+	const theOneLabel = await userLabels.data.find((x) => x.id === `${labelID}`); // find the one label with the same ID
 
 	if (theOneLabel) { // if we found the label on the user
 		return true;
@@ -70,7 +70,7 @@ async function checkUserOnLabel(UserID, labelID) { // checks if user is on the l
 async function getLabelID(labelName) {
 	const labelList = await client.getLabelList();
 
-	const theOneLabel = await labelList.data.find(x => x.name === `${labelName}`);
+	const theOneLabel = await labelList.data.find((x) => x.name === `${labelName}`);
 	if (theOneLabel && theOneLabel.id) { // check if label exists
 		return theOneLabel.id;
 	}
