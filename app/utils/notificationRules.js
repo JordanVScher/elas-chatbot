@@ -7,7 +7,7 @@ const turmaMap = {
 	dias: 'days',
 	horas: 'hours',
 	minutos: 'minutes',
-	lembrete: 'reminderDate',
+	'lembrete(dias)': 'reminderDate',
 	indicado: 'indicado',
 	familiar: 'familiar',
 	domingo: 'sunday',
