@@ -315,7 +315,7 @@ async function checkShouldSendNotification(notification, moduleDates, today, not
 
 async function checkShouldSendRecipient(recipient, notification) {
 	if (!recipient) { return false; }
-	if (notification.notification_type === 3 && notification.check_answered === true) {
+	if ([3, 19].includes(notification.notification_type) === true && notification.check_answered === true) {
 		const answerPre = recipient['respostas.pre'];
 		if (answerPre && Object.keys(answerPre)) { // if pre was already answered, there's no need to resend this notification
 			await notificationQueue.update({ error: { misc: 'Indicado já respondeu pré' } }, { where: { id: notification.id } })
@@ -324,7 +324,7 @@ async function checkShouldSendRecipient(recipient, notification) {
 		}
 	}
 
-	if (notification.notification_type === 10) { // if it's this type of notification, check if recipient has answered the pre-avaliacao
+	if ([10, 26].includes(notification.notification_type) === true) { // if it's this type of notification, check if recipient has answered the pre-avaliacao
 		const answerPre = recipient['respostas.pre'];
 		if (!answerPre || Object.entries(answerPre).length === 0) {
 			await notificationQueue.update({ error: { misc: 'Indicado não respondeu pré-avaliação' } }, { where: { id: notification.id } })
