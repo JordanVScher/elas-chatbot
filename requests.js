@@ -46,9 +46,10 @@ async function addLabel(req, res) {
 		if (securityToken !== process.env.SECURITY_TOKEN_MA) {
 			res.status(401); res.send('Unauthorized!');
 		} else {
-			const response = await linkUserToLabelByName(userID, labelName, pageToken, true);
+			const response = {};
+			response.facebook_label = await linkUserToLabelByName(userID, labelName, pageToken, true);
 			if (labelName === 'admin') {
-				await changeAdminStatus(userID, true);
+				response.database_label = await changeAdminStatus(userID, true);
 			}
 
 			res.status(200); res.send(response);
