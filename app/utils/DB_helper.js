@@ -619,18 +619,20 @@ async function getAllIndicadosFromAlunaID(alunoID) {
 	return result;
 }
 
-async function getAlunaRespostaCadastro(alunoID) {
+async function getAlunaRespostaCadastro(alunoCPF) {
 	const result = await sequelize.query(`
-	SELECT atividade_1 as cadastro FROM alunos_respostas WHERE aluno_id = '${alunoID}' LIMIT 1;
-	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
-		console.log(`Got getAlunaRespostaCadastro successfully!`);
+	SELECT RESPOSTAS.atividade_1 as "cadastro" 
+	FROM alunos_respostas AS RESPOSTAS 
+	LEFT JOIN alunos ALUNO ON ALUNO.id = RESPOSTAS.aluno_id
+	WHERE ALUNO.cpf = '${alunoCPF}' LIMIT 1;
+	`).spread((results) => {
+		console.log(`Got cadastro successfully!`);
 		return results;
-	}).catch((err) => { sentryError('Erro em getAlunasRespostasReport =>', err); });
-
+	}).catch((err) => { sentryError('Erro em getAlunaRespostaCadastro =>', err); });
 	if (!result || result.length === 0 || result.cadastro === null || result[0].cadastro === null ) {
 		return false;
 	}
-	return result[0].Cadastro;
+	return result[0].cadastro;
 }
 
 module.exports = {

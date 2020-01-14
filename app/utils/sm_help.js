@@ -182,9 +182,15 @@ async function handleAtividadeOne(response) {
 		answers = await replaceChoiceId(answers, surveysMaps.atividade1, response.survey_id);
 		answers = await addCustomParametersToAnswer(answers, response.custom_variables);
 		if (answers.cpf) { answers.cpf = await answers.cpf.replace(/[_.,-]/g, ''); }
+		if (response.custom_variables && response.custom_variables.cpf) { answers.cpf = response.custom_variables.cpf }; // cpf as a parameter overwrites cpf as an answer
+		const cadastroStatus = await db.getAlunaRespostaCadastro(answers.cpf);
+		if (cadastroStatus) {
+			sentryError('Aluna respondeu o cadastro novamente', { answers });
+			return false;
+		}
 		answers.added_by_admin = false; // user wasnt added by the admins
 		answers.turma_id = await db.getTurmaID(answers.turma);
-
+	
 		const newUser = await db.upsertAlunoCadastro(answers);
 		if (newUser && newUser.id) { // if everything went right we update a few things
 			await db.updateAtividade(newUser.id, 'atividade_1', answers);

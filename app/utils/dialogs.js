@@ -206,7 +206,7 @@ module.exports.receiveCSVAluno = async (csvLines, chatbotUserId, pageToken) => {
 							errors.push({ line: i + 2, msg: 'Erro ao salvar no banco' });
 							help.sentryError('Erro em receiveCSVAluno => Erro ao salvar no banco', { element });
 						} else {
-							const cadastroStatus = await db.getAlunaRespostaCadastro(newAluno.id); // check if aluno has answered the cadastro atividade already
+							const cadastroStatus = await db.getAlunaRespostaCadastro(newAluno.cpf); // check if aluno has answered the cadastro atividade already
 							if (!cadastroStatus) { await sendMatricula(element.Turma.nome, false, element.email, element.cpf); } // if not, send it with the new aluno cpf
 							if (newAluno.email === newAluno.contato_emergencia_email) {
 								errors.push({ line: i + 2, msg: `Contato de emergência tem o mesmo e-mail da aluna ${newAluno.nome_completo}: ${newAluno.contato_emergencia_email}`, ignore: true });
