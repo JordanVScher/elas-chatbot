@@ -273,7 +273,7 @@ async function getSameContatoEmailErrorText(aluna) {
 	if (aluna.contato_emergencia_fone) text += `\nTelefone: ${aluna.contato_emergencia_fone}`;
 	if (aluna.contato_emergencia_relacao) text += `\nRelação com Aluna: ${aluna.contato_emergencia_relacao}`;
 
-	text += '\n\nQualquer administrador pode arrumar isso atualizando o e-mail do contato na opção Inserir Alunas.';
+	text += '\n\nO e-mail pode ser alterado na opção Inserir Alunas por um administrador da Donna.';
 
 	return text;
 }

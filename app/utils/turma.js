@@ -99,5 +99,6 @@ async function updateTurmas() {
 
 	return { results, errors };
 }
+updateTurmas();
 
 module.exports = { updateTurmas };
