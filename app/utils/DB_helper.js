@@ -618,6 +618,20 @@ async function getAllIndicadosFromAlunaID(alunoID) {
 	return result;
 }
 
+async function getAlunaRespostaCadastro(alunoID) {
+	const result = await sequelize.query(`
+	SELECT atividade_1 as cadastro FROM alunos_respostas WHERE aluno_id = '${alunoID}' LIMIT 1;
+	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
+		console.log(`Got getAlunaRespostaCadastro successfully!`);
+		return results;
+	}).catch((err) => { sentryError('Erro em getAlunasRespostasReport =>', err); });
+
+	if (!result || result.length === 0 || result.cadastro === null || result[0].cadastro === null ) {
+		return false;
+	}
+	return result[0].Cadastro;
+}
+
 module.exports = {
 	upsertUser,
 	getAlunaFromCPF,
@@ -657,4 +671,5 @@ module.exports = {
 	getFBIDFromAlunaID,
 	removeAlunaFromTurma,
 	getAllIndicadosFromAlunaID,
+	getAlunaRespostaCadastro,
 };
