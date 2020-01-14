@@ -78,6 +78,7 @@ async function getTurmaName(turmaID) {
 }
 
 async function getTurmaInCompany(turmaID) {
+	if (!turmaID) return false;
 	const InCompany = await sequelize.query(`
 	SELECT in_company FROM turma where id = '${turmaID}';
 	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars

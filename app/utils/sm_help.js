@@ -22,13 +22,18 @@ async function sendAlunaToAssistente(name, email, cpf, turma) {
 }
 
 // after a payement happens we send an e-mail to the buyer with the matricula/atividade 1 form
-async function sendMatricula(turmaName, pagamentoID, buyerEmail) {
+async function sendMatricula(turmaName, pagamentoID, buyerEmail, cpf) {
 	try {
+		let link = surveysInfo.atividade1.link;
+		if (!pagamentoID) { link = link.replace('&pgid=PSIDRESPOSTA', ''); }
+		if (cpf) { link += '&cpf=CPFRESPOSTA';}
+
 		let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Matricula.html`, 'utf-8'); // prepare the e-mail
-		html = await html.replace(/<link_atividade>/g, surveysInfo.atividade1.link); // add link to mail template
+		html = await html.replace(/<link_atividade>/g, link); // add link to mail template
 		html = await html.replace(/TURMARESPOSTA/g, turmaName.trim()); // update the turma
 		html = await html.replace(/PSIDRESPOSTA/g, pagamentoID);
-		await mailer.sendHTMLMail(eMail.atividade1.assunto, buyerEmail, html);
+		html = await html.replace(/CPFRESPOSTA/g, cpf);
+			await mailer.sendHTMLMail(eMail.atividade1.assunto, buyerEmail, html);
 	} catch (error) { sentryError('Erro sendMatricula', error); }
 }
 
