@@ -625,14 +625,18 @@ async function getAlunaRespostaCadastro(alunoCPF) {
 	FROM alunos_respostas AS RESPOSTAS 
 	LEFT JOIN alunos ALUNO ON ALUNO.id = RESPOSTAS.aluno_id
 	WHERE ALUNO.cpf = '${alunoCPF}' LIMIT 1;
-	`).spread((results) => {
-		console.log(`Got cadastro successfully!`);
-		return results;
-	}).catch((err) => { sentryError('Erro em getAlunaRespostaCadastro =>', err); });
-	if (!result || result.length === 0 || result.cadastro === null || result[0].cadastro === null ) {
+	`).spread((r) => r).catch((err) => { sentryError('Erro em getAlunaRespostaCadastro =>', err); });
+	if (!result || result.length === 0 || result.cadastro === null || result[0].cadastro === null) {
 		return false;
 	}
 	return result[0].cadastro;
+}
+
+async function getWhatsappFromID(turmaID) {
+	const result = await sequelize.query(`
+	SELECT whatsapp FROM turma where id = ${turmaID}
+	`).spread((r) => (r && r[0] && r[0].whatsapp ? r[0].whatsapp : false)).catch((err) => { sentryError('Erro em getAlunaRespostaCadastro =>', err); });
+	return result;
 }
 
 module.exports = {
@@ -675,4 +679,5 @@ module.exports = {
 	removeAlunaFromTurma,
 	getAllIndicadosFromAlunaID,
 	getAlunaRespostaCadastro,
+	getWhatsappFromID,
 };

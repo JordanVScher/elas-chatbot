@@ -145,7 +145,7 @@ async function fillMasks(replaceMap, recipientData) {
 				newData = process.env.NUMBERWHATSAP;
 				break;
 			case 'GRUPOWHATS':
-				newData = await help.getTinyUrl(process.env.GRUPOWHATSAP);
+				newData = await help.getTinyUrl(await DB.getWhatsappFromID(recipientData.turma_id));
 				break;
 			case 'LINKDONNA':
 				newData = await help.getTinyUrl(process.env.LINK_DONNA);
@@ -506,7 +506,6 @@ async function sendNotificationFromQueue(test = false) {
 		lastNotification = notification;
 	}
 }
-
 
 module.exports = {
 	checkShouldSendRecipient,

@@ -24,16 +24,16 @@ async function sendAlunaToAssistente(name, email, cpf, turma) {
 // after a payement happens we send an e-mail to the buyer with the matricula/atividade 1 form
 async function sendMatricula(turmaName, pagamentoID, buyerEmail, cpf) {
 	try {
-		let link = surveysInfo.atividade1.link;
+		let { link } = surveysInfo.atividade1;
 		if (!pagamentoID) { link = link.replace('&pgid=PSIDRESPOSTA', ''); }
-		if (cpf) { link += '&cpf=CPFRESPOSTA';}
+		if (cpf) { link += '&cpf=CPFRESPOSTA'; }
 
 		let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Matricula.html`, 'utf-8'); // prepare the e-mail
 		html = await html.replace(/<link_atividade>/g, link); // add link to mail template
 		html = await html.replace(/TURMARESPOSTA/g, turmaName.trim()); // update the turma
 		html = await html.replace(/PSIDRESPOSTA/g, pagamentoID);
 		html = await html.replace(/CPFRESPOSTA/g, cpf);
-			await mailer.sendHTMLMail(eMail.atividade1.assunto, buyerEmail, html);
+		await mailer.sendHTMLMail(eMail.atividade1.assunto, buyerEmail, html);
 	} catch (error) { sentryError('Erro sendMatricula', error); }
 }
 
@@ -182,38 +182,38 @@ async function handleAtividadeOne(response) {
 		answers = await replaceChoiceId(answers, surveysMaps.atividade1, response.survey_id);
 		answers = await addCustomParametersToAnswer(answers, response.custom_variables);
 		if (answers.cpf) { answers.cpf = await answers.cpf.replace(/[_.,-]/g, ''); }
-		if (response.custom_variables && response.custom_variables.cpf) { answers.cpf = response.custom_variables.cpf }; // cpf as a parameter overwrites cpf as an answer
-		const cadastroStatus = await db.getAlunaRespostaCadastro(answers.cpf);
-		if (cadastroStatus) {
+		if (response.custom_variables && response.custom_variables.cpf) { answers.cpf = response.custom_variables.cpf; } // cpf as a parameter overwrites cpf as an answer
+		const cadastroStatus = await db.getAlunaRespostaCadastro(answers.cpf); // check if aluna has answered this questionario before
+		if (cadastroStatus) { // aluna can only answer this questionario once
 			sentryError('Aluna respondeu o cadastro novamente', { answers });
-			return false;
-		}
-		answers.added_by_admin = false; // user wasnt added by the admins
-		answers.turma_id = await db.getTurmaID(answers.turma);
-	
-		const newUser = await db.upsertAlunoCadastro(answers);
-		if (newUser && newUser.id) { // if everything went right we update a few things
-			await db.updateAtividade(newUser.id, 'atividade_1', answers);
-			if (answers.pgid) await db.updateAlunoOnPagamento(answers.pgid, newUser.id);
-			await addQueue.addNewNotificationAlunas(newUser.id, newUser.turma_id);
-			await sendAlunaToAssistente(newUser.nome_completo, newUser.email, newUser.cpf, answers.turma);
-			if (newUser.email === newUser.contato_emergencia_email) sameContatoEmail = true;
 		} else {
-			sentryError('Erro em no salvamento de cadastro', { answers, newUser });
-		}
+			answers.added_by_admin = false; // user wasnt added by the admins
+			answers.turma_id = await db.getTurmaID(answers.turma);
 
-		/* sending "Apresentação" mail */
-		let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Apresentar_Donna.html`, 'utf-8');
-		html = await html.replace('[nome]', answers.nome_completo); // add nome to mail template
-		html = await html.replace(/<link_donna>/g, process.env.LINK_DONNA); // add chatbot link to mail template
-		await mailer.sendHTMLMail(eMail.depoisMatricula.assunto, answers.email, html);
+			const newUser = await db.upsertAlunoCadastro(answers);
+			if (newUser && newUser.id) { // if everything went right we update a few things
+				await db.updateAtividade(newUser.id, 'atividade_1', answers);
+				if (answers.pgid) await db.updateAlunoOnPagamento(answers.pgid, newUser.id);
+				await addQueue.addNewNotificationAlunas(newUser.id, newUser.turma_id);
+				await sendAlunaToAssistente(newUser.nome_completo, newUser.email, newUser.cpf, answers.turma);
+				if (newUser.email === newUser.contato_emergencia_email) sameContatoEmail = true;
+			} else {
+				sentryError('Erro em no salvamento de cadastro', { answers, newUser });
+			}
 
-		if (sameContatoEmail) {
-			const eMailToSend = await getMailAdmin(answers.turma);
-			const eMailText = await getSameContatoEmailErrorText(newUser);
-			let html2 = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
-			html2 = await html2.replace('[CONTEUDO_MAIL]', eMailText);
-			await mailer.sendHTMLMail(`Alerta no cadastro da Aluna ${newUser.nome_completo}`, eMailToSend, html2);
+			/* sending "Apresentação" mail */
+			let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Apresentar_Donna.html`, 'utf-8');
+			html = await html.replace('[nome]', answers.nome_completo); // add nome to mail template
+			html = await html.replace(/<link_donna>/g, process.env.LINK_DONNA); // add chatbot link to mail template
+			await mailer.sendHTMLMail(eMail.depoisMatricula.assunto, answers.email, html);
+
+			if (sameContatoEmail) {
+				const eMailToSend = await getMailAdmin(answers.turma);
+				const eMailText = await getSameContatoEmailErrorText(newUser);
+				let html2 = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
+				html2 = await html2.replace('[CONTEUDO_MAIL]', eMailText);
+				await mailer.sendHTMLMail(`Alerta no cadastro da Aluna ${newUser.nome_completo}`, eMailToSend, html2);
+			}
 		}
 	} catch (error) {	sentryError('Erro em handleAtividadeOne', error); }
 }
