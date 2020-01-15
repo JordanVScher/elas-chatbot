@@ -366,10 +366,9 @@ async function buildAttachment(type, cpf, name) {
 	}
 
 	if (['13', '29'].includes(type.id.toString()) && cpf) {
-		const pdf = { filename: `${name}_360Results.pdf` };
-		const { content } = await charts.buildIndicadoChart(cpf); // actually path
-		pdf.content = content || false;
-
+		const pdf = { filename: `${name}_360Results.pdf` }; // avaliadores pdf
+		const content = await charts.buildIndicadoChart(cpf); // actually path, pass use the new filename
+		pdf.content = content ? content.filename : false;
 		if (pdf && pdf.content) {
 			result.mail.push({
 				filename: pdf.filename,
@@ -430,9 +429,11 @@ async function actuallySendMessages(types, notification, recipient, test = false
 
 	const newText = await replaceParameters(currentType, masks, recipient);
 	const attachment = await buildAttachment(currentType, recipient.cpf, recipient.nome_completo);
+	console.log('attachment', attachment);
 	const HasFeedbackMail = await verifyFeedbackMail(notification.notification_type, attachment);
 	const HasFeedbackChatbot = await verifyFeedbackChatbot(notification.notification_type, attachment);
 	const error = {};
+
 
 	if (newText.email_text && recipient.email && recipient.email.trim()) { // if there's an email to send, send it
 		if (HasFeedbackMail === true) {
