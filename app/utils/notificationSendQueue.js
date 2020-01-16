@@ -429,7 +429,6 @@ async function actuallySendMessages(types, notification, recipient, test = false
 
 	const newText = await replaceParameters(currentType, masks, recipient);
 	const attachment = await buildAttachment(currentType, recipient.cpf, recipient.nome_completo);
-	console.log('attachment', attachment);
 	const HasFeedbackMail = await verifyFeedbackMail(notification.notification_type, attachment);
 	const HasFeedbackChatbot = await verifyFeedbackChatbot(notification.notification_type, attachment);
 	const error = {};
