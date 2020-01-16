@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const Sentry = require('@sentry/node');
 const gsjson = require('google-spreadsheet-to-json');
 const accents = require('remove-accents');
@@ -5,6 +6,23 @@ const moment = require('moment');
 const pdf = require('html-pdf');
 const TinyURL = require('tinyurl');
 const { sendHTMLMail } = require('./mailer');
+
+const algorithm = process.env.CRYPTO_ALGORITHM;
+const password = process.env.CRYPTO_PASSWORD;
+
+function encrypt(text) {
+	const cipher = crypto.createCipher(algorithm, password);
+	let crypted = cipher.update(text, 'utf8', 'hex');
+	crypted += cipher.final('hex');
+	return crypted;
+}
+
+function decrypt(text) {
+	const decipher = crypto.createDecipher(algorithm, password);
+	let dec = decipher.update(text, 'hex', 'utf8');
+	dec += decipher.final('utf8');
+	return dec;
+}
 
 moment.locale('pt-BR');
 // Sentry - error reporting
@@ -375,4 +393,6 @@ module.exports = {
 	handleRequestAnswer,
 	buildRecipientObj,
 	cutName,
+	encrypt,
+	decrypt,
 };
