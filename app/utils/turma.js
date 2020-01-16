@@ -12,6 +12,7 @@ const turmaMap = {
 	datahora2: 'modulo2',
 	datahora3: 'modulo3',
 	inCompany: 'inCompany',
+	whatsapp: 'whatsapp',
 };
 
 async function handleInCompany(queryInput, aux) {
@@ -48,7 +49,7 @@ async function buildUpdateQuery(newData, oldData) {
 	const result = {};
 
 	Object.keys(newData).forEach((element) => {
-		if (newData[element] !== 'ignore_me' && newData[element].toString() !== oldData[element].toString()) {
+		if (newData[element] !== 'ignore_me' && ((!oldData[element] && newData[element]) || newData[element].toString() !== oldData[element].toString())) {
 			result[element] = newData[element];
 		}
 	});
