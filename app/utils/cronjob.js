@@ -11,10 +11,14 @@ const { getChatbotData } = require('../chatbot_api');
 const { sendHTMLMail } = require('./mailer');
 
 async function checkAPI() {
-	const res = await getChatbotData(process.env.PAGE_ID);
-	if (!res || !res.id) {
-		const txt = `Chatbot: Elas\n\nAmbiente: ${process.env.ENV}\n\nErro: A api do Assistente Cívico CAIU\n\nEndereço: ${process.env.MANDATOABERTO_API_URL}`;
-		if (process.env.ENV !== 'local') await sendHTMLMail(`ERRO - API do Assistente Cívico CAIU ${process.env.ENV}`, process.env.MAILDEV, txt);
+	try {
+		const res = await getChatbotData(process.env.PAGE_ID);
+		if (!res || !res.id) {
+			const txt = `Chatbot: Elas\n\nAmbiente: ${process.env.ENV}\n\nErro: A api do Assistente Cívico CAIU\n\nEndereço: ${process.env.MANDATOABERTO_API_URL}`;
+			if (process.env.ENV === 'local') await sendHTMLMail(`ERRO - API do Assistente Cívico CAIU ${process.env.ENV}`, process.env.MAILDEV, txt);
+		}
+	} catch (e) {
+		sentryError('Error on checkAPI', e);
 	}
 }
 
@@ -26,12 +30,8 @@ const sendMissingWarningCron = new CronJob(
 		} catch (error) {
 			await sentryError('Error on sendMissingWarningCron', error);
 		}
-	}, (() => {
-		console.log('Crontab sendMissingWarningCron stopped.');
-	}),
-	true, /* Starts the job right now (no need for MissionTimer.start()) */
-	'America/Sao_Paulo', false,
-	false, // runOnInit = true useful only for tests
+	}, (() => { console.log('Crontab sendMissingWarningCron stopped.'); }),
+	true, 'America/Sao_Paulo', false, false,
 );
 
 const sendWarningAlunasCron = new CronJob(
@@ -42,12 +42,8 @@ const sendWarningAlunasCron = new CronJob(
 		} catch (error) {
 			await sentryError('Error on sendWarningAlunasCron', error);
 		}
-	}, (() => {
-		console.log('Crontab sendWarningAlunasCron stopped.');
-	}),
-	true, /* Starts the job right now (no need for MissionTimer.start()) */
-	'America/Sao_Paulo', false,
-	false, // runOnInit = true useful only for tests
+	}, (() => { console.log('Crontab sendWarningAlunasCron stopped.'); }),
+	true, 'America/Sao_Paulo', false, false,
 );
 
 const sendNotificationCron = new CronJob(
@@ -58,12 +54,8 @@ const sendNotificationCron = new CronJob(
 		} catch (error) {
 			await sentryError('Error on sendNotificationFromQueue', error);
 		}
-	}, (() => {
-		console.log('Crontab sendNotificationCron stopped.');
-	}),
-	true, /* Starts the job right now (no need for MissionTimer.start()) */
-	'America/Sao_Paulo', false,
-	false, // runOnInit = true useful only for tests
+	}, (() => { console.log('Crontab sendNotificationCron stopped.'); }),
+	true, 'America/Sao_Paulo', false, false,
 );
 
 const updateTurmasCron = new CronJob(
@@ -74,12 +66,8 @@ const updateTurmasCron = new CronJob(
 		} catch (error) {
 			await sentryError('Error on updateTurmasCron', error);
 		}
-	}, (() => {
-		console.log('Crontab updateTurmas stopped.');
-	}),
-	true, /* Starts the job right now (no need for MissionTimer.start()) */
-	'America/Sao_Paulo', false,
-	false, // runOnInit = true useful only for tests
+	}, (() => { console.log('Crontab updateTurmas stopped.'); }),
+	true, 'America/Sao_Paulo', false, false,
 );
 
 const addPesquisasCron = new CronJob(
@@ -90,12 +78,8 @@ const addPesquisasCron = new CronJob(
 		} catch (error) {
 			await sentryError('Error on addPesquisasCron', error);
 		}
-	}, (() => {
-		console.log('Crontab addPesquisasCron stopped.');
-	}),
-	true, /* Starts the job right now (no need for MissionTimer.start()) */
-	'America/Sao_Paulo', false,
-	false, // runOnInit = true useful only for tests
+	}, (() => {	console.log('Crontab addPesquisasCron stopped.'); }),
+	true, 'America/Sao_Paulo', false, false,
 );
 
 const sendPesquisasCron = new CronJob(
@@ -106,12 +90,8 @@ const sendPesquisasCron = new CronJob(
 		} catch (error) {
 			await sentryError('Error on sendPesquisasCron', error);
 		}
-	}, (() => {
-		console.log('Crontab sendPesquisasCron stopped.');
-	}),
-	true, /* Starts the job right now (no need for MissionTimer.start()) */
-	'America/Sao_Paulo', false,
-	false, // runOnInit = true useful only for tests
+	}, (() => {	console.log('Crontab sendPesquisasCron stopped.'); }),
+	true,	'America/Sao_Paulo', false, false,
 );
 
 const checkAPICron = new CronJob(
@@ -122,14 +102,9 @@ const checkAPICron = new CronJob(
 		} catch (error) {
 			await sentryError('Error on checkAPICron', error);
 		}
-	}, (() => {
-		console.log('Crontab checkAPICron stopped.');
-	}),
-	true, /* Starts the job right now (no need for MissionTimer.start()) */
-	'America/Sao_Paulo', false,
-	false, // runOnInit = true useful only for tests
+	}, (() => { console.log('Crontab checkAPICron stopped.'); }),
+	true,	'America/Sao_Paulo', false, false,
 );
-
 
 async function cronLog() {
 	console.log(`Crontab sendNotificationCron is running? => ${sendNotificationCron.running}`);
