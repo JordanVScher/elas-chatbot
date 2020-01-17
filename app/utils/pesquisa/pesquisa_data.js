@@ -19,7 +19,11 @@ async function updateLinksObj(links, newLink) {
 
 	Object.keys(result).forEach((e) => {
 		if (!flag && !result[e]) {
-			result[e] = newLink;
+			result[e] = {
+				link: newLink,
+				date: new Date(),
+			};
+
 			flag = true;
 		}
 	});

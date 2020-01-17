@@ -1,5 +1,6 @@
 // pesquisa: for alunos in pesquisa, send message with links every PESQUISA_MONTHS months
 // everytime a pesquisa_broadcast is sent, the next date will be updated thanks to the increment on msgsEnviadas
+const { Op } = require('sequelize');
 const { readFileSync } = require('fs');
 const help = require('../helper');
 const flow = require('../flow');
@@ -31,6 +32,7 @@ async function checkSendPesquisa(today, pAluno) {
 	const dateToSendMoment = help.moment(dateToSend);
 
 	// if msgsEnviadas is the same length as the amount of links we have actually sent, there's no more more links to send
+	if (!pAluno.linksEnviados || !Object.values(pAluno.linksEnviados)) return false; // aluno NEEDS linksEnviados to be sent successfully, not only because of the verification below
 	const linksSent = Object.values(pAluno.linksEnviados);
 	if (pAluno.msgsEnviadas >= linksSent.length) return false;
 	if (todayMoment.diff(dateToSendMoment, 'days') >= 0) return true; // if today happens at or after the next date
@@ -44,8 +46,7 @@ async function checkSendPesquisa(today, pAluno) {
 async function getAlunosToSend(test) {
 	const alunosToSend = [];
 	const today = new Date();
-	const alunosMightSend = await pesquisa.findAll({ where: {}, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em getAlunosToSend.findAll', err));
-
+	const alunosMightSend = await pesquisa.findAll({ where: { msgs_enviadas: { [Op.lt]: 4 } }, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em getAlunosToSend.findAll', err));
 	for (let i = 0; i < alunosMightSend.length; i++) {
 		const aluno = alunosMightSend[i];
 		if (await checkSendPesquisa(today, aluno) === true || test) {

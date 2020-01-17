@@ -26,7 +26,8 @@ async function addAlunosPesquisa() {
 			const alunas = await alunos.findAll({ where: { turma_id: t.id }, raw: true });
 			for (let j = 0; j < alunas.length; j++) {
 				const a = alunas[j];
-				const emptyLinks = {}; Object.keys(pData.pesquisaLinksObj).forEach((e) => { emptyLinks[e] = ''; }); // create empty links obj (number of keys = msgs to send)
+				const emptyLinks = {};
+				Object.keys(pData.pesquisaLinksObj).forEach((e) => { emptyLinks[e] = ''; }); // create empty links obj (number of keys = msgs to send)
 				await pesquisa.findOrCreate({
 					where: { alunoID: a.id },
 					defaults: {
