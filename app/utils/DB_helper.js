@@ -116,6 +116,7 @@ async function getAlunaRespostasWarning(turmaID) {
 	const result = await sequelize.query(queryString).spread((results) => results).catch((err) => sentryError('Erro no getAlunaRespostasWarning =>', err));
 	return result;
 }
+
 async function getIndicadoRespostasWarning(turma) {
 	const queryString = `
 		SELECT INDICADOS.id as "indicado_id", INDICADOS.aluno_id, INDICADOS.nome as "indicado_nome",
@@ -236,8 +237,18 @@ async function getAlunoRespostas(cpf) {
 		return results && results[0] ? results[0] : false;
 	}).catch((err) => { sentryError('Erro em getAlunoRespostas =>', err); });
 
-
 	return aluna;
+}
+
+async function getTurmaRespostas(turmaID) {
+	const queryString = `
+		SELECT RESPOSTAS_ALUNOS.pre as "pre", RESPOSTAS_ALUNOS.pos as "pos"
+		FROM alunos ALUNOS
+		LEFT JOIN alunos_respostas RESPOSTAS_ALUNOS ON ALUNOS.id = RESPOSTAS_ALUNOS.aluno_id
+		LEFT JOIN chatbot_users CHATBOT ON ALUNOS.cpf = CHATBOT.cpf
+		WHERE ALUNOS.turma_id = '${turmaID}' AND RESPOSTAS_ALUNOS.pre IS NOT NULL AND RESPOSTAS_ALUNOS.pos IS NOT NULL;`;
+	const result = await sequelize.query(queryString).spread((results) => results).catch((err) => sentryError('Erro no getTurmaRespostas =>', err));
+	return result;
 }
 
 async function upsertIndicado(avaliador) {
@@ -680,4 +691,5 @@ module.exports = {
 	getAllIndicadosFromAlunaID,
 	getAlunaRespostaCadastro,
 	getWhatsappFromID,
+	getTurmaRespostas,
 };

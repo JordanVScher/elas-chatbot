@@ -35,6 +35,50 @@ async function buildAlunoChart(cpf) {
 	return false;
 }
 
+async function buildTurmaChart(turmaID) {
+	const allAnswers = await db.getTurmaRespostas(turmaID);
+	const respostas = { pre: {}, pos: {} };
+	const result = [];
+
+	if (!allAnswers || allAnswers.length === 0) return false;
+
+	allAnswers.forEach((answer) => {
+		Object.keys(answer.pre).forEach((e) => {
+			if (!respostas.pre[e]) respostas.pre[e] = 0;
+			respostas.pre[e] += parseInt(answer.pre[e], 10);
+		});
+		Object.keys(answer.pos).forEach((e) => {
+			if (!respostas.pos[e]) respostas.pos[e] = 0;
+			respostas.pos[e] += parseInt(answer.pos[e], 10);
+		});
+	});
+
+	const secondHalf = [...chartsMaps.sondagem];
+	const firstHalf = secondHalf.splice(0, 23);
+	const charts = [firstHalf, secondHalf];
+
+	if (respostas && respostas.pre && respostas.pos) {
+		for (let i = 0; i < charts.length; i++) {
+			const e = charts[i];
+
+			const data = {};
+			e.forEach(async (element) => { // this map contains only the necessary answers
+				if (respostas.pre[element.paramName] && respostas.pos[element.paramName]) { // build obj with param_name and the number variation
+					data[element.questionName] = help.getPercentageChange(respostas.pre[element.paramName], respostas.pos[element.paramName]);
+				}
+			});
+
+			if (data && Object.keys(data) && Object.keys(data).length > 0) {
+				const res = await chart.createChart(Object.keys(data), Object.values(data), turmaID, `Resultado auto-avaliação ${respostas.nome}`);
+				result.push(res);
+			}
+		}
+		return result;
+	}
+
+	return false;
+}
+
 async function separateIndicadosData(cpf) {
 	const indicado = await db.getIndicadoRespostas(cpf);
 
@@ -147,5 +191,5 @@ async function formatSondagemPDF(buffer, name) {
 }
 
 module.exports = {
-	buildAlunoChart, separateIndicadosData, buildIndicadoChart, formatSondagemPDF,
+	buildAlunoChart, buildTurmaChart, separateIndicadosData, buildIndicadoChart, formatSondagemPDF,
 };
