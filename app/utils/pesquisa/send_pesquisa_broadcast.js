@@ -41,14 +41,14 @@ async function checkSendPesquisa(today, pAluno) {
  * get data from aluno_pesquisa that havent sent all the broadcast messages yet
  * @return {array} aluno_pesquisa rows that passed the date validation
  */
-async function getAlunosToSend() {
+async function getAlunosToSend(test) {
 	const alunosToSend = [];
 	const today = new Date();
 	const alunosMightSend = await pesquisa.findAll({ where: {}, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em getAlunosToSend.findAll', err));
 
 	for (let i = 0; i < alunosMightSend.length; i++) {
 		const aluno = alunosMightSend[i];
-		if (await checkSendPesquisa(today, aluno) === true) { // !== for easy testing
+		if (await checkSendPesquisa(today, aluno) === true || test) {
 			alunosToSend.push(aluno);
 		}
 	}
@@ -124,8 +124,8 @@ async function updatePesquisa(sent) { // eslint-disable-line
 }
 
 
-async function sendPesquisa() {
-	let alunosToSend = await getAlunosToSend();
+async function sendPesquisa(test) {
+	let alunosToSend = await getAlunosToSend(test);
 	alunosToSend = await prepareAlunosToSend(alunosToSend);
 	alunosToSend = await broadcastPesquisa(alunosToSend);
 	await updatePesquisa(alunosToSend);

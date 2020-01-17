@@ -96,6 +96,8 @@ module.exports = async (context) => {
 					});
 				}
 				await context.setState({ matricula: '', gotAluna: '' });
+			} else if (context.state.dialog === 'graficoMedia') {
+				await dialogs.graficoMedia(context);
 			} else if (context.state.dialog === 'mudarTurma') {
 				await dialogs.adminAlunaCPF(context, 'mudarAskTurma');
 			} else if (context.state.dialog === 'removerAluna') {
@@ -317,6 +319,12 @@ module.exports = async (context) => {
 			break;
 		case 'removerAlunaFim':
 			await dialogs.removerAluna(context);
+			break;
+		case 'graficos':
+			await context.sendText(flow.adminMenu.graficos.txt1, await attach.getQR(flow.adminMenu.graficos));
+			break;
+		case 'graficoMedia':
+			await context.sendText(flow.adminMenu.graficos.txt2, await attach.getQR(flow.adminMenu.verTurma));
 			break;
 		case 'sendFeedback':
 			await context.sendText(flow.adminMenu.sendFeedback.askTurma);

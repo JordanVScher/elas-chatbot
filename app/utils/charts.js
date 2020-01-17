@@ -42,7 +42,7 @@ async function buildTurmaChart(turmaID) {
 
 	if (!allAnswers || allAnswers.length === 0) return false;
 
-	allAnswers.forEach((answer) => {
+	allAnswers.forEach((answer) => { // sum all of the values in the answers
 		Object.keys(answer.pre).forEach((e) => {
 			if (!respostas.pre[e]) respostas.pre[e] = 0;
 			respostas.pre[e] += parseInt(answer.pre[e], 10);
@@ -52,6 +52,14 @@ async function buildTurmaChart(turmaID) {
 			respostas.pos[e] += parseInt(answer.pos[e], 10);
 		});
 	});
+
+	delete respostas.pre.cpf;
+	delete respostas.pos.cpf;
+	// get the average
+	const divideBy = allAnswers.length;
+	Object.keys(respostas.pre).forEach((e) => { respostas.pre[e] /= divideBy; });
+	Object.keys(respostas.pos).forEach((e) => { respostas.pos[e] /= divideBy; });
+
 
 	const secondHalf = [...chartsMaps.sondagem];
 	const firstHalf = secondHalf.splice(0, 23);
@@ -69,7 +77,7 @@ async function buildTurmaChart(turmaID) {
 			});
 
 			if (data && Object.keys(data) && Object.keys(data).length > 0) {
-				const res = await chart.createChart(Object.keys(data), Object.values(data), turmaID, `Resultado auto-avaliação ${respostas.nome}`);
+				const res = await chart.createChart(Object.keys(data), Object.values(data), turmaID, `Resultado auto-avaliação da Turma ${await db.getTurmaName(turmaID)}`);
 				result.push(res);
 			}
 		}

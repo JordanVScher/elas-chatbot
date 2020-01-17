@@ -16,6 +16,8 @@ const { addNewNotificationAlunas } = require('./notificationAddQueue');
 const { getAluna } = require('./notificationSendQueue');
 const { actuallySendMessages } = require('./notificationSendQueue');
 const { addNewNotificationIndicados } = require('./notificationAddQueue');
+const charts = require('./charts');
+const { sendFiles } = require('./broadcast');
 const notificationTypes = require('../server/models').notification_types;
 
 module.exports.sendMainMenu = async (context, txtMsg) => {
@@ -361,6 +363,30 @@ module.exports.mailTest = async (context) => {
 		}
 	} else {
 		await context.sendText('Não consegui estabelecer o vínculo entre seu usuário no chatbot e alguma aluna cadastrada. Tente se vincular através do seu PDF, entre no fluxo Já Sou Aluna e se cadastre.');
+	}
+};
+
+module.exports.graficoMedia = async (context) => {
+	await context.setState({ desiredTurma: context.state.whatWasTyped });
+	const validTurma = await db.getTurmaID(context.state.desiredTurma);
+	if (!validTurma) { // if theres no id then it's not a valid turma
+		await context.sendText(flow.adminMenu.sendFeedback.turmaInvalida);
+	} else {
+		const turmaPDF = { filename: `${context.state.desiredTurma}_sondagem.pdf` };
+		turmaPDF.content = await charts.buildTurmaChart(validTurma);
+		if (!turmaPDF || !turmaPDF.content) {
+			await context.sendText(flow.adminMenu.graficos.failure);
+		} else {
+			turmaPDF.content = await charts.formatSondagemPDF(turmaPDF.content, context.state.desiredTurma);
+			const chatbotError = await sendFiles(context.session.user.id, null, turmaPDF);
+			if (!chatbotError) {
+				await context.sendText(flow.adminMenu.graficos.success);
+				await context.setState({ dialog: 'mainMenu' });
+			} else {
+				await context.sendText(flow.adminMenu.graficos.failure);
+				sentryError(`${flow.adminMenu.graficos.failure} => ${validTurma}`, chatbotError);
+			}
+		}
 	}
 };
 
