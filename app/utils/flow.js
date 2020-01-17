@@ -228,10 +228,12 @@ module.exports = {
 			menuPostback: ['removerAlunaFim', 'adminMenu', 'removerAluna'],
 		},
 		removerAlunaFim: {
-			success: '<NOME> foi removida da turma <TURMA>.',
+			success: '<NOME> foi removida da turma <TURMA>. A equipe ELAS também será avisada por e-mail.',
 			erro: 'Obs, aconteceu um erro, não foi possível remover <NOME> da turma <TURMA>.',
 			mailSubject: 'ELAS - Você foi removida da turma <TURMA>',
 			mailText: 'Olá, <NOME>.\n\nVocê foi removida da turma <TURMA>.',
+			adminMailSubject: 'ELAS - <NOME> foi removida da turma <TURMA>',
+			adminMailText: 'Olá.\n\nA aluna <NOME> foi removida da turma <TURMA> conforme solicitação de <ADMIN> através do Chatbot.',
 			menuOptions: ['Cancelar', 'Tentar Novamente', 'Mudar de Aluna'],
 			menuPostback: ['adminMenu', 'removerAlunaFim', 'removerAluna'],
 		},

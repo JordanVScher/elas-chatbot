@@ -105,6 +105,7 @@ async function warnAlunaTroca(alunaData) {
 
 module.exports.warnAlunaTroca = warnAlunaTroca;
 
+// build e-mail to warn aluna of removal from turma
 async function warnAlunaRemocao(alunaData) {
 	const subject = flow.adminMenu.removerAlunaFim.mailSubject.replace('<TURMA>', alunaData.turma);
 	const mailText = flow.adminMenu.removerAlunaFim.mailText.replace('<TURMA>', alunaData.turma).replace('<NOME>', alunaData.nome_completo);
@@ -113,6 +114,17 @@ async function warnAlunaRemocao(alunaData) {
 	html = await html.replace('[CONTEUDO_MAIL]', mailText);
 
 	await sendHTMLMail(subject, alunaData.email, html);
+}
+
+// build e-mail to warn admins of aluna removal from turma, add the name of the admin that made the request
+async function warnAdminOfAlunaRemocao(alunaData, adminNome) {
+	const subject = flow.adminMenu.removerAlunaFim.adminMailSubject.replace('<TURMA>', alunaData.turma).replace('<NOME>', alunaData.nome_completo);
+	const mailText = flow.adminMenu.removerAlunaFim.adminMailText.replace('<TURMA>', alunaData.turma).replace('<NOME>', alunaData.nome_completo).replace('<ADMIN>', adminNome);
+
+	let html = await readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
+	html = await html.replace('[CONTEUDO_MAIL]', mailText);
+
+	await sendHTMLMail(subject, process.env.MAILELAS, html);
 }
 
 module.exports.removerAluna = async (context) => {
@@ -125,6 +137,7 @@ module.exports.removerAluna = async (context) => {
 		await admin.SaveTurmaChange(
 			context.state.chatbotData.user_id, context.state.chatbotData.fb_access_token, context.state.adminAlunaFound.id, context.state.adminAlunaFound.turma_id, null,
 		);
+		await warnAdminOfAlunaRemocao(context.state.adminAlunaFound, context.session.user.name);
 		await context.sendText(flow.adminMenu.removerAlunaFim.success.replace('<NOME>', context.state.adminAlunaFound.nome_completo.trim()).replace('<TURMA>', context.state.adminAlunaFound.turma));
 		await context.sendText(flow.adminMenu.firstMenu.txt1, await attach.getQR(flow.adminMenu.firstMenu));
 	}
@@ -381,7 +394,7 @@ module.exports.graficoMedia = async (context) => {
 			const chatbotError = await sendFiles(context.session.user.id, null, turmaPDF);
 			if (!chatbotError) {
 				await context.sendText(flow.adminMenu.graficos.success);
-				await context.setState({ dialog: 'mainMenu' });
+				await context.setState({ dialog: 'adminMenu' });
 			} else {
 				await context.sendText(flow.adminMenu.graficos.failure);
 				sentryError(`${flow.adminMenu.graficos.failure} => ${validTurma}`, chatbotError);
