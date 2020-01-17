@@ -89,7 +89,7 @@ async function getMissingAnswers(users, moduloN) {
 						user.modulo = moduloN; // save the modulo the user is in
 					}
 				} else {
-					user[key] = null; // no use for this atividade because it's not a part of the rule, answered or not
+					user[key] = 'N/A'; // no use for this atividade because it's not a part of the rule, answered or not
 				}
 			}
 		});
