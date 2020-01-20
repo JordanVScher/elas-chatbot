@@ -216,7 +216,7 @@ async function buildAlunoChart(cpf) {
 
 	// divide the answers table into two to fit the page
 	const size = [...chartsMaps.sondagem];
-	const charts = [size.slice(0, 11), size.slice(11, 25), size.slice(25, 37), size.slice(37, size.length)];
+	const charts = [size.slice(0, 12), size.slice(12, 26), size.slice(26, 38), size.slice(38, size.length)];
 
 	// calculates the average
 	let media = 0; let divideBy = Object.keys(respostas.pre).length;
@@ -259,14 +259,13 @@ async function buildAlunoChart(cpf) {
 
 		html += '</table>';
 
-		if (i + 1 !== charts.length) html += '<br><br><br><br>';
+		if (i + 1 !== charts.length) html += '<br><br><br>';
 	});
 
 	const createPDFAsync = promisify(help.pdf.create);
 	const result = await createPDFAsync(html).then((tmp) => tmp).catch((err) => console.log(err));
 
 	if (!result || !result.filename) { return { error: 'Não existe respostas para gerar o resultado da sondagem da aluna' }; }
-
 	return result;
 }
 
