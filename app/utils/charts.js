@@ -1,5 +1,5 @@
 const { promisify } = require('util');
-const { readFileSync } = require('fs');
+const fs = require('fs');
 const chart = require('../simple_chart');
 const chartsMaps = require('./charts_maps');
 const help = require('./helper');
@@ -183,7 +183,7 @@ async function formatSondagemPDF(buffer, name) {
 		base: `file://${process.cwd()}/mail_template/`,
 	};
 
-	let html = await readFileSync(`${process.cwd()}/mail_template/chart.html`, 'utf-8');
+	let html = await fs.readFileSync(`${process.cwd()}/mail_template/chart.html`, 'utf-8');
 	html = html.replace('{{name}}', name);
 	html = html.replace('{{img0}}', img[0]);
 	html = html.replace('{{img1}}', img[1]);
@@ -244,6 +244,26 @@ async function buildAlunoChart(cpf) {
 	return result;
 }
 
+async function buildAlunosDocs(turmaID) {
+	const alunos = await db.getAlunasFromTurma(turmaID);
+	const result = [];
+
+	for (let i = 0; i < alunos.length; i++) {
+		const aluno = alunos[i];
+		if (aluno && aluno.cpf) {
+			const aux = await buildAlunoChart(aluno.cpf);
+			if (aux && aux.filename) {
+				result.push({ aluno: aluno.nome_completo, sondagem: aux.filename });
+			} else if (aux && aux.error) {
+				result.push({ aluno: aluno.nome_completo, error: aux.error });
+			}
+		}
+	}
+
+	return result;
+}
+
+
 module.exports = {
-	buildAlunoChart, buildTurmaChart, separateIndicadosData, buildIndicadoChart, formatSondagemPDF,
+	buildAlunoChart, buildTurmaChart, separateIndicadosData, buildIndicadoChart, formatSondagemPDF, buildAlunosDocs,
 };

@@ -1,4 +1,5 @@
-const { readFileSync } = require('fs');
+const fs = require('fs');
+const archiver = require('archiver');
 const { sendHTMLMail } = require('./mailer');
 const db = require('./DB_helper');
 const help = require('./helper');
@@ -17,8 +18,10 @@ const { getAluna } = require('./notificationSendQueue');
 const { actuallySendMessages } = require('./notificationSendQueue');
 const { addNewNotificationIndicados } = require('./notificationAddQueue');
 const charts = require('./charts');
-const { sendFiles } = require('./broadcast');
+const broadcast = require('./broadcast');
 const notificationTypes = require('../server/models').notification_types;
+
+module.exports.checkReceivedFile = admin.checkReceivedFile;
 
 module.exports.sendMainMenu = async (context, txtMsg) => {
 	const text = txtMsg || flow.mainMenu.defaultText;
@@ -96,7 +99,7 @@ async function warnAlunaTroca(alunaData) {
 
 	if (aux) mailText += `\nDados da aluna: \n${aux}`;
 
-	let html = await readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
+	let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
 	html = await html.replace('[CONTEUDO_MAIL]', mailText);
 
 	const eMailToSend = await getMailAdmin(alunaData.turma);
@@ -110,7 +113,7 @@ async function warnAlunaRemocao(alunaData) {
 	const subject = flow.adminMenu.removerAlunaFim.mailSubject.replace('<TURMA>', alunaData.turma);
 	const mailText = flow.adminMenu.removerAlunaFim.mailText.replace('<TURMA>', alunaData.turma).replace('<NOME>', alunaData.nome_completo);
 
-	let html = await readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
+	let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
 	html = await html.replace('[CONTEUDO_MAIL]', mailText);
 
 	await sendHTMLMail(subject, alunaData.email, html);
@@ -121,7 +124,7 @@ async function warnAdminOfAlunaRemocao(alunaData, adminNome) {
 	const subject = flow.adminMenu.removerAlunaFim.adminMailSubject.replace('<TURMA>', alunaData.turma).replace('<NOME>', alunaData.nome_completo);
 	const mailText = flow.adminMenu.removerAlunaFim.adminMailText.replace('<TURMA>', alunaData.turma).replace('<NOME>', alunaData.nome_completo).replace('<ADMIN>', adminNome);
 
-	let html = await readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
+	let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
 	html = await html.replace('[CONTEUDO_MAIL]', mailText);
 
 	await sendHTMLMail(subject, process.env.MAILELAS, html);
@@ -391,7 +394,7 @@ module.exports.graficoMedia = async (context) => {
 			await context.sendText(flow.adminMenu.graficos.failure);
 		} else {
 			turmaPDF.content = await charts.formatSondagemPDF(turmaPDF.content, context.state.desiredTurma);
-			const chatbotError = await sendFiles(context.session.user.id, null, turmaPDF);
+			const chatbotError = await broadcast.sendFiles(context.session.user.id, null, turmaPDF);
 			if (!chatbotError) {
 				await context.sendText(flow.adminMenu.graficos.success);
 				await context.setState({ dialog: 'adminMenu' });
@@ -403,4 +406,27 @@ module.exports.graficoMedia = async (context) => {
 	}
 };
 
-module.exports.checkReceivedFile = admin.checkReceivedFile;
+module.exports.zipAllDocs = async (context, turmaID, turmaName) => {
+	const docs = await charts.buildAlunosDocs(turmaID);
+	const fileName = `${turmaName}_graficos.zip`;
+	const output = fs.createWriteStream(fileName);
+	const archive = archiver('zip');
+
+	output.on('close', async () => {
+		console.log(`${archive.pointer()} total bytes`);
+		console.log(`${fileName} archiver has been finalized and the output file descriptor has closed.`);
+		await context.sendText(`Arquivo Zip com os resultados da turma ${turmaName} foram enviados para o e-mail das avaliadoras. `);
+	});
+
+	archive.on('error', (err) => { throw err; });
+	archive.pipe(output);
+
+	for (let i = 0; i < docs.length; i++) {
+		const doc = docs[i];
+		if (doc && doc.sondagem) {
+			archive.append(fs.createReadStream(doc.sondagem), { name: `${doc.aluno}_sondagem.pdf` });
+		}
+	}
+
+	archive.finalize();
+};
