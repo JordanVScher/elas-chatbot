@@ -216,6 +216,7 @@ module.exports = {
 		sendFeedbackZip: {
 			askTurma: 'Entre com o nome da turma que você deseja enviar os arquivos de evolução e feedback.',
 			turmaInvalida: 'Turma não encontrada! Tente novamente.',
+			noDocs: 'Não foram encontradas alunas nessa turma',
 			success: 'Arquivo ZIP com os resultados da turma <TURMA> foram enviados para o e-mail das avaliadoras.',
 			failure: 'Ocorreu um erro ao enviar o ZIP da turma <TURMA>. Tente novamente.',
 			mailSubject: 'ELAS - ZIP da turma',

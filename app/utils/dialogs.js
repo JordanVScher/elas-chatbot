@@ -418,40 +418,49 @@ async function sendZipMail(filename, turmaName, adminNome, docs) {
 	let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
 	html = await html.replace('[CONTEUDO_MAIL]', mailText);
 
-	return sendHTMLMail(subject, process.env.MAILELAS, html, [{ filename, path: `./${filename}` }]);
+	if (filename) {
+		return sendHTMLMail(subject, process.env.MAILELAS, html, [{ filename, path: `./${filename}` }]);
+	}
+	return sendHTMLMail(subject, process.env.MAILELAS, html);
 }
 
 
 async function zipAllDocs(context, turmaID, turmaName) {
 	const docs = await charts.buildAlunosDocs(turmaID);
-	const fileName = `${turmaName}_graficos.zip`;
-	const output = fs.createWriteStream(fileName);
-	const archive = archiver('zip');
+	if (docs && docs.length > 0) {
+		const fileName = `${turmaName}_graficos.zip`;
+		const output = fs.createWriteStream(fileName);
+		const archive = archiver('zip');
+		let sendZip = false; // send the zip file only if it has one file
 
-	output.on('close', async () => {
-		const error = await sendZipMail(fileName, turmaName, context.session.user.name, docs);
-		if (!error) {
-			await context.sendText(flow.adminMenu.sendFeedbackZip.success.replace('<TURMA>', turmaName));
-			await context.sendText(flow.adminMenu.firstMenu.txt1, await attach.getQR(flow.adminMenu.firstMenu));
-		} else {
-			await context.sendText(flow.adminMenu.sendFeedbackZip.failure.replace('<TURMA>', turmaName));
-			await context.sendText(flow.adminMenu.graficos.txt3, await attach.getQR(flow.adminMenu.verTurma));
+		output.on('close', async () => {
+			const error = await sendZipMail(sendZip ? fileName : false, turmaName, context.session.user.name, docs);
+			if (!error) {
+				await context.sendText(flow.adminMenu.sendFeedbackZip.success.replace('<TURMA>', turmaName));
+				await context.sendText(flow.adminMenu.firstMenu.txt1, await attach.getQR(flow.adminMenu.firstMenu));
+			} else {
+				await context.sendText(flow.adminMenu.sendFeedbackZip.failure.replace('<TURMA>', turmaName));
+				await context.sendText(flow.adminMenu.graficos.txt3, await attach.getQR(flow.adminMenu.verTurma));
+			}
+		});
+
+		archive.on('error', (err) => { throw err; });
+		archive.pipe(output);
+
+		for (let i = 0; i < docs.length; i++) {
+			const doc = docs[i];
+			if (doc.sondagem) {
+				archive.append(fs.createReadStream(doc.sondagem), { name: `${doc.aluno}_sondagem.pdf` }); sendZip = true;
+			} else if (doc.avaliacao360) {
+				archive.append(fs.createReadStream(doc.avaliacao360), { name: `${doc.aluno}_360Results.pdf` }); sendZip = true;
+			}
 		}
-	});
 
-	archive.on('error', (err) => { throw err; });
-	archive.pipe(output);
-
-	for (let i = 0; i < docs.length; i++) {
-		const doc = docs[i];
-		if (doc.sondagem) {
-			archive.append(fs.createReadStream(doc.sondagem), { name: `${doc.aluno}_sondagem.pdf` });
-		} else if (doc.avaliacao360) {
-			archive.append(fs.createReadStream(doc.avaliacao360), { name: `${doc.aluno}_360Results.pdf` });
-		}
+		archive.finalize();
+	} else {
+		await context.sendText(flow.adminMenu.sendFeedbackZip.noDocs.replace('<TURMA>', turmaName));
+		await context.sendText(flow.adminMenu.graficos.txt3, await attach.getQR(flow.adminMenu.verTurma));
 	}
-
-	archive.finalize();
 }
 
 
