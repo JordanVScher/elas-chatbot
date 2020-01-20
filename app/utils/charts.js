@@ -233,13 +233,13 @@ async function buildAlunoChart(cpf) {
 	html += `<p>${await db.getTurmaName(respostas.turma_id)}<br>${respostas.nome}<br></p>`;
 
 	// tables
-	let questionNumber = 0;
+	let questionNumber = -1;
 	charts.forEach((map, i) => {
 		html += `<table style="width:100% border:1px solid black; border-collapse:collapse; " border=1 >
 			<tr> <th>Questões</th> <th>Antes</th> <th>Depois</th> <th>Evolução</th> `;
 
 		map.forEach((e) => {
-			const questao = questionNumber !== 0 ? `<td>${questionNumber}. ${e.questionName}</td>` : `<td align="center"><strong>${e.questionName}</strong></td>`;
+			const questao = questionNumber !== -1 && questionNumber !== 0 ? `<td>${questionNumber}. ${e.questionName}</td>` : `<td align="center"><strong>${e.questionName}</strong></td>`;
 			const key = e.paramName;
 			const pre = respostas.pre[key] ? respostas.pre[key] : '';
 			const pos = respostas.pos[key] ? respostas.pos[key] : '';
@@ -261,6 +261,7 @@ async function buildAlunoChart(cpf) {
 
 		if (i + 1 !== charts.length) html += '<br><br><br>';
 	});
+
 
 	const createPDFAsync = promisify(help.pdf.create);
 	const result = await createPDFAsync(html).then((tmp) => tmp).catch((err) => console.log(err));
