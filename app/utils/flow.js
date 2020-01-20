@@ -194,6 +194,14 @@ module.exports = {
 			menuOptions: ['Voltar'],
 			menuPostback: ['adminMenu'],
 		},
+		graficos: {
+			txt1: 'Escolha uma opção',
+			txt2: 'Entre com o nome da turma para gerar o gráfico com a média da turma. Ele será enviado para você através do Chatbot. Exemplo: T7-SP',
+			success: 'Sucesso! Baixe o gráfico acima.',
+			failure: 'Não foi possível construir o gráfico!',
+			menuOptions: ['Média da Turma', 'Enviar evolução'],
+			menuPostback: ['graficoMedia', 'sendFeedback'],
+		},
 		sendFeedback: {
 			askTurma: 'Entre com o nome da turma que você deseja enviar os arquivos de evolução e feedback.',
 			turmaInvalida: 'Turma não encontrada! Tente novamente.',
@@ -204,13 +212,13 @@ module.exports = {
 			menuPostback: ['sendFeedbackFim', 'adminMenu', 'sendFeedback'],
 			noCount: 'Turma não tem nenhuma aluna. Tente novamente.',
 		},
-		graficos: {
-			txt1: 'Escolha uma opção',
-			txt2: 'Entre com o nome da turma para gerar o gráfico com a média da turma. Ele será enviado para você através do Chatbot. Exemplo: T7-SP',
-			success: 'Sucesso! Baixe o gráfico acima.',
-			failure: 'Não foi possível construir o gráfico!',
-			menuOptions: ['Média da Turma', 'Enviar evolução'],
-			menuPostback: ['graficoMedia', 'sendFeedback'],
+		sendFeedbackZip: {
+			askTurma: 'Entre com o nome da turma que você deseja enviar os arquivos de evolução e feedback.',
+			turmaInvalida: 'Turma não encontrada! Tente novamente.',
+			success: 'Arquivo ZIP com os resultados da turma <TURMA> foram enviados para o e-mail das avaliadoras.',
+			failure: 'Ocorreu um erro ao enviar o ZIP da turma <TURMA>. Tente novamente.',
+			mailSubject: 'ELAS - ZIP da turma',
+			mailText: 'Olá, em anexo se encontra o arquivo zip contendo os gráficos da turma <TURMA>, tanto a sondagem quanto a avaliação 360. Quem fez a solicitação no chatbot foi: <ADMIN>.',
 		},
 		removerAluna: {
 			txt1: 'Entre com o CPF da Aluna que deseja remover de turma. Pode ser só números. \nSe não souber o CPF, baixe o CSV com as informações da turma clicando no botão abaixo.',

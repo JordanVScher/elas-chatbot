@@ -406,6 +406,17 @@ module.exports.graficoMedia = async (context) => {
 	}
 };
 
+async function sendZipMail(filename, turmaName, adminNome, docs) {
+	const subject = flow.adminMenu.sendFeedbackZip.mailSubject.replace('<TURMA>', turmaName);
+	const mailText = flow.adminMenu.sendFeedbackZip.mailText.replace('<TURMA>', turmaName).replace('<ADMIN>', adminNome);
+
+	let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
+	html = await html.replace('[CONTEUDO_MAIL]', mailText);
+
+	return sendHTMLMail(subject, process.env.MAILELAS, html, [{ filename, path: `./${filename}` }]);
+}
+
+
 module.exports.zipAllDocs = async (context, turmaID, turmaName) => {
 	const docs = await charts.buildAlunosDocs(turmaID);
 	const fileName = `${turmaName}_graficos.zip`;
@@ -413,9 +424,12 @@ module.exports.zipAllDocs = async (context, turmaID, turmaName) => {
 	const archive = archiver('zip');
 
 	output.on('close', async () => {
-		console.log(`${archive.pointer()} total bytes`);
-		console.log(`${fileName} archiver has been finalized and the output file descriptor has closed.`);
-		await context.sendText(`Arquivo Zip com os resultados da turma ${turmaName} foram enviados para o e-mail das avaliadoras. `);
+		const error = await sendZipMail(fileName, turmaName, context.session.user.name, docs);
+		if (!error) {
+			await context.sendText(flow.adminMenu.sendFeedbackZip.success.replace('<TURMA>', turmaName));
+		} else {
+			await context.sendText(flow.adminMenu.sendFeedbackZip.failure.replace('<TURMA>', turmaName));
+		}
 	});
 
 	archive.on('error', (err) => { throw err; });
