@@ -382,7 +382,7 @@ module.exports.mailTest = async (context) => {
 	}
 };
 
-module.exports.graficoMedia = async (context) => {
+module.exports.graficoMediaEnd = async (context) => {
 	await context.setState({ desiredTurma: context.state.whatWasTyped });
 	const validTurma = await db.getTurmaID(context.state.desiredTurma);
 	if (!validTurma) { // if theres no id then it's not a valid turma
@@ -397,9 +397,10 @@ module.exports.graficoMedia = async (context) => {
 			const chatbotError = await broadcast.sendFiles(context.session.user.id, null, turmaPDF);
 			if (!chatbotError) {
 				await context.sendText(flow.adminMenu.graficos.success);
-				await context.setState({ dialog: 'adminMenu' });
+				await context.sendText(flow.adminMenu.firstMenu.txt1, await attach.getQR(flow.adminMenu.firstMenu));
 			} else {
 				await context.sendText(flow.adminMenu.graficos.failure);
+				await context.sendText(flow.adminMenu.graficos.txt2, await attach.getQR(flow.adminMenu.verTurma));
 				sentryError(`${flow.adminMenu.graficos.failure} => ${validTurma}`, chatbotError);
 			}
 		}
@@ -408,7 +409,11 @@ module.exports.graficoMedia = async (context) => {
 
 async function sendZipMail(filename, turmaName, adminNome, docs) {
 	const subject = flow.adminMenu.sendFeedbackZip.mailSubject.replace('<TURMA>', turmaName);
-	const mailText = flow.adminMenu.sendFeedbackZip.mailText.replace('<TURMA>', turmaName).replace('<ADMIN>', adminNome);
+	let mailText = flow.adminMenu.sendFeedbackZip.mailText.replace('<TURMA>', turmaName).replace('<ADMIN>', adminNome);
+
+	let errorText = '';
+	docs.forEach((e) => { if (e.error) { errorText += `\n${e.aluno}: ${e.error}`; } });
+	if (errorText) { mailText += `\n\n\nErros que aconteceram durante o processo: \n${errorText}`; }
 
 	let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
 	html = await html.replace('[CONTEUDO_MAIL]', mailText);
@@ -417,7 +422,7 @@ async function sendZipMail(filename, turmaName, adminNome, docs) {
 }
 
 
-module.exports.zipAllDocs = async (context, turmaID, turmaName) => {
+async function zipAllDocs(context, turmaID, turmaName) {
 	const docs = await charts.buildAlunosDocs(turmaID);
 	const fileName = `${turmaName}_graficos.zip`;
 	const output = fs.createWriteStream(fileName);
@@ -427,8 +432,10 @@ module.exports.zipAllDocs = async (context, turmaID, turmaName) => {
 		const error = await sendZipMail(fileName, turmaName, context.session.user.name, docs);
 		if (!error) {
 			await context.sendText(flow.adminMenu.sendFeedbackZip.success.replace('<TURMA>', turmaName));
+			await context.sendText(flow.adminMenu.firstMenu.txt1, await attach.getQR(flow.adminMenu.firstMenu));
 		} else {
 			await context.sendText(flow.adminMenu.sendFeedbackZip.failure.replace('<TURMA>', turmaName));
+			await context.sendText(flow.adminMenu.graficos.txt3, await attach.getQR(flow.adminMenu.verTurma));
 		}
 	});
 
@@ -437,10 +444,23 @@ module.exports.zipAllDocs = async (context, turmaID, turmaName) => {
 
 	for (let i = 0; i < docs.length; i++) {
 		const doc = docs[i];
-		if (doc && doc.sondagem) {
+		if (doc.sondagem) {
 			archive.append(fs.createReadStream(doc.sondagem), { name: `${doc.aluno}_sondagem.pdf` });
+		} else if (doc.avaliacao360) {
+			archive.append(fs.createReadStream(doc.avaliacao360), { name: `${doc.aluno}_360Results.pdf` });
 		}
 	}
 
 	archive.finalize();
+}
+
+
+module.exports.graficoZipEnd = async (context) => {
+	await context.setState({ desiredTurma: context.state.whatWasTyped });
+	const validTurma = await db.getTurmaID(context.state.desiredTurma);
+	if (!validTurma) { // if theres no id then it's not a valid turma
+		await context.sendText(flow.adminMenu.sendFeedback.turmaInvalida);
+	} else {
+		await zipAllDocs(context, validTurma, await db.getTurmaName(validTurma));
+	}
 };

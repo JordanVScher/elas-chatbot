@@ -97,7 +97,9 @@ module.exports = async (context) => {
 				}
 				await context.setState({ matricula: '', gotAluna: '' });
 			} else if (context.state.dialog === 'graficoMedia') {
-				await dialogs.graficoMedia(context);
+				await context.setState({ dialog: 'graficoMediaEnd' });
+			} else if (['graficoZipEnd', 'graficoZip'].includes(context.state.dialog)) {
+				await context.setState({ dialog: 'graficoZipEnd' });
 			} else if (context.state.dialog === 'mudarTurma') {
 				await dialogs.adminAlunaCPF(context, 'mudarAskTurma');
 			} else if (context.state.dialog === 'removerAluna') {
@@ -325,6 +327,15 @@ module.exports = async (context) => {
 			break;
 		case 'graficoMedia':
 			await context.sendText(flow.adminMenu.graficos.txt2, await attach.getQR(flow.adminMenu.verTurma));
+			break;
+		case 'graficoMediaEnd':
+			await dialogs.graficoMediaEnd(context);
+			break;
+		case 'graficoZip':
+			await context.sendText(flow.adminMenu.graficos.txt3, await attach.getQR(flow.adminMenu.verTurma));
+			break;
+		case 'graficoZipEnd':
+			await dialogs.graficoZipEnd(context);
 			break;
 		case 'sendFeedback':
 			await context.sendText(flow.adminMenu.sendFeedback.askTurma);

@@ -144,7 +144,7 @@ async function checkIfDataExists(data) {
 async function buildIndicadoChart(cpf) {
 	const data = await separateIndicadosData(cpf);
 
-	if (await checkIfDataExists(data) === true) {
+	if (data && await checkIfDataExists(data) === true) {
 		const styleDiv = 'font-size:10pt;margin-left:1.5em;margin-right:1.5em;margin-bottom:0.5em;margin-top:2.0em';
 		let html = `<p style="${styleDiv}"><h1>Resultados</h1></p>`;
 		html += `<table style="width:100% border:1px solid black " border=1>
@@ -168,9 +168,11 @@ async function buildIndicadoChart(cpf) {
 		const createPDFAsync = promisify(help.pdf.create);
 		const result = await createPDFAsync(html).then((tmp) => tmp).catch((err) => console.log(err));
 
+		if (!result || !result.filename) { return { error: 'Não foi possível gerar o resultado da avaliação 360 da aluna' }; }
+
 		return result;
 	}
-	return [];
+	return { error: 'Não foi possível recuperar as respostas para a avaliação 360 da aluna' };
 }
 
 async function formatSondagemPDF(buffer, name) {
@@ -205,9 +207,9 @@ async function buildAlunoChart(cpf) {
 	const respostas = await db.getAlunoRespostas(cpf);
 
 	// check if user has every answer needed
-	if (!respostas) { return { error: `Usuário ${respostas.nome} não tem respostas` }; }
-	if (!respostas.pre) { return { error: `Usuário ${respostas.nome} não respondeu a Sondagem Pré` }; }
-	if (!respostas.pos) { return { error: `Usuário ${respostas.nome} não respondeu a Sondagem Pós` }; }
+	if (!respostas) { return { error: 'Não foi possível recuperar as respostas da Sondagem' }; }
+	if (!respostas.pre) { return { error: 'Não respondeu a Sondagem Pré' }; }
+	if (!respostas.pos) { return { error: 'Não respondeu a Sondagem Pós' }; }
 
 	// divide the answers table into two to fit the page
 	const secondHalf = [...chartsMaps.sondagem];
@@ -241,6 +243,7 @@ async function buildAlunoChart(cpf) {
 	const createPDFAsync = promisify(help.pdf.create);
 	const result = await createPDFAsync(html).then((tmp) => tmp).catch((err) => console.log(err));
 
+	if (!result || !result.filename) { return { error: 'Não existe respostas para gerar o resultado da sondagem da aluna' }; }
 	return result;
 }
 
@@ -256,6 +259,17 @@ async function buildAlunosDocs(turmaID) {
 				result.push({ aluno: aluno.nome_completo, sondagem: aux.filename });
 			} else if (aux && aux.error) {
 				result.push({ aluno: aluno.nome_completo, error: aux.error });
+			} else {
+				result.push({ aluno: aluno.nome_completo, error: 'Erro inesperado na sondagem' });
+			}
+
+			const aux2 = await buildIndicadoChart(aluno.cpf);
+			if (aux2 && aux2.filename) {
+				result.push({ aluno: aluno.nome_completo, avaliacao360: aux2.filename });
+			} else if (aux2 && aux2.error) {
+				result.push({ aluno: aluno.nome_completo, error: aux2.error });
+			} else {
+				result.push({ aluno: aluno.nome_completo, error: 'Erro inesperado na avaliação 360' });
 			}
 		}
 	}
