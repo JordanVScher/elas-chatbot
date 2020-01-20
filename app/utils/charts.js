@@ -211,39 +211,62 @@ async function buildAlunoChart(cpf) {
 	if (!respostas.pre) { return { error: 'Não respondeu a Sondagem Pré' }; }
 	if (!respostas.pos) { return { error: 'Não respondeu a Sondagem Pós' }; }
 
+	respostas.pre.answer_date = respostas.pre.answer_date ? await help.formatSondagem(respostas.pre.answer_date) : '';
+	respostas.pos.answer_date = respostas.pos.answer_date ? await help.formatSondagem(respostas.pos.answer_date) : '';
+
 	// divide the answers table into two to fit the page
-	const secondHalf = [...chartsMaps.sondagem];
-	const firstHalf = secondHalf.splice(0, 19);
-	const charts = [firstHalf, secondHalf];
+	const size = [...chartsMaps.sondagem];
+	const charts = [size.slice(0, 11), size.slice(11, 25), size.slice(25, 37), size.slice(37, size.length)];
+
+	// calculates the average
+	let media = 0; let divideBy = Object.keys(respostas.pre).length;
+	Object.keys(respostas.pre).forEach((e) => { if (e !== 'cpf' && e !== 'answer_date') { media += parseInt(respostas.pre[e], 10); } });
+	respostas.pre.media = (media / divideBy).toFixed(0);
+	media = 0; divideBy = Object.keys(respostas.pos).length;
+	Object.keys(respostas.pos).forEach((e) => { if (e !== 'cpf' && e !== 'answer_date') 	{ media += parseInt(respostas.pos[e], 10); } });
+	respostas.pos.media = (media / divideBy).toFixed(0);
+	media = 0; divideBy = 1; // we will use these two to ind the average later
 
 	// header
 	const styleDiv = 'font-size:10pt;margin-left:1.5em;margin-right:1.5em;margin-bottom:0.5em;margin-top:2.0em';
 	let html = `<p style="${styleDiv}"><h3>Resultados Sondagem</h3></p>`;
-	html += `<p>${await db.getTurmaName(respostas.turma_id)}<br>${respostas.nome}<br>${cpf}<br>${respostas.email}</p>`;
+	html += `<p>${await db.getTurmaName(respostas.turma_id)}<br>${respostas.nome}<br></p>`;
 
 	// tables
-	let questionNumber = 1;
+	let questionNumber = 0;
 	charts.forEach((map, i) => {
-		html += `<table style="width:100% border:1px solid black" border=1>
-			<tr> <th>Número</th> <th>Questão</th> <th>Nota Pré</th> <th>Nota Pós</th> <th>Variação</th> `;
+		html += `<table style="width:100% border:1px solid black; border-collapse:collapse; " border=1 >
+			<tr> <th>Questões</th> <th>Antes</th> <th>Depois</th> <th>Evolução</th> `;
 
 		map.forEach((e) => {
+			const questao = questionNumber !== 0 ? `<td>${questionNumber}. ${e.questionName}</td>` : `<td align="center"><strong>${e.questionName}</strong></td>`;
 			const key = e.paramName;
 			const pre = respostas.pre[key] ? respostas.pre[key] : '';
 			const pos = respostas.pos[key] ? respostas.pos[key] : '';
 			let change = parseInt(pre, 10) && parseInt(pos, 10) ? help.getPercentageChange(pre, pos) : '';
+			if (change) {
+				media += parseInt(change, 10); divideBy += 1;
+			}
 			change = change ? `${change} %` : '';
-			html += `<tr> <td>${questionNumber}</td> <td>${e.questionName}</td> <td>${pre}</td> <td>${pos}</td> <td>${change}</td> </tr>`;
+			html += `<tr> ${questao} <td>${pre}</td> <td>${pos}</td> <td>${change}</td> </tr>`;
 			questionNumber += 1;
 		});
 
-		if (i + 1 < charts.length) { html += '</table><br><br><br><br>'; } // dont empty space on last table
+		if (i + 1 === charts.length) { // average of the evolution
+			const evolution = (media / divideBy).toFixed(0);
+			if (evolution) html += `<tr><td align="center"><strong>Evolução</strong></td> <td></td> <td></td> <td>${evolution} %</td> </tr>`;
+		}
+
+		html += '</table>';
+
+		if (i + 1 !== charts.length) html += '<br><br><br><br>';
 	});
 
 	const createPDFAsync = promisify(help.pdf.create);
 	const result = await createPDFAsync(html).then((tmp) => tmp).catch((err) => console.log(err));
 
 	if (!result || !result.filename) { return { error: 'Não existe respostas para gerar o resultado da sondagem da aluna' }; }
+
 	return result;
 }
 

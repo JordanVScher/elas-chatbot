@@ -9,7 +9,7 @@ const help = require('./helper');
 const { sentryError } = require('./helper');
 const mailer = require('./mailer');
 const broadcast = require('./broadcast');
-const charts = require('./charts');
+// const charts = require('./charts');
 const DB = require('./DB_helper');
 const rules = require('./notificationRules');
 
@@ -354,7 +354,7 @@ async function checkShouldSendRecipient(recipient, notification) {
 	return true;
 }
 
-async function buildAttachment(type, cpf, name) {
+async function buildAttachment(type, cpf, name) { // eslint-disable-line
 	const result = { mail: [], chatbot: {} };
 
 	if (type.attachment_name) {

@@ -45,6 +45,8 @@ async function addCustomParametersToAnswer(answers, parameters) {
 		});
 	}
 
+	result.answer_date = new Date();
+
 	return result;
 }
 

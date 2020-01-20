@@ -123,6 +123,10 @@ async function formatModuloHora(date) {
 	return `dia ${moment(date).utcOffset('+0000').format('DD')} de ${moment(date).utcOffset('+0000').format('MMMM')} as `
 	+ `${moment(date).utcOffset('+0000').format('HH:mm')}`;
 }
+async function formatSondagem(date) {
+	const d = typeof date === 'string' ? new Date(date) : date;
+	return `${moment(d).utcOffset('+0000').format('MMMM').slice(0, 3).toLowerCase()}./${moment(d).utcOffset('+0000').format('DD')}`; // eslint-disable-line
+}
 
 async function formatFdsMod(date) {
 	const primeiraAula = date;
@@ -233,7 +237,7 @@ function getPercentageChange(oldNumber, newNumber) {
 	const difference = newNumber - oldNumber;
 	let result = difference / oldNumber;
 	result *= 100;
-	result = +result.toFixed(2);
+	result = +result.toFixed(0);
 	return result.toString();
 }
 
@@ -363,6 +367,19 @@ async function cutName(name) {
 	return aux;
 }
 
+/**
+ * Returns an array with arrays of the given size.
+ *
+ * @param {Array} myArray  Array to split
+ * @param {Integer} chunkSize  Size of every group
+ */
+function chunkArray(myArray, chunkSize) {
+	const results = [];
+	while (myArray.length) { results.push(myArray.splice(0, chunkSize)); }
+	return results;
+}
+
+
 module.exports = {
 	Sentry,
 	separateString,
@@ -382,6 +399,7 @@ module.exports = {
 	formatModuloHora,
 	formatFdsMod,
 	formatDiasMod,
+	formatSondagem,
 	atividadesCompletas,
 	getTimestamp,
 	getCPFValid,
@@ -396,4 +414,5 @@ module.exports = {
 	cutName,
 	encrypt,
 	decrypt,
+	chunkArray,
 };
