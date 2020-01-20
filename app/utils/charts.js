@@ -217,8 +217,7 @@ async function buildAlunoChart(cpf) {
 		const pre = respostas.pre[key] ? respostas.pre[key] : '';
 		const pos = respostas.pos[key] ? respostas.pos[key] : '';
 		let change = parseInt(pre, 10) && parseInt(pos, 10) ? help.getPercentageChange(pre, pos) : '';
-		change = (parseInt(change, 10)) ? `${change} %` : '';
-		console.log('change', help.getPercentageChange(pre, pos));
+		change = change ? `${change} %` : '';
 		html += `<tr> <td>${i + 1}</td> <td>${e.questionName}</td> <td>${pre}</td> <td>${pos}</td> <td>${change}</td> </tr>`;
 	});
 	html += '</table><br><br>';

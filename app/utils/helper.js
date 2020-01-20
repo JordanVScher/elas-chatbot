@@ -233,7 +233,8 @@ function getPercentageChange(oldNumber, newNumber) {
 	const difference = newNumber - oldNumber;
 	let result = difference / oldNumber;
 	result *= 100;
-	return +result.toFixed(2);
+	result = +result.toFixed(2);
+	return result.toString();
 }
 
 function buildAlunaMsg(aluna) {
