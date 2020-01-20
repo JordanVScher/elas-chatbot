@@ -226,6 +226,8 @@ async function getAlunoRespostas(cpf) {
 	SELECT
 			ALUNOS.id id,
 			ALUNOS.nome_completo nome,
+			ALUNOS.email email,
+			ALUNOS.turma_id turma_id,
 			RESPOSTAS.pre pre,
 			RESPOSTAS.pos pos
 	FROM

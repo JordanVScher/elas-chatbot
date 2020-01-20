@@ -305,11 +305,6 @@ async function handleSondagem(response, column, map) {
 	if (aluna) {
 		await db.upsertPrePos(aluna.id, JSON.stringify(answers), column);
 	}
-
-	// build and send graph
-	// if (column === 'pos') {
-	// 	await buildAlunoChart(aluna.cpf, aluna.email);
-	// }
 }
 
 async function handleAvaliador(response, column, map) {
