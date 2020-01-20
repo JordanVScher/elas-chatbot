@@ -216,23 +216,26 @@ async function buildAlunoChart(cpf) {
 
 	// header
 	const styleDiv = 'font-size:10pt;margin-left:1.5em;margin-right:1.5em;margin-bottom:0.5em;margin-top:2.0em';
-	let html = `<p style="${styleDiv}"><h1>Resultados Sondagem</h1></p>`;
+	let html = `<p style="${styleDiv}"><h3>Resultados Sondagem</h3></p>`;
 	html += `<p>${await db.getTurmaName(respostas.turma_id)}<br>${respostas.nome}<br>${cpf}<br>${respostas.email}</p>`;
 
 	// tables
-	charts.forEach((map) => {
+	let questionNumber = 1;
+	charts.forEach((map, i) => {
 		html += `<table style="width:100% border:1px solid black" border=1>
 			<tr> <th>Número</th> <th>Questão</th> <th>Nota Pré</th> <th>Nota Pós</th> <th>Variação</th> `;
 
-		map.forEach((e, i) => {
+		map.forEach((e) => {
 			const key = e.paramName;
 			const pre = respostas.pre[key] ? respostas.pre[key] : '';
 			const pos = respostas.pos[key] ? respostas.pos[key] : '';
 			let change = parseInt(pre, 10) && parseInt(pos, 10) ? help.getPercentageChange(pre, pos) : '';
 			change = change ? `${change} %` : '';
-			html += `<tr> <td>${i + 1}</td> <td>${e.questionName}</td> <td>${pre}</td> <td>${pos}</td> <td>${change}</td> </tr>`;
+			html += `<tr> <td>${questionNumber}</td> <td>${e.questionName}</td> <td>${pre}</td> <td>${pos}</td> <td>${change}</td> </tr>`;
+			questionNumber += 1;
 		});
-		html += '</table><br><br>';
+
+		if (i + 1 < charts.length) { html += '</table><br><br><br><br>'; } // dont empty space on last table
 	});
 
 	const createPDFAsync = promisify(help.pdf.create);

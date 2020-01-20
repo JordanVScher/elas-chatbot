@@ -375,21 +375,18 @@ async function buildAttachment(type, cpf, name) {
 				content: createReadStream(pdf.content),
 				contentType: 'application/pdf',
 			});
-
 			result.chatbot.pdf = pdf;
 		}
 
 		const pdf2 = { filename: `${name}_sondagem.pdf` };
-		pdf2.content = await charts.buildAlunoChart(cpf); // actually buffer
-
+		const content2 = await charts.buildAlunoChart(cpf); // actually buffer
+		pdf2.content = content2 ? content2.filename : false;
 		if (pdf2 && pdf2.content) {
-			pdf2.content = await charts.formatSondagemPDF(pdf2.content, name);
 			result.mail.push({
 				filename: pdf2.filename,
 				content: createReadStream(pdf2.content),
 				contentType: 'application/pdf',
 			});
-
 			result.chatbot.pdf2 = pdf2;
 		}
 	}
