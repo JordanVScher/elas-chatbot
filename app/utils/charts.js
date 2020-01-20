@@ -196,31 +196,44 @@ async function formatSondagemPDF(buffer, name) {
 	return result.filename;
 }
 
-
+/**
+ * builds a pdf doc with the answers and grade variation of the sondagem questionnaires
+ * @param {integer} cpf - aluno cpf
+ * @return {object} obj with the temporary path of the pdf file. Ex: { filename: '/tmp/html-pdf-3098.pdf' }
+ */
 async function buildAlunoChart(cpf) {
 	const respostas = await db.getAlunoRespostas(cpf);
 
+	// check if user has every answer needed
 	if (!respostas) { return { error: `Usuário ${respostas.nome} não tem respostas` }; }
 	if (!respostas.pre) { return { error: `Usuário ${respostas.nome} não respondeu a Sondagem Pré` }; }
 	if (!respostas.pos) { return { error: `Usuário ${respostas.nome} não respondeu a Sondagem Pós` }; }
-	const map = chartsMaps.sondagem;
 
+	// divide the answers table into two to fit the page
+	const secondHalf = [...chartsMaps.sondagem];
+	const firstHalf = secondHalf.splice(0, 19);
+	const charts = [firstHalf, secondHalf];
+
+	// header
 	const styleDiv = 'font-size:10pt;margin-left:1.5em;margin-right:1.5em;margin-bottom:0.5em;margin-top:2.0em';
 	let html = `<p style="${styleDiv}"><h1>Resultados Sondagem</h1></p>`;
 	html += `<p>${await db.getTurmaName(respostas.turma_id)}<br>${respostas.nome}<br>${cpf}<br>${respostas.email}</p>`;
 
-	html += `<table style="width:100% border:1px solid black" border=1>
-		<tr> <th>Número</th> <th>Questão</th> <th>Nota Pré</th> <th>Nota Pós</th> <th>Variação</th> `;
+	// tables
+	charts.forEach((map) => {
+		html += `<table style="width:100% border:1px solid black" border=1>
+			<tr> <th>Número</th> <th>Questão</th> <th>Nota Pré</th> <th>Nota Pós</th> <th>Variação</th> `;
 
-	map.forEach((e, i) => {
-		const key = e.paramName;
-		const pre = respostas.pre[key] ? respostas.pre[key] : '';
-		const pos = respostas.pos[key] ? respostas.pos[key] : '';
-		let change = parseInt(pre, 10) && parseInt(pos, 10) ? help.getPercentageChange(pre, pos) : '';
-		change = change ? `${change} %` : '';
-		html += `<tr> <td>${i + 1}</td> <td>${e.questionName}</td> <td>${pre}</td> <td>${pos}</td> <td>${change}</td> </tr>`;
+		map.forEach((e, i) => {
+			const key = e.paramName;
+			const pre = respostas.pre[key] ? respostas.pre[key] : '';
+			const pos = respostas.pos[key] ? respostas.pos[key] : '';
+			let change = parseInt(pre, 10) && parseInt(pos, 10) ? help.getPercentageChange(pre, pos) : '';
+			change = change ? `${change} %` : '';
+			html += `<tr> <td>${i + 1}</td> <td>${e.questionName}</td> <td>${pre}</td> <td>${pos}</td> <td>${change}</td> </tr>`;
+		});
+		html += '</table><br><br>';
 	});
-	html += '</table><br><br>';
 
 	const createPDFAsync = promisify(help.pdf.create);
 	const result = await createPDFAsync(html).then((tmp) => tmp).catch((err) => console.log(err));
