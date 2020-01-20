@@ -200,8 +200,8 @@ module.exports = {
 			txt3: 'Entre com o nome da turma para gerar o Zip com os PDFs de Sondagem e Avaliação 360 da turma. Ele será enviado para todas as administradoras por e-mail. Exemplo: T7-SP',
 			success: 'Sucesso! Baixe o gráfico acima.',
 			failure: 'Não foi possível construir o gráfico!',
-			menuOptions: ['Média da Turma', 'Zip dos alunos', 'Enviar evolução'],
-			menuPostback: ['graficoMedia', 'graficoZip', 'sendFeedback'],
+			menuOptions: ['Média da Turma', 'Zip dos alunos'],
+			menuPostback: ['graficoMedia', 'graficoZip'],
 		},
 		sendFeedback: {
 			askTurma: 'Entre com o nome da turma que você deseja enviar os arquivos de evolução e feedback.',
