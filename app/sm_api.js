@@ -187,9 +187,9 @@ async function createNewWebhook(urlHook, surveyIDs) {
 	} else if (!surveyIDs) {
 		surveyIDs =	await getSurveyIds(); // eslint-disable-line
 	} else {
-		postWebhook('webhook_local', 'response_completed', 'survey', surveyIDs, `${urlHook}/webhook`);
-		// postWebhook('webhook_dev', 'response_completed', 'survey', surveyIDs, `${process.env.LINK_DEV}/webhook`);
 		postWebhook('webhook_homol', 'response_completed', 'survey', surveyIDs, `${process.env.LINK_HOMOL}/webhook`);
+		postWebhook('webhook_local', 'response_completed', 'survey', surveyIDs, `${urlHook}/webhook`);
+		// postWebhook('webhook_prod', 'response_completed', 'survey', surveyIDs, `${process.env.LINK_PROD}/webhook`);
 	}
 }
 
