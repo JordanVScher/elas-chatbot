@@ -53,15 +53,16 @@ async function buildTurmaChart(turmaID) {
 		});
 	});
 
+	delete respostas.pre.answer_date;
 	delete respostas.pre.cpf;
+	delete respostas.pos.answer_date;
 	delete respostas.pos.cpf;
 	// get the average
 	const divideBy = allAnswers.length;
 	Object.keys(respostas.pre).forEach((e) => { respostas.pre[e] /= divideBy; });
 	Object.keys(respostas.pos).forEach((e) => { respostas.pos[e] /= divideBy; });
 
-
-	const secondHalf = [...chartsMaps.sondagem];
+	const secondHalf = [...chartsMaps.sondagemMedia];
 	const firstHalf = secondHalf.splice(0, 23);
 	const charts = [firstHalf, secondHalf];
 
