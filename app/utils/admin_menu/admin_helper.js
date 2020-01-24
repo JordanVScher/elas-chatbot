@@ -133,7 +133,7 @@ async function NotificationChangeTurma(alunaID, oldTurmaID, newturmaID) {
 			userNotifications.forEach((n) => { // update notification only when it hasnt already been sent and the turma differs
 				if ((!n.error && !n.sent_at) && n.turma_id !== newturmaID) { // simply update the turma_id of the ones that havent been sent yet
 					let error = null;
-					if (!newturmaID) { error = { msg: 'Removida da turma' }; }
+					if (!newturmaID) { error = { msg: 'Removida da turma', date: new Date() }; }
 					notificationQueue.update({ turma_id: newturmaID, error }, { where: { id: n.id } })
 						.then((rowsUpdated) => rowsUpdated).catch((err) => help.sentryError('Erro no update do notificationQueue', err));
 				}
@@ -149,7 +149,7 @@ async function NotificationChangeTurma(alunaID, oldTurmaID, newturmaID) {
 			for (let i = 0; i < userNotifications.length; i++) {
 				const n = userNotifications[i]; // update notification only when it hasnt already been sent and the turma differs, adding an error msg
 				if ((!n.error && !n.sent_at) && n.turma_id !== newturmaID) { // which turns OFF notification of the older turma
-					notificationQueue.update({ error: { msg: `User changed from ${oldInCompany ? '"in company"' : '"regular turma"'} to ${newInCompany ? '"in company"' : '"regular turma"'}` } }, { where: { id: n.id } })
+					notificationQueue.update({ error: { msg: `User changed from ${oldInCompany ? '"in company"' : '"regular turma"'} to ${newInCompany ? '"in company"' : '"regular turma"'}`, date: new Date() } }, { where: { id: n.id } })
 						.then((rowsUpdated) => rowsUpdated).catch((err) => help.sentryError('Erro no update do notificationQueue', err));
 				}
 
@@ -302,7 +302,7 @@ async function updateNotificationTurma(turmaID) {
 	const turmaNotifications = await notificationQueue.findAll({ where: { turma_id: turmaID, error: null, sent_at: null }, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em notificationQueue.findAll', err));
 	for (let i = 0; i < turmaNotifications.length; i++) {
 		const n = turmaNotifications[i];
-		notificationQueue.update({ error: { msg } }, { where: { id: n.id } })
+		notificationQueue.update({ error: { msg, date: new Date() } }, { where: { id: n.id } })
 			.then((rowsUpdated) => rowsUpdated).catch((err) => help.sentryError('Erro no update do notificationQueue-turma', err));
 	}
 

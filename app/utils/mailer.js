@@ -78,8 +78,7 @@ async function sendHTMLFile(subject, to, html, pdf, png) {
 		const info = await transporter.sendMail(options);
 		console.log(`'${subject}' para ${to}:`, info.messageId, `with ${options.attachments.length} attachments`);
 	} catch (error) {
-		console.log('Could not send mail to ', to);
-		console.log('Error => ', error);
+		console.log('Could not send mail to ', to, 'Error => ', error);
 	}
 }
 
