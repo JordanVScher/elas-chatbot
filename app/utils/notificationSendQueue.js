@@ -340,14 +340,16 @@ async function checkShouldSendRecipient(recipient, notification) {
 				return false;
 			}
 		}
+	}
 
-		// these two notifications are for alunos only, check if any of their indicados havent answered the pre/pos quiz already
-		if ([4, 11, 20, 27].includes(notification.notification_type)) {
-			const column = [4, 20].includes(notification.notification_type) ? 'pre' : 'pos';
-			const indicados = await DB.getIndicadoRespostasAnswerNull(recipient.id, column);
-			if (!indicados || indicados.length === 0) {
-				return false;
-			}
+	// these two notifications are for alunos only, check if any of their indicados havent answered the pre/pos quiz already
+	if ([4, 11, 20, 27].includes(notification.notification_type)) {
+		const column = [4, 20].includes(notification.notification_type) ? 'pre' : 'pos'; // select which questionario
+		const indicados = await DB.getIndicadoRespostasAnswerNull(recipient.id, column); // get indicados that didnt answer the current questionario
+		if (!indicados || indicados.length === 0) { // if every indiciado answered, dont send email
+			await notificationQueue.update({ error: { misc: 'Todos os indicados já responderam', date: new Date() } }, { where: { id: notification.id } })
+				.then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do erro do 4 e 11', err));
+			return false;
 		}
 	}
 
@@ -489,11 +491,11 @@ async function sendNotificationFromQueue(test = false) {
 			const notificationRules = await rules.getNotificationRules(turmaName, regularRules);
 			// console.log('await checkShouldSendNotification(notification, moduleDates, today, notificationRules',
 			// await checkShouldSendNotification(notification, moduleDates, today, notificationRules));
-			if (test || await checkShouldSendNotification(notification, moduleDates, today, notificationRules) === true) { // !== for easy testing
+			if (await checkShouldSendNotification(notification, moduleDates, today, notificationRules) === true || test) { // !== for easy testing
 				const recipient = await getRecipient(notification, moduleDates);
 				// console.log('notification que passou', notification);
 				// console.log('recipient', recipient);
-				if (test || await checkShouldSendRecipient(recipient, notification) === true) {
+				if (await checkShouldSendRecipient(recipient, notification) === true) {
 					// console.log('Deve enviar');
 					await actuallySendMessages(types, notification, recipient, test);
 				}
@@ -504,9 +506,9 @@ async function sendNotificationFromQueue(test = false) {
 }
 
 module.exports = {
+	sendNotificationFromQueue,
 	checkShouldSendRecipient,
 	checkShouldSendNotification,
-	sendNotificationFromQueue,
 	findCurrentModulo,
 	getAluna,
 	getIndicado,
