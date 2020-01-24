@@ -181,13 +181,16 @@ async function getFormatedSpreadsheet() {
 		const obj = spreadsheet[i];
 		const aux = {};
 		// eslint-disable-next-line no-loop-func
+		const lines = Object.keys(obj);
 
-		await Object.keys(obj).forEach(async (key) => {
+		for (let j = 0; j < lines.length; j++) {
+			const key = lines[j];
 			if (key.slice(0, 6) === 'módulo') { // date is 5 digit long, originally its not a string
 				aux[key] = await getJsDateFromExcel(obj[key]);
 				const whichModule = key.replace('módulo', '');
-				if (!aux[`horárioMódulo${whichModule}`]) aux[`horárioMódulo${whichModule}`] = obj[`horárioMódulo${whichModule}`]; // this has to be set so we force it
+				if (!aux[`horárioMódulo${whichModule}`]) { aux[`horárioMódulo${whichModule}`] = obj[`horárioMódulo${whichModule}`]; } // this has to be set so we force it
 				let newDatahora = obj[key] + aux[`horárioMódulo${whichModule}`];
+				console.log('newDatahora', newDatahora);
 				newDatahora = await getJsDateFromExcel(newDatahora);
 				if (newDatahora.getMilliseconds() === 999) {
 					newDatahora.setMilliseconds(newDatahora.getMilliseconds() + 1);
@@ -196,7 +199,8 @@ async function getFormatedSpreadsheet() {
 			} else {
 				aux[key] = obj[key];
 			}
-		});
+		}
+
 		result.push(aux);
 	}
 
