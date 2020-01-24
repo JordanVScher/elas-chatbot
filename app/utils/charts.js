@@ -236,7 +236,7 @@ async function buildAlunoChart(cpf) {
 	// tables
 	let questionNumber = -1;
 	charts.forEach((map, i) => {
-		html += `<table style="width:100% border:1px solid black; border-collapse:collapse; " border=1 >
+		html += `<table style="width:100% border:1px solid black; border-collapse:collapse; font-size:12pt" border=1 >
 			<tr> <th>Questões</th> <th>Antes</th> <th>Depois</th> <th>Evolução</th> `;
 
 		map.forEach((e) => {
@@ -268,8 +268,11 @@ async function buildAlunoChart(cpf) {
 	const result = await createPDFAsync(html).then((tmp) => tmp).catch((err) => console.log(err));
 
 	if (!result || !result.filename) { return { error: 'Não existe respostas para gerar o resultado da sondagem da aluna' }; }
+	console.log('result', result);
 	return result;
 }
+
+buildAlunoChart(41734249811);
 
 async function buildAlunosDocs(turmaID) {
 	const alunos = await db.getAlunasFromTurma(turmaID);
