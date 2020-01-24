@@ -6,6 +6,7 @@ module.exports = (sequelize, DataTypes) => {
 			status: DataTypes.STRING,
 			local: DataTypes.STRING,
 			whatsapp: DataTypes.STRING,
+			disc: DataTypes.STRING,
 			inCompany: { type: DataTypes.BOOLEAN, field: 'in_company' },
 			pagseguroID: { type: DataTypes.INTEGER, field: 'pagseguro_id' },
 			modulo1: { type: DataTypes.DATE, field: 'horario_modulo1' },

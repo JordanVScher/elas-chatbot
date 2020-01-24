@@ -151,7 +151,7 @@ async function fillMasks(replaceMap, recipientData) {
 				newData = await help.getTinyUrl(process.env.LINK_DONNA);
 				break;
 			case 'DISC_LINK':
-				newData = await help.getTinyUrl(process.env.DISC_LINK1);
+				newData = await help.getTinyUrl(await DB.getDISCFromID(recipientData.turma_id));
 				break;
 			case 'SONDAGEMPRE':
 				newData = process.env.SONDAGEM_PRE_LINK;

@@ -648,7 +648,14 @@ async function getAlunaRespostaCadastro(alunoCPF) {
 async function getWhatsappFromID(turmaID) {
 	const result = await sequelize.query(`
 	SELECT whatsapp FROM turma where id = ${turmaID}
-	`).spread((r) => (r && r[0] && r[0].whatsapp ? r[0].whatsapp : false)).catch((err) => { sentryError('Erro em getAlunaRespostaCadastro =>', err); });
+	`).spread((r) => (r && r[0] && r[0].whatsapp ? r[0].whatsapp : false)).catch((err) => { sentryError('Erro em getWhatsappFromID =>', err); });
+	return result;
+}
+
+async function getDISCFromID(turmaID) {
+	const result = await sequelize.query(`
+	SELECT disc FROM turma where id = ${turmaID}
+	`).spread((r) => (r && r[0] && r[0].disc ? r[0].disc : false)).catch((err) => { sentryError('Erro em getDISCFromID =>', err); });
 	return result;
 }
 
@@ -694,4 +701,5 @@ module.exports = {
 	getAlunaRespostaCadastro,
 	getWhatsappFromID,
 	getTurmaRespostas,
+	getDISCFromID,
 };

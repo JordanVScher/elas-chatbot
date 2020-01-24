@@ -13,6 +13,7 @@ const turmaMap = {
 	datahora3: 'modulo3',
 	inCompany: 'inCompany',
 	whatsapp: 'whatsapp',
+	disc: 'disc',
 };
 
 async function handleInCompany(queryInput, aux) {
