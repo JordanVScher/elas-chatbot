@@ -176,14 +176,17 @@ async function getFormatedSpreadsheet() {
 	const result = [];
 	const spreadsheet = await reloadSpreadSheet(0, 6) || []; // console.log('spreadsheet', spreadsheet); // load spreadsheet
 	if (!spreadsheet) { sentryError('Couldnt load spreadsheet', spreadsheet); return []; }
+
 	for (let i = 0; i < spreadsheet.length; i++) {
 		const obj = spreadsheet[i];
 		const aux = {};
 		// eslint-disable-next-line no-loop-func
+
 		await Object.keys(obj).forEach(async (key) => {
 			if (key.slice(0, 6) === 'módulo') { // date is 5 digit long, originally its not a string
 				aux[key] = await getJsDateFromExcel(obj[key]);
 				const whichModule = key.replace('módulo', '');
+				if (!aux[`horárioMódulo${whichModule}`]) aux[`horárioMódulo${whichModule}`] = obj[`horárioMódulo${whichModule}`]; // this has to be set so we force it
 				let newDatahora = obj[key] + aux[`horárioMódulo${whichModule}`];
 				newDatahora = await getJsDateFromExcel(newDatahora);
 				if (newDatahora.getMilliseconds() === 999) {

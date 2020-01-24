@@ -304,8 +304,8 @@ module.exports = async (context) => {
 		case 'updateTurma': {
 			const feedback = await updateTurmas();
 			await context.setState({ csvLines: feedback && feedback.results ? feedback.results.length : 0 });
-			if (feedback && feedback.results) await context.sendText(feedback.results.join('\n'), await attach.getQR(flow.adminMenu.atualizarTurma));
-			if (feedback && feedback.errors) await dialogs.sendFeedbackMsgs(context, feedback.errors, '', flow.adminMenu.atualizarTurma);
+			if (feedback && feedback.results && feedback.results.length > 0) await context.sendText(feedback.results.join('\n'), await attach.getQR(flow.adminMenu.atualizarTurma));
+			if (feedback && feedback.errors && feedback.errors.length > 0) await dialogs.sendFeedbackMsgs(context, feedback.errors, '', flow.adminMenu.atualizarTurma);
 		} break;
 		case 'removerAluna':
 			await context.sendText(flow.adminMenu.removerAluna.txt1, await attach.getQR(flow.adminMenu.removerAluna));
