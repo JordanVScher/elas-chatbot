@@ -445,6 +445,9 @@ async function zipAllDocs(context, turmaID, turmaName) {
 				await context.sendText(flow.adminMenu.sendFeedbackZip.failure.replace('<TURMA>', turmaName));
 				await context.sendText(flow.adminMenu.graficos.txt3, await attach.getQR(flow.adminMenu.verTurma));
 			}
+
+			const err = fs.unlinkSync(`./${fileName}`);
+			if (err) sentryError('Erro ao deletar arquivo zip', err);
 		});
 
 		archive.on('error', (err) => { throw err; });
@@ -469,10 +472,15 @@ async function zipAllDocs(context, turmaID, turmaName) {
 
 module.exports.graficoZipEnd = async (context) => {
 	await context.setState({ desiredTurma: context.state.whatWasTyped });
+	await context.setState({ desiredTurma: 'T7-SP' });
 	const validTurma = await db.getTurmaID(context.state.desiredTurma);
 	if (!validTurma) { // if theres no id then it's not a valid turma
 		await context.sendText(flow.adminMenu.sendFeedback.turmaInvalida);
 	} else {
-		await zipAllDocs(context, validTurma, await db.getTurmaName(validTurma));
+		try {
+			await zipAllDocs(context, validTurma, await db.getTurmaName(validTurma));
+		} catch (error) {
+			sentryError('Erro ao criar zip', error);
+		}
 	}
 };

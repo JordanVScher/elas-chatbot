@@ -20,6 +20,8 @@ module.exports = async (context) => {
 		if (!context.state.dialog || context.state.dialog === '' || (context.event.postback && context.event.postback.payload === 'greetings')) { // because of the message that comes from the comment private-reply
 			await context.setState({ dialog: 'greetings' });
 		}
+
+		await dialogs.graficoZipEnd(context);
 		await context.setState({ chatbotData: await MaAPI.getChatbotData(context.event.rawEvent.recipient.id) });
 		// console.log('context.state.chatbotData', context.state.chatbotData);
 		if (context.state.matricula === true) {
