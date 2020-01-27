@@ -23,7 +23,7 @@ const notificationTypes = require('../server/models').notification_types;
 
 module.exports.checkReceivedFile = admin.checkReceivedFile;
 
-module.exports.sendMainMenu = async (context, txtMsg) => {
+async function sendMainMenu(context, txtMsg) {
 	const text = txtMsg || flow.mainMenu.defaultText;
 	let opt = [];
 
@@ -34,7 +34,9 @@ module.exports.sendMainMenu = async (context, txtMsg) => {
 	}
 
 	await context.sendText(text, opt);
-};
+}
+
+module.exports.sendMainMenu = sendMainMenu;
 
 module.exports.handleCPF = async (context) => {
 	const cpf = await help.getCPFValid(context.state.whatWasTyped);
@@ -65,6 +67,7 @@ module.exports.getAgenda = async (context, userTurma) => {
 				// getting the day the module starts
 				result.newDate = newDate;
 				result.newDateDay = help.weekDayName[result.newDate.getDay()];
+				result.horario = `${result.newDate.getHours() + 3}:${result.newDate.getMinutes()}`;
 				// getting the next day
 				result.nextDate = new Date(newDate);
 				result.nextDate.setDate(result.nextDate.getDate() + 1);
@@ -80,7 +83,7 @@ module.exports.buildAgendaMsg = async (data) => {
 	let msg = '';
 	if (data.turmaNome) msg = `📝 Sua Turma: ${data.turmaNome}\n`;
 	if (data.currentModule) msg += `💡 Você está no módulo ${data.currentModule} de 3\n`;
-	if (data.newDate) msg += `🗓️ Sua aula acontecerá ${data.newDateDay} dia ${await help.formatDate(data.newDate)} e ${data.nextDateDay} dia ${help.formatDate(data.nextDate)}\n`;
+	if (data.newDate) msg += `🗓️ Sua aula acontecerá ${data.newDateDay} dia ${await help.formatDate(data.newDate)} e ${data.nextDateDay} dia ${help.formatDate(data.nextDate)} às ${data.horario}\n`;
 	if (data.local) msg += `🏠 Local: ${await help.toTitleCase(data.local)}`;
 
 	return msg;
