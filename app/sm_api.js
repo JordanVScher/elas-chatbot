@@ -189,7 +189,7 @@ async function createNewWebhook(urlHook, surveyIDs) {
 	} else {
 		postWebhook('webhook_homol', 'response_completed', 'survey', surveyIDs, `${process.env.LINK_HOMOL}/webhook`);
 		postWebhook('webhook_local', 'response_completed', 'survey', surveyIDs, `${urlHook}/webhook`);
-		// postWebhook('webhook_prod', 'response_completed', 'survey', surveyIDs, `${process.env.LINK_PROD}/webhook`);
+		// postWebhook('webhook_prod', 'response_completed', 'survey', surveyIDs, 'https://elas.appcivico.com/webhook');
 	}
 }
 
