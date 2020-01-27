@@ -59,7 +59,7 @@ const sendNotificationCron = new CronJob(
 );
 
 const updateTurmasCron = new CronJob(
-	'00 30 * * * *', async () => {
+	'00 00 00 * * *', async () => {
 		console.log('Running updateTurmas');
 		try {
 			await updateTurmas();
