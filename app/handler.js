@@ -90,7 +90,7 @@ module.exports = async (context) => {
 					await labels.unlinkUserToLabelByName(context.session.user.id, context.state.gotAluna.turma, context.state.chatbotData.fb_access_token);
 				}
 				await context.setState({ recipient: await MaAPI.getRecipient(context.state.chatbotData.user_id, context.session.user.id) });
-				if (context.state.recipient.extra_fields.labels) {
+				if (context.state.recipient && context.state.recipient.extra_fields.labels) {
 					context.state.recipient.extra_fields.labels.forEach(async (element) => {
 						await MaAPI.deleteRecipientLabel(context.state.chatbotData.user_id, context.session.user.id, element.name);
 					});
