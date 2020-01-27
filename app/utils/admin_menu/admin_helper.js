@@ -216,8 +216,8 @@ async function formatRespostasCSV(lines, replament) {
 		await Object.keys(line).forEach(async (element) => {
 			if (line[element] === true) {
 				newLine[element] = replament;
-			} else if (line[element] === false) {
-				newLine[element] = '';
+			} else if (!line[element]) {
+				newLine[element] = 'Não Respondido';
 			} else {
 				newLine[element] = line[element];
 			}
