@@ -49,7 +49,7 @@ async function getSurveyDetails(id) {
 		const res = await request(`${url}/surveys/${id}/details`).set(headers);
 		result = await res.json();
 	} catch (error) { console.log('Erro em getSurveyDetails', JSON.stringify(result, null, 2)); Sentry.captureMessage('Erro em getSurveyDetails');	}
-	// console.log('getSurveyDetails', JSON.stringify(result, null, 2));
+	console.log('getSurveyDetails', JSON.stringify(result, null, 2));
 	return result;
 }
 
@@ -189,7 +189,7 @@ async function createNewWebhook(urlHook, surveyIDs) {
 	} else {
 		postWebhook('webhook_homol', 'response_completed', 'survey', surveyIDs, `${process.env.LINK_HOMOL}/webhook`);
 		postWebhook('webhook_local', 'response_completed', 'survey', surveyIDs, `${urlHook}/webhook`);
-		// postWebhook('webhook_prod', 'response_completed', 'survey', surveyIDs, 'https://elas.appcivico.com/webhook');
+		// postWebhook('webhook_prod', 'response_completed', 'survey', surveyIDs, `${urlHook}/webhook`);
 	}
 }
 
