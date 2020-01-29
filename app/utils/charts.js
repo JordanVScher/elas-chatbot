@@ -170,13 +170,10 @@ async function buildIndicadoChart(cpf) {
 		const result = await createPDFAsync(html).then((tmp) => tmp).catch((err) => console.log(err));
 
 		if (!result || !result.filename) { return { error: 'Não foi possível gerar o resultado da avaliação 360 da aluna' }; }
-		console.log('result', result);
 		return result;
 	}
 	return { error: 'Não foi possível recuperar as respostas para a avaliação 360 da aluna' };
 }
-
-buildIndicadoChart(41734249811);
 
 async function formatSondagemPDF(buffer, name) {
 	const img = [];
