@@ -472,7 +472,6 @@ async function zipAllDocs(context, turmaID, turmaName) {
 
 module.exports.graficoZipEnd = async (context) => {
 	await context.setState({ desiredTurma: context.state.whatWasTyped });
-	await context.setState({ desiredTurma: 'T7-SP' });
 	const validTurma = await db.getTurmaID(context.state.desiredTurma);
 	if (!validTurma) { // if theres no id then it's not a valid turma
 		await context.sendText(flow.adminMenu.sendFeedback.turmaInvalida);

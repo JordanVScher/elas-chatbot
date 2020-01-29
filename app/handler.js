@@ -21,7 +21,6 @@ module.exports = async (context) => {
 			await context.setState({ dialog: 'greetings' });
 		}
 
-		await dialogs.graficoZipEnd(context);
 		await context.setState({ chatbotData: await MaAPI.getChatbotData(context.event.rawEvent.recipient.id) });
 		// console.log('context.state.chatbotData', context.state.chatbotData);
 		if (context.state.matricula === true) {
