@@ -149,10 +149,10 @@ async function buildIndicadoChart(cpf) {
 		const styleDiv = 'font-size:10pt;margin-left:1.5em;margin-right:1.5em;margin-bottom:0.5em;margin-top:2.0em';
 		let html = `<p style="${styleDiv}"><h1>Resultados</h1></p>`;
 		html += `<table style="width:100% border:1px solid black " border=1>
-		<tr> <th>Questão Pré</th> <th>Avaliação Pré</th> <th>Exemplo Pré</th> <th>Oportunidade Pré</th> `;
+		<tr> <th>Questão Pré</th> <th>Avaliação Pré</th> <th>Oportunidade Pré</th> `;
 		data.forEach((element) => {
 			html += `<tr> <td>${element.titlePre}</td> 
-			<td>${element.avaliasPre}</td> <td>${element.exemploPre}</td> <td>${element.melhoraPre}</td> </tr>`;
+			<td>${element.avaliasPre}</td> <td>${element.melhoraPre}</td> </tr>`;
 		});
 		html += '</table><br><br>';
 		html += `<table style="width:100% border:1px solid black" border=1>
@@ -170,11 +170,13 @@ async function buildIndicadoChart(cpf) {
 		const result = await createPDFAsync(html).then((tmp) => tmp).catch((err) => console.log(err));
 
 		if (!result || !result.filename) { return { error: 'Não foi possível gerar o resultado da avaliação 360 da aluna' }; }
-
+		console.log('result', result);
 		return result;
 	}
 	return { error: 'Não foi possível recuperar as respostas para a avaliação 360 da aluna' };
 }
+
+buildIndicadoChart(41734249811);
 
 async function formatSondagemPDF(buffer, name) {
 	const img = [];
