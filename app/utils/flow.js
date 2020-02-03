@@ -166,9 +166,9 @@ module.exports = {
 		firstMenu: {
 			txt1: 'Esse é o menu do admin. Clique em uma opção:',
 			menuOptions: ['Inserir Alunas', 'Inserir Avaliadores', 'Ver Turma', 'Remover Aluna', 'Mudar Turma', 'Atualizar Turma', 'Aviso Respostas', 'Gerar Gráficos'],
-			// menuOptions: ['Inserir Alunas', 'Inserir Avaliadores', 'Ver Turma', 'Remover Aluna', 'Mudar Turma', 'Atualizar Turma', 'Aviso Respostas', 'Simular Notificação', 'Gerar Gráficos'],
+			// menuOptions: ['Inserir Alunas', 'Inserir Avaliadores', 'Ver Turma', 'Remover Aluna', 'Mudar Turma', 'Atualizar Turma', 'Aviso Respostas', 'Simular Notificação'],
 			menuPostback: ['inserirAlunas', 'inserirAvaliadores', 'verTurma', 'removerAluna', 'mudarTurma', 'updateTurma', 'avisoResposta', 'graficos'],
-			// menuPostback: ['inserirAlunas', 'inserirAvaliadores', 'verTurma', 'removerAluna', 'mudarTurma', 'updateTurma', 'avisoResposta', 'simularAskCPF', 'graficos'],
+			// menuPostback: ['inserirAlunas', 'inserirAvaliadores', 'verTurma', 'removerAluna', 'mudarTurma', 'updateTurma', 'avisoResposta', 'simularAskCPF'],
 		},
 		inserirAlunas: {
 			txt1: 'Envie o CSV com os dados das novas alunas. As colunas devem estar formatadas como esse arquivo de exemplo:',
@@ -205,18 +205,8 @@ module.exports = {
 			menuOptions: ['Média da Turma', 'Zip dos alunos'],
 			menuPostback: ['graficoMedia', 'graficoZip'],
 		},
-		sendFeedback: {
-			askTurma: 'Entre com o nome da turma que você deseja enviar os arquivos de evolução e feedback.',
-			turmaInvalida: 'Turma não encontrada! Tente novamente.',
-			turmaFound: 'Nome da Turma: <NOME>\nQuantas Alunas: <COUNT>',
-			confirma: 'Prosseguir com o envio?',
-			fim: 'Arquivos enviados.',
-			menuOptions: ['Sim', 'Cancelar', 'Trocar de Turma'],
-			menuPostback: ['sendFeedbackFim', 'adminMenu', 'sendFeedback'],
-			noCount: 'Turma não tem nenhuma aluna. Tente novamente.',
-		},
 		sendFeedbackZip: {
-			askTurma: 'Entre com o nome da turma que você deseja enviar os arquivos de evolução e feedback.',
+			askTurma: 'Entre com o nome da turma que você deseja receber por e-mail os arquivos de evolução e feedback.',
 			turmaInvalida: 'Turma não encontrada! Tente novamente.',
 			noDocs: 'Não foram encontradas alunas nessa turma',
 			success: 'Arquivo ZIP com os resultados da turma <TURMA> foram enviados para o e-mail das avaliadoras.',

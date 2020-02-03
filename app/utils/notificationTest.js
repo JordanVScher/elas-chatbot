@@ -12,7 +12,7 @@ const time = 30 * 1000;
 /**
  * Envia as notificações por e-mail e chatbot desconsiderando as datas
  * @param {number} cpf o cpf da aluna que irá receber (vazio = todos recebem)
- * @param {number} typeNumber o tipo de notificação (obs: em notificações como a 15 e 16 o texto ficará sempre igual)
+ * @param {number} typeNumber o tipo de notificação (obs: em notificações como a 14 e 15 o texto ficará sempre igual)
  */
 async function sendTestNotification(cpf, typeNumber, indicado = false, ignore = []) {
 	console.log('Running sendTestNotification');

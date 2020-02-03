@@ -14,12 +14,9 @@ const { sendTestNotification } = require('./notificationTest');
 const { alunos } = require('../server/models');
 const { turma } = require('../server/models');
 const { addNewNotificationAlunas } = require('./notificationAddQueue');
-const { getAluna } = require('./notificationSendQueue');
-const { actuallySendMessages } = require('./notificationSendQueue');
 const { addNewNotificationIndicados } = require('./notificationAddQueue');
 const charts = require('./charts');
 const broadcast = require('./broadcast');
-const notificationTypes = require('../server/models').notification_types;
 
 module.exports.checkReceivedFile = admin.checkReceivedFile;
 
@@ -305,42 +302,6 @@ module.exports.adminAlunaCPF = async (context, nextDialog) => {
 	}
 };
 
-module.exports.sendFeedbackFim = async (feedbackTurmaID, inCompany) => {
-	const types = await notificationTypes.findAll({ where: {}, raw: true }).then((res) => res).catch((err) => sentryError('Erro ao carregar notification_types', err));
-	const notification = {};
-	if (inCompany === true) {
-		notification.notification_type = 29;
-	} else {
-		notification.notification_type = 13;
-	}
-
-	const alunosToSend = await alunos.findAll({ where: { turma_id: feedbackTurmaID }, raw: true }).then((res) => res).catch((err) => help.sentryError('alunos em turma.findAll', err));
-	for (let i = 0; i < alunosToSend.length; i++) {
-		const e = alunosToSend[i];
-		const aluna = await getAluna(e.id);
-		await actuallySendMessages(types, notification, aluna, true);
-	}
-};
-
-module.exports.sendFeedbackConfirm = async (context) => {
-	await context.setState({ desiredTurma: context.state.whatWasTyped });
-	const validTurma = await db.getTurmaID(context.state.desiredTurma);
-	if (!validTurma) { // if theres no id then it's not a valid turma
-		await context.sendText(flow.adminMenu.sendFeedback.turmaInvalida);
-	} else {
-		const turmaData = await turma.findOne({ where: { id: validTurma }, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em turma.findOne', err));
-		const count = await alunos.count({ where: { turma_id: validTurma }, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em alunos.count', err));
-		if (count) {
-			await context.setState({ feedbackTurmaID: validTurma });
-			await context.sendText(flow.adminMenu.sendFeedback.turmaFound.replace('<NOME>', turmaData.nome).replace('<COUNT>', count));
-			await context.sendText(flow.adminMenu.sendFeedback.confirma, await attach.getQR(flow.adminMenu.sendFeedback));
-		} else {
-			await context.sendText(flow.adminMenu.sendFeedback.turmaInvalida);
-			await context.sendText(flow.adminMenu.firstMenu.txt1, await attach.getQR(flow.adminMenu.firstMenu));
-		}
-	}
-};
-
 module.exports.mudarAskTurma = async (context, pageToken) => {
 	await context.setState({ desiredTurma: context.state.whatWasTyped });
 	const validTurma = await db.getTurmaID(context.state.desiredTurma); // get the id that will be user for the transfer
@@ -389,7 +350,7 @@ module.exports.graficoMediaEnd = async (context) => {
 	await context.setState({ desiredTurma: context.state.whatWasTyped });
 	const validTurma = await db.getTurmaID(context.state.desiredTurma);
 	if (!validTurma) { // if theres no id then it's not a valid turma
-		await context.sendText(flow.adminMenu.sendFeedback.turmaInvalida);
+		await context.sendText(flow.adminMenu.sendFeedbackZip.turmaInvalida);
 	} else {
 		const turmaPDF = { filename: `${context.state.desiredTurma}_sondagem.pdf` };
 		turmaPDF.content = await charts.buildTurmaChart(validTurma);
@@ -474,7 +435,7 @@ module.exports.graficoZipEnd = async (context) => {
 	await context.setState({ desiredTurma: context.state.whatWasTyped });
 	const validTurma = await db.getTurmaID(context.state.desiredTurma);
 	if (!validTurma) { // if theres no id then it's not a valid turma
-		await context.sendText(flow.adminMenu.sendFeedback.turmaInvalida);
+		await context.sendText(flow.adminMenu.sendFeedbackZip.turmaInvalida);
 	} else {
 		try {
 			await zipAllDocs(context, validTurma, await db.getTurmaName(validTurma));

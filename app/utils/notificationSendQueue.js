@@ -258,10 +258,10 @@ async function checkShouldSendNotification(notification, moduleDates, today, not
 	const ourTurma = moduleDates.find((x) => x.id === notification.turma_id); // turma for this notification
 	if (!ourTurma) return false;
 	let currentRule = ''; // depends on the notification_type, rule for the notification (and module)
-	if ([15, 31].includes(notification.notification_type)) {
+	if ([14, 31].includes(notification.notification_type)) {
 		const currentModule = await findCurrentModulo(moduleDates, today);
 		currentRule = await notificationRules.find((x) => x.notification_type === notification.notification_type && x.modulo === currentModule);
-	} else if ([16, 32].includes(notification.notification_type)) {
+	} else if ([15, 32].includes(notification.notification_type)) {
 		const currentModule = await findCurrentModulo(moduleDates, today);
 		let sunday = false;
 		if (today.getDay() === 0) { sunday = true; }
@@ -296,7 +296,7 @@ async function checkShouldSendNotification(notification, moduleDates, today, not
 	}
 
 	// ignore hours for most notifications
-	if ([15, 16, 31, 32].includes(notification.notification_type) !== true) {
+	if ([14, 16, 31, 32].includes(notification.notification_type) !== true) {
 		max.setHours(0, 0, 0, 0);
 		min.setHours(0, 0, 0, 0);
 		today.setHours(0, 0, 0, 0);
@@ -324,7 +324,7 @@ async function checkShouldSendRecipient(recipient, notification) {
 		}
 	}
 
-	if ([10, 26].includes(notification.notification_type) === true) { // if it's this type of notification, check if recipient has answered the pre-avaliacao
+	if ([9, 26].includes(notification.notification_type) === true) { // if it's this type of notification, check if recipient has answered the pre-avaliacao
 		const answerPre = recipient['respostas.pre'];
 		if (!answerPre || Object.entries(answerPre).length === 0) {
 			await notificationQueue.update({ error: { misc: 'Indicado não respondeu pré-avaliação', date: new Date() } }, { where: { id: notification.id } })
@@ -336,19 +336,19 @@ async function checkShouldSendRecipient(recipient, notification) {
 			const answerPos = recipient['respostas.pos'];
 			if (answerPos && Object.entries(answerPos).length !== 0) { // if pos was already answered, there's no need to resend this notification
 				await notificationQueue.update({ error: { misc: 'Indicado já respondeu pós', date: new Date() } }, { where: { id: notification.id } })
-					.then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do erro check_answered & 10', err));
+					.then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do erro check_answered & 9', err));
 				return false;
 			}
 		}
 	}
 
 	// these two notifications are for alunos only, check if any of their indicados havent answered the pre/pos quiz already
-	if ([4, 11, 20, 27].includes(notification.notification_type)) {
+	if ([4, 10, 20, 27].includes(notification.notification_type)) {
 		const column = [4, 20].includes(notification.notification_type) ? 'pre' : 'pos'; // select which questionario
 		const indicados = await DB.getIndicadoRespostasAnswerNull(recipient.id, column); // get indicados that didnt answer the current questionario
 		if (!indicados || indicados.length === 0) { // if every indiciado answered, dont send email
 			await notificationQueue.update({ error: { misc: 'Todos os indicados já responderam', date: new Date() } }, { where: { id: notification.id } })
-				.then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do erro do 4 e 11', err));
+				.then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do erro do 4 e 10', err));
 			return false;
 		}
 	}
@@ -370,30 +370,6 @@ async function buildAttachment(type, cpf, name) { // eslint-disable-line
 	return result;
 }
 
-/**
- * Send notifications that need the feedback attachments only if we have said attachments for the e-mail.
- * @param {integer} notificationType the type of the notification
- * @param {json} attachment the attachment object
- * @returns {boolean} is allowed to send the notification?
- */
-async function verifyFeedbackMail(notificationType, attachment) {
-	if (['13', '29'].includes(notificationType.toString()) === false) return true; // other notification types dont need this verification
-	if (attachment && attachment.mail && attachment.mail.length > 0) return true;
-	return false;
-}
-
-/**
- * Send notifications that need the feedback attachments only if we have said attachments for the chatbot.
- * @param {integer} notificationType the type of the notification
- * @param {json} attachment the attachment object
- * @returns {boolean} is allowed to send the notification?
- */
-async function verifyFeedbackChatbot(notificationType, attachment) {
-	if (['13', '29'].includes(notificationType.toString()) === false) return true;
-	if (attachment && attachment.chatbot && (attachment.chatbot.pdf || attachment.chatbot.pdf2)) return true;
-	return false;
-}
-
 async function actuallySendMessages(types, notification, recipient, test = false) {
 	let currentType = types.find((x) => x.id === notification.notification_type); // get the correct kind of notification
 	currentType = JSON.parse(JSON.stringify(currentType)); // makes an actual copy
@@ -402,27 +378,21 @@ async function actuallySendMessages(types, notification, recipient, test = false
 
 	const newText = await replaceParameters(currentType, masks, recipient);
 	const attachment = await buildAttachment(currentType, recipient.cpf, recipient.nome_completo);
-	const HasFeedbackMail = await verifyFeedbackMail(notification.notification_type, attachment);
-	const HasFeedbackChatbot = await verifyFeedbackChatbot(notification.notification_type, attachment);
 	const error = {};
 
 
 	if (newText.email_text && recipient.email && recipient.email.trim()) { // if there's an email to send, send it
-		if (HasFeedbackMail === true) {
-			let html = await readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
-			html = await html.replace('[CONTEUDO_MAIL]', newText.email_text); // add nome to mail template
-			const mailError = await mailer.sendHTMLMail(newText.email_subject, recipient.email, html, attachment.mail);
-			if (mailError) { error.mailError = mailError.toString(); } // save the error, if it happens
-		}
+		let html = await readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
+		html = await html.replace('[CONTEUDO_MAIL]', newText.email_text); // add nome to mail template
+		const mailError = await mailer.sendHTMLMail(newText.email_subject, recipient.email, html, attachment.mail);
+		if (mailError) { error.mailError = mailError.toString(); } // save the error, if it happens
 	}
 
 	if (recipient['chatbot.fb_id'] && newText.chatbot_text) { // if aluna is linked with messenger we send a message to the bot
-		if (HasFeedbackChatbot === true) {
-			let chatbotError = await broadcast.sendBroadcastAluna(recipient['chatbot.fb_id'], newText.chatbot_text, newText.chatbot_quick_reply);
-			if (!chatbotError && newText.chatbot_cards) { chatbotError = await broadcast.sendCardAluna(recipient['chatbot.fb_id'], newText.chatbot_cards, recipient.cpf); }
-			if (!chatbotError && [attachment.chatbot.pdf || attachment.chatbot.png]) { chatbotError = await broadcast.sendFiles(recipient['chatbot.fb_id'], attachment.chatbot.pdf, attachment.chatbot.pdf2); }
-			if (chatbotError) { error.chatbotError = chatbotError.toString(); } // save the error, if it happens
-		}
+		let chatbotError = await broadcast.sendBroadcastAluna(recipient['chatbot.fb_id'], newText.chatbot_text, newText.chatbot_quick_reply);
+		if (!chatbotError && newText.chatbot_cards) { chatbotError = await broadcast.sendCardAluna(recipient['chatbot.fb_id'], newText.chatbot_cards, recipient.cpf); }
+		if (!chatbotError && [attachment.chatbot.pdf || attachment.chatbot.png]) { chatbotError = await broadcast.sendFiles(recipient['chatbot.fb_id'], attachment.chatbot.pdf, attachment.chatbot.pdf2); }
+		if (chatbotError) { error.chatbotError = chatbotError.toString(); } // save the error, if it happens
 	}
 
 	if (!error.mailError && !error.chatbotError && !test) { // if there wasn't any errors, we can update the queue succesfully
