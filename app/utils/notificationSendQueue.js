@@ -367,32 +367,6 @@ async function buildAttachment(type, cpf, name) { // eslint-disable-line
 		});
 	}
 
-	// if (['13', '29'].includes(type.id.toString()) && cpf) {
-	// 	const pdf = { filename: `${name}_360Results.pdf` }; // avaliadores pdf
-	// 	const content = await charts.buildIndicadoChart(cpf); // actually path, pass use the new filename
-	// 	pdf.content = content ? content.filename : false;
-	// 	if (pdf && pdf.content) {
-	// 		result.mail.push({
-	// 			filename: pdf.filename,
-	// 			content: createReadStream(pdf.content),
-	// 			contentType: 'application/pdf',
-	// 		});
-	// 		result.chatbot.pdf = pdf;
-	// 	}
-
-	// 	const pdf2 = { filename: `${name}_sondagem.pdf` };
-	// 	const content2 = await charts.buildAlunoChart(cpf); // actually buffer
-	// 	pdf2.content = content2 ? content2.filename : false;
-	// 	if (pdf2 && pdf2.content) {
-	// 		result.mail.push({
-	// 			filename: pdf2.filename,
-	// 			content: createReadStream(pdf2.content),
-	// 			contentType: 'application/pdf',
-	// 		});
-	// 		result.chatbot.pdf2 = pdf2;
-	// 	}
-	// }
-
 	return result;
 }
 
