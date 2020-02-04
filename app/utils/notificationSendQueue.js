@@ -114,6 +114,96 @@ async function fillMasks(replaceMap, recipientData) {
 			case 'TURMA':
 				newData = recipientData.turmaName;
 				break;
+			case 'MOD1_PRE_1':
+				newData = await help.formatDiasMod(recipientData.mod1, -1);
+				break;
+			case 'MOD2_PRE_1':
+				newData = await help.formatDiasMod(recipientData.mod2, -1);
+				break;
+			case 'MOD3_PRE_1':
+				newData = await help.formatDiasMod(recipientData.mod3, -1);
+				break;
+			case 'MOD1_PRE_2':
+				newData = await help.formatDiasMod(recipientData.mod1, -2);
+				break;
+			case 'MOD2_PRE_2':
+				newData = await help.formatDiasMod(recipientData.mod2, -2);
+				break;
+			case 'MOD3_PRE_2':
+				newData = await help.formatDiasMod(recipientData.mod3, -2);
+				break;
+			case 'MOD1_PRE_5':
+				newData = await help.formatDiasMod(recipientData.mod1, -5);
+				break;
+			case 'MOD2_PRE_5':
+				newData = await help.formatDiasMod(recipientData.mod2, -5);
+				break;
+			case 'MOD3_PRE_5':
+				newData = await help.formatDiasMod(recipientData.mod3, -5);
+				break;
+			case 'MOD1_PRE_6':
+				newData = await help.formatDiasMod(recipientData.mod1, -6);
+				break;
+			case 'MOD2_PRE_6':
+				newData = await help.formatDiasMod(recipientData.mod2, -6);
+				break;
+			case 'MOD3_PRE_6':
+				newData = await help.formatDiasMod(recipientData.mod3, -6);
+				break;
+			case 'MOD1_PRE_7':
+				newData = await help.formatDiasMod(recipientData.mod1, -7);
+				break;
+			case 'MOD2_PRE_7':
+				newData = await help.formatDiasMod(recipientData.mod2, -7);
+				break;
+			case 'MOD3_PRE_7':
+				newData = await help.formatDiasMod(recipientData.mod3, -7);
+				break;
+			case 'MOD1_PRE_8':
+				newData = await help.formatDiasMod(recipientData.mod1, -8);
+				break;
+			case 'MOD2_PRE_8':
+				newData = await help.formatDiasMod(recipientData.mod2, -8);
+				break;
+			case 'MOD3_PRE_8':
+				newData = await help.formatDiasMod(recipientData.mod3, -8);
+				break;
+			case 'MOD1_PRE_9':
+				newData = await help.formatDiasMod(recipientData.mod1, -9);
+				break;
+			case 'MOD2_PRE_9':
+				newData = await help.formatDiasMod(recipientData.mod2, -9);
+				break;
+			case 'MOD3_PRE_9':
+				newData = await help.formatDiasMod(recipientData.mod3, -9);
+				break;
+			case 'MOD1_PRE_13':
+				newData = await help.formatDiasMod(recipientData.mod1, -13);
+				break;
+			case 'MOD2_PRE_13':
+				newData = await help.formatDiasMod(recipientData.mod2, -13);
+				break;
+			case 'MOD3_PRE_13':
+				newData = await help.formatDiasMod(recipientData.mod3, -13);
+				break;
+			case 'MOD1_PRE_14':
+				newData = await help.formatDiasMod(recipientData.mod1, -14);
+				break;
+			case 'MOD2_PRE_14':
+				newData = await help.formatDiasMod(recipientData.mod2, -14);
+				break;
+			case 'MOD3_PRE_14':
+				newData = await help.formatDiasMod(recipientData.mod3, -14);
+				break;
+			case 'MOD1_POS_1':
+				newData = await help.formatDiasMod(recipientData.mod1, 1);
+				break;
+			case 'MOD2_POS_1':
+				newData = await help.formatDiasMod(recipientData.mod2, 1);
+				break;
+			case 'MOD3_POS_1':
+				newData = await help.formatDiasMod(recipientData.mod3, 1);
+				break;
 			case 'MOD1_15DIAS':
 				newData = await help.formatDiasMod(recipientData.mod1, -15);
 				break;
