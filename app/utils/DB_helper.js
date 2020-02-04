@@ -11,6 +11,11 @@ if (process.env.TEST !== 'true') {
 	});
 }
 
+function addslashes(str) {
+	if (typeof str !== 'string') return str;
+	return str.replace(/'/g, `''`); // eslint-disable-line
+}
+
 async function changeAdminStatus(fbID, status) {
 	const updatedUser = await sequelize.query(`
 		UPDATE chatbot_users SET is_admin = '${status}' WHERE fb_id = '${fbID}' RETURNING *;
@@ -152,7 +157,7 @@ async function upsertAlunoCadastro(userAnswers) {
 	const alunoExtraData = ['nome_completo', 'cpf', 'turma_id', 'email', 'rg', 'telefone', 'endereco', 'data_nascimento', 'contato_emergencia_nome', 'contato_emergencia_fone', 'contato_emergencia_email', 'contato_emergencia_relacao', 'added_by_admin'];
 	alunoExtraData.forEach((element) => { // columns on the database
 		if ((answers[element] && answers[element] !== undefined && answers[element] !== null) || answers[element] === false) {
-			columns.push(element); values.push(`'${answers[element]}'`); set.push(`${columns[columns.length - 1]} = ${values[values.length - 1]}`);
+			columns.push(element); values.push(`'${addslashes(answers[element])}'`); set.push(`${columns[columns.length - 1]} = ${values[values.length - 1]}`);
 		}
 	});
 
@@ -180,7 +185,7 @@ async function insertIndicacao(alunaID, userData, familiar) {
 	const id = await sequelize.query(`
 	INSERT INTO "indicacao_avaliadores" (aluno_id, nome, email, telefone, 
 		familiar, relacao_com_aluna, created_at, updated_at)
-	  VALUES ('${alunaID}', '${userData.nome || ''}', '${userData.email}', '${userData.tele || ''}', 
+	  VALUES ('${alunaID}', '${addslashes(userData.nome) || ''}', '${userData.email}', '${userData.tele || ''}', 
 	  '${familiar}', '${userData.relacao || ''}','${date}', '${date}')
 	RETURNING id, email;
 	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
@@ -198,7 +203,7 @@ async function insertFamiliar(alunaID, userData) {
 
 	const id = await sequelize.query(`
 	INSERT INTO "indicacao_familiares" (aluno_id, nome, relacao_com_aluna, email, telefone, created_at, updated_at)
-	  VALUES ('${alunaID}', '${userData.nome}', '${userData.relacao}', '${userData.email}', '${userData.tele}', '${date}', '${date}')
+	  VALUES ('${alunaID}', '${addslashes(userData.nome)}', '${userData.relacao}', '${userData.email}', '${userData.tele}', '${date}', '${date}')
 	RETURNING id, email;
 	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
 		console.log(`Added ${userData.email} successfully!`);
@@ -265,7 +270,7 @@ async function upsertIndicado(avaliador) {
 	const alunoExtraData = ['nome', 'email', 'telefone', 'aluno_id', 'familiar', 'relacao_com_aluna'];
 	alunoExtraData.forEach((element) => { // columns on the database
 		if ((indicado[element] && indicado[element] !== undefined && indicado[element] !== null) || indicado[element] === false) {
-			columns.push(element); values.push(`'${indicado[element]}'`); set.push(`${columns[columns.length - 1]} = ${values[values.length - 1]}`);
+			columns.push(element); values.push(`'${addslashes(indicado[element])}'`); set.push(`${columns[columns.length - 1]} = ${values[values.length - 1]}`);
 		}
 	});
 
@@ -572,7 +577,7 @@ async function addAlunaFromCSV(aluno) {
 	const set = []; // for do update only
 
 	if (aluno['Nome Completo']) {
-		columns.push('nome_completo'); values.push(`'${aluno['Nome Completo']}'`); set.push(`${columns[columns.length - 1]} = ${values[values.length - 1]}`);
+		columns.push('nome_completo'); values.push(`"${addslashes(aluno['Nome Completo'])}"`); set.push(`${columns[columns.length - 1]} = ${values[values.length - 1]}`);
 	}
 	if (aluno.CPF) {
 		columns.push('cpf'); values.push(`'${aluno.CPF}'`);

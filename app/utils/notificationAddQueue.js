@@ -69,7 +69,7 @@ async function addNewNotificationIndicados(alunaId, turmaID) {
 			sentryError(`addNewNotificationIndicados: turma ${turmaID} not found`);
 		}
 	} else {
-		sentryError(`addNewNotificationIndicados: aluna ${alunaId} não tem indicados`);
+		// sentryError(`addNewNotificationIndicados: aluna ${alunaId} não tem indicados`); // eslint-disable-line
 	}
 }
 
