@@ -52,7 +52,7 @@ const sendNotificationCron = new CronJob(
 	'00 00 10-22/1 * * *', async () => {
 		console.log('Running sendNotificationCron');
 		try {
-			await sendNotificationFromQueue();
+			// await sendNotificationFromQueue();
 		} catch (error) {
 			console.log('sendNotificationFromQueue error', error);
 			await sentryError('Error on sendNotificationFromQueue', error);
