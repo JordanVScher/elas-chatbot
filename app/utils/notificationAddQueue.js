@@ -1,15 +1,16 @@
 const notificationQueue = require('../server/models').notification_queue;
 const indicadosAvaliadores = require('../server/models').indicacao_avaliadores;
+const { alunos } = require('../server/models');
 const { turma } = require('../server/models');
 const { sentryError } = require('./helper');
 const rules = require('./notificationRules');
 const { getTurmaName } = require('./DB_helper');
 const { getTurmaInCompany } = require('./DB_helper');
 
-async function addNewNotificationAlunas(alunaId, turmaID) {
+async function addNewNotificationAlunas(alunaId, turmaID, reRules, noRules) {
 	try {
-		const regularRules = await rules.buildNotificationRules(await getTurmaInCompany(turmaID));
-		const notificationRules = await rules.getNotificationRules(await getTurmaName(turmaID), regularRules);
+		const regularRules = reRules || await rules.buildNotificationRules(await getTurmaInCompany(turmaID));
+		const notificationRules = noRules || await rules.getNotificationRules(await getTurmaName(turmaID), regularRules);
 		const ourTurma = await turma.findOne({ where: { id: turmaID }, raw: true }).then((res) => res).catch((err) => sentryError('Erro em turmaFindOne', err));
 		const rulesAlunos = await notificationRules.filter((x) => x.indicado !== true);
 		if (ourTurma) {
@@ -46,9 +47,9 @@ async function addAvaliadorOnQueue(rule, indicado, turmaID) {
 	}
 }
 
-async function addNewNotificationIndicados(alunaId, turmaID) {
-	const regularRules = await rules.buildNotificationRules(await getTurmaInCompany(turmaID));
-	const notificationRules = await rules.getNotificationRules(await getTurmaName(turmaID), regularRules);
+async function addNewNotificationIndicados(alunaId, turmaID, reRules, noRules) {
+	const regularRules = reRules || await rules.buildNotificationRules(await getTurmaInCompany(turmaID));
+	const notificationRules = noRules || await rules.getNotificationRules(await getTurmaName(turmaID), regularRules);
 	const indicados = await indicadosAvaliadores.findAll({ where: { aluno_id: alunaId }, raw: true }) // // get every indicado from aluna
 		.then((res) => res).catch((err) => sentryError('Erro em indicadosAvaliadores.findAll', err));
 	const rulesIndicados = await notificationRules.filter((x) => x.indicado === true);
@@ -69,14 +70,44 @@ async function addNewNotificationIndicados(alunaId, turmaID) {
 			sentryError(`addNewNotificationIndicados: turma ${turmaID} not found`);
 		}
 	} else {
+		console.log(`Aluna ${alunaId} não tem indicados!`);
 		// sentryError(`addNewNotificationIndicados: aluna ${alunaId} não tem indicados`); // eslint-disable-line
 	}
 }
 
-module.exports = {
-	addNewNotificationAlunas, addNewNotificationIndicados, addAvaliadorOnQueue,
-};
 
+async function addAlunasToQueue(turmaID) {
+	const queueTurma = await notificationQueue.findAll({ where: { turma_id: turmaID, sent_at: null }, raw: true }).then((r) => r).catch((err) => sentryError('Erro no findAll do notificationQueue', err));
+	const alunosOnQueue = [];
+	queueTurma.forEach((e) => {
+		const id = e.aluno_id;
+		if (!alunosOnQueue.includes(id)) alunosOnQueue.push(id);
+	});
+
+	const alunasTurma = await alunos.findAll({ where: { turma_id: turmaID }, raw: true }).then((r) => r).catch((err) => sentryError('Erro no findAll do alunos', err));
+	const alunosToAdd = [];
+	alunasTurma.forEach((e) => {
+		const { id } = e;
+		if (!alunosOnQueue.includes(id)) alunosToAdd.push(id);
+	});
+
+	if (alunosToAdd && alunosToAdd.length > 0) {
+		const regularRules = await rules.buildNotificationRules(await getTurmaInCompany(turmaID));
+		const notificationRules = await rules.getNotificationRules(await getTurmaName(turmaID), regularRules);
+		for (let i = 0; i < alunosToAdd.length; i++) {
+			const e = alunosToAdd[i];
+			addNewNotificationAlunas(e, turmaID, regularRules, notificationRules);
+			addNewNotificationIndicados(e, turmaID, regularRules, notificationRules);
+		}
+		console.log('Done');
+	} else {
+		console.log(`No alunos left to add in queue for turma ${turmaID}`);
+	}
+}
+
+module.exports = {
+	addNewNotificationAlunas, addNewNotificationIndicados, addAvaliadorOnQueue, addAlunasToQueue,
+};
 
 // addNewNotificationAlunas(120, 15);
 // addNewNotificationIndicados(120, 15);
