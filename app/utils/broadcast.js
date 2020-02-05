@@ -16,7 +16,7 @@ const client = MessengerClient.connect({
 
 async function sendBroadcastAluna(USER_ID, textMsg, buttons) {
 	if (USER_ID) {
-		const newButtons = buttons ? JSON.parse(buttons) : {};
+		const newButtons	= buttons;
 		let quickReply = [];
 		if (newButtons && newButtons.length > 0) { quickReply = { quick_replies: newButtons }; }
 

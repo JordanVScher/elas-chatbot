@@ -470,7 +470,6 @@ async function actuallySendMessages(types, notification, recipient, test = false
 	const attachment = await buildAttachment(currentType, recipient.cpf, recipient.nome_completo);
 	const error = {};
 
-
 	if (newText.email_text && recipient.email && recipient.email.trim()) { // if there's an email to send, send it
 		let html = await readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
 		html = await html.replace('[CONTEUDO_MAIL]', newText.email_text); // add nome to mail template
@@ -485,11 +484,11 @@ async function actuallySendMessages(types, notification, recipient, test = false
 		if (chatbotError) { error.chatbotError = chatbotError.toString(); } // save the error, if it happens
 	}
 
-	if (!error.mailError && !error.chatbotError && !test) { // if there wasn't any errors, we can update the queue succesfully
+	if (!error.mailError && !error.chatbotError && test) { // if there wasn't any errors, we can update the queue succesfully
 		await notificationQueue.update({ sent_at: new Date() }, { where: { id: notification.id } })
 			.then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do sendAt', err));
-	} else if (Object.entries(error).length > 0) { // if there was any errors, we store what happened
-		await notificationQueue.update({ error, date: new Date() }, { where: { id: notification.id } })
+	} else { // if there was any errors, we store what happened
+		await notificationQueue.update({ error, sent_at: new Date() }, { where: { id: notification.id } })
 			.then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do erro', err));
 	}
 	return false;
