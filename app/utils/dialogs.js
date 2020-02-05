@@ -217,6 +217,7 @@ module.exports.receiveCSVAluno = async (csvLines, chatbotUserId, pageToken) => {
 						const oldAluno = await alunos.findOne({ where: { cpf: element.cpf }, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em alunos.findOne', err));
 						// if aluno existed before we save the turma and label change
 						if (oldAluno && oldAluno.turma_id) { await admin.SaveTurmaChange(chatbotUserId, pageToken, oldAluno.id, oldAluno.turma_id, element.turma_id); }
+						if (!oldAluno) { await sendMatricula(element.Turma.nome, false, element.email, element.cpf); } // send matricula to new aluno only
 						element.added_by_admin = true;
 						const newAluno = await db.upsertAlunoCadastro(element);
 						await sendAlunaToAssistente(element.nome_completo, element.email, element.cpf, element.Turma.nome);
@@ -224,7 +225,6 @@ module.exports.receiveCSVAluno = async (csvLines, chatbotUserId, pageToken) => {
 							errors.push({ line: i + 2, msg: 'Erro ao salvar no banco' });
 							help.sentryError('Erro em receiveCSVAluno => Erro ao salvar no banco', { element });
 						} else {
-							if (!oldAluno) { await sendMatricula(element.Turma.nome, false, element.email, element.cpf); } // if not, send it with the new aluno cpf
 							if (newAluno.email === newAluno.contato_emergencia_email) {
 								errors.push({ line: i + 2, msg: `Contato de emergência tem o mesmo e-mail da aluna ${newAluno.nome_completo}: ${newAluno.contato_emergencia_email}`, ignore: true });
 							}
