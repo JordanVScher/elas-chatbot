@@ -28,6 +28,7 @@ const sendMissingWarningCron = new CronJob(
 		try {
 			await sendWarningCSV(false);
 		} catch (error) {
+			console.log('sendMissingWarningCron error', error);
 			await sentryError('Error on sendMissingWarningCron', error);
 		}
 	}, (() => { console.log('Crontab sendMissingWarningCron stopped.'); }),
@@ -40,6 +41,7 @@ const sendWarningAlunasCron = new CronJob(
 		try {
 			await sendWarningAlunas(false);
 		} catch (error) {
+			console.log('sendWarningAlunasCron error', error);
 			await sentryError('Error on sendWarningAlunasCron', error);
 		}
 	}, (() => { console.log('Crontab sendWarningAlunasCron stopped.'); }),
@@ -52,6 +54,7 @@ const sendNotificationCron = new CronJob(
 		try {
 			await sendNotificationFromQueue();
 		} catch (error) {
+			console.log('sendNotificationFromQueue error', error);
 			await sentryError('Error on sendNotificationFromQueue', error);
 		}
 	}, (() => { console.log('Crontab sendNotificationCron stopped.'); }),
@@ -64,6 +67,7 @@ const updateTurmasCron = new CronJob(
 		try {
 			await updateTurmas();
 		} catch (error) {
+			console.log('updateTurmasCron error', error);
 			await sentryError('Error on updateTurmasCron', error);
 		}
 	}, (() => { console.log('Crontab updateTurmas stopped.'); }),
@@ -76,6 +80,7 @@ const addPesquisasCron = new CronJob(
 		try {
 			await addAlunosPesquisa();
 		} catch (error) {
+			console.log('addPesquisasCron error', error);
 			await sentryError('Error on addPesquisasCron', error);
 		}
 	}, (() => {	console.log('Crontab addPesquisasCron stopped.'); }),
@@ -88,6 +93,7 @@ const sendPesquisasCron = new CronJob(
 		try {
 			await sendPesquisa();
 		} catch (error) {
+			console.log('sendPesquisasCron error', error);
 			await sentryError('Error on sendPesquisasCron', error);
 		}
 	}, (() => {	console.log('Crontab sendPesquisasCron stopped.'); }),
@@ -100,6 +106,7 @@ const checkAPICron = new CronJob(
 		try {
 			await checkAPI();
 		} catch (error) {
+			console.log('checkAPICron error', error);
 			await sentryError('Error on checkAPICron', error);
 		}
 	}, (() => { console.log('Crontab checkAPICron stopped.'); }),
