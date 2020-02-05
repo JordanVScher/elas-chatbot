@@ -470,21 +470,21 @@ async function actuallySendMessages(types, notification, recipient, test = false
 	const attachment = await buildAttachment(currentType, recipient.cpf, recipient.nome_completo);
 	const error = {};
 
-	if (newText.email_text && recipient.email && recipient.email.trim()) { // if there's an email to send, send it
-		let html = await readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
-		html = await html.replace('[CONTEUDO_MAIL]', newText.email_text); // add nome to mail template
-		const mailError = await mailer.sendHTMLMail(newText.email_subject, recipient.email, html, attachment.mail);
-		if (mailError) { error.mailError = mailError.toString(); } // save the error, if it happens
-	}
+	// if (newText.email_text && recipient.email && recipient.email.trim()) { // if there's an email to send, send it
+	// 	let html = await readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
+	// 	html = await html.replace('[CONTEUDO_MAIL]', newText.email_text); // add nome to mail template
+	// 	const mailError = await mailer.sendHTMLMail(newText.email_subject, recipient.email, html, attachment.mail);
+	// 	if (mailError) { error.mailError = mailError.toString(); } // save the error, if it happens
+	// }
 
-	if (recipient['chatbot.fb_id'] && newText.chatbot_text) { // if aluna is linked with messenger we send a message to the bot
-		let chatbotError = await broadcast.sendBroadcastAluna(recipient['chatbot.fb_id'], newText.chatbot_text, newText.chatbot_quick_reply);
-		if (!chatbotError && newText.chatbot_cards) { chatbotError = await broadcast.sendCardAluna(recipient['chatbot.fb_id'], newText.chatbot_cards, recipient.cpf); }
-		if (!chatbotError && [attachment.chatbot.pdf || attachment.chatbot.png]) { chatbotError = await broadcast.sendFiles(recipient['chatbot.fb_id'], attachment.chatbot.pdf, attachment.chatbot.pdf2); }
-		if (chatbotError) { error.chatbotError = chatbotError.toString(); } // save the error, if it happens
-	}
+	// if (recipient['chatbot.fb_id'] && newText.chatbot_text) { // if aluna is linked with messenger we send a message to the bot
+	// 	let chatbotError = await broadcast.sendBroadcastAluna(recipient['chatbot.fb_id'], newText.chatbot_text, newText.chatbot_quick_reply);
+	// 	if (!chatbotError && newText.chatbot_cards) { chatbotError = await broadcast.sendCardAluna(recipient['chatbot.fb_id'], newText.chatbot_cards, recipient.cpf); }
+	// 	if (!chatbotError && [attachment.chatbot.pdf || attachment.chatbot.png]) { chatbotError = await broadcast.sendFiles(recipient['chatbot.fb_id'], attachment.chatbot.pdf, attachment.chatbot.pdf2); }
+	// 	if (chatbotError) { error.chatbotError = chatbotError.toString(); } // save the error, if it happens
+	// }
 
-	if (!error.mailError && !error.chatbotError && test) { // if there wasn't any errors, we can update the queue succesfully
+	if (!error.mailError && !error.chatbotError) { // if there wasn't any errors, we can update the queue succesfully
 		await notificationQueue.update({ sent_at: new Date() }, { where: { id: notification.id } })
 			.then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do sendAt', err));
 	} else { // if there was any errors, we store what happened
@@ -508,13 +508,15 @@ async function sendNotificationFromQueue(test = false) {
 	const moduleDates = await DB.getModuloDates();
 	const today = new Date();
 
-	const queue = await notificationQueue.findAll({ where: { turma_id: { [Op.not]: null }, sent_at: null, error: null }, raw: true }) // eslint-disable-line
+	// const queue = await notificationQueue.findAll({ where: { turma_id: { [Op.not]: null }, sent_at: null, error: null }, raw: true }) // eslint-disable-line
+	const queue = await notificationQueue.findAll({ where: { turma_id: 15, aluno_id: 14, sent_at: null, error: null }, raw: true }) // eslint-disable-line
 		.then((res) => res).catch((err) => sentryError('Erro ao carregar notification_queue', err));
 
 	const types = await notificationTypes.findAll({ where: {}, raw: true })
 		.then((res) => res).catch((err) => sentryError('Erro ao carregar notification_types', err));
 	let lastNotification = {};
 
+	console.log('queue', queue);
 	for (let i = 0; i < queue.length; i++) {
 		const notification = queue[i];
 		if (lastNotification.aluno_id !== notification.aluno_id || lastNotification.notification_type !== notification.notification_type) {
@@ -526,11 +528,16 @@ async function sendNotificationFromQueue(test = false) {
 			// await checkShouldSendNotification(notification, moduleDates, today, notificationRules));
 			if (await checkShouldSendNotification(notification, moduleDates, today, notificationRules) === true || test) { // !== for easy testing
 				const recipient = await getRecipient(notification, moduleDates);
-				// console.log('notification que passou', notification);
-				// console.log('recipient', recipient);
-				if (await checkShouldSendRecipient(recipient, notification) === true) {
-					// console.log('Deve enviar');
-					await actuallySendMessages(types, notification, recipient, test);
+				if (recipient.nome_completo === 'Jordan dos mil testes' && recipient.id === 14) {
+					console.log('Jordan Receberá o e-mail');
+					// console.log('notification que passou', notification);
+					// console.log('recipient', recipient);
+					if (await checkShouldSendRecipient(recipient, notification) === true) {
+						// console.log('Deve enviar');
+						await actuallySendMessages(types, notification, recipient, test);
+					}
+				} else {
+					console.log(`${recipient.nome_completo} Não recebeu`);
 				}
 			}
 		}
@@ -551,3 +558,5 @@ module.exports = {
 	actuallySendMessages,
 	getRecipient,
 };
+
+sendNotificationFromQueue(true);
