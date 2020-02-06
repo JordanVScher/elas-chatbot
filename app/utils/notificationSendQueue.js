@@ -361,7 +361,8 @@ async function checkShouldSendNotification(notification, moduleDates, today, not
 	}
 
 	if (!currentRule) {
-		return sentryError('currentRule undefined!', JSON.stringify({ currentNotification: notification }, null, 2));
+		return false;
+		// return sentryError('currentRule undefined!', JSON.stringify({ currentNotification: notification }, null, 2));
 	}
 	const dateToSend = await rules.getSendDate(ourTurma, currentRule); // the date to send
 	const moduloDate = new Date(ourTurma[`modulo${currentRule.modulo}`]);
