@@ -146,7 +146,7 @@ module.exports = {
 				title: 'ATIVIDADE 3 - INVENTÁRIO COMPORTAMENTAL',
 				subtitle: '"Descobrir" o seu potencial e suas habilidades.Preencha em um momento calmo.',
 				image_url: 'https://gallery.mailchimp.com/926cb477483bcd8122304bc56/images/9f6a19c4-571b-429f-b628-8ef4cedda1a9.jpg',
-				url: process.env.DISC_LINK1,
+				url: '[DISC_LINK]',
 			},
 		],
 	},

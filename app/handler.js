@@ -223,7 +223,7 @@ module.exports = async (context) => {
 			await context.setState({ ourTurma: await db.getTurmaFromID(context.state.gotAluna.turma_id) });
 			await context.setState({ mod1Date: context.state.ourTurma.horario_modulo1 });
 			await context.sendText(flow.Atividade2.text1.replace('[MOD1_15DIAS]', await help.formatDiasMod(context.state.mod1Date, -15)));
-			await attach.sendAtividade2Cards(context, flow.Atividade2.cards, context.state.cpf);
+			await attach.sendAtividade2Cards(context, await help.replaceVarOnCards(flow.Atividade2.cards, '[DISC_LINK]', await db.getDISCFromID(context.state.gotAluna.turma_id)), context.state.cpf);
 			await context.sendText(flow.Atividade2.text2.replace('[MOD1_2DIAS]', await help.formatDiasMod(context.state.mod1Date, -2)), await attach.getQR(flow.Atividade2));
 			await context.setState({ spreadsheet: '', ourTurma: '', mod1Date: '' });
 			break;

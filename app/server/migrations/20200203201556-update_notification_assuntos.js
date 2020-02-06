@@ -1,6 +1,4 @@
 module.exports = {
-
-
 	up: (queryInterface) => {
 		queryInterface.bulkUpdate('notification_types', { email_subject: 'PROGRAMA ELAS - TURMA [TURMA] - INFORMAÇÕES IMPORTANTES: LOCAL E HORÁRIO DO TREINAMENTO' }, { id: 1 });
 		queryInterface.bulkUpdate('notification_types', { email_subject: 'PROGRAMA ELAS - TURMA [TURMA] - Atividades 1 e 2 Pré Treinamento' }, { id: 2 });

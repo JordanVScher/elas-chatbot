@@ -387,6 +387,19 @@ function chunkArray(myArray, chunkSize) {
 	return results;
 }
 
+function replaceVarOnCards(cards, toReplace, value) {
+	const res = JSON.parse(JSON.stringify(cards));
+	res.forEach((obj) => {
+		Object.keys(obj).forEach((key) => {
+			if (obj[key].includes(toReplace)) {
+				obj[key] = obj[key].replace(toReplace, value);
+			}
+		});
+	});
+
+	return res;
+}
+
 
 module.exports = {
 	Sentry,
@@ -423,4 +436,5 @@ module.exports = {
 	encrypt,
 	decrypt,
 	chunkArray,
+	replaceVarOnCards,
 };

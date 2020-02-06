@@ -240,8 +240,10 @@ async function fillMasks(replaceMap, recipientData) {
 			case 'LINKDONNA':
 				newData = await help.getTinyUrl(process.env.LINK_DONNA);
 				break;
+			case 'DISC_LINK1':
+			case 'DISC_LINK2':
 			case 'DISC_LINK':
-				newData = await help.getTinyUrl(process.env.DISC_LINK1);
+				newData = await help.getTinyUrl(await DB.getDISCFromID(recipientData.turma_id));
 				break;
 			case 'SONDAGEMPRE':
 				newData = process.env.SONDAGEM_PRE_LINK;
@@ -471,6 +473,7 @@ async function actuallySendMessages(types, notification, recipient) {
 	const attachment = await buildAttachment(currentType, recipient.cpf, recipient.nome_completo);
 	const error = {};
 
+	console.log('newText', newText);
 	if (newText.email_text && recipient.email && recipient.email.trim()) { // if there's an email to send, send it
 		let html = await readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
 		html = await html.replace('[CONTEUDO_MAIL]', newText.email_text); // add nome to mail template
