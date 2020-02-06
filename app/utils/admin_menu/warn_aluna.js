@@ -39,7 +39,7 @@ async function sendWarningAlunas(test, mod) {
 	const today = new Date();
 	const allTurmas = await turmas.findAll({ where: {}, raw: true }).then((res) => res).catch((err) => sentryError('Erro em turmas.findAll', err));
 
-	const modulos = await warn.getValidModulos(today, allTurmas, 2, test, mod);
+	const modulos = await warn.getValidModulos(today, allTurmas, 8, test, mod);
 	let content = await warn.GetWarningData(modulos);
 
 	content = await content.filter((x) => x['ID Avaliador'] === null);

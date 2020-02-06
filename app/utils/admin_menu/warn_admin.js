@@ -55,8 +55,8 @@ async function getValidModulos(today, allTurmas, warnDaysBefore = 2, test, modul
 			if (modDate) {
 				modDate.setHours(0, 0, 0, 0);
 				modDate = help.moment(modDate);
-				const diff = today.diff(modDate, 'days');
-				if (test || (!test && diff === warnDaysBefore)) {
+				const diff = modDate.diff(today, 'days');
+				if (test || (diff === warnDaysBefore)) {
 					result.push({
 						turmaID: turma.id,
 						moduloN,
