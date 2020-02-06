@@ -4,8 +4,7 @@ const { MessengerClient } = require('messaging-api-messenger');
 const { createReadStream } = require('fs');
 const { missingAnswersWarning } = require('./flow');
 const chatbotUsers = require('../server/models').chatbot_users;
-const sentryError = require('./helper');
-
+const { sentryError } = require('./helper');
 
 const config = require('../bottender.config').messenger;
 
