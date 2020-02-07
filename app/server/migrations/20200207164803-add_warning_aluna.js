@@ -15,7 +15,7 @@ Equipe ELAS`,
 
 Parece que falta você preencher alguns formulários para a nossa aula dessa semana:
 
-[]`,
+[ATIVIDADES]`,
 	},
 };
 

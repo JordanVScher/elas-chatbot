@@ -663,6 +663,12 @@ async function getDISCFromID(turmaID) {
 	`).spread((r) => (r && r[0] && r[0].disc ? r[0].disc : false)).catch((err) => { sentryError('Erro em getDISCFromID =>', err); });
 	return result;
 }
+async function getAlunoRespostasAll(alunoID) {
+	const result = await sequelize.query(`
+	SELECT * FROM alunos_respostas where aluno_id = ${alunoID}
+	`).spread((r) => (r[0])).catch((err) => { sentryError('Erro em getAlunoRespostasAll =>', err); });
+	return result;
+}
 
 module.exports = {
 	upsertUser,
@@ -677,6 +683,7 @@ module.exports = {
 	insertFamiliar,
 	getAluno,
 	getAlunoRespostas,
+	getAlunoRespostasAll,
 	getIndicadoRespostas,
 	getIndicadoRespostasAnswerNull,
 	getAlunasFromTurma,

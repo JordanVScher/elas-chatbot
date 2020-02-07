@@ -9,11 +9,39 @@ const help = require('./helper');
 const { sentryError } = require('./helper');
 const mailer = require('./mailer');
 const broadcast = require('./broadcast');
-// const charts = require('./charts');
 const DB = require('./DB_helper');
 const rules = require('./notificationRules');
+const surveysInfo = require('./sm_surveys');
 
 const { Op } = Sequelize;
+
+const atividadesRules = {
+	1: ['pre', 'atividade_indicacao'],
+	2: [],
+	3: ['pos'],
+};
+
+async function findCurrentModulo(turmaData, today = new Date()) {
+	let currentModule = 1;
+
+	for (let i = 1; i <= 3; i++) {
+		const moduleX = turmaData[`modulo${i}`];
+		if (today >= new Date(moduleX)) { currentModule = i; }
+	}
+
+	return currentModule;
+}
+
+async function findAtividadesMissing(atividades, currentModule, alunoID) {
+	const atividadesModulo = atividades[currentModule];
+	const respostas = await DB.getAlunoRespostasAll(alunoID);
+	const areMissing = [];
+	atividadesModulo.forEach((e) => {
+		if (respostas[e] === null) { areMissing.push(e); }
+	});
+
+	return areMissing;
+}
 
 async function replaceCustomParameters(original, recipient) {
 	const alunaTurma = recipient.turmaName ? recipient.turmaName : await DB.getTurmaName(recipient.turma_id);
@@ -73,6 +101,31 @@ async function buildIndicadosLinks(alunaID, turma, column, link) {
 		result += `\n${aux}\n`;
 	}
 	return result;
+}
+
+const atividadesHumanName = {
+	atividade_indicacao: 'Indicação de Avaliadores (Avaliação 360)',
+	pre: 'Pré Sondagem de foco',
+	pos: 'Pós Sondagem de foco',
+};
+
+const atividadesLinks = {
+	atividade_indicacao: surveysInfo.indicacao360.link,
+	pre: surveysInfo.sondagemPre.link,
+	pos: surveysInfo.sondagemPre.link,
+};
+
+async function buildAtividadeText(recipient, atividades) {
+	let text = '';
+
+	for (let i = 0; i < atividades.length; i++) {
+		const e = atividades[i];
+		if (atividadesHumanName[e]) text += `${atividadesHumanName[e]}`;
+		if (atividadesLinks[e]) text += ` - ${await replaceCustomParameters(atividadesLinks[e], recipient)}`;
+		text += '\n';
+	}
+
+	return text;
 }
 
 /*
@@ -269,6 +322,9 @@ async function fillMasks(replaceMap, recipientData) {
 			case 'AVALIACAO3':
 				newData = process.env.MODULO3_LINK;
 				break;
+			case 'ATIVIDADES':
+				newData = await buildAtividadeText(recipientData, recipientData.atividadesMissing);
+				break;
 			default:
 				break;
 			}
@@ -334,18 +390,6 @@ async function replaceParameters(texts, newMap, recipient) {
 	return newTexts || {};
 }
 
-async function findCurrentModulo(turmaData, today = new Date()) {
-	let currentModule = 1;
-
-	for (let i = 1; i <= 3; i++) {
-		const moduleX = turmaData[`modulo${i}`];
-		if (today >= new Date(moduleX)) { currentModule = i; }
-	}
-
-	return currentModule;
-}
-
-
 async function checkShouldSendNotification(notification, moduleDates, today, notificationRules) {
 	const ourTurma = moduleDates.find((x) => x.id === notification.turma_id); // turma for this notification
 	if (!ourTurma) return false;
@@ -406,7 +450,7 @@ async function checkShouldSendNotification(notification, moduleDates, today, not
 	return false; // can't send this notification
 }
 
-async function checkShouldSendRecipient(recipient, notification) {
+async function checkShouldSendRecipient(recipient, notification, moduleDates, today) {
 	if (!recipient) { return false; }
 	if ([3, 19].includes(notification.notification_type) === true && notification.check_answered === true) {
 		const answerPre = recipient['respostas.pre'];
@@ -446,6 +490,17 @@ async function checkShouldSendRecipient(recipient, notification) {
 		}
 	}
 
+	if ([16].includes(notification.notification_type)) {
+		const currentModule = await findCurrentModulo(moduleDates, today);
+		const atividadesMissing = await findAtividadesMissing(atividadesRules, currentModule, recipient.id);
+		if (!atividadesMissing || atividadesMissing.length === 0) {
+			await notificationQueue.update({ error: { misc: `Aluna já respondeu todos os questionários do módulo ${currentModule}`, date: new Date() } }, { where: { id: notification.id } })
+				.then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update da checagem do tipo 16', err));
+			return false;
+		}
+		recipient.atividadesMissing = atividadesMissing;
+	}
+
 	return true;
 }
 
@@ -463,7 +518,7 @@ async function buildAttachment(type, cpf, name) { // eslint-disable-line
 	return result;
 }
 
-async function actuallySendMessages(types, notification, recipient) {
+async function actuallySendMessages(types, notification, recipient, test) {
 	let currentType = types.find((x) => x.id === notification.notification_type); // get the correct kind of notification
 	currentType = JSON.parse(JSON.stringify(currentType)); // makes an actual copy
 	const parametersMap = await rules.buildParametersRules(currentType);
@@ -473,7 +528,6 @@ async function actuallySendMessages(types, notification, recipient) {
 	const attachment = await buildAttachment(currentType, recipient.cpf, recipient.nome_completo);
 	const error = {};
 
-	console.log('newText', newText);
 	if (newText.email_text && recipient.email && recipient.email.trim()) { // if there's an email to send, send it
 		let html = await readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
 		html = await html.replace('[CONTEUDO_MAIL]', newText.email_text); // add nome to mail template
@@ -488,7 +542,7 @@ async function actuallySendMessages(types, notification, recipient) {
 		if (chatbotError) { error.chatbotError = chatbotError.toString(); } // save the error, if it happens
 	}
 
-	if (!error.mailError && !error.chatbotError) { // if there wasn't any errors, we can update the queue succesfully
+	if (!error.mailError && !error.chatbotError && !test) { // if there wasn't any errors, we can update the queue succesfully
 		await notificationQueue.update({ sent_at: new Date() }, { where: { id: notification.id } })
 			.then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do sendAt', err));
 	} else { // if there was any errors, we store what happened
@@ -531,7 +585,7 @@ async function sendNotificationFromQueue(test = false) {
 				const recipient = await getRecipient(notification, moduleDates);
 				// console.log('notification que passou', notification);
 				// console.log('recipient', recipient);
-				if (await checkShouldSendRecipient(recipient, notification) === true) {
+				if (await checkShouldSendRecipient(recipient, notification, moduleDates, today) === true) {
 					// console.log('Deve enviar');
 					await actuallySendMessages(types, notification, recipient, test);
 				}
