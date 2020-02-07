@@ -402,7 +402,7 @@ function replaceVarOnCards(cards, toReplace, value) {
 
 function buildModDateChange(date) {
 	const dateRegex = /MOD[123]_(PRE|POS)_\d+/;
-	if (!date || dateRegex.test(date) === false) return false;
+	if (!date || typeof date !== 'string' || dateRegex.test(date) === false) return false;
 	let text = date;
 	text = text.replace('MOD', '');
 	const module = text.charAt(0);
@@ -412,11 +412,10 @@ function buildModDateChange(date) {
 	if (date.includes('PRE')) { negative = true; text = text.replace('_PRE_', ''); }
 	if (date.includes('POS')) { negative = false; text = text.replace('_POS_', ''); }
 	if (negative === null) { return false; }
-	const days = negative ? text * -1 : text;
+	const days = negative ? text * -1 : parseInt(text, 10);
 
 	return { module, days };
 }
-
 
 module.exports = {
 	Sentry,
@@ -453,6 +452,6 @@ module.exports = {
 	encrypt,
 	decrypt,
 	chunkArray,
-	buildModDateChange,
 	replaceVarOnCards,
+	buildModDateChange,
 };

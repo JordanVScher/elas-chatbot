@@ -325,7 +325,12 @@ async function fillMasks(replaceMap, recipientData) {
 			case 'ATIVIDADES':
 				newData = await buildAtividadeText(recipientData, recipientData.atividadesMissing);
 				break;
-			default:
+			default: {
+				const modDate = await help.buildModDateChange(currentKey);
+				if (modDate && modDate.module && modDate.days) {
+					newData = await help.formatDiasMod(recipientData[`mod${modDate.module}`], modDate.days);
+				}
+			}
 				break;
 			}
 			result[currentKey] = newData;
@@ -594,6 +599,8 @@ async function sendNotificationFromQueue(test = false) {
 		lastNotification = notification;
 	}
 }
+
+sendNotificationFromQueue();
 
 module.exports = {
 	sendNotificationFromQueue,
