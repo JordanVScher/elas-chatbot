@@ -350,7 +350,7 @@ async function checkShouldSendNotification(notification, moduleDates, today, not
 	const ourTurma = moduleDates.find((x) => x.id === notification.turma_id); // turma for this notification
 	if (!ourTurma) return false;
 	let currentRule = ''; // depends on the notification_type, rule for the notification (and module)
-	if ([14, 31].includes(notification.notification_type)) {
+	if ([14, 31, 16].includes(notification.notification_type)) {
 		const currentModule = await findCurrentModulo(moduleDates, today);
 		currentRule = await notificationRules.find((x) => x.notification_type === notification.notification_type && x.modulo === currentModule);
 	} else if ([15, 32].includes(notification.notification_type)) {
