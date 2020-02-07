@@ -106,35 +106,36 @@ async function addAlunasToQueue(turmaID) {
 }
 
 async function addMissingAlunoNotification(turmaID, type) {
+	const res = [];
 	const regularRules = await rules.buildNotificationRules(await getTurmaInCompany(turmaID));
 	const notificationRules = await rules.getNotificationRules(await getTurmaName(turmaID), regularRules);
 	const rulesAlunos = await notificationRules.filter((x) => x.indicado !== true && x.notification_type === type);
 	if (!rulesAlunos || rulesAlunos.length === 0) {
-		console.log('Regra não encontrada');
-		return false;
+		return `Regra ${type} não encontrada`;
 	}
-	const alunosTurma = await alunos.findAll({ where: { turma_id: turmaID }, raw: true }).then((res) => res).catch((err) => sentryError('Erro em turmaFindOne', err));
+	const alunosTurma = await alunos.findAll({ where: { turma_id: turmaID }, raw: true }).then((r) => r).catch((err) => sentryError('Erro em turmaFindOne', err));
 
 	for (let i = 0; i < alunosTurma.length; i++) {
 		const aluno = alunosTurma[i];
 		const notificacoes = await notificationQueue.findAll({ where: { aluno_id: aluno.id, notification_type: type, sent_at: null, error: null }, raw: true }).then((r) => r).catch((err) => sentryError('Erro no findAll do notificationQueue', err)); // eslint-disable-line object-curly-newline
 		if (!notificacoes || notificacoes.length === 0) {
-			console.log(`${aluno.nome_completo} receberá ${rulesAlunos.length} da notificação ${type}`);
+			res.push(`${aluno.nome_completo} receberá ${rulesAlunos.length} da notificação ${type}`);
 			for (let j = 0; j < rulesAlunos.length; j++) {
 				const rule = rulesAlunos[j];
 				await notificationQueue.create({
 					notification_type: rule.notification_type, aluno_id: aluno.id, turma_id: turmaID, modulo: rule.modulo,
-				}).then((res) => res).catch((err) => sentryError('Erro em notificationQueue.create', err));
+				}).then((r) => r).catch((err) => sentryError('Erro em notificationQueue.create', err));
 			}
 		} else {
-			console.log(`${aluno.nome_completo} já tem ${notificacoes.length} da notificação ${type}`);
+			res.push(`${aluno.nome_completo} já tem ${notificacoes.length} da notificação ${type}`);
 		}
 	}
+
+	return res;
 }
 module.exports = {
 	addNewNotificationAlunas, addNewNotificationIndicados, addAvaliadorOnQueue, addAlunasToQueue, addMissingAlunoNotification,
 };
-
 
 // addNewNotificationAlunas(120, 15);
 // addNewNotificationIndicados(120, 15);

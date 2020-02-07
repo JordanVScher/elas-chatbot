@@ -4,6 +4,7 @@ const testFolder = './.sessions/';
 const fs = require('fs');
 const { linkUserToLabelByName } = require('./app/utils/labels');
 const { changeAdminStatus } = require('./app/utils/DB_helper');
+const { addMissingAlunoNotification } = require('./app/utils/notificationAddQueue');
 
 async function getFBIDJson() { // eslint-disable-line
 	const result = {};
@@ -53,6 +54,25 @@ async function addLabel(req, res) {
 			}
 
 			res.status(200); res.send(response);
+		}
+	}
+}
+
+async function addMissingNotification(req, res) {
+	const body = JSON.parse(req.body || '{}');
+	if (!body || !body.security_token) {
+		res.status(400); res.send('Param security_token is required!');
+	} else {
+		const securityToken = body.security_token;
+		if (securityToken !== process.env.SECURITY_TOKEN_MA) {
+			res.status(401); res.send('Unauthorized!');
+		} else {
+			const result = await addMissingAlunoNotification();
+			if (result) {
+				res.status(200); res.send(result);
+			} else {
+				res.status(500); res.send('Failure');
+			}
 		}
 	}
 }

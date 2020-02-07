@@ -95,6 +95,10 @@ server.get('/name-id', async (req, res) => {
 	await requests.getNameFBID(req, res);
 });
 
+server.post('/add-missing-notification', async (req, res) => {
+	await requests.addMissingNotification(req, res);
+});
+
 
 server.listen(process.env.API_PORT, () => {
 	console.log(`Server is running on ${process.env.API_PORT} port...`);
