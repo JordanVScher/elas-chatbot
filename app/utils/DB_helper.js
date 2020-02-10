@@ -670,6 +670,15 @@ async function getAlunoRespostasAll(alunoID) {
 	return result;
 }
 
+async function getNotificationTypes() {
+	const result = await sequelize.query(`
+	SELECT id, name, email_subject, email_text, chatbot_text, chatbot_quick_reply, chatbot_cards, attachment_name, attachment_link 
+	FROM notification_types order by id
+	`).spread((r) => (r)).catch((err) => { sentryError('Erro em getNotificationTypes =>', err); });
+	console.log(JSON.stringify(result, null, 2));
+	return result;
+}
+
 module.exports = {
 	upsertUser,
 	getAlunaFromCPF,
@@ -714,4 +723,5 @@ module.exports = {
 	getWhatsappFromID,
 	getTurmaRespostas,
 	getDISCFromID,
+	getNotificationTypes,
 };
