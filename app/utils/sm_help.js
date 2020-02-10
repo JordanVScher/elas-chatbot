@@ -2,6 +2,7 @@ const fs = require('fs');
 const { sentryError } = require('./helper');
 const { getIndicacaoErrorText } = require('./helper');
 const { getSameContatoEmailErrorText } = require('./helper');
+const matriculaLog = require('../server/models').matricula_mail_log;
 const smAPI = require('../sm_api');
 const mailer = require('./mailer');
 const { eMail } = require('./flow');
@@ -29,11 +30,16 @@ async function sendMatricula(turmaName, pagamentoID, buyerEmail, cpf) {
 		if (cpf) { link += '&cpf=CPFRESPOSTA'; }
 
 		let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Matricula.html`, 'utf-8'); // prepare the e-mail
+		link = link.replace(/TURMARESPOSTA/g, turmaName.trim());
+		link = link.replace(/PSIDRESPOSTA/g, pagamentoID);
+		link = link.replace(/CPFRESPOSTA/g, cpf);
+
 		html = await html.replace(/<link_atividade>/g, link); // add link to mail template
-		html = await html.replace(/TURMARESPOSTA/g, turmaName.trim()); // update the turma
-		html = await html.replace(/PSIDRESPOSTA/g, pagamentoID);
-		html = await html.replace(/CPFRESPOSTA/g, cpf);
-		await mailer.sendHTMLMail(eMail.atividade1.assunto, buyerEmail, html);
+		const e = await mailer.sendHTMLMail(eMail.atividade1.assunto, buyerEmail, html);
+
+		await matriculaLog.create({
+			sentTo: buyerEmail, sentAt: new Date(), atividadeLink: link, error: e && e.stack ? e.stack : e,
+		}).then((res) => res).catch((err) => sentryError('Erro em matriculaLog.create', err));
 	} catch (error) { sentryError('Erro sendMatricula', error); }
 }
 

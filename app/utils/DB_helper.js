@@ -679,6 +679,17 @@ async function getNotificationTypes() {
 	return result;
 }
 
+async function getMissingCadastro() {
+	const result = await sequelize.query(`
+	SELECT *
+	FROM alunos AS ALUNO 
+	INNER JOIN alunos_respostas RESPOSTAS ON ALUNO.id = RESPOSTAS.aluno_id
+	WHERE RESPOSTAS.atividade_1 is null;
+	`).spread((r) => (r)).catch((err) => { sentryError('Erro em getNotificationTypes =>', err); });
+	console.log(JSON.stringify(result, null, 2));
+	return result;
+}
+
 module.exports = {
 	upsertUser,
 	getAlunaFromCPF,

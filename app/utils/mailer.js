@@ -47,7 +47,7 @@ async function sendHTMLMail(subject, to, html, anexo) {
 	try {
 		const info = await transporter.sendMail(options);
 		console.log(`'${subject}' para ${to}:`, info.messageId);
-		return false;
+		return null;
 	} catch (error) {
 		console.log('Could not send mail to ', to, 'Error => ', error);
 		return error;

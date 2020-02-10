@@ -600,7 +600,6 @@ async function sendNotificationFromQueue(test = false) {
 	}
 }
 
-sendNotificationFromQueue();
 
 module.exports = {
 	sendNotificationFromQueue,
