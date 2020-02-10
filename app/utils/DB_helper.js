@@ -681,12 +681,13 @@ async function getNotificationTypes() {
 
 async function getMissingCadastro() {
 	const result = await sequelize.query(`
-	SELECT *
+	SELECT ALUNO.id, ALUNO.nome_completo, ALUNO.email, ALUNO.cpf, TURMA.nome as turma_nome, PAGAMENTO.id as pagamento_id
 	FROM alunos AS ALUNO 
 	INNER JOIN alunos_respostas RESPOSTAS ON ALUNO.id = RESPOSTAS.aluno_id
+	INNER JOIN turma TURMA ON TURMA.id = ALUNO.turma_id
+	LEFT JOIN pagamentos PAGAMENTO ON PAGAMENTO.aluno_id = ALUNO.id
 	WHERE RESPOSTAS.atividade_1 is null;
 	`).spread((r) => (r)).catch((err) => { sentryError('Erro em getNotificationTypes =>', err); });
-	console.log(JSON.stringify(result, null, 2));
 	return result;
 }
 
@@ -735,4 +736,5 @@ module.exports = {
 	getTurmaRespostas,
 	getDISCFromID,
 	getNotificationTypes,
+	getMissingCadastro,
 };

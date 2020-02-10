@@ -30,17 +30,24 @@ async function sendMatricula(turmaName, pagamentoID, buyerEmail, cpf) {
 		if (cpf) { link += '&cpf=CPFRESPOSTA'; }
 
 		let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Matricula.html`, 'utf-8'); // prepare the e-mail
-		link = link.replace(/TURMARESPOSTA/g, turmaName.trim());
+		link = link.replace(/TURMARESPOSTA/g, turmaName);
 		link = link.replace(/PSIDRESPOSTA/g, pagamentoID);
 		link = link.replace(/CPFRESPOSTA/g, cpf);
 
 		html = await html.replace(/<link_atividade>/g, link); // add link to mail template
 		const e = await mailer.sendHTMLMail(eMail.atividade1.assunto, buyerEmail, html);
-
 		await matriculaLog.create({
 			sentTo: buyerEmail, sentAt: new Date(), atividadeLink: link, error: e && e.stack ? e.stack : e,
 		}).then((res) => res).catch((err) => sentryError('Erro em matriculaLog.create', err));
 	} catch (error) { sentryError('Erro sendMatricula', error); }
+}
+
+async function sendMissingMatriculas() { // eslint-disable-line no-unused-vars
+	const alunas = await db.getMissingCadastro();
+	for (let i = 0; i < alunas.length; i++) {
+		const e = alunas[i];
+		await sendMatricula(e.turma_nome, e.pagamento_id, e.email, e.cpf);
+	}
 }
 
 async function addCustomParametersToAnswer(answers, parameters) {
