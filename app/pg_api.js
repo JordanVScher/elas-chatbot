@@ -69,9 +69,7 @@ async function createVenda(itemId = 1) { // for testing only, creates a link to 
 
 // what to do after someone buys one of the products
 async function handlePagamento(notification) {
-	console.log('notification', notification);
 	await pagseguro.notification(notification.notificationCode, async (success, response) => { // get transaction details based on notificationCode
-		console.log('response', response);
 		if (success && !response.error) {
 			try {
 				const answer = await xmlParse(response); console.log('answer', JSON.stringify(answer, null, 2)); // parse xml to json

@@ -592,13 +592,14 @@ async function sendNotificationFromQueue(alunoID = null, test = false) {
 
 	const queue = await notificationQueue.findAll({ where: queryRules, raw: true }) // eslint-disable-line
 		.then((res) => res).catch((err) => sentryError('Erro ao carregar notification_queue', err));
-
+	console.log('queue', queue);
 	const types = await notificationTypes.findAll({ where: {}, raw: true })
 		.then((res) => res).catch((err) => sentryError('Erro ao carregar notification_types', err));
 
 	for (let i = 0; i < queue.length; i++) {
 		const notification = queue[i];
-		const logID = await notificationLog.create({ notificationId: notification.id, notificationType: Notification.notification_type }).then((res) => (res && res.dataValues && res.dataValues.id ? res.dataValues.id : false)).catch((err) => sentryError('Erro em notificationQueue.create', err));
+		const logID = await notificationLog.create({ notificationId: notification.id, notificationType: notification.notification_type }).then((res) => (res && res.dataValues && res.dataValues.id ? res.dataValues.id : false)).catch((err) => sentryError('Erro em notificationQueue.create', err));
+		console.log('\n\n---logID', logID);
 		const turmaName = await DB.getTurmaName(notification.turma_id);
 		const turmaInCompany = await DB.getTurmaInCompany(notification.turma_id);
 		const regularRules = await rules.buildNotificationRules(turmaInCompany);
