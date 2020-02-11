@@ -587,7 +587,7 @@ async function sendNotificationFromQueue(test = false) {
 	const moduleDates = await DB.getModuloDates();
 	const today = new Date();
 
-	const queue = await notificationQueue.findAll({ where: { turma_id: { [Op.not]: null, aluno_id: 215 }, sent_at: null, error: null }, raw: true }) // eslint-disable-line
+	const queue = await notificationQueue.findAll({ where: { turma_id: { [Op.not]: null }, aluno_id: 215, sent_at: null, error: null }, raw: true }) // eslint-disable-line
 		.then((res) => res).catch((err) => sentryError('Erro ao carregar notification_queue', err));
 
 	const types = await notificationTypes.findAll({ where: {}, raw: true })
