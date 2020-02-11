@@ -4,8 +4,9 @@ const testFolder = './.sessions/';
 const fs = require('fs');
 const { linkUserToLabelByName } = require('./app/utils/labels');
 const { changeAdminStatus } = require('./app/utils/DB_helper');
-const { addMissingAlunoNotification } = require('./app/utils/notificationAddQueue');
+const { addNewNotificationAlunas } = require('./app/utils/notificationAddQueue');
 const { sendNotificationFromQueue } = require('./app/utils/notificationSendQueue');
+
 
 async function getFBIDJson() { // eslint-disable-line
 	const result = {};
@@ -70,7 +71,7 @@ async function addMissingNotification(req, res) {
 		} else if (!body.aluno_id || !body.turma_id) {
 			res.status(401); res.send('Missing aluno_id or turma_id!');
 		} else {
-			addMissingAlunoNotification(body.aluno_id, body.turma_id);
+			addNewNotificationAlunas(body.aluno_id, body.turma_id);
 			res.status(200); res.send('Processando');
 		}
 	}
