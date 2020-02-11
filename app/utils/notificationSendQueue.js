@@ -368,7 +368,7 @@ async function getIndicado(id, moduleDates, logID) {
 		return extendRecipient(result, moduleDates, result['aluna.turma_id']);
 	}
 
-	await notificationLog.update({ sentEmail: 'Erro: indicado não tem e-mail' }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog1', err));
+	await notificationLog.update({ sentEmail: 'Erro: indicado não tem e-mail', recipientData: result }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog1', err));
 	return sentryError('Erro: indicado não tem e-mail', result);
 }
 
@@ -381,7 +381,7 @@ async function getAluna(id, moduleDates, logID) {
 		return extendRecipient(result, moduleDates, result.turma_id);
 	}
 
-	await notificationLog.update({ sentEmail: 'Erro: aluna não tem e-mail' }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog1', err));
+	await notificationLog.update({ sentEmail: 'Erro: aluna não tem e-mail', recipientData: result }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog1', err));
 	return sentryError('Erro: aluno não tem e-mail', result);
 }
 
@@ -460,11 +460,12 @@ async function checkShouldSendNotification(notification, moduleDates, today, not
 	return false; // can't send this notification
 }
 
-async function checkShouldSendRecipient(recipient, notification, moduleDates, today) {
+async function checkShouldSendRecipient(recipient, notification, moduleDates, today, logID) {
 	if (!recipient) { return false; }
 	if ([3, 19].includes(notification.notification_type) === true && notification.check_answered === true) {
 		const answerPre = recipient['respostas.pre'];
 		if (answerPre && Object.keys(answerPre)) { // if pre was already answered, there's no need to resend this notification
+			await notificationLog.update({ shouldSend: false, sentEmail: 'Indicado já respondeu pré' }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog1', err));
 			await notificationQueue.update({ error: { misc: 'Indicado já respondeu pré', date: new Date() } }, { where: { id: notification.id } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do erro check_answered & 3', err));
 			return false;
 		}
@@ -473,6 +474,7 @@ async function checkShouldSendRecipient(recipient, notification, moduleDates, to
 	if ([9, 26].includes(notification.notification_type) === true) { // if it's this type of notification, check if recipient has answered the pre-avaliacao
 		const answerPre = recipient['respostas.pre'];
 		if (!answerPre || Object.entries(answerPre).length === 0) {
+			await notificationLog.update({ shouldSend: false, sentEmail: 'Indicado não respondeu pré-avaliação' }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog1', err));
 			await notificationQueue.update({ error: { misc: 'Indicado não respondeu pré-avaliação', date: new Date() } }, { where: { id: notification.id } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do erro === 10', err));
 			return false;
 		}
@@ -480,6 +482,7 @@ async function checkShouldSendRecipient(recipient, notification, moduleDates, to
 		if (notification.check_answered === true) { // check if we need to see if recipient answered pos already
 			const answerPos = recipient['respostas.pos'];
 			if (answerPos && Object.entries(answerPos).length !== 0) { // if pos was already answered, there's no need to resend this notification
+				await notificationLog.update({ shouldSend: false, sentEmail: 'Indicado já respondeu pós' }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog1', err));
 				await notificationQueue.update({ error: { misc: 'Indicado já respondeu pós', date: new Date() } }, { where: { id: notification.id } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do erro check_answered & 9', err));
 				return false;
 			}
@@ -491,6 +494,7 @@ async function checkShouldSendRecipient(recipient, notification, moduleDates, to
 		const column = [4, 20].includes(notification.notification_type) ? 'pre' : 'pos'; // select which questionario
 		const indicados = await DB.getIndicadoRespostasAnswerNull(recipient.id, column); // get indicados that didnt answer the current questionario
 		if (!indicados || indicados.length === 0) { // if every indiciado answered, dont send email
+			await notificationLog.update({ shouldSend: false, sentEmail: 'Todos os indicados já responderam' }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog1', err));
 			await notificationQueue.update({ error: { misc: 'Todos os indicados já responderam', date: new Date() } }, { where: { id: notification.id } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do erro do 4 e 10', err));
 			return false;
 		}
@@ -500,6 +504,7 @@ async function checkShouldSendRecipient(recipient, notification, moduleDates, to
 		const currentModule = await findCurrentModulo(moduleDates, today);
 		const atividadesMissing = await findAtividadesMissing(atividadesRules, currentModule, recipient.id);
 		if (!atividadesMissing || atividadesMissing.length === 0) {
+			await notificationLog.update({ shouldSend: false, sentEmail: `Aluna já respondeu todos os questionários do módulo ${currentModule}` }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog1', err));
 			await notificationQueue.update({ error: { misc: `Aluna já respondeu todos os questionários do módulo ${currentModule}`, date: new Date() } }, { where: { id: notification.id } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update da checagem do tipo 16', err));
 			return false;
 		}
@@ -558,6 +563,8 @@ async function actuallySendMessages(types, notification, recipient, logID) {
 		} else {
 			await notificationLog.update({ sentBroadcast: JSON.stringify({ status: 'Enviado', data: new Date() }, null, 2) }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog1', err));
 		}
+	} else {
+		await notificationLog.update({ sentBroadcast: 'Não tem facebook_id' }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog1', err));
 	}
 
 	if (!error.mailError && !error.chatbotError) { // if there wasn't any errors, we can update the queue succesfully
@@ -581,6 +588,7 @@ async function getRecipient(notification, moduleDates, logID) {
 	return recipient;
 }
 async function sendNotificationFromQueue(alunoID = null, notificationType, test = false) {
+	const types = await notificationTypes.findAll({ where: {}, raw: true }).then((res) => res).catch((err) => sentryError('Erro ao carregar notification_types', err));
 	const moduleDates = await DB.getModuloDates();
 	const today = new Date();
 
@@ -588,24 +596,19 @@ async function sendNotificationFromQueue(alunoID = null, notificationType, test 
 	if (alunoID) { queryRules.aluno_id = alunoID; }
 	if (notificationType) { queryRules.notification_type = notificationType; }
 
-	const queue = await notificationQueue.findAll({ where: queryRules, raw: true }) // eslint-disable-line
-		.then((res) => res).catch((err) => sentryError('Erro ao carregar notification_queue', err));
-	console.log('queue', queue);
-	const types = await notificationTypes.findAll({ where: {}, raw: true })
-		.then((res) => res).catch((err) => sentryError('Erro ao carregar notification_types', err));
+	const queue = await notificationQueue.findAll({ where: queryRules, raw: true }).then((res) => res).catch((err) => sentryError('Erro ao carregar notification_queue', err));
 
 	for (let i = 0; i < queue.length; i++) {
 		const notification = queue[i];
-		const logID = await notificationLog.create({ notificationId: notification.id, notificationType: notification.notification_type }).then((res) => (res && res.dataValues && res.dataValues.id ? res.dataValues.id : false)).catch((err) => sentryError('Erro em notificationQueue.create', err));
-		console.log('\n\n---logID', logID);
 		const turmaName = await DB.getTurmaName(notification.turma_id);
 		const turmaInCompany = await DB.getTurmaInCompany(notification.turma_id);
 		const regularRules = await rules.buildNotificationRules(turmaInCompany);
 		const notificationRules = await rules.getNotificationRules(turmaName, regularRules);
 
-		if (await checkShouldSendNotification(notification, moduleDates, today, notificationRules, logID) === true || test) { // !== for easy testing
+		if (await checkShouldSendNotification(notification, moduleDates, today, notificationRules) === true || test) { // !== for easy testing
+			const logID = await notificationLog.create({ notificationId: notification.id, notificationType: notification.notification_type }).then((res) => (res && res.dataValues && res.dataValues.id ? res.dataValues.id : false)).catch((err) => sentryError('Erro em notificationQueue.create', err));
 			const recipientData = await getRecipient(notification, moduleDates, logID);
-			await notificationLog.update({ recipientData }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog1', err));
+			if (recipientData !== false) await notificationLog.update({ recipientData }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog1', err));
 			if (await checkShouldSendRecipient(recipientData, notification, moduleDates, today, logID) === true) {
 				await notificationLog.update({ shouldSend: true }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog1', err));
 				await actuallySendMessages(types, notification, recipientData, logID, test);
