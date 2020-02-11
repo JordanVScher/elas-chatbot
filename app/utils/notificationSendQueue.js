@@ -583,12 +583,13 @@ async function getRecipient(notification, moduleDates) {
 
 	return recipient;
 }
-async function sendNotificationFromQueue(alunoID = null, test = false) {
+async function sendNotificationFromQueue(alunoID = null, notificationType, test = false) {
 	const moduleDates = await DB.getModuloDates();
 	const today = new Date();
 
 	const queryRules = { turma_id: { [Op.not]: null }, sent_at: null, error: null };
 	if (alunoID) { queryRules.aluno_id = alunoID; }
+	if (notificationType) { queryRules.notification_type = notificationType; }
 
 	const queue = await notificationQueue.findAll({ where: queryRules, raw: true }) // eslint-disable-line
 		.then((res) => res).catch((err) => sentryError('Erro ao carregar notification_queue', err));

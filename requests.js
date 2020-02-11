@@ -86,10 +86,10 @@ async function sendNotificationQueue(req, res) {
 		const securityToken = body.security_token;
 		if (securityToken !== process.env.SECURITY_TOKEN_MA) {
 			res.status(401); res.send('Unauthorized!');
-		} else if (!body.aluno_id) {
-			res.status(401); res.send('Missing aluno_id!');
+		} else if (!body.aluno_id || !body.notification_type) {
+			res.status(401); res.send('Missing aluno_id or notification_type!');
 		} else {
-			sendNotificationFromQueue(body.aluno_id);
+			sendNotificationFromQueue(body.aluno_id, body.notification_type);
 			res.status(200); res.send('Processando');
 		}
 	}
