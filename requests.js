@@ -5,6 +5,7 @@ const fs = require('fs');
 const { linkUserToLabelByName } = require('./app/utils/labels');
 const { changeAdminStatus } = require('./app/utils/DB_helper');
 const { addMissingAlunoNotification } = require('./app/utils/notificationAddQueue');
+const { sendNotificationFromQueue } = require('./app/utils/notificationSendQueue');
 
 async function getFBIDJson() { // eslint-disable-line
 	const result = {};
@@ -77,7 +78,24 @@ async function addMissingNotification(req, res) {
 	}
 }
 
+async function sendNotificationQueue(req, res) {
+	const { body } = req;
+	if (!body || !body.security_token) {
+		res.status(400); res.send('Param security_token is required!');
+	} else {
+		const securityToken = body.security_token;
+		if (securityToken !== process.env.SECURITY_TOKEN_MA) {
+			res.status(401); res.send('Unauthorized!');
+		} else if (!body.aluno_id) {
+			res.status(401); res.send('Missing aluno_id!');
+		} else {
+			sendNotificationFromQueue();
+			res.status(200); res.send('Processando');
+		}
+	}
+}
+
 
 module.exports = {
-	getNameFBID, addLabel,
+	getNameFBID, addLabel, addMissingNotification, sendNotificationQueue,
 };

@@ -11,6 +11,10 @@ module.exports = {
 				type: Sequelize.INTEGER,
 				allowNull: false,
 			},
+			notification_type: {
+				type: Sequelize.INTEGER,
+				allowNull: false,
+			},
 			notification_rules: {
 				type: Sequelize.JSON,
 				allowNull: true,

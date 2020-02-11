@@ -99,6 +99,9 @@ server.post('/add-missing-notification', async (req, res) => {
 	await requests.addMissingNotification(req, res);
 });
 
+server.post('/send-notification-queue', async (req, res) => {
+	await requests.sendNotificationQueue(req, res);
+});
 
 server.listen(process.env.API_PORT, () => {
 	console.log(`Server is running on ${process.env.API_PORT} port...`);

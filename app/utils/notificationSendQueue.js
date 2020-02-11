@@ -583,11 +583,14 @@ async function getRecipient(notification, moduleDates) {
 
 	return recipient;
 }
-async function sendNotificationFromQueue(test = false) {
+async function sendNotificationFromQueue(alunoID = null, test = false) {
 	const moduleDates = await DB.getModuloDates();
 	const today = new Date();
 
-	const queue = await notificationQueue.findAll({ where: { turma_id: { [Op.not]: null }, sent_at: null, error: null }, raw: true }) // eslint-disable-line
+	const queryRules = { turma_id: { [Op.not]: null }, sent_at: null, error: null };
+	if (alunoID) { queryRules.aluno_id = alunoID; }
+
+	const queue = await notificationQueue.findAll({ where: queryRules, raw: true }) // eslint-disable-line
 		.then((res) => res).catch((err) => sentryError('Erro ao carregar notification_queue', err));
 
 	const types = await notificationTypes.findAll({ where: {}, raw: true })
@@ -595,7 +598,7 @@ async function sendNotificationFromQueue(test = false) {
 
 	for (let i = 0; i < queue.length; i++) {
 		const notification = queue[i];
-		const logID = await notificationLog.create({ notificationId: notification.id }).then((res) => (res && res.dataValues && res.dataValues.id ? res.dataValues.id : false)).catch((err) => sentryError('Erro em notificationQueue.create', err));
+		const logID = await notificationLog.create({ notificationId: notification.id, notificationType: Notification.notification_type }).then((res) => (res && res.dataValues && res.dataValues.id ? res.dataValues.id : false)).catch((err) => sentryError('Erro em notificationQueue.create', err));
 		const turmaName = await DB.getTurmaName(notification.turma_id);
 		const turmaInCompany = await DB.getTurmaInCompany(notification.turma_id);
 		const regularRules = await rules.buildNotificationRules(turmaInCompany);
@@ -611,6 +614,7 @@ async function sendNotificationFromQueue(test = false) {
 		}
 	}
 }
+
 
 module.exports = {
 	sendNotificationFromQueue,
