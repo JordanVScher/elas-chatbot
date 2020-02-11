@@ -359,7 +359,7 @@ async function extendRecipient(recipient, moduleDates, turmaID) {
 	return result;
 }
 
-async function getIndicado(id, moduleDates) {
+async function getIndicado(id, moduleDates, logID) {
 	const result = await indicadosAvaliadores.findByPk(id, { raw: true, include: ['respostas', 'aluna'] })
 		.then((res) => res).catch((err) => sentryError('Erro ao carregar indicado', err));
 
@@ -368,10 +368,11 @@ async function getIndicado(id, moduleDates) {
 		return extendRecipient(result, moduleDates, result['aluna.turma_id']);
 	}
 
+	await notificationLog.update({ sentEmail: 'Erro: indicado não tem e-mail' }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog1', err));
 	return sentryError('Erro: indicado não tem e-mail', result);
 }
 
-async function getAluna(id, moduleDates) {
+async function getAluna(id, moduleDates, logID) {
 	const result = await aluno.findByPk(id, { raw: true, include: ['chatbot'] })
 		.then((res) => res).catch((err) => sentryError('Erro ao carregar aluno', err));
 
@@ -380,6 +381,7 @@ async function getAluna(id, moduleDates) {
 		return extendRecipient(result, moduleDates, result.turma_id);
 	}
 
+	await notificationLog.update({ sentEmail: 'Erro: aluna não tem e-mail' }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog1', err));
 	return sentryError('Erro: aluno não tem e-mail', result);
 }
 
@@ -573,12 +575,12 @@ async function actuallySendMessages(types, notification, recipient, logID) {
 	return false;
 }
 
-async function getRecipient(notification, moduleDates) {
+async function getRecipient(notification, moduleDates, logID) {
 	let recipient;
 	if (notification.aluno_id && !notification.indicado_id) { // if notification doesnt have indicado_id it's just an aluno notification
-		recipient = await getAluna(notification.aluno_id, moduleDates);
+		recipient = await getAluna(notification.aluno_id, moduleDates, logID);
 	} else if (notification.indicado_id) {
-		recipient = await getIndicado(notification.indicado_id, moduleDates);
+		recipient = await getIndicado(notification.indicado_id, moduleDates, logID);
 	}
 
 	return recipient;
@@ -607,7 +609,7 @@ async function sendNotificationFromQueue(alunoID = null, notificationType, test 
 		const notificationRules = await rules.getNotificationRules(turmaName, regularRules);
 
 		if (await checkShouldSendNotification(notification, moduleDates, today, notificationRules, logID) === true || test) { // !== for easy testing
-			const recipientData = await getRecipient(notification, moduleDates);
+			const recipientData = await getRecipient(notification, moduleDates, logID);
 			await notificationLog.update({ recipientData }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog1', err));
 			if (await checkShouldSendRecipient(recipientData, notification, moduleDates, today) === true) {
 				await notificationLog.update({ shouldSend: true }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog1', err));
@@ -616,7 +618,6 @@ async function sendNotificationFromQueue(alunoID = null, notificationType, test 
 		}
 	}
 }
-
 
 module.exports = {
 	sendNotificationFromQueue,
