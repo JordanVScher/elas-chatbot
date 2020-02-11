@@ -4,6 +4,7 @@ const { Sequelize } = require('sequelize');
 const notificationTypes = require('../server/models').notification_types;
 const notificationQueue = require('../server/models').notification_queue;
 const indicadosAvaliadores = require('../server/models').indicacao_avaliadores;
+const notificationLog = require('../server/models').notification_log;
 const aluno = require('../server/models').alunos;
 const help = require('./helper');
 const { sentryError } = require('./helper');
@@ -395,7 +396,7 @@ async function replaceParameters(texts, newMap, recipient) {
 	return newTexts || {};
 }
 
-async function checkShouldSendNotification(notification, moduleDates, today, notificationRules) {
+async function checkShouldSendNotification(notification, moduleDates, today, notificationRules, logID) {
 	const ourTurma = moduleDates.find((x) => x.id === notification.turma_id); // turma for this notification
 	if (!ourTurma) return false;
 	let currentRule = ''; // depends on the notification_type, rule for the notification (and module)
@@ -410,6 +411,8 @@ async function checkShouldSendNotification(notification, moduleDates, today, not
 	} else {
 		currentRule = await notificationRules.find((x) => x.notification_type === notification.notification_type);
 	}
+
+	await notificationLog.update({ notificationRules: currentRule }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog1', err));
 
 	if (!currentRule) {
 		return false;
@@ -523,11 +526,13 @@ async function buildAttachment(type, cpf, name) { // eslint-disable-line
 	return result;
 }
 
-async function actuallySendMessages(types, notification, recipient, test) {
+async function actuallySendMessages(types, notification, recipient, logID, test) {
 	let currentType = types.find((x) => x.id === notification.notification_type); // get the correct kind of notification
 	currentType = JSON.parse(JSON.stringify(currentType)); // makes an actual copy
 	const parametersMap = await rules.buildParametersRules(currentType);
 	const masks = await fillMasks(parametersMap, recipient);
+
+	await notificationLog.update({ masks }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog1', err));
 
 	const newText = await replaceParameters(currentType, masks, recipient);
 	const attachment = await buildAttachment(currentType, recipient.cpf, recipient.nome_completo);
@@ -537,7 +542,12 @@ async function actuallySendMessages(types, notification, recipient, test) {
 		let html = await readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
 		html = await html.replace('[CONTEUDO_MAIL]', newText.email_text); // add nome to mail template
 		const mailError = await mailer.sendHTMLMail(newText.email_subject, recipient.email, html, attachment.mail);
-		if (mailError) { error.mailError = mailError.toString(); } // save the error, if it happens
+		if (mailError) { // save the error, if it happens
+			error.mailError = mailError.toString();
+			await notificationLog.update({ sentEmail: mailError.toString() }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog1', err));
+		} else {
+			await notificationLog.update({ sentEmail: JSON.stringify({ status: 'Enviado', data: new Date() }, null, 2) }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog1', err));
+		}
 	}
 
 	if (recipient['chatbot.fb_id'] && newText.chatbot_text) { // if aluna is linked with messenger we send a message to the bot
@@ -545,6 +555,12 @@ async function actuallySendMessages(types, notification, recipient, test) {
 		if (!chatbotError && newText.chatbot_cards) { chatbotError = await broadcast.sendCardAluna(recipient['chatbot.fb_id'], newText.chatbot_cards, recipient.cpf); }
 		if (!chatbotError && [attachment.chatbot.pdf || attachment.chatbot.png]) { chatbotError = await broadcast.sendFiles(recipient['chatbot.fb_id'], attachment.chatbot.pdf, attachment.chatbot.pdf2); }
 		if (chatbotError) { error.chatbotError = chatbotError.toString(); } // save the error, if it happens
+		if (chatbotError) { // save the error, if it happens
+			error.chatbotError = chatbotError.toString();
+			await notificationLog.update({ sentBroadcast: chatbotError.toString() }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog1', err));
+		} else {
+			await notificationLog.update({ sentBroadcast: JSON.stringify({ status: 'Enviado', data: new Date() }, null, 2) }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog1', err));
+		}
 	}
 
 	if (!error.mailError && !error.chatbotError && !test) { // if there wasn't any errors, we can update the queue succesfully
@@ -576,30 +592,27 @@ async function sendNotificationFromQueue(test = false) {
 
 	const types = await notificationTypes.findAll({ where: {}, raw: true })
 		.then((res) => res).catch((err) => sentryError('Erro ao carregar notification_types', err));
-	let lastNotification = {};
+
 	for (let i = 0; i < queue.length; i++) {
 		const notification = queue[i];
-		if (lastNotification.aluno_id !== notification.aluno_id || lastNotification.notification_type !== notification.notification_type) {
-			const turmaName = await DB.getTurmaName(notification.turma_id);
-			const turmaInCompany = await DB.getTurmaInCompany(notification.turma_id);
-			const regularRules = await rules.buildNotificationRules(turmaInCompany);
-			const notificationRules = await rules.getNotificationRules(turmaName, regularRules);
-			// console.log('await checkShouldSendNotification(notification, moduleDates, today, notificationRules',
-			// await checkShouldSendNotification(notification, moduleDates, today, notificationRules));
-			if (await checkShouldSendNotification(notification, moduleDates, today, notificationRules) === true || test) { // !== for easy testing
-				const recipient = await getRecipient(notification, moduleDates);
-				// console.log('notification que passou', notification);
-				// console.log('recipient', recipient);
-				if (await checkShouldSendRecipient(recipient, notification, moduleDates, today) === true) {
-					// console.log('Deve enviar');
-					await actuallySendMessages(types, notification, recipient, test);
-				}
+		const logID = await notificationLog.create({ notificationId: 1 }).then((res) => (res && res.dataValues && res.dataValues.id ? res.dataValues.id : false)).catch((err) => sentryError('Erro em notificationQueue.create', err));
+		const turmaName = await DB.getTurmaName(notification.turma_id);
+		const turmaInCompany = await DB.getTurmaInCompany(notification.turma_id);
+		const regularRules = await rules.buildNotificationRules(turmaInCompany);
+		const notificationRules = await rules.getNotificationRules(turmaName, regularRules);
+
+		if (await checkShouldSendNotification(notification, moduleDates, today, notificationRules, logID) === true || test) { // !== for easy testing
+			const recipientData = await getRecipient(notification, moduleDates);
+			await notificationLog.update({ recipientData }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog1', err));
+
+			if (await checkShouldSendRecipient(recipientData, notification, moduleDates, today) === true) {
+				// console.log('Deve enviar');
+				await notificationLog.update({ shouldSend: true }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog1', err));
+				await actuallySendMessages(types, notification, recipientData, logID, test);
 			}
 		}
-		lastNotification = notification;
 	}
 }
-
 
 module.exports = {
 	sendNotificationFromQueue,
