@@ -526,7 +526,7 @@ async function buildAttachment(type, cpf, name) { // eslint-disable-line
 	return result;
 }
 
-async function actuallySendMessages(types, notification, recipient, logID, test) {
+async function actuallySendMessages(types, notification, recipient, logID) {
 	let currentType = types.find((x) => x.id === notification.notification_type); // get the correct kind of notification
 	currentType = JSON.parse(JSON.stringify(currentType)); // makes an actual copy
 	const parametersMap = await rules.buildParametersRules(currentType);
@@ -563,7 +563,7 @@ async function actuallySendMessages(types, notification, recipient, logID, test)
 		}
 	}
 
-	if (!error.mailError && !error.chatbotError && !test) { // if there wasn't any errors, we can update the queue succesfully
+	if (!error.mailError && !error.chatbotError) { // if there wasn't any errors, we can update the queue succesfully
 		await notificationQueue.update({ sent_at: new Date() }, { where: { id: notification.id } })
 			.then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do sendAt', err));
 	} else { // if there was any errors, we store what happened
@@ -587,7 +587,7 @@ async function sendNotificationFromQueue(test = false) {
 	const moduleDates = await DB.getModuloDates();
 	const today = new Date();
 
-	const queue = await notificationQueue.findAll({ where: { turma_id: { [Op.not]: null }, sent_at: null, error: null }, raw: true }) // eslint-disable-line
+	const queue = await notificationQueue.findAll({ where: { turma_id: { [Op.not]: null, aluno_id: 215 }, sent_at: null, error: null }, raw: true }) // eslint-disable-line
 		.then((res) => res).catch((err) => sentryError('Erro ao carregar notification_queue', err));
 
 	const types = await notificationTypes.findAll({ where: {}, raw: true })
@@ -595,7 +595,7 @@ async function sendNotificationFromQueue(test = false) {
 
 	for (let i = 0; i < queue.length; i++) {
 		const notification = queue[i];
-		const logID = await notificationLog.create({ notificationId: 1 }).then((res) => (res && res.dataValues && res.dataValues.id ? res.dataValues.id : false)).catch((err) => sentryError('Erro em notificationQueue.create', err));
+		const logID = await notificationLog.create({ notificationId: notification.id }).then((res) => (res && res.dataValues && res.dataValues.id ? res.dataValues.id : false)).catch((err) => sentryError('Erro em notificationQueue.create', err));
 		const turmaName = await DB.getTurmaName(notification.turma_id);
 		const turmaInCompany = await DB.getTurmaInCompany(notification.turma_id);
 		const regularRules = await rules.buildNotificationRules(turmaInCompany);
@@ -604,9 +604,7 @@ async function sendNotificationFromQueue(test = false) {
 		if (await checkShouldSendNotification(notification, moduleDates, today, notificationRules, logID) === true || test) { // !== for easy testing
 			const recipientData = await getRecipient(notification, moduleDates);
 			await notificationLog.update({ recipientData }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog1', err));
-
 			if (await checkShouldSendRecipient(recipientData, notification, moduleDates, today) === true) {
-				// console.log('Deve enviar');
 				await notificationLog.update({ shouldSend: true }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog1', err));
 				await actuallySendMessages(types, notification, recipientData, logID, test);
 			}
