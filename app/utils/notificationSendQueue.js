@@ -398,7 +398,7 @@ async function replaceParameters(texts, newMap, recipient) {
 	return newTexts || {};
 }
 
-async function checkShouldSendNotification(notification, moduleDates, today, notificationRules, logID) {
+async function checkShouldSendNotification(notification, moduleDates, today, notificationRules) {
 	const ourTurma = moduleDates.find((x) => x.id === notification.turma_id); // turma for this notification
 	if (!ourTurma) return false;
 	let currentRule = ''; // depends on the notification_type, rule for the notification (and module)
@@ -413,8 +413,6 @@ async function checkShouldSendNotification(notification, moduleDates, today, not
 	} else {
 		currentRule = await notificationRules.find((x) => x.notification_type === notification.notification_type);
 	}
-
-	await notificationLog.update({ notificationRules: currentRule }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog13', err));
 
 	if (!currentRule) {
 		return false;
@@ -607,10 +605,10 @@ async function sendNotificationFromQueue(alunoID = null, notificationType, test 
 
 		if (await checkShouldSendNotification(notification, moduleDates, today, notificationRules) === true || test) { // !== for easy testing
 			const logID = await notificationLog.create({ notificationId: notification.id, notificationType: notification.notification_type }).then((res) => (res && res.dataValues && res.dataValues.id ? res.dataValues.id : false)).catch((err) => sentryError('Erro em notificationQueue.create', err));
+			await notificationLog.update({ shouldSend: true }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog116', err));
 			const recipientData = await getRecipient(notification, moduleDates, logID);
 			if (recipientData !== false) await notificationLog.update({ recipientData }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog115', err));
 			if (await checkShouldSendRecipient(recipientData, notification, moduleDates, today, logID) === true) {
-				await notificationLog.update({ shouldSend: true }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog116', err));
 				await actuallySendMessages(types, notification, recipientData, logID, test);
 			}
 		}
