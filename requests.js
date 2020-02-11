@@ -60,20 +60,18 @@ async function addLabel(req, res) {
 }
 
 async function addMissingNotification(req, res) {
-	const body = JSON.parse(req.body || '{}');
+	const { body } = req;
 	if (!body || !body.security_token) {
 		res.status(400); res.send('Param security_token is required!');
 	} else {
 		const securityToken = body.security_token;
 		if (securityToken !== process.env.SECURITY_TOKEN_MA) {
 			res.status(401); res.send('Unauthorized!');
+		} else if (!body.aluno_id || !body.turma_id) {
+			res.status(401); res.send('Missing aluno_id or turma_id!');
 		} else {
-			const result = await addMissingAlunoNotification();
-			if (result) {
-				res.status(200); res.send(result);
-			} else {
-				res.status(500); res.send('Failure');
-			}
+			addMissingAlunoNotification(body.aluno_id, body.turma_id);
+			res.status(200); res.send('Processando');
 		}
 	}
 }
