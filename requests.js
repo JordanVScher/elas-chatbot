@@ -89,7 +89,7 @@ async function sendNotificationQueue(req, res) {
 		} else if (!body.aluno_id) {
 			res.status(401); res.send('Missing aluno_id!');
 		} else {
-			sendNotificationFromQueue();
+			sendNotificationFromQueue(body.aluno_id);
 			res.status(200); res.send('Processando');
 		}
 	}
