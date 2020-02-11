@@ -465,8 +465,7 @@ async function checkShouldSendRecipient(recipient, notification, moduleDates, to
 	if ([3, 19].includes(notification.notification_type) === true && notification.check_answered === true) {
 		const answerPre = recipient['respostas.pre'];
 		if (answerPre && Object.keys(answerPre)) { // if pre was already answered, there's no need to resend this notification
-			await notificationQueue.update({ error: { misc: 'Indicado já respondeu pré', date: new Date() } }, { where: { id: notification.id } })
-				.then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do erro check_answered & 3', err));
+			await notificationQueue.update({ error: { misc: 'Indicado já respondeu pré', date: new Date() } }, { where: { id: notification.id } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do erro check_answered & 3', err));
 			return false;
 		}
 	}
@@ -474,16 +473,14 @@ async function checkShouldSendRecipient(recipient, notification, moduleDates, to
 	if ([9, 26].includes(notification.notification_type) === true) { // if it's this type of notification, check if recipient has answered the pre-avaliacao
 		const answerPre = recipient['respostas.pre'];
 		if (!answerPre || Object.entries(answerPre).length === 0) {
-			await notificationQueue.update({ error: { misc: 'Indicado não respondeu pré-avaliação', date: new Date() } }, { where: { id: notification.id } })
-				.then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do erro === 10', err));
+			await notificationQueue.update({ error: { misc: 'Indicado não respondeu pré-avaliação', date: new Date() } }, { where: { id: notification.id } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do erro === 10', err));
 			return false;
 		}
 
 		if (notification.check_answered === true) { // check if we need to see if recipient answered pos already
 			const answerPos = recipient['respostas.pos'];
 			if (answerPos && Object.entries(answerPos).length !== 0) { // if pos was already answered, there's no need to resend this notification
-				await notificationQueue.update({ error: { misc: 'Indicado já respondeu pós', date: new Date() } }, { where: { id: notification.id } })
-					.then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do erro check_answered & 9', err));
+				await notificationQueue.update({ error: { misc: 'Indicado já respondeu pós', date: new Date() } }, { where: { id: notification.id } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do erro check_answered & 9', err));
 				return false;
 			}
 		}
@@ -494,8 +491,7 @@ async function checkShouldSendRecipient(recipient, notification, moduleDates, to
 		const column = [4, 20].includes(notification.notification_type) ? 'pre' : 'pos'; // select which questionario
 		const indicados = await DB.getIndicadoRespostasAnswerNull(recipient.id, column); // get indicados that didnt answer the current questionario
 		if (!indicados || indicados.length === 0) { // if every indiciado answered, dont send email
-			await notificationQueue.update({ error: { misc: 'Todos os indicados já responderam', date: new Date() } }, { where: { id: notification.id } })
-				.then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do erro do 4 e 10', err));
+			await notificationQueue.update({ error: { misc: 'Todos os indicados já responderam', date: new Date() } }, { where: { id: notification.id } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do erro do 4 e 10', err));
 			return false;
 		}
 	}
@@ -504,8 +500,7 @@ async function checkShouldSendRecipient(recipient, notification, moduleDates, to
 		const currentModule = await findCurrentModulo(moduleDates, today);
 		const atividadesMissing = await findAtividadesMissing(atividadesRules, currentModule, recipient.id);
 		if (!atividadesMissing || atividadesMissing.length === 0) {
-			await notificationQueue.update({ error: { misc: `Aluna já respondeu todos os questionários do módulo ${currentModule}`, date: new Date() } }, { where: { id: notification.id } })
-				.then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update da checagem do tipo 16', err));
+			await notificationQueue.update({ error: { misc: `Aluna já respondeu todos os questionários do módulo ${currentModule}`, date: new Date() } }, { where: { id: notification.id } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update da checagem do tipo 16', err));
 			return false;
 		}
 		recipient.atividadesMissing = atividadesMissing;
@@ -611,7 +606,7 @@ async function sendNotificationFromQueue(alunoID = null, notificationType, test 
 		if (await checkShouldSendNotification(notification, moduleDates, today, notificationRules, logID) === true || test) { // !== for easy testing
 			const recipientData = await getRecipient(notification, moduleDates, logID);
 			await notificationLog.update({ recipientData }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog1', err));
-			if (await checkShouldSendRecipient(recipientData, notification, moduleDates, today) === true) {
+			if (await checkShouldSendRecipient(recipientData, notification, moduleDates, today, logID) === true) {
 				await notificationLog.update({ shouldSend: true }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog1', err));
 				await actuallySendMessages(types, notification, recipientData, logID, test);
 			}
