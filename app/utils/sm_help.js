@@ -209,7 +209,7 @@ async function handleAtividadeOne(response) {
 			if (newUser && newUser.id) { // if everything went right we update a few things
 				await db.updateAtividade(newUser.id, 'atividade_1', answers);
 				if (answers.pgid) await db.updateAlunoOnPagamento(answers.pgid, newUser.id);
-				// await addQueue.addNewNotificationAlunas(newUser.id, newUser.turma_id);
+				await addQueue.addNewNotificationAlunas(newUser.id, newUser.turma_id);
 				await sendAlunaToAssistente(newUser.nome_completo, newUser.email, newUser.cpf, answers.turma);
 				if (newUser.email === newUser.contato_emergencia_email) sameContatoEmail = true;
 			} else {
