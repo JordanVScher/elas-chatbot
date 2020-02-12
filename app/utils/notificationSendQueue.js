@@ -623,6 +623,8 @@ async function sendNotificationFromQueue(alunoID = null, notificationType, test 
 	}
 }
 
+
+sendNotificationFromQueue();
 module.exports = {
 	sendNotificationFromQueue,
 	checkShouldSendRecipient,
