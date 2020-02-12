@@ -456,6 +456,7 @@ async function checkShouldSendNotification(notification, moduleDates, today, not
 
 async function checkShouldSendRecipient(recipient, notification, moduleDates, today, logID) {
 	if (!recipient) { return false; }
+	if (notification.notification_type === 4) return true;
 	if ([3, 19].includes(notification.notification_type) === true && notification.check_answered === true) {
 		const answerPre = recipient['respostas.pre'];
 		if (answerPre && Object.keys(answerPre)) { // if pre was already answered, there's no need to resend this notification
