@@ -40,7 +40,7 @@ async function sendTestMail(subject, text, to) {
 
 async function sendHTMLMail(subject, to, html, anexo) {
 	const options = {
-		from, to, subject: subject ? subject.toUpperCase() : '<Programa Elas>', html, attachments: anexo,
+		from, to, subject: subject ? subject.toUpperCase() : '<Programa Elas>', html, attachments: anexo, text: 'Versão de texto da mensagem'
 	};
 
 
