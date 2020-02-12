@@ -40,23 +40,28 @@ async function buildQuery(data, map) {
 }
 
 // build the regular rule set, based on the spreadsheet
-async function buildNotificationRules(isInCompany) {
-	let aba = 1;
-	if (isInCompany === true) { aba = 2; }
-	const spreadsheet = await reloadSpreadSheet(aba);
+async function buildNotificationRules() {
+	const abas = ['normal', 'in_company'];
+
 	const rules = [];
-	if (spreadsheet && spreadsheet.length > 0) {
-		for (let i = 0; i < spreadsheet.length; i++) {
-			const e = spreadsheet[i];
-			const query = await buildQuery(e, turmaMap);
-			if (query) rules.push(query);
+	for (let j = 0; j < abas.length; j++) {
+		const aba = abas[j];
+		rules[aba] = [];
+		const spreadsheet = await reloadSpreadSheet(j + 1);
+
+		if (spreadsheet && spreadsheet.length > 0) {
+			for (let i = 0; i < spreadsheet.length; i++) {
+				const e = spreadsheet[i];
+				const query = await buildQuery(e, turmaMap);
+				if (query) rules[aba].push(query);
+			}
 		}
 	}
+
 	return rules;
 }
 
-
-async function getNotificationRules(turmaName, regularRules) {
+async function getNotificationRules(turmaName, regularRules, turmaInCompany) {
 	if (turmaName) turmaName = turmaName.toString().trim();
 	if (turmaName === 'turma_exemplo123') {
 		return [
@@ -88,7 +93,10 @@ async function getNotificationRules(turmaName, regularRules) {
 		];
 	}
 	// if current turma isn't a special case, use the regular rules from the spreadsheet
-	return regularRules;
+	if (turmaInCompany) {
+		return regularRules.in_company;
+	}
+	return regularRules.normal;
 }
 
 // return the sum of the module date (from the turma) with the notification rule
