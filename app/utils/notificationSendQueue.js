@@ -6,6 +6,7 @@ const notificationQueue = require('../server/models').notification_queue;
 const indicadosAvaliadores = require('../server/models').indicacao_avaliadores;
 const notificationLog = require('../server/models').notification_log;
 const aluno = require('../server/models').alunos;
+const { turma } = require('../server/models');
 const help = require('./helper');
 const { sentryError } = require('./helper');
 const mailer = require('./mailer');
@@ -90,7 +91,7 @@ async function replaceDataText(original, data, recipient) {
 	return text;
 }
 
-async function buildIndicadosLinks(alunaID, turma, column, link) {
+async function buildIndicadosLinks(alunaID, turmaID, column, link) {
 	const indicados = await DB.getIndicadoRespostasAnswerNull(alunaID, column);
 	if (!indicados || indicados.length === 0) return link;
 	let result = '';
@@ -98,7 +99,7 @@ async function buildIndicadosLinks(alunaID, turma, column, link) {
 		const e = indicados[i];
 		let aux = `${e.nome}:\n${link}`;
 		aux = aux.replace('IDRESPOSTA', e.id);
-		aux = aux.replace('TURMARESPOSTA', turma);
+		aux = aux.replace('TURMARESPOSTA', turmaID);
 		result += `\n${aux}\n`;
 	}
 	return result;
@@ -587,6 +588,7 @@ async function getRecipient(notification, moduleDates, logID) {
 }
 async function sendNotificationFromQueue(alunoID = null, notificationType, test = false) {
 	const types = await notificationTypes.findAll({ where: {}, raw: true }).then((res) => res).catch((err) => sentryError('Erro ao carregar notification_types', err));
+	const turmas = await turma.findAll({ where: {}, raw: true }).then((res) => res).catch((err) => sentryError('Erro ao carregar turma', err));
 	const moduleDates = await DB.getModuloDates();
 	const today = new Date();
 
@@ -598,8 +600,8 @@ async function sendNotificationFromQueue(alunoID = null, notificationType, test 
 
 	for (let i = 0; i < queue.length; i++) {
 		const notification = queue[i];
-		const turmaName = await DB.getTurmaName(notification.turma_id);
-		const turmaInCompany = await DB.getTurmaInCompany(notification.turma_id);
+		const currentTurma = await turmas.find((x) => x.id === notification.turma_id);
+		const turmaName = currentTurma.nome; const turmaInCompany = currentTurma.inCompany;
 		const regularRules = await rules.buildNotificationRules(turmaInCompany);
 		const notificationRules = await rules.getNotificationRules(turmaName, regularRules);
 
@@ -614,6 +616,7 @@ async function sendNotificationFromQueue(alunoID = null, notificationType, test 
 		}
 	}
 }
+
 
 module.exports = {
 	sendNotificationFromQueue,
