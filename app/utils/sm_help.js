@@ -3,6 +3,7 @@ const { sentryError } = require('./helper');
 const { getIndicacaoErrorText } = require('./helper');
 const { getSameContatoEmailErrorText } = require('./helper');
 const matriculaLog = require('../server/models').matricula_mail_log;
+const notificationQueue = require('../server/models').notification_queue;
 const smAPI = require('../sm_api');
 const mailer = require('./mailer');
 const { eMail } = require('./flow');
@@ -47,6 +48,13 @@ async function sendMissingMatriculas() { // eslint-disable-line no-unused-vars
 	for (let i = 0; i < alunas.length; i++) {
 		const e = alunas[i];
 		await sendMatricula(e.turma_nome, e.pagamento_id, e.email, e.cpf);
+	}
+}
+
+async function helpAddQueue(alunoID, turmaID) {
+	const notificacoes = await notificationQueue.findAll({ where: { aluno_id: alunoID, sent_at: null, error: null }, raw: true }).then((r) => r).catch((err) => sentryError('Erro no findAll do notificationQueue', err));
+	if (!notificacoes || notificacoes.length === 0) {
+		await addQueue.addNewNotificationAlunas(alunoID, turmaID);
 	}
 }
 
@@ -209,11 +217,11 @@ async function handleAtividadeOne(response) {
 			if (newUser && newUser.id) { // if everything went right we update a few things
 				await db.updateAtividade(newUser.id, 'atividade_1', answers);
 				if (answers.pgid) await db.updateAlunoOnPagamento(answers.pgid, newUser.id);
-				await addQueue.addNewNotificationAlunas(newUser.id, newUser.turma_id);
+				await helpAddQueue(newUser.id, newUser.turma_id);
 				await sendAlunaToAssistente(newUser.nome_completo, newUser.email, newUser.cpf, answers.turma);
 				if (newUser.email === newUser.contato_emergencia_email) sameContatoEmail = true;
 			} else {
-				sentryError('Erro em no salvamento de cadastro', { answers, newUser });
+				sentryError('Erro no salvamento de cadastro', { answers, newUser });
 			}
 
 			/* sending "Apresentação" mail */
