@@ -7,7 +7,7 @@ const { sendHTMLMail } = require('../mailer');
 const { sendWarning } = require('../broadcast');
 
 async function getMailAdmin(turmaNome) {
-	let mails = process.env.ENV === 'prod' ? process.env.EMAILMENTORIA : process.env.MAILDEV;
+	let mails = process.env.ENV === 'prod_final' ? process.env.EMAILMENTORIA : process.env.MAILDEV;
 	if (turmaNome === 'Simulação-1') mails += `, ${process.env.MAILELAS}`;
 	return mails;
 }
