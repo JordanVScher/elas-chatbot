@@ -407,9 +407,12 @@ async function checkShouldSendNotification(notification, moduleDates, today, not
 		if (today.getDay() === 0) { sunday = true; }
 		currentRule = await notificationRules.find((x) => x.notification_type === notification.notification_type && x.modulo === currentModule && x.sunday === sunday);
 	} else {
+		console.log('notificationRules', notificationRules);
+		console.log('notification', notification);
 		currentRule = await notificationRules.find((x) => x.notification_type === notification.notification_type);
 	}
 
+	console.log('currentRule', currentRule);
 	if (!currentRule) {
 		return false;
 		// return sentryError('currentRule undefined!', JSON.stringify({ currentNotification: notification }, null, 2));
@@ -423,6 +426,7 @@ async function checkShouldSendNotification(notification, moduleDates, today, not
 
 	const min = dateToSend;
 	let max;
+
 
 	if (dateToSend < moduloDate) { // notification will be sent before the moduloDate, today needs to be between the notification date and the moduleDate
 		max = moduloDate;
@@ -604,8 +608,7 @@ async function sendNotificationFromQueue(alunoID = null, notificationType, test 
 		console.log('notification', notification);
 		const currentTurma = await turmas.find((x) => x.id === notification.turma_id);
 		const turmaName = currentTurma.nome; const turmaInCompany = currentTurma.inCompany;
-		const notificationRules = await rules.getNotificationRules(turmaName, regularRules, !turmaInCompany);
-
+		const notificationRules = await rules.getNotificationRules(turmaName, regularRules, turmaInCompany);
 		if (await checkShouldSendNotification(notification, moduleDates, today, notificationRules) === true || test) { // !== for easy testing
 			const logID = await notificationLog.create({ notificationId: notification.id, notificationType: notification.notification_type }).then((res) => (res && res.dataValues && res.dataValues.id ? res.dataValues.id : false)).catch((err) => sentryError('Erro em notificationQueue.create', err));
 			await notificationLog.update({ shouldSend: true }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog116', err));
@@ -620,6 +623,8 @@ async function sendNotificationFromQueue(alunoID = null, notificationType, test 
 		}
 	}
 }
+
+sendNotificationFromQueue(null, 4);
 
 
 module.exports = {
