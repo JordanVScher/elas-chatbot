@@ -525,8 +525,8 @@ async function checkShouldSendRecipient(recipient, notification, moduleDates, to
 
 
 	logObj.push(`${recipient.nome_completo}: ${recipient.cpf} - ${recipient.id} vai receber sim!`);
-	return false;
-	// return true;
+
+	return true;
 }
 
 async function buildAttachment(type, cpf, name) { // eslint-disable-line
