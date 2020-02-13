@@ -460,6 +460,10 @@ async function checkShouldSendNotification(notification, moduleDates, today, not
 
 async function checkShouldSendRecipient(recipient, notification, moduleDates, today, logID) {
 	if (!recipient) { return false; }
+	if ([231, 251, 250, 248, 249].includes(recipient.id)) {
+		console.log(`${recipient.id} não vai receber`);
+		return false;
+	}
 	if ([3, 19].includes(notification.notification_type) === true && notification.check_answered === true) {
 		const answerPre = recipient['respostas.pre'];
 		if (answerPre && Object.keys(answerPre)) { // if pre was already answered, there's no need to resend this notification
@@ -520,7 +524,7 @@ async function checkShouldSendRecipient(recipient, notification, moduleDates, to
 	console.log('\n\n\nrecipient.nome_completo', recipient.nome_completo);
 	console.log('recipient.id', recipient.id);
 	console.log('recipient.cpf', recipient.cpf);
-	return true;
+	return false;
 	// return true;
 }
 
