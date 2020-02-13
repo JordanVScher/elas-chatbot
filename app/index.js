@@ -107,6 +107,10 @@ server.post('/data-queue', async (req, res) => {
 	await requests.dataQueue(req, res);
 });
 
+server.post('/see-notification-queue', async (req, res) => {
+	await requests.seeQueue(req, res);
+});
+
 server.listen(process.env.API_PORT, () => {
 	console.log(`Server is running on ${process.env.API_PORT} port...`);
 	console.log(`App: ${process.env.APP} & Page: ${process.env.PAGE}`);

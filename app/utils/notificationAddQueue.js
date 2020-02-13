@@ -149,8 +149,27 @@ async function seeDataQueue(turmaID) {
 	return result;
 }
 
+async function addMissingNotificationOnQueue(turmaID) {
+	const alunosTurma = await alunos.findAll({ where: { turma_id: turmaID }, raw: true }).then((r) => r).catch((err) => sentryError('Erro no findAll do alunos', err));
+	const notificationsTurma = await notificationQueue.findAll({ where: { turma_id: turmaID }, raw: true }).then((r) => r).catch((err) => sentryError('Erro no findAll do notificationQueue', err));
+
+	for (let i = 0; i < alunosTurma.length; i++) {
+		const aluno = alunosTurma[i];
+
+		const noti = await notificationsTurma.filter((x) => x.aluno_id === aluno.id);
+		console.log(`\n\nAluna ${aluno.nome_completo}: ${aluno.id} - ${aluno.cpf}`);
+		if (!noti || noti.length === 0) {
+			console.log('Aluna não tem nenhuma notificação');
+		} else {
+			console.log(`Aluna tem ${noti.length} notificações!`);
+			const ids = noti.map((x) => x.notification_type);
+			console.log(ids.join(', '));
+		}
+	}
+}
+
 module.exports = {
-	addNewNotificationAlunas, addNewNotificationIndicados, addAvaliadorOnQueue, addMissingAlunoNotification, seeDataQueue,
+	addNewNotificationAlunas, addNewNotificationIndicados, addAvaliadorOnQueue, addMissingAlunoNotification, seeDataQueue, addMissingNotificationOnQueue,
 };
 
 // addNewNotificationAlunas(120, 15);
