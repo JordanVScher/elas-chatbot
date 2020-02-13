@@ -458,10 +458,12 @@ async function checkShouldSendNotification(notification, moduleDates, today, not
 	return false; // can't send this notification
 }
 
+const logObj = [];
+
 async function checkShouldSendRecipient(recipient, notification, moduleDates, today, logID) {
 	if (!recipient) { return false; }
 	if ([231, 251, 250, 248, 249].includes(recipient.id)) {
-		console.log(`${recipient.id} não vai receber`);
+		logObj.push(`${recipient.nome_completo}: ${recipient.cpf} - ${recipient.id} não vai receber`);
 		return false;
 	}
 	if ([3, 19].includes(notification.notification_type) === true && notification.check_answered === true) {
@@ -513,6 +515,7 @@ async function checkShouldSendRecipient(recipient, notification, moduleDates, to
 		const currentModule = await findCurrentModulo(moduleDates, today);
 		const atividadesMissing = await findAtividadesMissing(atividadesRules, currentModule, recipient.id);
 		if (!atividadesMissing || atividadesMissing.length === 0) {
+			logObj.push(`${recipient.nome_completo}: ${recipient.cpf} - ${recipient.id} não vai receber`);
 			await notificationLog.update({ shouldSend: false, sentEmail: `Aluna já respondeu todos os questionários do módulo ${currentModule}` }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog18', err));
 			await notificationQueue.update({ error: { misc: `Aluna já respondeu todos os questionários do módulo ${currentModule}`, date: new Date() } }, { where: { id: notification.id } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update da checagem do tipo 16', err));
 			return false;
@@ -521,9 +524,7 @@ async function checkShouldSendRecipient(recipient, notification, moduleDates, to
 	}
 
 
-	console.log('\n\n\nrecipient.nome_completo', recipient.nome_completo);
-	console.log('recipient.id', recipient.id);
-	console.log('recipient.cpf', recipient.cpf);
+	logObj.push(`${recipient.nome_completo}: ${recipient.cpf} - ${recipient.id} vai receber sim!`);
 	return false;
 	// return true;
 }
@@ -643,10 +644,11 @@ async function sendNotificationFromQueue(alunoID = null, notificationType, test 
 				.then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do sendAt', err));
 		}
 	}
+
+	console.log('logObj', logObj);
 }
 
 sendNotificationFromQueue(null, null, true);
-
 module.exports = {
 	sendNotificationFromQueue,
 	checkShouldSendRecipient,
