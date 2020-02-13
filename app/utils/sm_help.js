@@ -58,8 +58,6 @@ async function helpAddQueue(alunoID, turmaID) {
 	}
 }
 
-helpAddQueue(120, 15);
-
 async function addCustomParametersToAnswer(answers, parameters) {
 	const result = answers;
 	if (parameters && Object.keys(parameters)) {
