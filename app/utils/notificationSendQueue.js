@@ -39,7 +39,7 @@ async function findAtividadesMissing(atividades, currentModule, alunoID) {
 	const respostas = await DB.getAlunoRespostasAll(alunoID);
 	const areMissing = [];
 	atividadesModulo.forEach((e) => {
-		if (respostas[e] === null) { areMissing.push(e); }
+		if (!respostas || respostas[e] === null) { areMissing.push(e); }
 	});
 
 	return areMissing;
@@ -644,6 +644,8 @@ async function sendNotificationFromQueue(alunoID = null, notificationType, test 
 		}
 	}
 }
+
+sendNotificationFromQueue(null, null, true);
 
 module.exports = {
 	sendNotificationFromQueue,
