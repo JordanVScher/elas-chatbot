@@ -648,7 +648,7 @@ async function sendNotificationFromQueue(alunoID = null, notificationType, test 
 	console.log('logObj', logObj);
 }
 
-sendNotificationFromQueue(null, null, true);
+
 module.exports = {
 	sendNotificationFromQueue,
 	checkShouldSendRecipient,
