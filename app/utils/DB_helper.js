@@ -111,8 +111,8 @@ async function getAlunaFromCPF(cpf) {
 
 async function getAlunaRespostasWarning(turmaID) {
 	const queryString = `
-		SELECT ALUNOS.id as "aluno_id", ALUNOS.nome_completo as "nome_aluno", ALUNOS.telefone, ALUNOS.email, ALUNOS.cpf, 
-		ALUNOS.turma_id as "turma",	CHATBOT.fb_id as "fb_id_aluno", RESPOSTAS_ALUNOS.pre as "atividade_aluno_pre", 
+		SELECT ALUNOS.id as "aluno_id", ALUNOS.nome_completo as "nome_aluno", ALUNOS.telefone, ALUNOS.email, ALUNOS.cpf,
+		ALUNOS.turma_id as "turma",	CHATBOT.fb_id as "fb_id_aluno", RESPOSTAS_ALUNOS.pre as "atividade_aluno_pre",
 		RESPOSTAS_ALUNOS.pos as "atividade_aluno_pos", RESPOSTAS_ALUNOS.atividade_indicacao
 		FROM alunos ALUNOS
 		LEFT JOIN alunos_respostas RESPOSTAS_ALUNOS ON ALUNOS.id = RESPOSTAS_ALUNOS.aluno_id
@@ -125,7 +125,7 @@ async function getAlunaRespostasWarning(turmaID) {
 async function getIndicadoRespostasWarning(turma) {
 	const queryString = `
 		SELECT INDICADOS.id as "indicado_id", INDICADOS.aluno_id, INDICADOS.nome as "indicado_nome",
-		INDICADOS.email as "indicado_mail", INDICADOS.telefone as "indicado_telefone", 
+		INDICADOS.email as "indicado_mail", INDICADOS.telefone as "indicado_telefone",
 		ALUNOS.turma_id as "turma", ALUNOS.nome_completo as "nome_aluno", ALUNOS.telefone, ALUNOS.email, ALUNOS.cpf,
 		RESPOSTAS.pre as "atividade_indicado_pre", RESPOSTAS.pos as "atividade_indicado_pos"
 		FROM indicacao_avaliadores INDICADOS
@@ -183,9 +183,9 @@ async function insertIndicacao(alunaID, userData, familiar) {
 	date = await moment(date).format('YYYY-MM-DD HH:mm:ss');
 
 	const id = await sequelize.query(`
-	INSERT INTO "indicacao_avaliadores" (aluno_id, nome, email, telefone, 
+	INSERT INTO "indicacao_avaliadores" (aluno_id, nome, email, telefone,
 		familiar, relacao_com_aluna, created_at, updated_at)
-	  VALUES ('${alunaID}', '${addslashes(userData.nome) || ''}', '${userData.email}', '${userData.tele || ''}', 
+	  VALUES ('${alunaID}', '${addslashes(userData.nome) || ''}', '${userData.email}', '${userData.tele || ''}',
 	  '${familiar}', '${userData.relacao || ''}','${date}', '${date}')
 	RETURNING id, email;
 	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
@@ -349,7 +349,7 @@ async function getIndicadoFromAluna(AlunaID, familiar, pre, pos) {
 
 
 	const indicado = await sequelize.query(`
-	SELECT * FROM 
+	SELECT * FROM
 	indicacao_avaliadores INDICADOS INNER JOIN indicados_respostas RESPOSTAS ON INDICADOS.id = RESPOSTAS.indicado_id
 	WHERE aluno_id = '${AlunaID}' ${queryComplement};
 `).spread((results, metadata) => { // eslint-disable-line no-unused-vars
@@ -513,7 +513,7 @@ async function getAlunasFromTurma(turma) {
 async function getAlunasReport(turma) {
 	const result = await sequelize.query(`
 	SELECT ALUNO.id as "ID", ALUNO.cpf as "CPF", TURMA.nome as "Turma", ALUNO.nome_completo as "Nome Completo", ALUNO.email as "E-mail",
-	ALUNO.telefone as "Telefone", ALUNO.rg as "RG", ALUNO.endereco as "Endereço", ALUNO.data_nascimento as "Data de Nascimento", 
+	ALUNO.telefone as "Telefone", ALUNO.rg as "RG", ALUNO.endereco as "Endereço", ALUNO.data_nascimento as "Data de Nascimento",
 	ALUNO.contato_emergencia_nome as "Nome Contato de Emergência", ALUNO.contato_emergencia_email as "E-mail do Contato",
 	ALUNO.contato_emergencia_fone as "Telefone do Contato",	ALUNO.contato_emergencia_relacao as "Relação com Contato",
 	BOT_USER.fb_id as "ID Facebook", ALUNO.added_by_admin as "Adicionado pelo Admin",
@@ -533,14 +533,16 @@ async function getAlunasReport(turma) {
 
 async function getAlunasRespostasReport(turma) {
 	const result = await sequelize.query(`
-	SELECT RESPOSTA.id as "RESPOSTA ID", ALUNO.nome_completo as "Nome Completo", ALUNO.cpf as "ALUNA CPF", ALUNO.email as "ALUNA E-MAIL",
-	RESPOSTA.pre as "Sondagem Pré", RESPOSTA.pos as "Sondagem Pós", RESPOSTA.atividade_1 as "Cadastro",
-	RESPOSTA.avaliacao_modulo1 as "Avaliação Módulo 1", RESPOSTA.avaliacao_modulo2 as "Avaliação Módulo 2", RESPOSTA.avaliacao_modulo3 as "Avaliação Módulo 3"
-	FROM alunos_respostas RESPOSTA
-	LEFT JOIN alunos ALUNO ON ALUNO.id = RESPOSTA.aluno_id
-	WHERE ALUNO.turma_id = '${turma}'
-	ORDER BY RESPOSTA.id;
-	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
+        SELECT RESPOSTA.id as "RESPOSTA ID", ALUNO.nome_completo as "Nome Completo", ALUNO.cpf as "ALUNA CPF", ALUNO.email as "ALUNA E-MAIL",
+        RESPOSTA.pre as "Sondagem Pré", RESPOSTA.pos as "Sondagem Pós", RESPOSTA.atividade_1 as "Cadastro",
+        RESPOSTA.avaliacao_modulo1 as "Avaliação Módulo 1", RESPOSTA.avaliacao_modulo2 as "Avaliação Módulo 2", RESPOSTA.avaliacao_modulo3 as "Avaliação Módulo 3"
+        FROM alunos_respostas RESPOSTA
+        LEFT JOIN alunos ALUNO ON ALUNO.id = RESPOSTA.aluno_id
+        WHERE ALUNO.turma_id = ?
+        ORDER BY RESPOSTA.id;
+        `,
+        { replacements: [ turma ] }
+    ).spread((results, metadata) => { // eslint-disable-line no-unused-vars
 		console.log(`Got ${turma} successfully!`);
 		return results;
 	}).catch((err) => { sentryError('Erro em getAlunasRespostasReport =>', err); });
@@ -639,8 +641,8 @@ async function getAllIndicadosFromAlunaID(alunoID) {
 
 async function getAlunaRespostaCadastro(alunoCPF) {
 	const result = await sequelize.query(`
-	SELECT RESPOSTAS.atividade_1 as "cadastro" 
-	FROM alunos_respostas AS RESPOSTAS 
+	SELECT RESPOSTAS.atividade_1 as "cadastro"
+	FROM alunos_respostas AS RESPOSTAS
 	LEFT JOIN alunos ALUNO ON ALUNO.id = RESPOSTAS.aluno_id
 	WHERE ALUNO.cpf = '${alunoCPF}' LIMIT 1;
 	`).spread((r) => r).catch((err) => { sentryError('Erro em getAlunaRespostaCadastro =>', err); });
@@ -672,7 +674,7 @@ async function getAlunoRespostasAll(alunoID) {
 
 async function getNotificationTypes() {
 	const result = await sequelize.query(`
-	SELECT id, name, email_subject, email_text, chatbot_text, chatbot_quick_reply, chatbot_cards, attachment_name, attachment_link 
+	SELECT id, name, email_subject, email_text, chatbot_text, chatbot_quick_reply, chatbot_cards, attachment_name, attachment_link
 	FROM notification_types order by id
 	`).spread((r) => (r)).catch((err) => { sentryError('Erro em getNotificationTypes =>', err); });
 	console.log(JSON.stringify(result, null, 2));
@@ -682,7 +684,7 @@ async function getNotificationTypes() {
 async function getMissingCadastro() {
 	const result = await sequelize.query(`
 	SELECT ALUNO.id, ALUNO.nome_completo, ALUNO.email, ALUNO.cpf, TURMA.nome as turma_nome, PAGAMENTO.id as pagamento_id
-	FROM alunos AS ALUNO 
+	FROM alunos AS ALUNO
 	INNER JOIN alunos_respostas RESPOSTAS ON ALUNO.id = RESPOSTAS.aluno_id
 	INNER JOIN turma TURMA ON TURMA.id = ALUNO.turma_id
 	LEFT JOIN pagamentos PAGAMENTO ON PAGAMENTO.aluno_id = ALUNO.id
