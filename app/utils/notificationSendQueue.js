@@ -527,52 +527,52 @@ async function buildAttachment(type, cpf, name) { // eslint-disable-line
 }
 
 async function actuallySendMessages(types, notification, recipient, logID) {
-	let currentType = types.find((x) => x.id === notification.notification_type); // get the correct kind of notification
-	currentType = JSON.parse(JSON.stringify(currentType)); // makes an actual copy
-	const parametersMap = await rules.buildParametersRules(currentType);
-	const masks = await fillMasks(parametersMap, recipient);
+	try {
+		let currentType = types.find((x) => x.id === notification.notification_type); // get the correct kind of notification
+		currentType = JSON.parse(JSON.stringify(currentType)); // makes an actual copy
+		const parametersMap = await rules.buildParametersRules(currentType);
+		const masks = await fillMasks(parametersMap, recipient);
 
-	await notificationLog.update({ masks }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog19', err));
+		await notificationLog.update({ masks }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog19', err));
 
-	const newText = await replaceParameters(currentType, masks, recipient);
-	const attachment = await buildAttachment(currentType, recipient.cpf, recipient.nome_completo);
-	const error = {};
+		const newText = await replaceParameters(currentType, masks, recipient);
+		const attachment = await buildAttachment(currentType, recipient.cpf, recipient.nome_completo);
+		const error = {};
 
-	if (newText.email_text && recipient.email && recipient.email.trim()) { // if there's an email to send, send it
-		let html = await readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
-		html = await html.replace('[CONTEUDO_MAIL]', newText.email_text); // add nome to mail template
-		const mailError = await mailer.sendHTMLMail(newText.email_subject, recipient.email, html, attachment.mail);
-		if (mailError) { // save the error, if it happens
-			error.mailError = mailError.toString(); error.mailError.data = new Date();
-			await notificationLog.update({ sentEmail: mailError.toString() }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog110', err));
-		} else {
-			await notificationLog.update({ sentEmail: JSON.stringify({ status: 'Enviado', data: new Date() }, null, 2) }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog111', err));
+		if (newText.email_text && recipient.email && recipient.email.trim()) { // if there's an email to send, send it
+			let html = await readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
+			html = await html.replace('[CONTEUDO_MAIL]', newText.email_text); // add nome to mail template
+			const mailError = await mailer.sendHTMLMail(newText.email_subject, recipient.email, html, attachment.mail);
+			if (mailError) { // save the error, if it happens
+				error.mailError = mailError.toString(); error.mailError.data = new Date();
+				await notificationLog.update({ sentEmail: mailError.toString() }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog110', err));
+			} else {
+				await notificationQueue.update({ sent_at: new Date() }, { where: { id: notification.id } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do sendAt', err));
+				await notificationLog.update({ sentEmail: JSON.stringify({ status: 'Enviado', data: new Date() }, null, 2) }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog111', err));
+			}
 		}
-	}
 
-	if (recipient['chatbot.fb_id'] && newText.chatbot_text) { // if aluna is linked with messenger we send a message to the bot
-		let chatbotError = await broadcast.sendBroadcastAluna(recipient['chatbot.fb_id'], newText.chatbot_text, newText.chatbot_quick_reply);
-		if (!chatbotError && newText.chatbot_cards) { chatbotError = await broadcast.sendCardAluna(recipient['chatbot.fb_id'], newText.chatbot_cards, recipient.cpf); }
-		if (!chatbotError && [attachment.chatbot.pdf || attachment.chatbot.png]) { chatbotError = await broadcast.sendFiles(recipient['chatbot.fb_id'], attachment.chatbot.pdf, attachment.chatbot.pdf2); }
-		if (chatbotError) { error.chatbotError = chatbotError.toString(); } // save the error, if it happens
-		if (chatbotError) { // save the error, if it happens
-			error.chatbotError = chatbotError.toString(); error.chatbotError.data = new Date();
-			await notificationLog.update({ sentBroadcast: chatbotError.toString() }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog112', err));
+		if (recipient['chatbot.fb_id'] && newText.chatbot_text) { // if aluna is linked with messenger we send a message to the bot
+			let chatbotError = await broadcast.sendBroadcastAluna(recipient['chatbot.fb_id'], newText.chatbot_text, newText.chatbot_quick_reply);
+			if (!chatbotError && newText.chatbot_cards) { chatbotError = await broadcast.sendCardAluna(recipient['chatbot.fb_id'], newText.chatbot_cards, recipient.cpf); }
+			if (!chatbotError && [attachment.chatbot.pdf || attachment.chatbot.png]) { chatbotError = await broadcast.sendFiles(recipient['chatbot.fb_id'], attachment.chatbot.pdf, attachment.chatbot.pdf2); }
+			if (chatbotError) { error.chatbotError = chatbotError.toString(); } // save the error, if it happens
+			if (chatbotError) { // save the error, if it happens
+				error.chatbotError = chatbotError.toString(); error.chatbotError.data = new Date();
+				await notificationLog.update({ sentBroadcast: chatbotError.toString() }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog112', err));
+			} else {
+				await notificationLog.update({ sentBroadcast: JSON.stringify({ status: 'Enviado', data: new Date() }, null, 2) }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog113', err));
+			}
 		} else {
-			await notificationLog.update({ sentBroadcast: JSON.stringify({ status: 'Enviado', data: new Date() }, null, 2) }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog113', err));
+			await notificationLog.update({ sentBroadcast: 'Não tem facebook_id' }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog114', err));
 		}
-	} else {
-		await notificationLog.update({ sentBroadcast: 'Não tem facebook_id' }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog114', err));
+		if (error.mailError || error.chatbotError) {
+			await notificationQueue.update({ error, sent_at: new Date() }, { where: { id: notification.id } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do erro', err));
+		}
+	} catch (error) {
+		await notificationQueue.update({ error }, { where: { id: notification.id } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do erro', err));
+		sentryError(error);
 	}
-
-	if (!error.mailError && !error.chatbotError) { // if there wasn't any errors, we can update the queue succesfully
-		await notificationQueue.update({ sent_at: new Date() }, { where: { id: notification.id } })
-			.then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do sendAt', err));
-	} else { // if there was any errors, we store what happened
-		await notificationQueue.update({ error, sent_at: new Date() }, { where: { id: notification.id } })
-			.then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do erro', err));
-	}
-	return false;
 }
 
 async function getRecipient(notification, moduleDates, logID) {
