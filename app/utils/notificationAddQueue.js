@@ -76,6 +76,7 @@ async function addNewNotificationIndicados(alunaId, turmaID) {
 async function addMissingAlunoNotification(turmaID, type) {
 	const res = [];
 	const notificationRules = await rules.loadTabNotificationRules(await getTurmaInCompany(turmaID));
+	const notificacoesTurma = await notificationQueue.findAll({ where: { turma_id: turmaID, notification_type: type, sent_at: null, error: null }, raw: true }).then((r) => r).catch((err) => sentryError('Erro no findAll do notificationQueue', err)); // eslint-disable-line object-curly-newline
 	const rulesAlunos = await notificationRules.filter((x) => x.indicado !== true && x.notification_type === type);
 	if (!rulesAlunos || rulesAlunos.length === 0) {
 		return `Regra ${type} não encontrada`;
@@ -84,7 +85,8 @@ async function addMissingAlunoNotification(turmaID, type) {
 
 	for (let i = 0; i < alunosTurma.length; i++) {
 		const aluno = alunosTurma[i];
-		const notificacoes = await notificationQueue.findAll({ where: { aluno_id: aluno.id, notification_type: type, sent_at: null, error: null }, raw: true }).then((r) => r).catch((err) => sentryError('Erro no findAll do notificationQueue', err)); // eslint-disable-line object-curly-newline
+		const notificacoes = notificacoesTurma.filter((x) => x.aluno_id === aluno.id);
+
 		if (!notificacoes || notificacoes.length === 0) {
 			res.push(`${aluno.nome_completo} receberá ${rulesAlunos.length} da notificação ${type}`);
 			for (let j = 0; j < rulesAlunos.length; j++) {
@@ -98,6 +100,7 @@ async function addMissingAlunoNotification(turmaID, type) {
 		}
 	}
 
+	console.log('res', res);
 	return res;
 }
 

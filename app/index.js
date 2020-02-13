@@ -99,6 +99,10 @@ server.post('/add-missing-notification', async (req, res) => {
 	await requests.addMissingNotification(req, res);
 });
 
+server.post('/add-new-notification', async (req, res) => {
+	await requests.addNewQueue(req, res);
+});
+
 server.post('/send-notification-queue', async (req, res) => {
 	await requests.sendNotificationQueue(req, res);
 });

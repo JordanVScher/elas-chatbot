@@ -8,6 +8,7 @@ const { addNewNotificationAlunas } = require('./app/utils/notificationAddQueue')
 const { sendNotificationFromQueue } = require('./app/utils/notificationSendQueue');
 const { seeDataQueue } = require('./app/utils/notificationAddQueue');
 const { addMissingNotificationOnQueue } = require('./app/utils/notificationAddQueue');
+const { addMissingAlunoNotification } = require('./app/utils/notificationAddQueue');
 
 async function getFBIDJson() { // eslint-disable-line
 	const result = {};
@@ -62,6 +63,23 @@ async function addLabel(req, res) {
 }
 
 async function addMissingNotification(req, res) {
+	const { body } = req;
+	if (!body || !body.security_token) {
+		res.status(400); res.send('Param security_token is required!');
+	} else {
+		const securityToken = body.security_token;
+		if (securityToken !== process.env.SECURITY_TOKEN_MA) {
+			res.status(401); res.send('Unauthorized!');
+		} else if (!body.notification_type || !body.turma_id) {
+			res.status(401); res.send('Missing aluno_id or turma_id!');
+		} else {
+			addMissingAlunoNotification(body.turma_id, body.notification_type);
+			res.status(200); res.send('Processando');
+		}
+	}
+}
+
+async function addNewQueue(req, res) {
 	const { body } = req;
 	if (!body || !body.security_token) {
 		res.status(400); res.send('Param security_token is required!');
@@ -128,5 +146,5 @@ async function seeQueue(req, res) {
 
 
 module.exports = {
-	getNameFBID, addLabel, addMissingNotification, sendNotificationQueue, dataQueue, seeQueue,
+	getNameFBID, addLabel, addMissingNotification, sendNotificationQueue, dataQueue, seeQueue, addNewQueue,
 };
