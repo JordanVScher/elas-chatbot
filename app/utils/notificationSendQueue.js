@@ -490,6 +490,13 @@ async function checkShouldSendRecipient(recipient, notification, moduleDates, to
 	// these two notifications are for alunos only, check if any of their indicados havent answered the pre/pos quiz already
 	if ([4, 10, 20, 27].includes(notification.notification_type)) {
 		const column = [4, 20].includes(notification.notification_type) ? 'pre' : 'pos'; // select which questionario
+		const avaliadores = await indicadosAvaliadores.findAll({ where: { aluno_id: recipient.id }, raw: true }).then((r) => r).catch((err) => sentryError('Erro no findAll do indicadosAvaliadores', err));
+
+		if (!avaliadores || avaliadores.length === 0) {
+			await notificationLog.update({ shouldSend: false, sentEmail: 'Não enviou pois Aluna não tem indicados' }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog17', err));
+			return false;
+		}
+
 		const indicados = await DB.getIndicadoRespostasAnswerNull(recipient.id, column); // get indicados that didnt answer the current questionario
 		if (!indicados || indicados.length === 0) { // if every indiciado answered, dont send email
 			await notificationLog.update({ shouldSend: false, sentEmail: 'Todos os indicados já responderam' }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog17', err));
@@ -509,7 +516,8 @@ async function checkShouldSendRecipient(recipient, notification, moduleDates, to
 		recipient.atividadesMissing = atividadesMissing;
 	}
 
-	console.log('recipient.nome_completo', recipient.nome_completo);
+
+	console.log('\n\n\nrecipient.nome_completo', recipient.nome_completo);
 	console.log('recipient.id', recipient.id);
 	console.log('recipient.cpf', recipient.cpf);
 	return false;
