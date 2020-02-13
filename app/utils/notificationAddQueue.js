@@ -145,6 +145,7 @@ async function seeDataQueue(turmaID) {
 		}
 	}
 
+	console.log('result', result);
 	return result;
 }
 
