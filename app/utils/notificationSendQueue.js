@@ -520,7 +520,7 @@ async function checkShouldSendRecipient(recipient, notification, moduleDates, to
 	console.log('\n\n\nrecipient.nome_completo', recipient.nome_completo);
 	console.log('recipient.id', recipient.id);
 	console.log('recipient.cpf', recipient.cpf);
-	return false;
+	return true;
 	// return true;
 }
 

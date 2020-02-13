@@ -157,7 +157,7 @@ async function addMissingNotificationOnQueue(turmaID) {
 		const aluno = alunosTurma[i];
 
 		const noti = await notificationsTurma.filter((x) => x.aluno_id === aluno.id);
-		console.log(`\n\nAluna ${aluno.nome_completo}: ${aluno.id} - ${aluno.cpf}`);
+		console.log(`\n\n${aluno.nome_completo}: ${aluno.id} - ${aluno.cpf}`);
 		if (!noti || noti.length === 0) {
 			console.log('Aluna não tem nenhuma notificação');
 		} else {
@@ -167,6 +167,7 @@ async function addMissingNotificationOnQueue(turmaID) {
 		}
 	}
 }
+
 
 module.exports = {
 	addNewNotificationAlunas, addNewNotificationIndicados, addAvaliadorOnQueue, addMissingAlunoNotification, seeDataQueue, addMissingNotificationOnQueue,
