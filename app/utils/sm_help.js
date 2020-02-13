@@ -380,5 +380,5 @@ async function newSurveyResponse(event) {
 }
 
 module.exports = {
-	sendMatricula, newSurveyResponse, sendAlunaToAssistente,
+	sendMatricula, newSurveyResponse, sendAlunaToAssistente, helpAddQueue,
 };

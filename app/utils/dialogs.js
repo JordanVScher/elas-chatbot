@@ -5,6 +5,7 @@ const db = require('./DB_helper');
 const help = require('./helper');
 const { sentryError } = require('./helper');
 const { sendAlunaToAssistente } = require('./sm_help');
+const { helpAddQueue } = require('./sm_help');
 const { sendMatricula } = require('./sm_help');
 const attach = require('./attach');
 const flow = require('./flow');
@@ -191,7 +192,6 @@ module.exports.sendFeedbackMsgs = async (context, errors, msgs, quickReplies) =>
 	}
 };
 
-
 module.exports.receiveCSVAluno = async (csvLines, chatbotUserId, pageToken) => { // createAlunos/ inserir
 	if (csvLines) {
 		const turmas = await turma.findAll({ where: {}, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em turma.findAll', err));
@@ -217,9 +217,12 @@ module.exports.receiveCSVAluno = async (csvLines, chatbotUserId, pageToken) => {
 						const oldAluno = await alunos.findOne({ where: { cpf: element.cpf }, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em alunos.findOne', err));
 						// if aluno existed before we save the turma and label change
 						if (oldAluno && oldAluno.turma_id) { await admin.SaveTurmaChange(chatbotUserId, pageToken, oldAluno.id, oldAluno.turma_id, element.turma_id); }
-						if (!oldAluno) { await sendMatricula(element.Turma.nome, false, element.email, element.cpf); } // send matricula to new aluno only
 						element.added_by_admin = true;
 						const newAluno = await db.upsertAlunoCadastro(element);
+						if (!oldAluno) { // send matricula to new aluno and create queue
+							await sendMatricula(element.Turma.nome, false, element.email, element.cpf);
+							await helpAddQueue(newAluno.id, newAluno.turma_id);
+						}
 						await sendAlunaToAssistente(element.nome_completo, element.email, element.cpf, element.Turma.nome);
 						if (!newAluno || newAluno.error || !newAluno.id) { // save line where error happended
 							errors.push({ line: i + 2, msg: 'Erro ao salvar no banco' });

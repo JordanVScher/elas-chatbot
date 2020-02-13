@@ -604,21 +604,27 @@ async function sendNotificationFromQueue(alunoID = null, notificationType, test 
 	let lastRecipient = {};
 	for (let i = 0; i < queue.length; i++) {
 		const notification = queue[i];
-		console.log('notification', notification);
-		const currentTurma = await turmas.find((x) => x.id === notification.turma_id);
-		const turmaName = currentTurma.nome; const turmaInCompany = currentTurma.inCompany;
-		const notificationRules = await rules.getNotificationRules(turmaName, regularRules, turmaInCompany);
-		if (await checkShouldSendNotification(notification, moduleDates, today, notificationRules) === true || test) { // !== for easy testing
-			const logID = await notificationLog.create({ notificationId: notification.id, notificationType: notification.notification_type }).then((res) => (res && res.dataValues && res.dataValues.id ? res.dataValues.id : false)).catch((err) => sentryError('Erro em notificationQueue.create', err));
-			await notificationLog.update({ shouldSend: true }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog116', err));
-			const recipientData = await getRecipient(notification, moduleDates, logID, lastRecipient); recipientData.turmaName = turmaName; lastRecipient = recipientData;
-			console.log('logID', logID);
-			console.log('recipientData', recipientData);
-			if (recipientData !== false) await notificationLog.update({ recipientData }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog115', err));
-			if (await checkShouldSendRecipient(recipientData, notification, moduleDates, today, logID) === true) {
-				console.log('vai enviar');
-				await actuallySendMessages(types, notification, recipientData, logID, test);
+		try {
+			console.log('notification', notification);
+			const currentTurma = await turmas.find((x) => x.id === notification.turma_id);
+			const turmaName = currentTurma.nome; const turmaInCompany = currentTurma.inCompany;
+			const notificationRules = await rules.getNotificationRules(turmaName, regularRules, turmaInCompany);
+			if (await checkShouldSendNotification(notification, moduleDates, today, notificationRules) === true || test) { // !== for easy testing
+				const logID = await notificationLog.create({ notificationId: notification.id, notificationType: notification.notification_type }).then((res) => (res && res.dataValues && res.dataValues.id ? res.dataValues.id : false)).catch((err) => sentryError('Erro em notificationQueue.create', err));
+				await notificationLog.update({ shouldSend: true }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog116', err));
+				const recipientData = await getRecipient(notification, moduleDates, logID, lastRecipient); recipientData.turmaName = turmaName; lastRecipient = recipientData;
+				console.log('logID', logID);
+				console.log('recipientData', recipientData);
+				if (recipientData !== false) await notificationLog.update({ recipientData }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog115', err));
+				if (await checkShouldSendRecipient(recipientData, notification, moduleDates, today, logID) === true) {
+					console.log('vai enviar');
+					await actuallySendMessages(types, notification, recipientData, logID, test);
+				}
 			}
+		} catch (error) {
+			console.log('error', error);
+			await notificationQueue.update({ error: { msg: error, data: new Date() } }, { where: { id: notification.id } })
+				.then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do sendAt', err));
 		}
 	}
 }
