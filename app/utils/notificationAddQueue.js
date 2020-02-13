@@ -9,7 +9,7 @@ const { getTurmaInCompany } = require('./DB_helper');
 
 async function addNewNotificationAlunas(alunaId, turmaID, reRules, noRules) {
 	try {
-		const regularRules = reRules || await rules.buildNotificationRules(await getTurmaInCompany(turmaID));
+		const regularRules = reRules || await rules.loadTabNotificationRules(await getTurmaInCompany(turmaID));
 		const notificationRules = noRules || await rules.getNotificationRules(await getTurmaName(turmaID), regularRules);
 		const ourTurma = await turma.findOne({ where: { id: turmaID }, raw: true }).then((res) => res).catch((err) => sentryError('Erro em turmaFindOne', err));
 		const rulesAlunos = await notificationRules.filter((x) => x.indicado !== true);
@@ -48,7 +48,7 @@ async function addAvaliadorOnQueue(rule, indicado, turmaID) {
 }
 
 async function addNewNotificationIndicados(alunaId, turmaID, reRules, noRules) {
-	const regularRules = reRules || await rules.buildNotificationRules(await getTurmaInCompany(turmaID));
+	const regularRules = reRules || await rules.loadTabNotificationRules(await getTurmaInCompany(turmaID));
 	const notificationRules = noRules || await rules.getNotificationRules(await getTurmaName(turmaID), regularRules);
 	const indicados = await indicadosAvaliadores.findAll({ where: { aluno_id: alunaId }, raw: true }) // // get every indicado from aluna
 		.then((res) => res).catch((err) => sentryError('Erro em indicadosAvaliadores.findAll', err));
@@ -92,7 +92,7 @@ async function addAlunasToQueue(turmaID) {
 	});
 
 	if (alunosToAdd && alunosToAdd.length > 0) {
-		const regularRules = await rules.buildNotificationRules(await getTurmaInCompany(turmaID));
+		const regularRules = await rules.loadTabNotificationRules(await getTurmaInCompany(turmaID));
 		const notificationRules = await rules.getNotificationRules(await getTurmaName(turmaID), regularRules);
 		for (let i = 0; i < alunosToAdd.length; i++) {
 			const e = alunosToAdd[i];
@@ -107,7 +107,7 @@ async function addAlunasToQueue(turmaID) {
 
 async function addMissingAlunoNotification(turmaID, type) {
 	const res = [];
-	const regularRules = await rules.buildNotificationRules(await getTurmaInCompany(turmaID));
+	const regularRules = await rules.loadTabNotificationRules(await getTurmaInCompany(turmaID));
 	const notificationRules = await rules.getNotificationRules(await getTurmaName(turmaID), regularRules);
 	const rulesAlunos = await notificationRules.filter((x) => x.indicado !== true && x.notification_type === type);
 	if (!rulesAlunos || rulesAlunos.length === 0) {

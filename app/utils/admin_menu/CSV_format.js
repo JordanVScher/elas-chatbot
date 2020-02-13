@@ -83,6 +83,7 @@ const avaliadorCSV = {
 	// aluno_id: 'ID da Aluna',
 	familiar: 'Familiar',
 	relacao_com_aluna: 'Relação com Aluna',
+	id: 'ID Indicado',
 };
 
 async function convertCSVToDB(line, dictionary) {

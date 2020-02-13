@@ -12,7 +12,7 @@ const { turma } = require('../../server/models');
 const { alunos } = require('../../server/models');
 const { checkUserOnLabel } = require('../../utils/postback');
 const { adminMenu } = require('../../utils/flow');
-const { buildNotificationRules } = require('../notificationRules');
+const rules = require('../notificationRules');
 const MaAPI = require('../../chatbot_api');
 const labels = require('../labels');
 
@@ -169,16 +169,17 @@ async function NotificationChangeTurma(alunaID, oldTurmaID, newturmaID) {
 // from the CSV, adds notification for new indicados and updates status of familiar notifications
 async function updateNotificationIndicados(indicados) {
 	try {
+		const regularRules = await rules.buildNotificationRules();
 		for (let i = 0; i < indicados.length; i++) {
 			const indicado = indicados[i];
 
 			const userNotifications = await notificationQueue.findAll({ where: { indicado_id: indicado.id }, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em notificationQueue.findAll', err));
 			const turmaID = await db.getTurmaIdFromAluno(indicado.aluno_id);
-
 			// load the correct notification rules, based on the In Company turma status
 			const inCompany = await db.getTurmaInCompany(turmaID);
-			const familiarType = inCompany ? 28 : 11; // the type_id of the familiar notification
-			let rulesIndicados = await buildNotificationRules(inCompany);
+			const familiarType = inCompany ? 28 : 12; // the type_id of the familiar notification
+			let rulesIndicados = await rules.buildNotificationRules(inCompany);
+			rulesIndicados = await rules.getNotificationRules('', regularRules, inCompany);
 			rulesIndicados = await rulesIndicados.filter((x) => x.indicado === true); // only rules for indicados
 
 			for (let j = 0; j < rulesIndicados.length; j++) {

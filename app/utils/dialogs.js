@@ -14,6 +14,7 @@ const { getMailAdmin } = require('./admin_menu/warn_admin');
 const { sendTestNotification } = require('./notificationTest');
 const { alunos } = require('../server/models');
 const { turma } = require('../server/models');
+const indicados = require('../server/models').indicacao_avaliadores;
 const { addNewNotificationAlunas } = require('./notificationAddQueue');
 const { addNewNotificationIndicados } = require('./notificationAddQueue');
 const charts = require('./charts');
@@ -199,48 +200,53 @@ module.exports.receiveCSVAluno = async (csvLines, chatbotUserId, pageToken) => {
 
 		for (let i = 0; i < csvLines.length; i++) {
 			let element = csvLines[i];
-			if (element.Turma) {
-				element.Turma = await turmas.find((x) => (x.nome.toUpperCase() === element.Turma.toUpperCase())); // find the turma that has that name
-				element.turma_id = element.Turma ? element.Turma.id : false; // get that turma id
-			} // convert turma as name to turma as id
-			if (element.Turma && element.turma_id) { // check valid turma
-				element = await admin.convertCSVToDB(element, admin.swap(admin.alunaCSV));
-				if (element.nome_completo) { // check if aluno has the bare minumium to be added to the database
-					element.cpf = await help.getCPFValid(element.cpf); // format cpf
-					if (!element.cpf) {
-						errors.push({ line: i + 2, msg: 'CPF inválido!' });
-						help.sentryError('Erro em receiveCSVAluno => CPF inválido!', { element });
-					} else if (!element.email) {
-						errors.push({ line: i + 2, msg: 'Email inválido!' });
-						help.sentryError('Erro em receiveCSVAluno => Email inválido!', { element });
-					} else {
-						const oldAluno = await alunos.findOne({ where: { cpf: element.cpf }, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em alunos.findOne', err));
-						// if aluno existed before we save the turma and label change
-						if (oldAluno && oldAluno.turma_id) { await admin.SaveTurmaChange(chatbotUserId, pageToken, oldAluno.id, oldAluno.turma_id, element.turma_id); }
-						element.added_by_admin = true;
-						const newAluno = await db.upsertAlunoCadastro(element);
-						if (!oldAluno) { // send matricula to new aluno and create queue
-							await sendMatricula(element.Turma.nome, false, element.email, element.cpf);
-							await helpAddQueue(newAluno.id, newAluno.turma_id);
-						}
-						await sendAlunaToAssistente(element.nome_completo, element.email, element.cpf, element.Turma.nome);
-						if (!newAluno || newAluno.error || !newAluno.id) { // save line where error happended
-							errors.push({ line: i + 2, msg: 'Erro ao salvar no banco' });
-							help.sentryError('Erro em receiveCSVAluno => Erro ao salvar no banco', { element });
+			try {
+				if (element.Turma) {
+					element.Turma = await turmas.find((x) => (x.nome.toUpperCase() === element.Turma.toUpperCase())); // find the turma that has that name
+					element.turma_id = element.Turma ? element.Turma.id : false; // get that turma id
+				} // convert turma as name to turma as id
+				if (element.Turma && element.turma_id) { // check valid turma
+					element = await admin.convertCSVToDB(element, admin.swap(admin.alunaCSV));
+					if (element.nome_completo) { // check if aluno has the bare minumium to be added to the database
+						element.cpf = await help.getCPFValid(element.cpf); // format cpf
+						if (!element.cpf) {
+							errors.push({ line: i + 2, msg: 'CPF inválido!' });
+							help.sentryError('Erro em receiveCSVAluno => CPF inválido!', { element });
+						} else if (!element.email) {
+							errors.push({ line: i + 2, msg: 'Email inválido!' });
+							help.sentryError('Erro em receiveCSVAluno => Email inválido!', { element });
 						} else {
-							if (newAluno.email === newAluno.contato_emergencia_email) {
-								errors.push({ line: i + 2, msg: `Contato de emergência tem o mesmo e-mail da aluna ${newAluno.nome_completo}: ${newAluno.contato_emergencia_email}`, ignore: true });
+							const oldAluno = await alunos.findOne({ where: { cpf: element.cpf }, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em alunos.findOne', err));
+							// if aluno existed before we save the turma and label change
+							if (oldAluno && oldAluno.turma_id) { await admin.SaveTurmaChange(chatbotUserId, pageToken, oldAluno.id, oldAluno.turma_id, element.turma_id); }
+							element.added_by_admin = true;
+							const newAluno = await db.upsertAlunoCadastro(element);
+							if (!oldAluno) { // send matricula to new aluno and create queue
+								await sendMatricula(element.Turma.nome, false, element.email, element.cpf);
+								await helpAddQueue(newAluno.id, newAluno.turma_id);
 							}
-							if (oldAluno && oldAluno.turma_id) await admin.NotificationChangeTurma(newAluno.id, oldAluno.turma_id, element.turma_id);
+							await sendAlunaToAssistente(element.nome_completo, element.email, element.cpf, element.Turma.nome);
+							if (!newAluno || newAluno.error || !newAluno.id) { // save line where error happended
+								errors.push({ line: i + 2, msg: 'Erro ao salvar no banco' });
+								help.sentryError('Erro em receiveCSVAluno => Erro ao salvar no banco', { element });
+							} else {
+								if (newAluno.email === newAluno.contato_emergencia_email) {
+									errors.push({ line: i + 2, msg: `Contato de emergência tem o mesmo e-mail da aluna ${newAluno.nome_completo}: ${newAluno.contato_emergencia_email}`, ignore: true });
+								}
+								if (oldAluno && oldAluno.turma_id) await admin.NotificationChangeTurma(newAluno.id, oldAluno.turma_id, element.turma_id);
+							}
 						}
+					} else {
+						errors.push({ line: i + 2, msg: 'Falta o nome da aluna' });
+						help.sentryError('Erro em receiveCSVAluno => aluna sem nome', { element });
 					}
 				} else {
-					errors.push({ line: i + 2, msg: 'Falta o nome da aluna' });
-					help.sentryError('Erro em receiveCSVAluno => aluna sem nome', { element });
+					errors.push({ line: i + 2, msg: `Turma ${element.Turma || ''} inválida` });
+					help.sentryError('Erro em receiveCSVAluno => turma inválida', { element });
 				}
-			} else {
-				errors.push({ line: i + 2, msg: `Turma ${element.Turma || ''} inválida` });
-				help.sentryError('Erro em receiveCSVAluno => turma inválida', { element });
+			} catch (error) {
+				errors.push({ line: i + 2, msg: 'Erro desconhecido' });
+				help.sentryError('Erro em receiveCSVAluno ', error);
 			}
 		}
 		return { errors };
@@ -252,38 +258,58 @@ module.exports.receiveCSVAluno = async (csvLines, chatbotUserId, pageToken) => {
 module.exports.receiveCSVAvaliadores = async (csvLines) => {
 	if (csvLines) {
 		const errors = []; // stores lines that presented an error
-		const indicados = [];
+		const indicadosToAdd = [];
 		for (let i = 0; i < csvLines.length; i++) {
-			let element = csvLines[i];
-			element = await admin.convertCSVToDB(element, admin.swap(admin.avaliadorCSV));
-			element.aluno_cpf = await help.getCPFValid(element.aluno_cpf);
-			if (element.nome && element.email && element.aluno_cpf) {
-				const avaliadorAluno = await alunos.findOne({ where: { cpf: element.aluno_cpf }, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em avaliadorAluno.findOne', err));
-				if (avaliadorAluno) {
-					element.aluno_id = avaliadorAluno.id;
-					element = await admin.formatBooleanToDatabase(element, 'Sim', 'Não', ['familiar']);
-					const newIndicado = await db.upsertIndicado(element);
-					if (!newIndicado || newIndicado.error || !newIndicado.id) { // save line where error happended
-						errors.push({ line: i + 2, msg: 'Erro ao salvar no banco' });
-						help.sentryError('Erro em receiveCSV => Erro ao salvar no banco', { element });
+			let e = csvLines[i];
+			try {
+				e = await admin.convertCSVToDB(e, admin.swap(admin.avaliadorCSV));
+				e.aluno_cpf = await help.getCPFValid(e.aluno_cpf);
+				if (e && e.id) {
+					const indicadoFound = await indicados.findOne({ where: { id: e.id }, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em avaliadorAluno.findOne', err));
+					if (indicadoFound && indicadoFound.id && Number.isInteger(indicadoFound.id)) {
+						e = await admin.formatBooleanToDatabase(e, 'Sim', 'Não', ['familiar']);
+						const updatedIndicado = await indicados.update(e, {
+							where: { id: indicadoFound.id }, returning: true, plain: true, raw: true,
+						}).then((r) => r[1]).catch((err) => {
+							errors.push({ line: i + 2, msg: 'Erro ao salvar no banco' });
+							help.sentryError('Erro em receiveCSV => Erro ao salvar no banco', { e, err });
+						});
+						if (updatedIndicado && updatedIndicado.id) indicadosToAdd.push(updatedIndicado);
 					} else {
-						if (newIndicado.email === avaliadorAluno.email) {
-							errors.push({ line: i + 2, msg: `Adicionado Indicado ${newIndicado.nome} com mesmo e-mail da aluna ${avaliadorAluno.nome_completo}: ${avaliadorAluno.email}`, ignore: true });
-							help.sentryError('Erro em receiveCSVAvaliadores => Avaliador com e-mail igual aluna', { element });
+						errors.push({ line: i + 2, msg: `Indicado com ID '${e.id}' não encontrado!` });
+						help.sentryError(`Indicado com ID ${e.id} não encontrado!`, { e });
+					}
+				} else if (e.nome && e.email && e.aluno_cpf) {
+					const avaliadorAluno = await alunos.findOne({ where: { cpf: e.aluno_cpf }, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em avaliadorAluno.findOne', err));
+					if (avaliadorAluno) {
+						e.aluno_id = avaliadorAluno.id;
+						e = await admin.formatBooleanToDatabase(e, 'Sim', 'Não', ['familiar']);
+						const newIndicado = await db.upsertIndicado(e);
+						if (!newIndicado || newIndicado.error || !newIndicado.id) { // save line where error happended
+							errors.push({ line: i + 2, msg: 'Erro ao salvar no banco' });
+							help.sentryError('Erro em receiveCSV => Erro ao salvar no banco', { e });
+						} else {
+							if (newIndicado.email === avaliadorAluno.email) {
+								errors.push({ line: i + 2, msg: `Adicionado Indicado ${newIndicado.nome} com mesmo e-mail da aluna ${avaliadorAluno.nome_completo}: ${avaliadorAluno.email}`, ignore: true });
+								help.sentryError('Erro em receiveCSVAvaliadores => Avaliador com e-mail igual aluna', { e });
+							}
+							indicadosToAdd.push(newIndicado);
 						}
-						indicados.push(newIndicado);
+					} else {
+						errors.push({ line: i + 2, msg: `Nenhuma aluna com CPF ${e.aluno_cpf}` });
+						help.sentryError('Erro em receiveCSVAvaliadores => Avaliador sem nome ou e-mail ou cpf do aluno', { e });
 					}
 				} else {
-					errors.push({ line: i + 2, msg: `Nenhuma aluna com CPF ${element.aluno_cpf}` });
-					help.sentryError('Erro em receiveCSVAvaliadores => Avaliador sem nome ou e-mail ou cpf do aluno', { element });
+					errors.push({ line: i + 2, msg: `Avaliador sem ${await admin.getMissingDataAvaliadoresCSV(e)}.` });
+					help.sentryError(`Erro em receiveCSVAvaliadores => Avaliador sem ${await admin.getMissingDataAvaliadoresCSV(e)}.`, { e });
 				}
-			} else {
-				errors.push({ line: i + 2, msg: `Avaliador sem ${await admin.getMissingDataAvaliadoresCSV(element)}.` });
-				help.sentryError(`Erro em receiveCSVAvaliadores => Avaliador sem ${await admin.getMissingDataAvaliadoresCSV(element)}.`, { element });
+			} catch (error) {
+				errors.push({ line: i + 2, msg: 'Erro desconhecido' });
+				help.sentryError('Erro em receiveCSVAvaliadores ', error);
 			}
 		}
 
-		await admin.updateNotificationIndicados(indicados);
+		await admin.updateNotificationIndicados(indicadosToAdd);
 		return { errors };
 	}
 	return help.sentryError('Erro em receiveCSVAluno => CSV inválido!', { csvLines });
