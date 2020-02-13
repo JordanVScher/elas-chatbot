@@ -616,12 +616,12 @@ async function sendNotificationFromQueue(alunoID = null, notificationType, test 
 	if (notificationType) { queryRules.notification_type = notificationType; }
 
 	const queue = await notificationQueue.findAll({ where: queryRules, raw: true }).then((res) => res).catch((err) => sentryError('Erro ao carregar notification_queue', err));
-	console.log('tamanho queue', queue.length);
+	// console.log('tamanho queue', queue.length);
 	let lastRecipient = {};
 	for (let i = 0; i < queue.length; i++) {
 		const notification = queue[i];
 		try {
-			console.log('notification', notification);
+			// console.log('notification', notification);
 			const currentTurma = await turmas.find((x) => x.id === notification.turma_id);
 			const turmaName = currentTurma.nome; const turmaInCompany = currentTurma.inCompany;
 			const notificationRules = turmaInCompany === true ? regularRules.in_company : regularRules.normal;
@@ -629,11 +629,11 @@ async function sendNotificationFromQueue(alunoID = null, notificationType, test 
 				const logID = await notificationLog.create({ notificationId: notification.id, notificationType: notification.notification_type }).then((res) => (res && res.dataValues && res.dataValues.id ? res.dataValues.id : false)).catch((err) => sentryError('Erro em notificationQueue.create', err));
 				await notificationLog.update({ shouldSend: true }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog116', err));
 				const recipientData = await getRecipient(notification, moduleDates, logID, lastRecipient); recipientData.turmaName = turmaName; lastRecipient = recipientData;
-				console.log('logID', logID);
-				console.log('recipientData', recipientData);
+				// console.log('logID', logID);
+				// console.log('recipientData', recipientData);
 				if (recipientData !== false) await notificationLog.update({ recipientData }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog115', err));
 				if (await checkShouldSendRecipient(recipientData, notification, moduleDates, today, logID) === true) {
-					console.log('vai enviar');
+					// console.log('vai enviar');
 					await actuallySendMessages(types, notification, recipientData, logID, test);
 				}
 			}
