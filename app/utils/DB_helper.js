@@ -541,8 +541,7 @@ async function getAlunasRespostasReport(turma) {
         WHERE ALUNO.turma_id = ?
         ORDER BY RESPOSTA.id;
         `,
-        { replacements: [ turma ] }
-    ).spread((results, metadata) => { // eslint-disable-line no-unused-vars
+	{ replacements: [turma] }).spread((results, metadata) => { // eslint-disable-line no-unused-vars
 		console.log(`Got ${turma} successfully!`);
 		return results;
 	}).catch((err) => { sentryError('Erro em getAlunasRespostasReport =>', err); });
@@ -600,7 +599,7 @@ async function addAlunaFromCSV(aluno) {
 	ON CONFLICT(cpf)
 	DO UPDATE
 	SET ${set.join(', ')}
-	RETURNING id;`;
+	RETURNING *;`;
 
 	const result = await sequelize.query(queryString).spread((results) => (results && results[0] ? results[0] : false)).catch((err) => sentryError('Erro no addAlunaFromCSV =>', err));
 

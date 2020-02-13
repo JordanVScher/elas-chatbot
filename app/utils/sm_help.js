@@ -4,6 +4,7 @@ const { getIndicacaoErrorText } = require('./helper');
 const { getSameContatoEmailErrorText } = require('./helper');
 const matriculaLog = require('../server/models').matricula_mail_log;
 const notificationQueue = require('../server/models').notification_queue;
+const { alunos } = require('../server/models');
 const smAPI = require('../sm_api');
 const mailer = require('./mailer');
 const { eMail } = require('./flow');
@@ -213,7 +214,9 @@ async function handleAtividadeOne(response) {
 			answers.added_by_admin = false; // user wasnt added by the admins
 			answers.turma_id = await db.getTurmaID(answers.turma);
 
-			const newUser = await db.upsertAlunoCadastro(answers);
+			const newUserID = await db.upsertAlunoCadastro(answers);
+			console.log('newUserID', newUserID);
+			const newUser = await alunos.findOne({ where: { id: newUserID.id }, raw: true }).then((r) => r).catch((err) => sentryError('Erro no findOne do alunos', err));
 			if (newUser && newUser.id) { // if everything went right we update a few things
 				await db.updateAtividade(newUser.id, 'atividade_1', answers);
 				if (answers.pgid && Number.isInteger(answers.pgid)) await db.updateAlunoOnPagamento(answers.pgid, newUser.id);

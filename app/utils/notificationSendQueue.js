@@ -509,7 +509,11 @@ async function checkShouldSendRecipient(recipient, notification, moduleDates, to
 		recipient.atividadesMissing = atividadesMissing;
 	}
 
-	return true;
+	console.log('recipient.nome_completo', recipient.nome_completo);
+	console.log('recipient.id', recipient.id);
+	console.log('recipient.cpf', recipient.cpf);
+	return false;
+	// return true;
 }
 
 async function buildAttachment(type, cpf, name) { // eslint-disable-line
