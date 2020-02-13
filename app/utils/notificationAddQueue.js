@@ -121,7 +121,7 @@ async function seeDataQueue(turmaID) {
 			result[key].fila = 'Nenhuma notificação!';
 		} else {
 			result[key].fila = `${queueAluna.length} notificações!`;
-			const enviadas = await queueAluna.filter((x) => x.sent !== null);
+			const enviadas = await queueAluna.filter((x) => x.sent_at !== null);
 			result[key].enviadas = `Foram enviadas ${enviadas.length}!`;
 			const erro = await queueAluna.filter((x) => x.error !== null);
 			result[key].com_erro = `${erro.length}`;
@@ -137,7 +137,7 @@ async function seeDataQueue(turmaID) {
 				result[key].indicados.fila = 'Nenhuma notificação!';
 			} else {
 				result[key].indicados.fila = `${queueIndicados.length} notificações!`;
-				const enviadas = await queueIndicados.filter((x) => x.sent !== null);
+				const enviadas = await queueIndicados.filter((x) => x.sent_at !== null);
 				result[key].indicados.enviadas = `Foram enviadas ${enviadas.length}!`;
 				const erro = await queueIndicados.filter((x) => x.error !== null);
 				result[key].indicados.com_erro = `${erro.length}`;
