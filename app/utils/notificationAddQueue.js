@@ -4,13 +4,11 @@ const { alunos } = require('../server/models');
 const { turma } = require('../server/models');
 const { sentryError } = require('./helper');
 const rules = require('./notificationRules');
-const { getTurmaName } = require('./DB_helper');
 const { getTurmaInCompany } = require('./DB_helper');
 
-async function addNewNotificationAlunas(alunaId, turmaID, reRules, noRules) {
+async function addNewNotificationAlunas(alunaId, turmaID) {
 	try {
-		const regularRules = reRules || await rules.loadTabNotificationRules(await getTurmaInCompany(turmaID));
-		const notificationRules = noRules || await rules.getNotificationRules(await getTurmaName(turmaID), regularRules);
+		const notificationRules = await rules.loadTabNotificationRules(await getTurmaInCompany(turmaID));
 		const ourTurma = await turma.findOne({ where: { id: turmaID }, raw: true }).then((res) => res).catch((err) => sentryError('Erro em turmaFindOne', err));
 		const rulesAlunos = await notificationRules.filter((x) => x.indicado !== true);
 		if (ourTurma) {
@@ -23,8 +21,8 @@ async function addNewNotificationAlunas(alunaId, turmaID, reRules, noRules) {
 		} else {
 			sentryError(`addNewNotificationAlunas: turma ${turmaID} not found`);
 		}
-	} catch (error) {
-		sentryError('Erro em addNewNotificationAlunas ', error);
+	} catch (e) {
+		sentryError('Erro em addNewNotificationAlunas ', e);
 	}
 }
 
@@ -47,10 +45,9 @@ async function addAvaliadorOnQueue(rule, indicado, turmaID) {
 	}
 }
 
-async function addNewNotificationIndicados(alunaId, turmaID, reRules, noRules) {
-	const regularRules = reRules || await rules.loadTabNotificationRules(await getTurmaInCompany(turmaID));
-	const notificationRules = noRules || await rules.getNotificationRules(await getTurmaName(turmaID), regularRules);
-	const indicados = await indicadosAvaliadores.findAll({ where: { aluno_id: alunaId }, raw: true }) // // get every indicado from aluna
+async function addNewNotificationIndicados(alunaId, turmaID) {
+	const notificationRules = await rules.loadTabNotificationRules(await getTurmaInCompany(turmaID));
+	const indicados = await indicadosAvaliadores.findAll({ where: { aluno_id: alunaId }, raw: true }) // get every indicado from aluna
 		.then((res) => res).catch((err) => sentryError('Erro em indicadosAvaliadores.findAll', err));
 	const rulesIndicados = await notificationRules.filter((x) => x.indicado === true);
 
@@ -76,39 +73,9 @@ async function addNewNotificationIndicados(alunaId, turmaID, reRules, noRules) {
 }
 
 
-async function addAlunasToQueue(turmaID) {
-	const queueTurma = await notificationQueue.findAll({ where: { turma_id: turmaID, sent_at: null }, raw: true }).then((r) => r).catch((err) => sentryError('Erro no findAll do notificationQueue', err));
-	const alunosOnQueue = [];
-	queueTurma.forEach((e) => {
-		const id = e.aluno_id;
-		if (!alunosOnQueue.includes(id)) alunosOnQueue.push(id);
-	});
-
-	const alunasTurma = await alunos.findAll({ where: { turma_id: turmaID }, raw: true }).then((r) => r).catch((err) => sentryError('Erro no findAll do alunos', err));
-	const alunosToAdd = [];
-	alunasTurma.forEach((e) => {
-		const { id } = e;
-		if (!alunosOnQueue.includes(id)) alunosToAdd.push(id);
-	});
-
-	if (alunosToAdd && alunosToAdd.length > 0) {
-		const regularRules = await rules.loadTabNotificationRules(await getTurmaInCompany(turmaID));
-		const notificationRules = await rules.getNotificationRules(await getTurmaName(turmaID), regularRules);
-		for (let i = 0; i < alunosToAdd.length; i++) {
-			const e = alunosToAdd[i];
-			addNewNotificationAlunas(e, turmaID, regularRules, notificationRules);
-			addNewNotificationIndicados(e, turmaID, regularRules, notificationRules);
-		}
-		console.log('Done');
-	} else {
-		console.log(`No alunos left to add in queue for turma ${turmaID}`);
-	}
-}
-
 async function addMissingAlunoNotification(turmaID, type) {
 	const res = [];
-	const regularRules = await rules.loadTabNotificationRules(await getTurmaInCompany(turmaID));
-	const notificationRules = await rules.getNotificationRules(await getTurmaName(turmaID), regularRules);
+	const notificationRules = await rules.loadTabNotificationRules(await getTurmaInCompany(turmaID));
 	const rulesAlunos = await notificationRules.filter((x) => x.indicado !== true && x.notification_type === type);
 	if (!rulesAlunos || rulesAlunos.length === 0) {
 		return `Regra ${type} não encontrada`;
@@ -133,8 +100,56 @@ async function addMissingAlunoNotification(turmaID, type) {
 
 	return res;
 }
+
+async function seeDataQueue(turmaID) {
+	const result = [];
+	const alunosTurma = await alunos.findAll({ where: { turma_id: turmaID }, raw: true }).then((r) => r).catch((err) => sentryError('Erro no findAll do alunos', err));
+	const notificationsTurma = await notificationQueue.findAll({ where: { turma_id: turmaID }, raw: true }).then((r) => r).catch((err) => sentryError('Erro no findAll do notificationQueue', err));
+	const alunosIds = alunosTurma.map((x) => x.id);
+
+	const indicadosTurma = await indicadosAvaliadores.findAll({ where: { aluno_id: alunosIds }, raw: true }).then((r) => r).catch((err) => sentryError('Erro no findAll do model', err));
+
+	result.totalAlunas = alunosTurma.length;
+	result.totalFila = notificationsTurma.length;
+	result.totalIndicados = indicadosTurma.length;
+	for (let i = 0; i < alunosTurma.length; i++) {
+		const a = alunosTurma[i];
+		const key = `aluna_${a.id}`;
+		result[key] = a;
+		const queueAluna = notificationsTurma.filter((x) => x.aluno_id === a.id);
+		if (!queueAluna || queueAluna.length === 0) {
+			result[key].fila = 'Nenhuma notificação!';
+		} else {
+			result[key].fila = `${queueAluna.length} notificações!`;
+			const enviadas = queueAluna.filter((x) => x.sent !== null);
+			result[key].enviadas = `Foram enviadas ${enviadas.length}!`;
+			const erro = queueAluna.filter((x) => x.error !== null);
+			result[key].com_erro = `${erro.length}`;
+		}
+
+		const alunaIndicados = indicadosTurma.filter((x) => x.aluno_id === a.id);
+		for (let j = 0; j < alunaIndicados.length; j++) {
+			const indicado = alunaIndicados[j];
+			result[key].indicados = indicado;
+
+			const queueIndicados = notificationsTurma.filter((x) => x.indicado_id === indicado.id);
+			if (!queueIndicados || queueIndicados.length === 0) {
+				result[key].indicados.fila = 'Nenhuma notificação!';
+			} else {
+				result[key].indicados.fila = `${queueIndicados.length} notificações!`;
+				const enviadas = queueIndicados.filter((x) => x.sent !== null);
+				result[key].indicados.enviadas = `Foram enviadas ${enviadas.length}!`;
+				const erro = queueIndicados.filter((x) => x.error !== null);
+				result[key].indicados.com_erro = `${erro.length}`;
+			}
+		}
+	}
+
+	return result;
+}
+
 module.exports = {
-	addNewNotificationAlunas, addNewNotificationIndicados, addAvaliadorOnQueue, addAlunasToQueue, addMissingAlunoNotification,
+	addNewNotificationAlunas, addNewNotificationIndicados, addAvaliadorOnQueue, addMissingAlunoNotification, seeDataQueue,
 };
 
 // addNewNotificationAlunas(120, 15);

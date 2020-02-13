@@ -6,7 +6,7 @@ const { linkUserToLabelByName } = require('./app/utils/labels');
 const { changeAdminStatus } = require('./app/utils/DB_helper');
 const { addNewNotificationAlunas } = require('./app/utils/notificationAddQueue');
 const { sendNotificationFromQueue } = require('./app/utils/notificationSendQueue');
-
+const { seeDataQueue } = require('./app/utils/notificationAddQueue');
 
 async function getFBIDJson() { // eslint-disable-line
 	const result = {};
@@ -92,7 +92,24 @@ async function sendNotificationQueue(req, res) {
 	}
 }
 
+async function dataQueue(req, res) {
+	const { body } = req;
+	if (!body || !body.security_token) {
+		res.status(400); res.send('Param security_token is required!');
+	} else {
+		const securityToken = body.security_token;
+		if (securityToken !== process.env.SECURITY_TOKEN_MA) {
+			res.status(401); res.send('Unauthorized!');
+		} else if (!body.turma_id) {
+			res.status(401); res.send('body.turma_id missing!');
+		} else {
+			const result = await seeDataQueue(body.turma_id);
+			res.status(200); res.send(result);
+		}
+	}
+}
+
 
 module.exports = {
-	getNameFBID, addLabel, addMissingNotification, sendNotificationQueue,
+	getNameFBID, addLabel, addMissingNotification, sendNotificationQueue, dataQueue,
 };

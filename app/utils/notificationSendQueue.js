@@ -608,7 +608,7 @@ async function sendNotificationFromQueue(alunoID = null, notificationType, test 
 			console.log('notification', notification);
 			const currentTurma = await turmas.find((x) => x.id === notification.turma_id);
 			const turmaName = currentTurma.nome; const turmaInCompany = currentTurma.inCompany;
-			const notificationRules = await rules.getNotificationRules(turmaName, regularRules, turmaInCompany);
+			const notificationRules = turmaInCompany === true ? regularRules.in_company : regularRules.normal;
 			if (await checkShouldSendNotification(notification, moduleDates, today, notificationRules) === true || test) { // !== for easy testing
 				const logID = await notificationLog.create({ notificationId: notification.id, notificationType: notification.notification_type }).then((res) => (res && res.dataValues && res.dataValues.id ? res.dataValues.id : false)).catch((err) => sentryError('Erro em notificationQueue.create', err));
 				await notificationLog.update({ shouldSend: true }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog116', err));

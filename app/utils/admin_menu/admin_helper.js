@@ -169,7 +169,6 @@ async function NotificationChangeTurma(alunaID, oldTurmaID, newturmaID) {
 // from the CSV, adds notification for new indicados and updates status of familiar notifications
 async function updateNotificationIndicados(indicados) {
 	try {
-		const regularRules = await rules.buildNotificationRules();
 		for (let i = 0; i < indicados.length; i++) {
 			const indicado = indicados[i];
 
@@ -178,8 +177,7 @@ async function updateNotificationIndicados(indicados) {
 			// load the correct notification rules, based on the In Company turma status
 			const inCompany = await db.getTurmaInCompany(turmaID);
 			const familiarType = inCompany ? 28 : 12; // the type_id of the familiar notification
-			let rulesIndicados = await rules.buildNotificationRules(inCompany);
-			rulesIndicados = await rules.getNotificationRules('', regularRules, inCompany);
+			let rulesIndicados = await rules.loadTabNotificationRules(inCompany);
 			rulesIndicados = await rulesIndicados.filter((x) => x.indicado === true); // only rules for indicados
 
 			for (let j = 0; j < rulesIndicados.length; j++) {
