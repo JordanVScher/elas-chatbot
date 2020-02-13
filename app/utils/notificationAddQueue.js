@@ -105,7 +105,7 @@ async function seeDataQueue(turmaID) {
 	const result = [];
 	const alunosTurma = await alunos.findAll({ where: { turma_id: turmaID }, raw: true }).then((r) => r).catch((err) => sentryError('Erro no findAll do alunos', err));
 	const notificationsTurma = await notificationQueue.findAll({ where: { turma_id: turmaID }, raw: true }).then((r) => r).catch((err) => sentryError('Erro no findAll do notificationQueue', err));
-	const alunosIds = alunosTurma.map((x) => x.id);
+	const alunosIds = await alunosTurma.map((x) => x.id);
 
 	const indicadosTurma = await indicadosAvaliadores.findAll({ where: { aluno_id: alunosIds }, raw: true }).then((r) => r).catch((err) => sentryError('Erro no findAll do model', err));
 
@@ -116,30 +116,30 @@ async function seeDataQueue(turmaID) {
 		const a = alunosTurma[i];
 		const key = `aluna_${a.id}`;
 		result[key] = a;
-		const queueAluna = notificationsTurma.filter((x) => x.aluno_id === a.id);
+		const queueAluna = await notificationsTurma.filter((x) => x.aluno_id === a.id);
 		if (!queueAluna || queueAluna.length === 0) {
 			result[key].fila = 'Nenhuma notificação!';
 		} else {
 			result[key].fila = `${queueAluna.length} notificações!`;
-			const enviadas = queueAluna.filter((x) => x.sent !== null);
+			const enviadas = await queueAluna.filter((x) => x.sent !== null);
 			result[key].enviadas = `Foram enviadas ${enviadas.length}!`;
-			const erro = queueAluna.filter((x) => x.error !== null);
+			const erro = await queueAluna.filter((x) => x.error !== null);
 			result[key].com_erro = `${erro.length}`;
 		}
 
-		const alunaIndicados = indicadosTurma.filter((x) => x.aluno_id === a.id);
+		const alunaIndicados = await indicadosTurma.filter((x) => x.aluno_id === a.id);
 		for (let j = 0; j < alunaIndicados.length; j++) {
 			const indicado = alunaIndicados[j];
 			result[key].indicados = indicado;
 
-			const queueIndicados = notificationsTurma.filter((x) => x.indicado_id === indicado.id);
+			const queueIndicados = await notificationsTurma.filter((x) => x.indicado_id === indicado.id);
 			if (!queueIndicados || queueIndicados.length === 0) {
 				result[key].indicados.fila = 'Nenhuma notificação!';
 			} else {
 				result[key].indicados.fila = `${queueIndicados.length} notificações!`;
-				const enviadas = queueIndicados.filter((x) => x.sent !== null);
+				const enviadas = await queueIndicados.filter((x) => x.sent !== null);
 				result[key].indicados.enviadas = `Foram enviadas ${enviadas.length}!`;
-				const erro = queueIndicados.filter((x) => x.error !== null);
+				const erro = await queueIndicados.filter((x) => x.error !== null);
 				result[key].indicados.com_erro = `${erro.length}`;
 			}
 		}
