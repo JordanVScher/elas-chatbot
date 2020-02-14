@@ -370,7 +370,8 @@ async function getIndicado(id, moduleDates, logID) {
 	}
 
 	await notificationLog.update({ sentEmail: 'Erro: indicado não tem e-mail', recipientData: result }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog11', err));
-	return sentryError('Erro: indicado não tem e-mail', result);
+	return false;
+	// return sentryError('Erro: indicado não tem e-mail', result);
 }
 
 async function getAluna(id, moduleDates, logID) {
