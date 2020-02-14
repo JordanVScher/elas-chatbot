@@ -9,6 +9,7 @@ const { sendNotificationFromQueue } = require('./app/utils/notificationSendQueue
 const { seeDataQueue } = require('./app/utils/notificationAddQueue');
 const { addMissingNotificationOnQueue } = require('./app/utils/notificationAddQueue');
 const { addMissingAlunoNotification } = require('./app/utils/notificationAddQueue');
+const { sendDonnaMail } = require('./app/utils/sm_help');
 
 async function getFBIDJson() { // eslint-disable-line
 	const result = {};
@@ -127,6 +128,7 @@ async function dataQueue(req, res) {
 		}
 	}
 }
+
 async function seeQueue(req, res) {
 	const { body } = req;
 	if (!body || !body.security_token) {
@@ -144,7 +146,24 @@ async function seeQueue(req, res) {
 	}
 }
 
+async function donnaMail(req, res) {
+	const { body } = req;
+	if (!body || !body.security_token) {
+		res.status(400); res.send('Param security_token is required!');
+	} else {
+		const securityToken = body.security_token;
+		if (securityToken !== process.env.SECURITY_TOKEN_MA) {
+			res.status(401); res.send('Unauthorized!');
+		} else if (!body.nome || !body.email) {
+			res.status(401); res.send('body.nome or body.email missing');
+		} else {
+			const result = await sendDonnaMail(body.nome, body.email);
+			res.status(200); res.send(result);
+		}
+	}
+}
+
 
 module.exports = {
-	getNameFBID, addLabel, addMissingNotification, sendNotificationQueue, dataQueue, seeQueue, addNewQueue,
+	getNameFBID, addLabel, addMissingNotification, sendNotificationQueue, dataQueue, seeQueue, addNewQueue, donnaMail,
 };

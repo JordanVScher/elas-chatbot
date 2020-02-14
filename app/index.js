@@ -115,6 +115,10 @@ server.post('/see-notification-queue', async (req, res) => {
 	await requests.seeQueue(req, res);
 });
 
+server.post('/donna-mail', async (req, res) => {
+	await requests.donnaMail(req, res);
+});
+
 server.listen(process.env.API_PORT, () => {
 	console.log(`Server is running on ${process.env.API_PORT} port...`);
 	console.log(`App: ${process.env.APP} & Page: ${process.env.PAGE}`);

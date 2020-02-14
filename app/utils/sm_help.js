@@ -398,6 +398,14 @@ async function newSurveyResponse(event) {
 	}
 }
 
+
+async function sendDonnaMail(nome, mail) {
+	let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Apresentar_Donna.html`, 'utf-8');
+	html = await html.replace('[nome]', nome); // add nome to mail template
+	html = await html.replace(/<link_donna>/g, process.env.LINK_DONNA); // add chatbot link to mail template
+	await mailer.sendHTMLMail(eMail.depoisMatricula.assunto, mail, html);
+}
+
 module.exports = {
-	sendMatricula, newSurveyResponse, sendAlunaToAssistente, helpAddQueue,
+	sendMatricula, newSurveyResponse, sendAlunaToAssistente, helpAddQueue, sendDonnaMail,
 };
