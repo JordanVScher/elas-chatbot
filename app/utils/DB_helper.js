@@ -2,6 +2,7 @@ const { sequelize } = require('../server/models/index');
 const { moment } = require('./helper');
 const { sentryError } = require('./helper');
 const { removeUndefined } = require('./admin_menu/CSV_format');
+const indicados = require('../server/models').indicacao_avaliadores;
 const indicadosRespostas = require('../server/models').indicados_respostas;
 
 if (process.env.TEST !== 'true') {
@@ -176,43 +177,6 @@ async function upsertAlunoCadastro(userAnswers) {
 	const result = await sequelize.query(queryString).spread((results) => (results && results[0] ? results[0] : false)).catch((err) => sentryError('Erro no upsertAlunoCadastro =>', err));
 	if (result) result.turma_id = answers.turma_id;
 	return result;
-}
-
-
-async function insertIndicacao(alunaID, userData, familiar) {
-	let date = new Date();
-	date = await moment(date).format('YYYY-MM-DD HH:mm:ss');
-
-	const id = await sequelize.query(`
-	INSERT INTO "indicacao_avaliadores" (aluno_id, nome, email, telefone,
-		familiar, relacao_com_aluna, created_at, updated_at)
-	  VALUES ('${alunaID}', '${addslashes(userData.nome) || ''}', '${userData.email}', '${userData.tele || ''}',
-	  '${familiar}', '${userData.relacao || ''}','${date}', '${date}')
-	RETURNING id, email;
-	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
-		console.log(`Added ${userData.email} successfully!`);
-		return results && results[0] ? results[0] : false;
-	}).catch((err) => { sentryError('Erro em insertIndicacao =>', err); });
-
-
-	return id;
-}
-
-async function insertFamiliar(alunaID, userData) {
-	let date = new Date();
-	date = await moment(date).format('YYYY-MM-DD HH:mm:ss');
-
-	const id = await sequelize.query(`
-	INSERT INTO "indicacao_familiares" (aluno_id, nome, relacao_com_aluna, email, telefone, created_at, updated_at)
-	  VALUES ('${alunaID}', '${addslashes(userData.nome)}', '${userData.relacao}', '${userData.email}', '${userData.tele}', '${date}', '${date}')
-	RETURNING id, email;
-	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
-		console.log(`Added ${userData.email} successfully!`);
-		return results && results[0] ? results[0] : false;
-	}).catch((err) => { sentryError('Erro em insertFamiliar =>', err); });
-
-
-	return id;
 }
 
 async function getAluno(cpf) {
@@ -686,7 +650,18 @@ async function upsertIndicadosRespostas(indicadoID, column, answers) {
 	return indicadosRespostas.create({ [column]: answers, indicado_id: 1 }).then((r) => r.dataValues).catch((err) => sentryError('Erro no create do indicadosRespostoas', err));
 }
 
+async function upsertIndicado2(alunaID, userData, familiar) {
+	const found = await indicados.findOne({ where: { aluno_id: alunaID, email: userData.email }, raw: true }).then((r) => r).catch((err) => sentryError('Erro no findOne do indicados', err));
+	const values = {
+		nome: userData.nome, email: userData.email, telefone: userData.tele, relacao_com_aluna: userData.relacao, familiar,
+	};
+	if (found && found.id) {
+		return indicados.update({ values }, { where: { id: found.id } }).then((r) => r).catch((err) => sentryError('Erro no update do indicados', err));
+	}
+	values.aluno_id = alunaID; // need for insertion
 
+	return indicados.create(values).then((r) => r.dataValues).catch((err) => sentryError('Erro no create do indicados', err));
+}
 module.exports = {
 	upsertUser,
 	getAlunaFromCPF,
@@ -695,8 +670,6 @@ module.exports = {
 	checkCPF,
 	upsertPrePos,
 	updateAtividade,
-	insertIndicacao,
-	insertFamiliar,
 	getAluno,
 	getAlunoRespostas,
 	getAlunoRespostasAll,
@@ -733,4 +706,5 @@ module.exports = {
 	getNotificationTypes,
 	getMissingCadastro,
 	upsertIndicadosRespostas,
+	upsertIndicado2,
 };

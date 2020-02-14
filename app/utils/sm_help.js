@@ -265,58 +265,72 @@ async function separateAnswer(respostas, elementos) {
 }
 
 async function handleIndicacao(response) {
-	const errors = [];
-	const baseAnswers = await formatAnswers(response.pages[0].questions);
-	const aluna = await db.getAluno(response.custom_variables.cpf);
-	aluna.turma = response.custom_variables.turma;
+	try {
+		const errors = [];
+		const baseAnswers = await formatAnswers(response.pages[0].questions);
+		const aluna = await db.getAluno(response.custom_variables.cpf);
+		aluna.turma = response.custom_variables.turma;
 
-	let indicados = {}; // could just as well be an array with the answers
-	await surveysMaps.indicacao360.forEach(async (element) => { // getting the answers for the indicados
-		const aux = baseAnswers.find((x) => x.id === element.questionID);
-		indicados[element.paramName] = aux && aux.text ? aux.text : '';
-	});
+		let indicados = {}; // could just as well be an array with the answers
+		await surveysMaps.indicacao360.forEach(async (element) => { // getting the answers for the indicados
+			const aux = baseAnswers.find((x) => x.id === element.questionID);
+			indicados[element.paramName] = aux && aux.text ? aux.text : '';
+		});
 
-	// formatting the answers
-	const indicacao = await separateAnswer(Object.values(indicados), ['nome', 'email', 'tele']) || [];
-	// saving each avaliador, if theres an e-mail
-	for (let i = 0; i < indicacao.length; i++) {
-		if (indicacao[i].nome || indicacao[i].email || indicacao[i].tele) { // check if indicado has anything fulfilled
-			if (!indicacao[i].email) errors.push({ id: 1, indicado: indicacao[i] });
-			if (indicacao[i].email && (indicacao[i].email === aluna.email)) errors.push({ id: 2, indicado: indicacao[i] });
-			await db.insertIndicacao(aluna.id, indicacao[i], false);
+		// formatting the answers
+		const indicacao = await separateAnswer(Object.values(indicados), ['nome', 'email', 'tele']) || [];
+		// saving each avaliador, if theres an e-mail
+		for (let i = 0; i < indicacao.length; i++) {
+			const ind = indicacao[i];
+			try {
+				if (ind.nome || ind.email || ind.tele) { // check if indicado has anything fulfilled
+					if (!ind.email) errors.push({ id: 1, indicado: ind });
+					if (ind.email && (ind.email === aluna.email)) errors.push({ id: 2, indicado: ind });
+					await db.upsertIndicado2(aluna.id, ind, false);
+				}
+			} catch (error) {
+				sentryError(`Erro ao salvar indicado ${ind.id}`, { indicado: ind, error });
+			}
 		}
-	}
 
-	// getting the answers for the familiares
-	indicados = {}; // cleaning up
-	await surveysMaps.indicacao360_familiares.forEach(async (element) => {
-		const aux = baseAnswers.find((x) => x.id === element.questionID);
-		indicados[element.paramName] = aux && aux.text ? aux.text : '';
-	});
+		// getting the answers for the familiares
+		indicados = {}; // cleaning up
+		await surveysMaps.indicacao360_familiares.forEach(async (element) => {
+			const aux = baseAnswers.find((x) => x.id === element.questionID);
+			indicados[element.paramName] = aux && aux.text ? aux.text : '';
+		});
 
-	// saving each familiar
-	const familiar = await separateAnswer(Object.values(indicados), ['nome', 'relacao', 'email', 'tele']) || [];
-	for (let i = 0; i < familiar.length; i++) {
-		if (familiar[i].nome || familiar[i].relacao || familiar[i].email || familiar[i].tele) { // check if amiliar has anything fulfilled
-			if (!familiar[i].email) errors.push({ id: 3, indicado: familiar[i] });
-			if (familiar[i].email && (familiar[i].email === aluna.email)) errors.push({ id: 4, indicado: familiar[i] });
-			await db.insertIndicacao(aluna.id, familiar[i], true);
+		// saving each familiar
+		const familiar = await separateAnswer(Object.values(indicados), ['nome', 'relacao', 'email', 'tele']) || [];
+		for (let i = 0; i < familiar.length; i++) {
+			const f = familiar[i];
+			try {
+				if (f.nome || f.relacao || f.email || f.tele) { // check if amiliar has anything fulfilled
+					if (!f.email) errors.push({ id: 3, indicado: f });
+					if (f.email && (f.email === aluna.email)) errors.push({ id: 4, indicado: f });
+					await db.upsertIndicado2(aluna.id, f, true);
+				}
+			} catch (error) {
+				sentryError(`Erro ao salvar familiar ${f.id} `, { familiar: f, error });
+			}
 		}
-	}
 
-	await addQueue.addNewNotificationIndicados(aluna.id, aluna.turma_id);
+		await addQueue.addNewNotificationIndicados(aluna.id, aluna.turma_id);
 
-	// joining indicados and saving answer
-	let answers = indicacao.concat(familiar);
-	answers = await addCustomParametersToAnswer(answers, response.custom_variables);
+		// joining indicados and saving answer
+		let answers = indicacao.concat(familiar);
+		answers = await addCustomParametersToAnswer(answers, response.custom_variables);
 
-	await db.updateAtividade(aluna.id, 'atividade_indicacao', answers);
-	if (errors && errors.length > 0) {
-		const eMailToSend = await getMailAdmin(aluna.turma);
-		const eMailText = await getIndicacaoErrorText(errors, aluna);
-		let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
-		html = await html.replace('[CONTEUDO_MAIL]', eMailText);
-		await mailer.sendHTMLMail(`Alertas na indicação da Aluna ${aluna.nome}`, eMailToSend, html);
+		await db.updateAtividade(aluna.id, 'atividade_indicacao', answers);
+		if (errors && errors.length > 0) {
+			const eMailToSend = await getMailAdmin(aluna.turma);
+			const eMailText = await getIndicacaoErrorText(errors, aluna);
+			let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
+			html = await html.replace('[CONTEUDO_MAIL]', eMailText);
+			await mailer.sendHTMLMail(`Alertas na indicação da Aluna ${aluna.nome}`, eMailToSend, html);
+		}
+	} catch (error) {
+		sentryError('Erro em handleIndicacao', error);
 	}
 }
 
