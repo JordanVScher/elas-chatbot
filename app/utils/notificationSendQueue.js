@@ -463,10 +463,6 @@ const logObj = [];
 
 async function checkShouldSendRecipient(recipient, notification, moduleDates, today, logID) {
 	if (!recipient) { return false; }
-	if ([231, 251, 250, 248, 249].includes(recipient.id)) {
-		logObj.push(`${recipient.nome_completo}: ${recipient.cpf} - ${recipient.id} não vai receber`);
-		return false;
-	}
 	if ([3, 19].includes(notification.notification_type) === true && notification.check_answered === true) {
 		const answerPre = recipient['respostas.pre'];
 		if (answerPre && Object.keys(answerPre)) { // if pre was already answered, there's no need to resend this notification
@@ -613,7 +609,7 @@ async function sendNotificationFromQueue(alunoID = null, notificationType, test 
 	const regularRules = await rules.buildNotificationRules();
 	const today = new Date();
 
-	const queryRules = { turma_id: { [Op.not]: null }, sent_at: null };
+	const queryRules = { turma_id: { [Op.not]: null }, sent_at: null, error: null };
 	if (alunoID) { queryRules.aluno_id = alunoID; }
 	if (notificationType) { queryRules.notification_type = notificationType; }
 

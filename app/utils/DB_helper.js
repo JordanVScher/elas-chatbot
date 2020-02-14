@@ -564,10 +564,12 @@ async function upsertIndicado(indicado) {
 async function upsertAtividade(alunoID, column, answers) {
 	const found = await alunosRespostas.findOne({ where: { aluno_id: alunoID }, raw: true }).then((r) => r).catch((err) => sentryError('Erro no findOne do alunosRespostas', err));
 	if (found && found.id) {
-		return alunosRespostas.update({ [column]: answers }, { where: { id: found.id } }).then((r) => r).catch((err) => sentryError('Erro no update do alunosRespostas', err));
+		return alunosRespostas.update({ [column]: answers }, {
+			where: { id: found.id }, raw: true, plain: true, returning: true,
+		}).then((r) => r[1]).catch((err) => sentryError('Erro no update do alunosRespostas', err));
 	}
 
-	return alunosRespostas.create({ [column]: answers }, { where: { id: found.id }, raw: true, plain: true, returning: true }).then((r) => r[1]).catch((err) => sentryError('Erro no create do alunosRespostas', err)); // eslint-disable-line object-curly-newline
+	return alunosRespostas.create({ [column]: answers }).then((r) => r).catch((err) => sentryError('Erro no create do alunosRespostas', err)); // eslint-disable-line object-curly-newline
 }
 
 async function upsertAlunoCadastro(aluno) {

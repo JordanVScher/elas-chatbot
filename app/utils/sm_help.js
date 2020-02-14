@@ -213,7 +213,6 @@ async function handleAtividadeOne(response) {
 			answers.added_by_admin = false; // user wasnt added by the admins
 			answers.turma_id = await db.getTurmaID(answers.turma);
 			const newUser = await db.upsertAlunoCadastro(answers);
-
 			if (newUser && newUser.id) { // if everything went right we update a few things
 				await db.upsertAtividade(newUser.id, 'atividade_1', answers);
 				if (answers.pgid && Number.isInteger(answers.pgid)) await db.updateAlunoOnPagamento(answers.pgid, newUser.id);
