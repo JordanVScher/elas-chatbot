@@ -2,6 +2,7 @@ const { sequelize } = require('../server/models/index');
 const { moment } = require('./helper');
 const { sentryError } = require('./helper');
 const { removeUndefined } = require('./admin_menu/CSV_format');
+const indicadosRespostas = require('../server/models').indicados_respostas;
 
 if (process.env.TEST !== 'true') {
 	sequelize.authenticate().then(() => {
@@ -377,22 +378,6 @@ async function upsertPrePos(userID, response, column) {
 	}).catch((err) => { sentryError('Erro em upsertPrePos =>', err); });
 }
 
-async function upsertPrePos360(userID, response, column) {
-	// column can be either pre or pos
-	let date = new Date();
-	date = await moment(date).format('YYYY-MM-DD HH:mm:ss');
-
-	await sequelize.query(`
-	INSERT INTO "indicados_respostas" (indicado_id, ${column}, created_at, updated_at)
-	VALUES ('${userID}', '${response}', '${date}', '${date}')
-	ON CONFLICT (indicado_id)
-  DO UPDATE
-		SET indicado_id = '${userID}', ${column} = '${response}', updated_at = '${date}';;
-	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
-		console.log(`Added ${userID}'s ${column} successfully!`);
-	}).catch((err) => { sentryError('Erro em upsertPrePos360 =>', err); });
-}
-
 async function getChatbotUser(alunaID) {
 	const aluna = await sequelize.query(`
 	SELECT *
@@ -692,6 +677,16 @@ async function getMissingCadastro() {
 	return result;
 }
 
+async function upsertIndicadosRespostas(indicadoID, column, answers) {
+	const found = await indicadosRespostas.findOne({ where: { indicado_id: indicadoID }, raw: true }).then((r) => r).catch((err) => sentryError('Erro no findOne do indicadosRespostoas', err));
+	if (found && found.id) {
+		return indicadosRespostas.update({ [column]: answers }, { where: { id: found.id } }).then((r) => r).catch((err) => sentryError('Erro no update do indicadosRespostoas', err));
+	}
+
+	return indicadosRespostas.create({ [column]: answers, indicado_id: 1 }).then((r) => r.dataValues).catch((err) => sentryError('Erro no create do indicadosRespostoas', err));
+}
+
+
 module.exports = {
 	upsertUser,
 	getAlunaFromCPF,
@@ -699,7 +694,6 @@ module.exports = {
 	linkUserToCPF,
 	checkCPF,
 	upsertPrePos,
-	upsertPrePos360,
 	updateAtividade,
 	insertIndicacao,
 	insertFamiliar,
@@ -738,4 +732,5 @@ module.exports = {
 	getDISCFromID,
 	getNotificationTypes,
 	getMissingCadastro,
+	upsertIndicadosRespostas,
 };

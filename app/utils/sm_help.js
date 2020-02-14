@@ -334,13 +334,15 @@ async function handleSondagem(response, column, map) {
 }
 
 async function handleAvaliador(response, column, map) {
-	// response.custom_variables = { indicaid: '1' };
-	// console.log('custom_variables', response.custom_variables);
-
-	let answers = await getSpecificAnswers(map, response.pages);
-	answers = await replaceChoiceId(answers, map, response.survey_id);
-	answers = await addCustomParametersToAnswer(answers, response.custom_variables);
-	await db.upsertPrePos360(answers.indicaid, JSON.stringify(answers), column);
+	try {
+		// response.custom_variables = { indicaid: '1' };
+		let answers = await getSpecificAnswers(map, response.pages);
+		answers = await replaceChoiceId(answers, map, response.survey_id);
+		answers = await addCustomParametersToAnswer(answers, response.custom_variables);
+		await db.upsertIndicadosRespostas(answers.indicaid, column, answers);
+	} catch (error) {
+		sentryError(`Erro ao salvar resposta 360 ${column} - ${response.id}`, { response, error });
+	}
 }
 
 // what to do with the form that was just answered
