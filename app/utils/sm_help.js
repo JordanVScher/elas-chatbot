@@ -344,14 +344,14 @@ async function handleSondagem(response, column, map) {
 	answers = await addCustomParametersToAnswer(answers, response.custom_variables);
 
 	const aluna = await db.getAluno(response.custom_variables.cpf);
-	if (aluna) {
-		await db.upsertPrePos(aluna.id, JSON.stringify(answers), column);
+	if (aluna && aluna.id) {
+		await db.upsertPrePos(aluna.id, column, answers);
 	}
 }
 
 async function handleAvaliador(response, column, map) {
 	try {
-		// response.custom_variables = { indicaid: '1' };
+		response.custom_variables = { indicaid: '1' };
 		let answers = await getSpecificAnswers(map, response.pages);
 		answers = await replaceChoiceId(answers, map, response.survey_id);
 		answers = await addCustomParametersToAnswer(answers, response.custom_variables);

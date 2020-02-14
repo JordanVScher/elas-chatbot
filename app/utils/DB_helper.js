@@ -4,6 +4,7 @@ const { sentryError } = require('./helper');
 const { removeUndefined } = require('./admin_menu/CSV_format');
 const indicados = require('../server/models').indicacao_avaliadores;
 const indicadosRespostas = require('../server/models').indicados_respostas;
+const alunosRespostas = require('../server/models').alunos_respostas;
 
 if (process.env.TEST !== 'true') {
 	sequelize.authenticate().then(() => {
@@ -283,22 +284,6 @@ async function getIndicadoFromAluna(AlunaID, familiar, pre, pos) {
 
 
 	return indicado || [];
-}
-
-async function upsertPrePos(userID, response, column) {
-	// column can be either pre or pos
-	let date = new Date();
-	date = await moment(date).format('YYYY-MM-DD HH:mm:ss');
-
-	await sequelize.query(`
-	INSERT INTO "alunos_respostas" (aluno_id, ${column}, created_at, updated_at)
-	VALUES ('${userID}', '${response}', '${date}', '${date}')
-	ON CONFLICT (aluno_id)
-  DO UPDATE
-		SET aluno_id = '${userID}', ${column} = '${response}', updated_at = '${date}';;
-	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
-		console.log(`Added ${userID}'s ${column} successfully!`);
-	}).catch((err) => { sentryError('Erro em upsertPrePos =>', err); });
 }
 
 async function getChatbotUser(alunaID) {
@@ -603,10 +588,10 @@ async function getMissingCadastro() {
 async function upsertIndicadosRespostas(indicadoID, column, answers) {
 	const found = await indicadosRespostas.findOne({ where: { indicado_id: indicadoID }, raw: true }).then((r) => r).catch((err) => sentryError('Erro no findOne do indicadosRespostoas', err));
 	if (found && found.id) {
-		return indicadosRespostas.update({ [column]: answers }, { where: { id: found.id } }).then((r) => r).catch((err) => sentryError('Erro no update do indicadosRespostoas', err));
+		return indicadosRespostas.update({ [column]: answers }, { where: { id: found.id }, raw: true, plain: true, returning: true }).then((r) => r[1]).catch((err) => sentryError('Erro no update do indicadosRespostoas', err)); // eslint-disable-line object-curly-newline
 	}
 
-	return indicadosRespostas.create({ [column]: answers, indicado_id: 1 }).then((r) => r.dataValues).catch((err) => sentryError('Erro no create do indicadosRespostoas', err));
+	return indicadosRespostas.create({ [column]: answers, indicado_id: indicadoID }).then((r) => r.dataValues).catch((err) => sentryError('Erro no create do indicadosRespostoas', err));
 }
 
 async function upsertIndicado(indicado) {
@@ -623,13 +608,22 @@ async function upsertIndicado(indicado) {
 	return indicados.create(values).then((r) => r.dataValues).catch((err) => sentryError('Erro no create do indicados', err));
 }
 
+
+async function upsertPrePos(alunoID, column, answers) {
+	const found = await alunosRespostas.findOne({ where: { aluno_id: alunoID }, raw: true }).then((r) => r).catch((err) => sentryError('Erro no findOne do alunosRespostas', err));
+	if (found && found.id) {
+		return alunosRespostas.update({ [column]: answers }, { where: { id: found.id } }).then((r) => r).catch((err) => sentryError('Erro no update do alunosRespostas', err));
+	}
+
+	return alunosRespostas.create({ [column]: answers, aluno_id: alunoID }).then((r) => r.dataValues).catch((err) => sentryError('Erro no create do alunosRespostas', err));
+}
+
 module.exports = {
 	upsertUser,
 	getAlunaFromCPF,
 	upsertAlunoCadastro,
 	linkUserToCPF,
 	checkCPF,
-	upsertPrePos,
 	updateAtividade,
 	getAluno,
 	getAlunoRespostas,
@@ -667,4 +661,5 @@ module.exports = {
 	getMissingCadastro,
 	upsertIndicadosRespostas,
 	upsertIndicado,
+	upsertPrePos,
 };
