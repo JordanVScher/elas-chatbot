@@ -28,7 +28,7 @@ async function formatBoolean(array) {
 
 async function formatBooleanToDatabase(obj, positive, negative, toChange) {
 	toChange.forEach((key) => {
-		if (obj[key]) {
+		if (obj[key] && obj[key].toString()) {
 			if (obj[key].toString() === positive) {
 				obj[key] = true;
 			} else if (obj[key].toString() === negative) {

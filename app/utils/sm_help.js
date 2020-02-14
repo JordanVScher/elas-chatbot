@@ -278,7 +278,7 @@ async function handleIndicacao(response) {
 		});
 
 		// formatting the answers
-		const indicacao = await separateAnswer(Object.values(indicados), ['nome', 'email', 'tele']) || [];
+		const indicacao = await separateAnswer(Object.values(indicados), ['nome', 'email', 'telefone']) || [];
 		// saving each avaliador, if theres an e-mail
 		for (let i = 0; i < indicacao.length; i++) {
 			const ind = indicacao[i];
@@ -286,7 +286,8 @@ async function handleIndicacao(response) {
 				if (ind.nome || ind.email || ind.tele) { // check if indicado has anything fulfilled
 					if (!ind.email) errors.push({ id: 1, indicado: ind });
 					if (ind.email && (ind.email === aluna.email)) errors.push({ id: 2, indicado: ind });
-					await db.upsertIndicado2(aluna.id, ind, false);
+					ind.aluno_id = aluna.id; ind.familiar = false;
+					await db.upsertIndicado(ind);
 				}
 			} catch (error) {
 				sentryError(`Erro ao salvar indicado ${ind.id}`, { indicado: ind, error });
@@ -301,14 +302,15 @@ async function handleIndicacao(response) {
 		});
 
 		// saving each familiar
-		const familiar = await separateAnswer(Object.values(indicados), ['nome', 'relacao', 'email', 'tele']) || [];
+		const familiar = await separateAnswer(Object.values(indicados), ['nome', 'relacao_com_aluna', 'email', 'telefone']) || [];
 		for (let i = 0; i < familiar.length; i++) {
 			const f = familiar[i];
 			try {
 				if (f.nome || f.relacao || f.email || f.tele) { // check if amiliar has anything fulfilled
 					if (!f.email) errors.push({ id: 3, indicado: f });
 					if (f.email && (f.email === aluna.email)) errors.push({ id: 4, indicado: f });
-					await db.upsertIndicado2(aluna.id, f, true);
+					f.aluno_id = aluna.id; f.familiar = true;
+					await db.upsertIndicado(f);
 				}
 			} catch (error) {
 				sentryError(`Erro ao salvar familiar ${f.id} `, { familiar: f, error });

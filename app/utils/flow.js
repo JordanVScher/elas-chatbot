@@ -180,7 +180,7 @@ module.exports = {
 		inserirAvaliadores: {
 			txt1: 'Envie o CSV com os dados dos novos avaliadores. As colunas devem estar formatadas como esse arquivo de exemplo:',
 			txt2: 'É necessário que cada avaliador tenha o nome completo, o e-mail, assim como o CPF de uma Aluna! Se o o mesmo e-mail já estiver cadastrado naquela aluna, os dados do avaliador serão atualizados com os valores no CSV (se houver algum).'
-			+ '\nDetalhe: Para transformar um avaliador em "Familiar", adicione a palavra "Sim" na coluna "Familiar". Para que o avaliador deixe de ser Familiar, escreva "Não". Todos os outros valores serão ignorados e não mudarão o estado de familiar do Avaliador',
+			+ '\nDetalhe: Para transformar um avaliador em "Familiar", adicione a palavra "Sim" na coluna "Familiar". Para que o avaliador deixe de ser Familiar, escreva "Nao" (sem acento). Todos os outros valores serão ignorados e não mudarão o estado de familiar do Avaliador',
 			invalidFile: 'Erro! Verifique se o arquivo CSV está formatado corretamente e envie novamente!',
 			menuOptions: ['Voltar'],
 			menuPostback: ['adminMenu'],

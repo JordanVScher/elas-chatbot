@@ -267,7 +267,7 @@ module.exports.receiveCSVAvaliadores = async (csvLines) => {
 				if (e && e.id) {
 					const indicadoFound = await indicados.findOne({ where: { id: e.id }, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em avaliadorAluno.findOne', err));
 					if (indicadoFound && indicadoFound.id && Number.isInteger(indicadoFound.id)) {
-						e = await admin.formatBooleanToDatabase(e, 'Sim', 'Não', ['familiar']);
+						e = await admin.formatBooleanToDatabase(e, 'Sim', 'Nao', ['familiar']);
 						const updatedIndicado = await indicados.update(e, {
 							where: { id: indicadoFound.id }, returning: true, plain: true, raw: true,
 						}).then((r) => r[1]).catch((err) => {
@@ -281,11 +281,11 @@ module.exports.receiveCSVAvaliadores = async (csvLines) => {
 					}
 				} else if (e.nome && e.email && e.aluno_cpf) {
 					const avaliadorAluno = await alunos.findOne({ where: { cpf: e.aluno_cpf }, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em avaliadorAluno.findOne', err));
-					if (avaliadorAluno) {
+					if (avaliadorAluno && avaliadorAluno.id) {
 						e.aluno_id = avaliadorAluno.id;
-						e = await admin.formatBooleanToDatabase(e, 'Sim', 'Não', ['familiar']);
+						e = await admin.formatBooleanToDatabase(e, 'Sim', 'Nao', ['familiar']);
 						const newIndicado = await db.upsertIndicado(e);
-						if (!newIndicado || newIndicado.error || !newIndicado.id) { // save line where error happended
+						if (!newIndicado || !newIndicado.id) { // save line if error happended
 							errors.push({ line: i + 2, msg: 'Erro ao salvar no banco' });
 							help.sentryError('Erro em receiveCSV => Erro ao salvar no banco', { e });
 						} else {

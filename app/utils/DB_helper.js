@@ -223,47 +223,6 @@ async function getTurmaRespostas(turmaID) {
 	return result;
 }
 
-async function upsertIndicado(avaliador) {
-	const indicado = avaliador;
-	let date = new Date();
-	date = await moment(date).format('YYYY-MM-DD HH:mm:ss');
-
-	const columns = [];
-	const values = [];
-	const set = []; // for update only
-
-	const alunoExtraData = ['nome', 'email', 'telefone', 'aluno_id', 'familiar', 'relacao_com_aluna'];
-	alunoExtraData.forEach((element) => { // columns on the database
-		if ((indicado[element] && indicado[element] !== undefined && indicado[element] !== null) || indicado[element] === false) {
-			columns.push(element); values.push(`'${addslashes(indicado[element])}'`); set.push(`${columns[columns.length - 1]} = ${values[values.length - 1]}`);
-		}
-	});
-
-	columns.push('created_at'); values.push(`'${date}'`);
-	columns.push('updated_at'); values.push(`'${date}'`); set.push(`${columns[columns.length - 1]} = ${values[values.length - 1]}`);
-
-	const foundIndicado = await sequelize.query(`
-	SELECT * FROM indicacao_avaliadores
-	WHERE email = '${indicado.email}' AND aluno_id = '${indicado.aluno_id}' LIMIT 1;
-`).spread((results) => (results && results[0] ? results[0] : false)).catch((err) => { sentryError('Erro em select indicacao_avaliadores =>', err); });
-
-	// if we found this indicado we have to update it
-	if (foundIndicado && foundIndicado.id) {
-		const updatedIndicado = await sequelize.query(`
-		UPDATE indicacao_avaliadores SET ${set.join(', ')} WHERE id = '${foundIndicado.id}' RETURNING *;
-		`).spread((results) => (results && results[0] ? results[0] : false)).catch((err) => { sentryError('Erro em update indicacao_avaliadores =>', err); });
-		return updatedIndicado;
-	}
-
-	// if avaliador wasnt found we insert it
-	const insertedIndicado = await sequelize.query(`
-	INSERT INTO indicacao_avaliadores(${columns.join(', ')}) VALUES(${values.join(', ')}) RETURNING *;
-	`).spread((results) => (results && results[0] ? results[0] : false)).catch((err) => { sentryError('Erro em insert indicacao_avaliadores =>', err); });
-
-	return insertedIndicado;
-}
-
-
 async function getIndicadoRespostas(cpf) {
 	const indicado = await sequelize.query(`
 	SELECT
@@ -650,18 +609,20 @@ async function upsertIndicadosRespostas(indicadoID, column, answers) {
 	return indicadosRespostas.create({ [column]: answers, indicado_id: 1 }).then((r) => r.dataValues).catch((err) => sentryError('Erro no create do indicadosRespostoas', err));
 }
 
-async function upsertIndicado2(alunaID, userData, familiar) {
-	const found = await indicados.findOne({ where: { aluno_id: alunaID, email: userData.email }, raw: true }).then((r) => r).catch((err) => sentryError('Erro no findOne do indicados', err));
+async function upsertIndicado(indicado) {
+	const found = await indicados.findOne({ where: { aluno_id: indicado.aluno_id, email: indicado.email }, raw: true }).then((r) => r).catch((err) => sentryError('Erro no findOne do indicados', err));
 	const values = {
-		nome: userData.nome, email: userData.email, telefone: userData.tele, relacao_com_aluna: userData.relacao, familiar,
+		nome: indicado.nome, email: indicado.email, telefone: indicado.telefone, relacao_com_aluna: indicado.relacao_com_aluna, familiar: indicado.familiar,
 	};
-	if (found && found.id) {
-		return indicados.update({ values }, { where: { id: found.id } }).then((r) => r).catch((err) => sentryError('Erro no update do indicados', err));
-	}
-	values.aluno_id = alunaID; // need for insertion
 
+	if (typeof values.familiar !== 'boolean') delete values.familiar;
+	if (found && found.id) {
+		return indicados.update(values, { where: { id: found.id }, raw: true, plain: true, returning: true }).then((r) => r[1]).catch((err) => sentryError('Erro no update do indicados', err)); // eslint-disable-line object-curly-newline
+	}
+	values.aluno_id = indicado.aluno_id; // need for insertion
 	return indicados.create(values).then((r) => r.dataValues).catch((err) => sentryError('Erro no create do indicados', err));
 }
+
 module.exports = {
 	upsertUser,
 	getAlunaFromCPF,
@@ -688,7 +649,6 @@ module.exports = {
 	getModuloDates,
 	getAlunaFromFBID,
 	buildTurmaDictionary,
-	upsertIndicado,
 	getTurmaIdFromAluno,
 	updateIndicadoNotification,
 	getAlunaRespostasWarning,
@@ -706,5 +666,5 @@ module.exports = {
 	getNotificationTypes,
 	getMissingCadastro,
 	upsertIndicadosRespostas,
-	upsertIndicado2,
+	upsertIndicado,
 };
