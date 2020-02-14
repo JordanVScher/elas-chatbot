@@ -49,7 +49,7 @@ const sendWarningAlunasCron = new CronJob(
 );
 
 const sendNotificationCron = new CronJob(
-	'00 00 10-22/1 * * *', async () => {
+	'00 00 7-22/1 * * *', async () => {
 		console.log('Running sendNotificationCron');
 		try {
 			await sendNotificationFromQueue();

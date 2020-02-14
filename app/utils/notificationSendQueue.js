@@ -442,11 +442,11 @@ async function checkShouldSendNotification(notification, moduleDates, today, not
 	}
 
 	// ignore hours for most notifications
-	if ([14, 16, 31, 32].includes(notification.notification_type) !== true) {
-		max.setHours(0, 0, 0, 0);
-		min.setHours(0, 0, 0, 0);
-		today.setHours(0, 0, 0, 0);
-	}
+	// if ([14, 15, 31, 32].includes(notification.notification_type) !== true) {
+	// 	max.setHours(0, 0, 0, 0);
+	// 	min.setHours(0, 0, 0, 0);
+	// 	today.setHours(0, 0, 0, 0);
+	// }
 
 	// console.log('max', max);
 	// console.log('min', min);
@@ -642,7 +642,7 @@ async function sendNotificationFromQueue(alunoID = null, notificationType, test 
 		}
 	}
 
-	console.log('logObj', logObj);
+	// console.log('logObj', logObj);
 }
 
 
