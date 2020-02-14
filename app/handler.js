@@ -22,7 +22,7 @@ module.exports = async (context) => {
 		}
 
 		await context.setState({ chatbotData: await MaAPI.getChatbotData(context.event.rawEvent.recipient.id) });
-		await context.setState({ politicanData: context.state.chatbotData });
+		await context.setState({ politicianData: context.state.chatbotData });
 		// console.log('context.state.chatbotData', context.state.chatbotData);
 		if (context.state.matricula === true) {
 			await MaAPI.postRecipient(context.state.chatbotData.user_id, await help.buildRecipientObj(context));
