@@ -284,23 +284,6 @@ async function getAlunaFromFBID(FBID) {
 	return aluna;
 }
 
-async function updateAtividade(userID, column, answers) {
-	let answer = answers;
-	if (typeof answer === 'object' && answer !== null) { answer = JSON.stringify(answers); }
-
-	let date = new Date();
-	date = await moment(date).format('YYYY-MM-DD HH:mm:ss');
-	await sequelize.query(`
-	INSERT INTO "alunos_respostas" (aluno_id, ${column}, created_at, updated_at)
-	VALUES ('${userID}', '${answer}', '${date}', '${date}')
-	ON CONFLICT (aluno_id)
-  DO UPDATE
-		SET aluno_id = '${userID}', ${column} = '${answer}', updated_at = '${date}';;
-	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
-		console.log(`Added ${userID}'s ${column} successfully!`);
-	}).catch((err) => { sentryError('Erro em updateAtividade =>', err); });
-}
-
 async function upsertUser(FBID, userName) {
 	let date = new Date();
 	date = await moment(date).format('YYYY-MM-DD HH:mm:ss');
@@ -578,7 +561,7 @@ async function upsertIndicado(indicado) {
 }
 
 
-async function upsertPrePos(alunoID, column, answers) {
+async function upsertAtividade(alunoID, column, answers) {
 	const found = await alunosRespostas.findOne({ where: { aluno_id: alunoID }, raw: true }).then((r) => r).catch((err) => sentryError('Erro no findOne do alunosRespostas', err));
 	if (found && found.id) {
 		return alunosRespostas.update({ [column]: answers }, { where: { id: found.id } }).then((r) => r).catch((err) => sentryError('Erro no update do alunosRespostas', err));
@@ -618,7 +601,6 @@ module.exports = {
 	upsertAlunoCadastro,
 	linkUserToCPF,
 	checkCPF,
-	updateAtividade,
 	getAluno,
 	getAlunoRespostas,
 	getAlunoRespostasAll,
@@ -655,5 +637,5 @@ module.exports = {
 	getMissingCadastro,
 	upsertIndicadosRespostas,
 	upsertIndicado,
-	upsertPrePos,
+	upsertAtividade,
 };

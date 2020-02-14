@@ -192,7 +192,7 @@ async function handleAvaliacao(response, column) {
 	answers = await addCustomParametersToAnswer(answers, response.custom_variables);
 	const aluno = await db.getAluno(response.custom_variables.cpf);
 	if (aluno) {
-		await db.updateAtividade(aluno.id, column, answers);
+		await db.upsertAtividade(aluno.id, column, answers);
 	}
 }
 
@@ -215,7 +215,7 @@ async function handleAtividadeOne(response) {
 			const newUser = await db.upsertAlunoCadastro(answers);
 
 			if (newUser && newUser.id) { // if everything went right we update a few things
-				await db.updateAtividade(newUser.id, 'atividade_1', answers);
+				await db.upsertAtividade(newUser.id, 'atividade_1', answers);
 				if (answers.pgid && Number.isInteger(answers.pgid)) await db.updateAlunoOnPagamento(answers.pgid, newUser.id);
 				await helpAddQueue(newUser.id, newUser.turma_id);
 				await sendAlunaToAssistente(newUser.nome_completo, newUser.email, newUser.cpf, answers.turma);
@@ -322,7 +322,7 @@ async function handleIndicacao(response) {
 		let answers = indicacao.concat(familiar);
 		answers = await addCustomParametersToAnswer(answers, response.custom_variables);
 
-		await db.updateAtividade(aluna.id, 'atividade_indicacao', answers);
+		await db.upsertAtividade(aluna.id, 'atividade_indicacao', answers);
 		if (errors && errors.length > 0) {
 			const eMailToSend = await getMailAdmin(aluna.turma);
 			const eMailText = await getIndicacaoErrorText(errors, aluna);
@@ -344,7 +344,7 @@ async function handleSondagem(response, column, map) {
 
 	const aluna = await db.getAluno(response.custom_variables.cpf);
 	if (aluna && aluna.id) {
-		await db.upsertPrePos(aluna.id, column, answers);
+		await db.upsertAtividade(aluna.id, column, answers);
 	}
 }
 
