@@ -45,11 +45,12 @@ async function addAvaliadorOnQueue(rule, indicado, turmaID) {
 	}
 }
 
-async function addNewNotificationIndicados(alunaId, turmaID) {
+async function addNewNotificationIndicados(alunaId, turmaID, check) {
 	const notificationRules = await rules.loadTabNotificationRules(await getTurmaInCompany(turmaID));
 	const indicados = await indicadosAvaliadores.findAll({ where: { aluno_id: alunaId }, raw: true }) // get every indicado from aluna
 		.then((res) => res).catch((err) => sentryError('Erro em indicadosAvaliadores.findAll', err));
 	const rulesIndicados = await notificationRules.filter((x) => x.indicado === true);
+	const allNotifications = await notificationQueue.findAll({ where: { aluno_id: alunaId, sent_at: null, error: null }, raw: true }).then((r) => r).catch((err) => sentryError('Erro no findAll do notificationQueue', err));
 
 	if (indicados && indicados.length > 0) {
 		const ourTurma = await turma.findOne({ where: { id: turmaID }, raw: true }).then((res) => res).catch((err) => sentryError('Erro em turmaFindOne', err));
@@ -59,8 +60,16 @@ async function addNewNotificationIndicados(alunaId, turmaID) {
 
 				for (let j = 0; j < indicados.length; j++) {
 					const indicado = indicados[j];
-
-					await addAvaliadorOnQueue(rule, indicado, ourTurma.id);
+					if (check) {
+						const indicadoNotifications = await allNotifications.filter((x) => x.indicado_id === indicado.id);
+						if (!indicadoNotifications || indicadoNotifications.length === 0) {
+							await addAvaliadorOnQueue(rule, indicado, ourTurma.id);
+						} else {
+							console.log(`Indicado ${indicado.nome} - ${indicado.id} já tem ${indicadoNotifications.length} notificações`);
+						}
+					} else {
+						await addAvaliadorOnQueue(rule, indicado, ourTurma.id);
+					}
 				}
 			}
 		} else {

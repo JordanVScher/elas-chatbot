@@ -316,7 +316,7 @@ async function handleIndicacao(response) {
 			}
 		}
 
-		await addQueue.addNewNotificationIndicados(aluna.id, aluna.turma_id);
+		await addQueue.addNewNotificationIndicados(aluna.id, aluna.turma_id, true);
 
 		// joining indicados and saving answer
 		let answers = indicacao.concat(familiar);

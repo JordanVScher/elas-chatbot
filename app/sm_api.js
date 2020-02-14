@@ -49,7 +49,7 @@ async function getSurveyDetails(id) {
 		const res = await request(`${url}/surveys/${id}/details`).set(headers);
 		result = await res.json();
 	} catch (error) { console.log('Erro em getSurveyDetails', JSON.stringify(result, null, 2)); Sentry.captureMessage('Erro em getSurveyDetails');	}
-	console.log('getSurveyDetails', JSON.stringify(result, null, 2));
+	// console.log('getSurveyDetails', JSON.stringify(result, null, 2));
 	return result;
 }
 
@@ -69,7 +69,7 @@ async function getSurveyPageDetails(id, pageId) {
 		const res = await request(`${url}/surveys/${id}/pages/${pageId}`).set(headers);
 		result = await res.json();
 	} catch (error) { console.log('Erro em getSurveyPageDetails', JSON.stringify(result, null, 2)); Sentry.captureMessage('Erro em getSurveyPageDetails'); }
-	console.log(JSON.stringify(result, null, 2));
+	// console.log(JSON.stringify(result, null, 2));
 	return result;
 }
 
@@ -79,7 +79,7 @@ async function getSurveyResponse(id) {
 		const res = await request(`${url}/surveys/${id}/responses`).set(headers).query({ per_page: 100 });
 		result = await res.json();
 	} catch (error) { console.log('Erro em getSurveyResponse', JSON.stringify(result, null, 2)); Sentry.captureMessage('Erro em getSurveyResponse'); }
-	console.log(JSON.stringify(result, null, 2));
+	// console.log(JSON.stringify(result, null, 2));
 	return result;
 }
 
