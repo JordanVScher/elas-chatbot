@@ -4,7 +4,6 @@ const { getIndicacaoErrorText } = require('./helper');
 const { getSameContatoEmailErrorText } = require('./helper');
 const matriculaLog = require('../server/models').matricula_mail_log;
 const notificationQueue = require('../server/models').notification_queue;
-const { alunos } = require('../server/models');
 const smAPI = require('../sm_api');
 const mailer = require('./mailer');
 const { eMail } = require('./flow');
@@ -199,7 +198,7 @@ async function handleAvaliacao(response, column) {
 
 async function handleAtividadeOne(response) {
 	try {
-		// response.custom_variables = { turma: 'T7-SP', cpf: '99999999990', pgid: '17' };
+		// response.custom_variables = { turma: 'T7-SP', cpf: '12356458215652', pgid: '17' };
 		// console.log('custom_variables', response.custom_variables);
 		let sameContatoEmail = false;
 		let answers = await getSpecificAnswers(surveysMaps.atividade1, response.pages);
@@ -213,10 +212,8 @@ async function handleAtividadeOne(response) {
 		} else {
 			answers.added_by_admin = false; // user wasnt added by the admins
 			answers.turma_id = await db.getTurmaID(answers.turma);
+			const newUser = await db.upsertAlunoCadastro(answers);
 
-			const newUserID = await db.upsertAlunoCadastro(answers);
-			console.log('newUserID', newUserID);
-			const newUser = await alunos.findOne({ where: { id: newUserID.id }, raw: true }).then((r) => r).catch((err) => sentryError('Erro no findOne do alunos', err));
 			if (newUser && newUser.id) { // if everything went right we update a few things
 				await db.updateAtividade(newUser.id, 'atividade_1', answers);
 				if (answers.pgid && Number.isInteger(answers.pgid)) await db.updateAlunoOnPagamento(answers.pgid, newUser.id);
@@ -241,7 +238,9 @@ async function handleAtividadeOne(response) {
 				await mailer.sendHTMLMail(`Alerta no cadastro da Aluna ${newUser.nome_completo}`, eMailToSend, html2);
 			}
 		}
-	} catch (error) {	sentryError('Erro em handleAtividadeOne', error); }
+	} catch (error) {
+		sentryError('Erro em handleAtividadeOne', error);
+	}
 }
 
 async function separateAnswer(respostas, elementos) {

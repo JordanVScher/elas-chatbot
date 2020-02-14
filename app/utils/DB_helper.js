@@ -5,6 +5,7 @@ const { removeUndefined } = require('./admin_menu/CSV_format');
 const indicados = require('../server/models').indicacao_avaliadores;
 const indicadosRespostas = require('../server/models').indicados_respostas;
 const alunosRespostas = require('../server/models').alunos_respostas;
+const { alunos } = require('../server/models');
 
 if (process.env.TEST !== 'true') {
 	sequelize.authenticate().then(() => {
@@ -145,38 +146,6 @@ async function getModuloDates() {
 	where local IS NOT NULL AND horario_modulo1 IS NOT NULL AND horario_modulo2 IS NOT NULL AND horario_modulo3 IS NOT NULL;
 	`).spread((results) => (results || false)).catch((err) => { sentryError('Erro em getModuloDates =>', err); });
 
-	return result;
-}
-
-async function upsertAlunoCadastro(userAnswers) {
-	const answers = userAnswers;
-	let date = new Date();
-	date = await moment(date).format('YYYY-MM-DD HH:mm:ss');
-
-	const columns = [];
-	const values = [];
-	let set = []; // for do update only
-
-	const alunoExtraData = ['nome_completo', 'cpf', 'turma_id', 'email', 'rg', 'telefone', 'endereco', 'data_nascimento', 'contato_emergencia_nome', 'contato_emergencia_fone', 'contato_emergencia_email', 'contato_emergencia_relacao', 'added_by_admin'];
-	alunoExtraData.forEach((element) => { // columns on the database
-		if ((answers[element] && answers[element] !== undefined && answers[element] !== null) || answers[element] === false) {
-			columns.push(element); values.push(`'${addslashes(answers[element])}'`); set.push(`${columns[columns.length - 1]} = ${values[values.length - 1]}`);
-		}
-	});
-
-	columns.push('created_at'); values.push(`'${date}'`);
-	columns.push('updated_at'); values.push(`'${date}'`); set.push(`${columns[columns.length - 1]} = ${values[values.length - 1]}`);
-	set = set.filter((e) => !e.includes('added_by_admin')); // we must never update where the user was added from
-
-	const queryString = `INSERT INTO "alunos" (${columns.join(', ')})
-	VALUES(${values.join(', ')})
-	ON CONFLICT(cpf)
-	DO UPDATE
-	SET ${set.join(', ')}
-	RETURNING *;`;
-
-	const result = await sequelize.query(queryString).spread((results) => (results && results[0] ? results[0] : false)).catch((err) => sentryError('Erro no upsertAlunoCadastro =>', err));
-	if (result) result.turma_id = answers.turma_id;
 	return result;
 }
 
@@ -615,7 +584,32 @@ async function upsertPrePos(alunoID, column, answers) {
 		return alunosRespostas.update({ [column]: answers }, { where: { id: found.id } }).then((r) => r).catch((err) => sentryError('Erro no update do alunosRespostas', err));
 	}
 
-	return alunosRespostas.create({ [column]: answers, aluno_id: alunoID }).then((r) => r.dataValues).catch((err) => sentryError('Erro no create do alunosRespostas', err));
+	return alunosRespostas.create({ [column]: answers }, { where: { id: found.id }, raw: true, plain: true, returning: true }).then((r) => r[1]).catch((err) => sentryError('Erro no create do alunosRespostas', err)); // eslint-disable-line object-curly-newline
+}
+
+async function upsertAlunoCadastro(aluno) {
+	const found = await alunos.findOne({ where: { cpf: aluno.cpf }, raw: true }).then((r) => r).catch((err) => sentryError('Erro no findOne do alunos', err));
+	const values = {
+		nome_completo: aluno.nome_completo,
+		cpf: aluno.cpf,
+		turma_id: aluno.turma_id,
+		email: aluno.email,
+		rg: aluno.rg,
+		telefone: aluno.telefone,
+		endereco: aluno.endereco,
+		data_nascimento: aluno.data_nascimento,
+		contato_emergencia_nome: aluno.contato_emergencia_nome,
+		contato_emergencia_fone: aluno.contato_emergencia_fone,
+		contato_emergencia_email: aluno.contato_emergencia_email,
+		contato_emergencia_relacao: aluno.contato_emergencia_relacao,
+		added_by_admin: aluno.added_by_admin,
+	};
+
+	if (found && found.id) {
+		return alunos.update(values, { where: { id: found.id }, raw: true, plain: true, returning: true }).then((r) => r[1]).catch((err) => sentryError('Erro no update do alunos', err)); // eslint-disable-line object-curly-newline
+	}
+
+	return alunos.create(values).then((r) => r.dataValues).catch((err) => sentryError('Erro no create do alunos', err));
 }
 
 module.exports = {

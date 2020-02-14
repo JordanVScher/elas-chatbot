@@ -58,7 +58,7 @@ async function sentryError(msg, err) {
 		await sendHTMLMail(`Erro no bot do ELAS - ${process.env.ENV || ''}`, process.env.MAILDEV, `${msg || ''}\n\n${erro}`);
 		console.log(`Error sent at ${new Date()}!\n `);
 	}
-	console.log('erro', erro);
+	console.log(msg, erro);
 	return false;
 }
 
