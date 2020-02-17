@@ -289,6 +289,7 @@ module.exports = async (context) => {
 					await context.setState({ dialog: element });
 					await dialogs.sendCSV(context, context.state.searchTurma);
 				}
+				await dialogs.sendStatus(context, context.state.searchTurma);
 				await context.sendText(flow.adminMenu.verTurma.txt2, await attach.getQR(flow.adminMenu.verTurma));
 				await context.setState({ dialog: 'alunosTurmaCSV' });
 			} else {

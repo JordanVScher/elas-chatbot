@@ -319,28 +319,33 @@ async function updateNotificationTurma(turmaID) {
 
 async function getStatusData(turmaID) {
 	const results = [];
-	const alunosTurma = await aluno.findAll({ where: { turma_id: turmaID }, raw: true }).then((r) => r).catch((err) => console.log(err));
+	const alunosTurma = await aluno.findAll({ where: { turma_id: turmaID }, attributes: ['id', 'nome_completo', 'cpf', 'email'], raw: true }).then((r) => r).catch((err) => console.log(err));
 	const notifications = await notificationQueue.findAll({ where: { turma_id: turmaID }, raw: true }).then((r) => r).catch((err) => console.log(err));
 	const alunosID = alunosTurma.map((x) => x.id);
 	const respostas = await alunosRespostas.findAll({ where: { aluno_id: alunosID }, raw: true }).then((r) => r).catch((err) => console.log(err));
 	const toAnswer = ['pre', 'pos', 'atividade_indicacao', 'avaliacao_modulo1', 'avaliacao_modulo2', 'avaliacao_modulo3', 'atividade_1'];
+	const regras = await rules.loadTabNotificationRules(false);
 
 	for (let i = 0; i < alunosTurma.length; i++) {
 		const a = alunosTurma[i];
 		const aux = a;
-
 		const alunaQueue = notifications.filter((x) => x.aluno_id === a.id && x.indicado_id === null);
-		if (alunaQueue && alunaQueue.length > 0) {
-			alunaQueue.forEach((e) => {
-				if (e.sent_at && !e.error) {
-					aux[`notificacao${e.notification_type}`] = e.sent_at;
-				} else if (e.error) {
-					aux[`notificacao${e.notification_type}`] = JSON.stringify(e.error);
+
+		regras.forEach((e) => {
+			if (alunaQueue && alunaQueue.length > 0) {
+				const n = alunaQueue.find((x) => x.notification_type === e.notification_type);
+				if (n && n.sent_at && !n.error) {
+					aux[`notificacao${e.notification_type}`] = n.sent_at;
+				} else if (n && n.error) {
+					aux[`notificacao${e.notification_type}`] = JSON.stringify(n.error);
 				} else {
 					aux[`notificacao${e.notification_type}`] = 'Ainda não foi enviada';
 				}
-			});
-		}
+			} else {
+				aux[`notificacao${e.notification_type}`] = 'Não tem na fila';
+			}
+		});
+
 
 		const alunaResposta = respostas.find((x) => x.aluno_id === a.id);
 		toAnswer.forEach((e) => {
@@ -355,14 +360,13 @@ async function getStatusData(turmaID) {
 		results.push(aux);
 	}
 
-	return { context: results, input: turmaID };
+	return results;
 }
 
 async function anotherCSV(data) {
 	const result = await parseAsync(data, { includeEmptyRows: true }).then((csv) => csv).catch((err) => err);
 	return { csvData: await Buffer.from(result, 'utf8'), filename: 'status.csv' };
 }
-
 
 module.exports = {
 	buildCSV,
