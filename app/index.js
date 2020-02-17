@@ -1,7 +1,7 @@
 require('dotenv').config();
 
 const { MessengerBot, FileSessionStore, withTyping } = require('bottender');
-const { createServer } = require('bottender/restify');
+const { createServer } = require('@bottender/restify');
 const corsMiddleware = require('restify-cors-middleware');
 const restify = require('restify');
 const handler = require('./handler');

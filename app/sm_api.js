@@ -1,7 +1,9 @@
 require('dotenv').config();
 
+const fs = require('fs');
 const request = require('requisition');
 const { Sentry } = require('./utils/helper');
+const { sentryError } = require('./utils/helper');
 
 const url = process.env.SM_API_URL;
 const headers = {
@@ -73,12 +75,22 @@ async function getSurveyPageDetails(id, pageId) {
 	return result;
 }
 
-async function getSurveyResponse(id) {
+async function getSurveyResponse(id, page = 1) {
 	let result = {};
 	try {
-		const res = await request(`${url}/surveys/${id}/responses`).set(headers).query({ per_page: 100 });
+		const res = await request(`${url}/surveys/${id}/responses`).set(headers).query({ per_page: 100, page });
 		result = await res.json();
 	} catch (error) { console.log('Erro em getSurveyResponse', JSON.stringify(result, null, 2)); Sentry.captureMessage('Erro em getSurveyResponse'); }
+	// console.log(JSON.stringify(result, null, 2));
+	return result;
+}
+
+async function getSurveyResponseDetailsBulk(id, page) {
+	let result = {};
+	try {
+		const res = await request(`${url}/surveys/${id}/responses/bulk`).set(headers).query({ per_page: 100, page: page || 1 });
+		result = await res.json();
+	} catch (error) { console.log('Erro em getSurveyResponseDetailsBulk', JSON.stringify(result, null, 2)); Sentry.captureMessage('Erro em getSurveyResponseDetailsBulk'); }
 	// console.log(JSON.stringify(result, null, 2));
 	return result;
 }
@@ -99,17 +111,6 @@ async function getResponseWithAnswers(id, responseId) {
 		const res = await request(`${url}/surveys/${id}/responses/${responseId}/details`).set(headers);
 		result = await res.json();
 	} catch (error) { console.log('Erro em getResponseWithAnswers', JSON.stringify(result, null, 2)); Sentry.captureMessage('Erro em getResponseWithAnswers'); }
-	console.log(JSON.stringify(result, null, 2));
-	return result;
-}
-
-
-async function getSurveyResponseDetailsBulk(id, page) {
-	let result = {};
-	try {
-		const res = await request(`${url}/surveys/${id}/responses/bulk`).set(headers).query({ per_page: 100, page: page || 1 });
-		result = await res.json();
-	} catch (error) { console.log('Erro em getSurveyResponseDetailsBulk', JSON.stringify(result, null, 2)); Sentry.captureMessage('Erro em getSurveyResponseDetailsBulk'); }
 	// console.log(JSON.stringify(result, null, 2));
 	return result;
 }
@@ -125,9 +126,7 @@ async function getEveryAnswer(surveyId) {
 		totalOverall = answerPage.total; // get the total number of questions
 		pageNumber += 1; // increase the page number
 
-		if (answerPage.data) {
-			answerPage.data.forEach(async (element) => { answers.push(element.pages[0]); }); // add each answer (pages) on data
-		}
+		answers.push(...answerPage.data);
 	} while (totalOverall > answers.length); // while theres still answers to get
 	// obs: if an error occurs, totalOverall will become undefined making the while condition false
 
@@ -152,6 +151,21 @@ async function deleteOneWebhook(id) {
 	} catch (error) { console.log('Erro em deleteOneWebhook', JSON.stringify(result, null, 2)); Sentry.captureMessage('Erro em deleteOneWebhook'); }
 	console.log('Deleted', JSON.stringify(result, null, 2));
 	return result;
+}
+
+async function saveAnswers(qID) {
+	try {
+		const data = await getEveryAnswer(qID);
+		if (data) {
+			let text = `Data: ${new Date()}\nNúmero de Respostas: ${data.length}\n\n`;
+			text += JSON.stringify(data, null, 2);
+			await fs.writeFileSync(`${qID}_respostas.txt`, text);
+		}
+
+		return data;
+	} catch (error) {
+		return sentryError('Erro em saveAnswers', { qID, error });
+	}
 }
 
 async function postWebhook(name, event_type, object_type, object_ids, subscription_url) { // eslint-disable-line
@@ -193,6 +207,7 @@ async function createNewWebhook(urlHook, surveyIDs) {
 	}
 }
 
+
 module.exports = {
 	getSurveys,
 	getSurveyIds,
@@ -210,4 +225,5 @@ module.exports = {
 	postWebhook,
 	createNewWebhook,
 	deleteAllWebhooks,
+	saveAnswers,
 };

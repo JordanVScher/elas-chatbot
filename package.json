@@ -13,12 +13,13 @@
     "remove": "pm2 remove \"elas-homol\""
   },
   "dependencies": {
+    "@bottender/restify": "^1.0.0-alpha.2",
     "@sentry/node": "^4.2.3",
     "acorn": "^6.1.1",
     "apiai-promise": "^1.0.0",
     "archiver": "^3.1.1",
     "async-child-process": "^1.1.1",
-    "bottender": "^0.15.14",
+    "bottender": "^1.2.1",
     "canvas": "^2.5.0",
     "chart.js": "^2.8.0",
     "chartjs": "^0.3.24",

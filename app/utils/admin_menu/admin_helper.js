@@ -323,7 +323,7 @@ async function getStatusData(turmaID) {
 	const notifications = await notificationQueue.findAll({ where: { turma_id: turmaID }, raw: true }).then((r) => r).catch((err) => console.log(err));
 	const alunosID = alunosTurma.map((x) => x.id);
 	const respostas = await alunosRespostas.findAll({ where: { aluno_id: alunosID }, raw: true }).then((r) => r).catch((err) => console.log(err));
-	const toAnswer = ['pre', 'pos', 'atividade_indicacao', 'avaliacao_modulo1', 'avaliacao_modulo2', 'avaliacao_modulo3', 'atividade_1'];
+	const toAnswer = ['atividade_1', 'pre', 'pos', 'atividade_indicacao', 'avaliacao_modulo1', 'avaliacao_modulo2', 'avaliacao_modulo3'];
 	const regras = await rules.loadTabNotificationRules(false);
 
 	for (let i = 0; i < alunosTurma.length; i++) {
@@ -365,8 +365,6 @@ async function getStatusData(turmaID) {
 
 	return results;
 }
-
-getStatusData(15);
 
 async function anotherCSV(data) {
 	const result = await parseAsync(data, { includeEmptyRows: true }).then((csv) => csv).catch((err) => err);
