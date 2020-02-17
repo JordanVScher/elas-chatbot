@@ -331,22 +331,6 @@ async function getStatusData(turmaID) {
 		const aux = a;
 		const alunaQueue = notifications.filter((x) => x.aluno_id === a.id && x.indicado_id === null);
 
-		regras.forEach((e) => {
-			if (alunaQueue && alunaQueue.length > 0) {
-				const n = alunaQueue.find((x) => x.notification_type === e.notification_type);
-				if (n && n.sent_at && !n.error) {
-					aux[`notificacao${e.notification_type}`] = n.sent_at;
-				} else if (n && n.error) {
-					aux[`notificacao${e.notification_type}`] = JSON.stringify(n.error);
-				} else {
-					aux[`notificacao${e.notification_type}`] = 'Ainda não foi enviada';
-				}
-			} else {
-				aux[`notificacao${e.notification_type}`] = 'Não tem na fila';
-			}
-		});
-
-
 		const alunaResposta = respostas.find((x) => x.aluno_id === a.id);
 		toAnswer.forEach((e) => {
 			const resp = alunaResposta && alunaResposta[e] ? alunaResposta[e] : null;
@@ -357,11 +341,32 @@ async function getStatusData(turmaID) {
 			}
 		});
 
+		regras.forEach((e) => {
+			if (!e.indicado) {
+				if (alunaQueue && alunaQueue.length > 0) {
+					const n = alunaQueue.find((x) => x.notification_type === e.notification_type);
+					if (n && n.sent_at && !n.error) {
+						aux[`notificacao${e.notification_type}`] = n.sent_at;
+					} else if (n && n.error) {
+						aux[`notificacao${e.notification_type}`] = JSON.stringify(n.error);
+					} else {
+						aux[`notificacao${e.notification_type}`] = 'Ainda não foi enviada';
+					}
+				} else {
+					aux[`notificacao${e.notification_type}`] = 'Não tem na fila';
+				}
+			}
+		});
+
+
 		results.push(aux);
 	}
+	console.log('results', results);
 
 	return results;
 }
+
+getStatusData(15);
 
 async function anotherCSV(data) {
 	const result = await parseAsync(data, { includeEmptyRows: true }).then((csv) => csv).catch((err) => err);
