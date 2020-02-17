@@ -9,6 +9,7 @@ const client = MessengerClient.connect({
 	appSecret: config.appSecret,
 });
 
+
 async function createGetStarted() { // eslint-disable-line no-unused-vars
 	console.log(await client.setGetStarted('greetings'));
 	console.log(await client.setGreeting([{
@@ -16,6 +17,12 @@ async function createGetStarted() { // eslint-disable-line no-unused-vars
 		text: flow.getStarted,
 	}]));
 }
+
+async function deleteMenu() { // eslint-disable-line
+	const res = await client.deletePersistentMenu();
+	console.log('res', res);
+}
+
 
 async function createPersistentMenu() { // eslint-disable-line no-unused-vars
 	console.log(await client.setPersistentMenu([

@@ -8,6 +8,8 @@ const db = require('./../DB_helper');
 const queue = require('./../notificationAddQueue');
 const notificationQueue = require('../../server/models').notification_queue;
 const turmaChangelog = require('../../server/models').aluno_turma_changelog;
+const aluno = require('../../server/models').alunos;
+const alunosRespostas = require('../../server/models').alunos_respostas;
 const { turma } = require('../../server/models');
 const { alunos } = require('../../server/models');
 const { checkUserOnLabel } = require('../../utils/postback');
@@ -315,6 +317,53 @@ async function updateNotificationTurma(turmaID) {
 }
 
 
+async function getStatusData(turmaID) {
+	const results = [];
+	const alunosTurma = await aluno.findAll({ where: { turma_id: turmaID }, raw: true }).then((r) => r).catch((err) => console.log(err));
+	const notifications = await notificationQueue.findAll({ where: { turma_id: turmaID }, raw: true }).then((r) => r).catch((err) => console.log(err));
+	const alunosID = alunosTurma.map((x) => x.id);
+	const respostas = await alunosRespostas.findAll({ where: { aluno_id: alunosID }, raw: true }).then((r) => r).catch((err) => console.log(err));
+	const toAnswer = ['pre', 'pos', 'atividade_indicacao', 'avaliacao_modulo1', 'avaliacao_modulo2', 'avaliacao_modulo3', 'atividade_1'];
+
+	for (let i = 0; i < alunosTurma.length; i++) {
+		const a = alunosTurma[i];
+		const aux = a;
+
+		const alunaQueue = notifications.filter((x) => x.aluno_id === a.id && x.indicado_id === null);
+		if (alunaQueue && alunaQueue.length > 0) {
+			alunaQueue.forEach((e) => {
+				if (e.sent_at && !e.error) {
+					aux[`notificacao${e.notification_type}`] = e.sent_at;
+				} else if (e.error) {
+					aux[`notificacao${e.notification_type}`] = JSON.stringify(e.error);
+				} else {
+					aux[`notificacao${e.notification_type}`] = 'Ainda não foi enviada';
+				}
+			});
+		}
+
+		const alunaResposta = respostas.find((x) => x.aluno_id === a.id);
+		toAnswer.forEach((e) => {
+			const resp = alunaResposta && alunaResposta[e] ? alunaResposta[e] : null;
+			if (resp) {
+				aux[e] = resp.answer_date ? `Respondido em ${resp.answer_date}` : 'Respondido';
+			} else {
+				aux[e] = 'Não Respondido';
+			}
+		});
+
+		results.push(aux);
+	}
+
+	return { context: results, input: turmaID };
+}
+
+async function anotherCSV(data) {
+	const result = await parseAsync(data, { includeEmptyRows: true }).then((csv) => csv).catch((err) => err);
+	return { csvData: await Buffer.from(result, 'utf8'), filename: 'status.csv' };
+}
+
+
 module.exports = {
 	buildCSV,
 	getJsonFromURL,
@@ -328,4 +377,6 @@ module.exports = {
 	checkReceivedFile,
 	updateNotificationIndicados,
 	updateNotificationTurma,
+	getStatusData,
+	anotherCSV,
 };

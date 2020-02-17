@@ -180,6 +180,14 @@ module.exports.sendCSV = async (context) => { // verTurma
 	}
 };
 
+module.exports.sendStatus = async (context, turmaID) => {
+	const data = await admin.getStatusData(turmaID);
+	const res = await admin.anotherCSV(data);
+	if (res && !res.error && res.csvData) {
+		await context.sendFile(res.csvData, { filename: res.filename || 'seu_arquivo.csv' });
+	}
+};
+
 module.exports.sendFeedbackMsgs = async (context, errors, msgs, quickReplies) => {
 	// because some erros can be ignored at the error count (but not on the error listing) we get the number of mandatory errors
 	const notIgnoredErrorsLength = errors.filter((x) => !x.ignore).length;
