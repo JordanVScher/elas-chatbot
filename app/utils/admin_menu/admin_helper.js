@@ -2,14 +2,16 @@ require('dotenv').config();
 const { parseAsync } = require('json2csv');
 const request = require('request-promise');
 const { csv2json } = require('csvjson-csv2json');
+const { Op } = require('sequelize');
 const help = require('../helper');
 const CSVFormat = require('./CSV_format');
 const db = require('./../DB_helper');
 const queue = require('./../notificationAddQueue');
 const notificationQueue = require('../../server/models').notification_queue;
 const turmaChangelog = require('../../server/models').aluno_turma_changelog;
-const aluno = require('../../server/models').alunos;
 const alunosRespostas = require('../../server/models').alunos_respostas;
+const indicadosRespostas = require('../../server/models').indicados_respostas;
+const indicados = require('../../server/models').indicacao_avaliadores;
 const { turma } = require('../../server/models');
 const { alunos } = require('../../server/models');
 const { checkUserOnLabel } = require('../../utils/postback');
@@ -17,6 +19,7 @@ const { adminMenu } = require('../../utils/flow');
 const rules = require('../notificationRules');
 const MaAPI = require('../../chatbot_api');
 const labels = require('../labels');
+
 
 async function buildCSV(data, texts) {
 	if (!data || !data.content || data.content.length === 0) { return { error: texts.error }; }
@@ -169,10 +172,10 @@ async function NotificationChangeTurma(alunaID, oldTurmaID, newturmaID) {
 }
 
 // from the CSV, adds notification for new indicados and updates status of familiar notifications
-async function updateNotificationIndicados(indicados) {
+async function updateNotificationIndicados(indicadosLines) {
 	try {
-		for (let i = 0; i < indicados.length; i++) {
-			const indicado = indicados[i];
+		for (let i = 0; i < indicadosLines.length; i++) {
+			const indicado = indicadosLines[i];
 
 			const userNotifications = await notificationQueue.findAll({ where: { indicado_id: indicado.id }, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em notificationQueue.findAll', err));
 			const turmaID = await db.getTurmaIdFromAluno(indicado.aluno_id);
@@ -319,19 +322,17 @@ async function updateNotificationTurma(turmaID) {
 
 async function getStatusData(turmaID) {
 	const results = [];
-	const alunosTurma = await aluno.findAll({ where: { turma_id: turmaID }, attributes: ['id', 'nome_completo', 'cpf', 'email'], raw: true }).then((r) => r).catch((err) => console.log(err));
-	const notifications = await notificationQueue.findAll({ where: { turma_id: turmaID }, raw: true }).then((r) => r).catch((err) => console.log(err));
+	const alunosTurma = await alunos.findAll({ where: { turma_id: turmaID }, attributes: ['id', 'nome_completo', 'cpf', 'email', 'created_at'], raw: true }).then((r) => r).catch((err) => console.log(err));
+	const notifications = await notificationQueue.findAll({ where: { turma_id: turmaID, indicado_id: null }, raw: true }).then((r) => r).catch((err) => console.log(err));
 	const alunosID = alunosTurma.map((x) => x.id);
 	const respostas = await alunosRespostas.findAll({ where: { aluno_id: alunosID }, raw: true }).then((r) => r).catch((err) => console.log(err));
 	const toAnswer = ['atividade_1', 'pre', 'pos', 'atividade_indicacao', 'avaliacao_modulo1', 'avaliacao_modulo2', 'avaliacao_modulo3'];
 	const regras = await rules.loadTabNotificationRules(false);
 
 	for (let i = 0; i < alunosTurma.length; i++) {
-		const a = alunosTurma[i];
-		const aux = a;
-		const alunaQueue = notifications.filter((x) => x.aluno_id === a.id && x.indicado_id === null);
+		const aux = alunosTurma[i];
 
-		const alunaResposta = respostas.find((x) => x.aluno_id === a.id);
+		const alunaResposta = respostas.find((x) => x.aluno_id === aux.id);
 		toAnswer.forEach((e) => {
 			const resp = alunaResposta && alunaResposta[e] ? alunaResposta[e] : null;
 			if (resp) {
@@ -341,16 +342,71 @@ async function getStatusData(turmaID) {
 			}
 		});
 
+		const alunaQueue = notifications.filter((x) => x.aluno_id === aux.id);
 		regras.forEach((e) => {
 			if (!e.indicado) {
 				if (alunaQueue && alunaQueue.length > 0) {
 					const n = alunaQueue.find((x) => x.notification_type === e.notification_type);
-					if (n && n.sent_at && !n.error) {
-						aux[`notificacao${e.notification_type}`] = n.sent_at;
-					} else if (n && n.error) {
-						aux[`notificacao${e.notification_type}`] = JSON.stringify(n.error);
+					if (n) {
+						if (n.sent_at && !n.error) {
+							aux[`notificacao${e.notification_type}`] = n.sent_at;
+						} else if (n.error) {
+							aux[`notificacao${e.notification_type}`] = JSON.stringify(n.error);
+						} else {
+							aux[`notificacao${e.notification_type}`] = 'Ainda não foi enviada';
+						}
 					} else {
-						aux[`notificacao${e.notification_type}`] = 'Ainda não foi enviada';
+						aux[`notificacao${e.notification_type}`] = 'Não tem na fila';
+					}
+				} else {
+					aux[`notificacao${e.notification_type}`] = 'Não tem na fila';
+				}
+			}
+		});
+
+		results.push(aux);
+	}
+
+	return results;
+}
+
+async function getStatusDataIndicados(turmaID) {
+	const results = [];
+	const indicadosTurma = await indicados.findAll({
+		include: [
+			{
+				model: alunos, as: 'aluna', where: { turma_id: turmaID }, attributes: ['id', 'nome_completo', 'cpf'],
+			},
+			{ model: indicadosRespostas, as: 'respostas', attributes: ['pre', 'pos'] },
+		],
+		attributes: ['id', 'nome', 'email', 'familiar', 'created_at'],
+		raw: true,
+	}).then((r) => r).catch((err) => err);
+	const notifications = await notificationQueue.findAll({ where: { turma_id: turmaID, indicado_id: { [Op.ne]: null } }, raw: true }).then((r) => r).catch((err) => console.log(err));
+
+	const regras = await rules.loadTabNotificationRules(false);
+
+	for (let i = 0; i < indicadosTurma.length; i++) {
+		const aux = indicadosTurma[i];
+
+		aux['respostas.pre'] = aux['respostas.pre'] !== null ? 'Respondido' : 'Não respondido';
+		aux['respostas.pos'] = aux['respostas.pos'] !== null ? 'Respondido' : 'Não respondido';
+
+		const indicadoQueue = notifications.filter((x) => x.indicado_id === aux.id);
+		regras.forEach((e) => {
+			if (e.indicado) {
+				if (indicadoQueue && indicadoQueue.length > 0) {
+					const n = indicadoQueue.find((x) => x.notification_type === e.notification_type);
+					if (n) {
+						if (n.sent_at && !n.error) {
+							aux[`notificacao${e.notification_type}`] = n.sent_at;
+						} else if (n.error) {
+							aux[`notificacao${e.notification_type}`] = JSON.stringify(n.error);
+						} else {
+							aux[`notificacao${e.notification_type}`] = 'Ainda não foi enviada';
+						}
+					} else {
+						aux[`notificacao${e.notification_type}`] = 'Não tem na fila';
 					}
 				} else {
 					aux[`notificacao${e.notification_type}`] = 'Não tem na fila';
@@ -361,14 +417,13 @@ async function getStatusData(turmaID) {
 
 		results.push(aux);
 	}
-	console.log('results', results);
 
 	return results;
 }
 
-async function anotherCSV(data) {
+async function anotherCSV(data, filename) {
 	const result = await parseAsync(data, { includeEmptyRows: true }).then((csv) => csv).catch((err) => err);
-	return { csvData: await Buffer.from(result, 'utf8'), filename: 'status.csv' };
+	return { csvData: await Buffer.from(result, 'utf8'), filename };
 }
 
 module.exports = {
@@ -385,5 +440,6 @@ module.exports = {
 	updateNotificationIndicados,
 	updateNotificationTurma,
 	getStatusData,
+	getStatusDataIndicados,
 	anotherCSV,
 };

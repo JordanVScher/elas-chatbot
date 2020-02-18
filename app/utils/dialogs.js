@@ -180,10 +180,22 @@ module.exports.sendCSV = async (context) => { // verTurma
 	}
 };
 
-module.exports.sendStatus = async (context, turmaID) => {
+module.exports.sendStatus = async (context, turmaID, name) => {
 	try {
 		const data = await admin.getStatusData(turmaID);
-		const res = await admin.anotherCSV(data);
+		const res = await admin.anotherCSV(data, name);
+		if (res && !res.error && res.csvData) {
+			await context.sendFile(res.csvData, { filename: res.filename || 'seu_arquivo.csv' });
+		}
+	} catch (error) {
+		console.log('Erro ao enviar o csv de status', error);
+	}
+};
+
+module.exports.sendStatusIndicado = async (context, turmaID, name) => {
+	try {
+		const data = await admin.getStatusDataIndicados(turmaID);
+		const res = await admin.anotherCSV(data, name);
 		if (res && !res.error && res.csvData) {
 			await context.sendFile(res.csvData, { filename: res.filename || 'seu_arquivo.csv' });
 		}
