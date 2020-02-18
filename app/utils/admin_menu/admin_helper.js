@@ -392,7 +392,8 @@ async function getStatusDataIndicados(turmaID) {
 		aux['respostas.pre'] = aux['respostas.pre'] !== null ? 'Respondido' : 'Não respondido';
 		aux['respostas.pos'] = aux['respostas.pos'] !== null ? 'Respondido' : 'Não respondido';
 
-		const indicadoQueue = notifications.filter((x) => x.indicado_id === aux.id);
+		const indicadoQueue = notifications.filter((x) => x.indicado_id === aux.id && !x.check_answered);
+
 		regras.forEach((e) => {
 			if (e.indicado) {
 				if (indicadoQueue && indicadoQueue.length > 0) {
