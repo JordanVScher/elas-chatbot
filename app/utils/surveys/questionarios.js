@@ -26,19 +26,20 @@ async function loadQuestionarioData() {
 }
 
 /**
- * Load entries from questionario_sync from all questionarios. If there's no entry on the table, we create and return it.
+ * Load entries from questionario_sync from all questionarios. If there's no entry on the table, we create and return it. Add idSM from questionarios to the sync obj.
  * @return {array} array of questionario_sync objects Ex: [
- * { id: 1, id_questionario: 1, current_page: 1, last_verified: 2020-02-19T18:55:41.178Z,  next_verification: 2020-02-20T18:55:41.178Z, error_msg: null }
+ * { id: 1, id_questionario: 1, current_page: 1, last_verified: DATE,  next_verification: DATE, error_msg: {}, id_SM: '123' }}
  ]
  */
 async function getAllQuestionarioSyncs() {
 	try {
 		const res = [];
-		const qIDs = await questionario.findAll({ where: {}, attributes: ['id'], raw: true }).then((r) => (r ? r.map((x) => x.id) : false)).catch((err) => sentryError('Erro no findAll do questionario', err));
+		const questionarios = await questionario.findAll({ where: {}, attributes: ['id', 'idSM'], raw: true }).then((r) => r).catch((err) => sentryError('Erro no findAll do questionario', err));
 
-		for (let i = 0; i < qIDs.length; i++) {
-			const qID = qIDs[i];
+		for (let i = 0; i < questionarios.length; i++) {
+			const qID = questionarios[i].id;
 			const qsync = await sync.findOrCreate({ where: { id_questionario: qID }, defaults: { id_questionario: qID, current_page: 1 } }).then((r) => r[0].dataValues).catch((err) => sentryError('Erro no findOrCreate do sync', err));
+			qsync.id_SM = questionarios[i].idSM;
 			res.push(qsync);
 		}
 
