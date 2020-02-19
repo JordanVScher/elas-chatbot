@@ -2,7 +2,7 @@ module.exports = (sequelize, DataTypes) => {
 	const questionario = sequelize.define(
 		'questionario', {
 			id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-			id_surveymonkey: DataTypes.STRING,
+			idSM: { type: DataTypes.STRING, field: 'id_surveymonkey' },
 			name: DataTypes.STRING,
 			link: DataTypes.STRING,
 			parameters: DataTypes.JSON,

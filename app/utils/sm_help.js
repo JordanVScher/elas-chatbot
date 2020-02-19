@@ -4,7 +4,8 @@ const { getIndicacaoErrorText } = require('./helper');
 const { getSameContatoEmailErrorText } = require('./helper');
 const matriculaLog = require('../server/models').matricula_mail_log;
 const notificationQueue = require('../server/models').notification_queue;
-const smAPI = require('../sm_api');
+const { questionario } = require('../server/models');
+const { getResponseWithAnswers } = require('../sm_api');
 const mailer = require('./mailer');
 const { eMail } = require('./flow');
 const db = require('./DB_helper');
@@ -138,10 +139,11 @@ async function replaceChoiceId(answers, map, surveyID) {
 	const findDropdown = map.filter((x) => x.dropdown && x.dropdown.length > 0);
 
 	if (findDropdown) { // check if we have an answer that needs replacement (choice.id isnt the actual answer)
-		const survey = await smAPI.getSurveyDetails(surveyID); // load survey and separate the questions (load the details noew because we know we will need them)
+		// load survey and separate the questions (load the details now because we know we will need them)
+		const { details } = await questionario.findOne({ where: { idSM: surveyID.toString() }, attributes: ['details'], raw: true }).then((r) => r).catch((err) => sentryError('Erro no questionario do model', err));
 
-		for (let i = 0; i < survey.pages.length; i++) {
-			const questionDetails = survey.pages[i].questions;
+		for (let i = 0; i < details.pages.length; i++) {
+			const questionDetails = details.pages[i].questions;
 			await findDropdown.forEach((element) => { // for each map element we should replace
 				if (result[element.paramName] && result[element.paramName].slice(0, 8) !== '<outros>') { // check if the answers array actually has that answer and it's not an "Others" option
 					const findQuestion = questionDetails.find((x) => x.id.toString() === element.dropdown); // element.dropdown -> the ud
@@ -168,7 +170,7 @@ async function replaceChoiceId(answers, map, surveyID) {
 }
 
 async function buildPseudoMap(surveyID) {
-	const details = await smAPI.getSurveyDetails(surveyID);
+	const { details } = await questionario.findOne({ where: { idSM: surveyID.toString() }, attributes: ['details'], raw: true }).then((r) => r).catch((err) => sentryError('Erro no questionario do model', err));
 	const results = [];
 	details.pages.forEach((page) => {
 		page.questions.forEach((question) => {
@@ -362,7 +364,7 @@ async function handleAvaliador(response, column, map) {
 // what to do with the form that was just answered
 async function newSurveyResponse(event) {
 	console.log('newSurveyResponse', JSON.stringify(event, null, 2));
-	const responses = await smAPI.getResponseWithAnswers(event.filter_id, event.object_id);
+	const responses = await getResponseWithAnswers(event.filter_id, event.object_id);
 	console.log('responses', JSON.stringify(responses, null, 2)); // get details of the event
 	switch (responses.survey_id) { // which survey was answered?
 	case surveysInfo.sondagemPre.id:
