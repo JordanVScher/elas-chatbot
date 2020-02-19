@@ -115,9 +115,8 @@ async function getResponseWithAnswers(id, responseId) {
 	return result;
 }
 
-async function getEveryAnswer(surveyId) {
+async function getEveryAnswer(surveyId, pageNumber = 1) {
 	const answers = []; // result array
-	let pageNumber = 1;
 	let totalOverall;
 	let answerPage;
 

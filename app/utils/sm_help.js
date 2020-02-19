@@ -351,7 +351,7 @@ async function handleSondagem(response, column, map) {
 
 async function handleAvaliador(response, column, map) {
 	try {
-		response.custom_variables = { indicaid: '1' };
+		// response.custom_variables = { indicaid: '1' };
 		let answers = await getSpecificAnswers(map, response.pages);
 		answers = await replaceChoiceId(answers, map, response.survey_id);
 		answers = await addCustomParametersToAnswer(answers, response.custom_variables);
