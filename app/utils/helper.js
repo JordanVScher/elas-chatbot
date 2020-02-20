@@ -48,14 +48,10 @@ async function getJsDateFromExcel(excelDate) {
 	return date;
 }
 
-async function sentryError(msg, err) {
-	let erro = err;
-	if (typeof err === 'object' && err !== null) {
-		erro = JSON.stringify(err, null, 2);
-	}
+async function sentryError(msg, erro) {
 	if (process.env.ENV !== 'local') {
 		Sentry.captureMessage(msg);
-		await sendHTMLMail(`Erro no bot do ELAS - ${process.env.ENV || ''}`, process.env.MAILDEV, `${msg || ''}\n\n${erro}`);
+		await sendHTMLMail(`Erro no bot do ELAS - ${process.env.ENV || ''}`, process.env.MAILDEV, `${msg || ''}\n\n${erro}\n\n${JSON.stringify(erro, null, 2)}`);
 		console.log(`Error sent at ${new Date()}!\n `);
 	}
 	console.log(msg, erro);

@@ -99,7 +99,7 @@ module.exports = {
 		{ questionName: 'Como você avalia sua capacidade de dar soluções definitivas a problemas, de forma que eles não ressurjam no futuro?', paramName: 'solucoes_definitivas' },
 		{ questionName: 'Como você avalia o seu grau de conhecimento e sua capacidade de utilizar técnicas de resoluções de problemas no seu dia a dia?', paramName: 'conhecimento_resolucao' },
 	],
-	avaliacao360Pre: [
+	avaliador360pre: [
 		{ questionName: 'Como você avalia a perseverança da pessoa, isto é, sua capacidade de seguir seus planos até o fim?', paramName: 'avalias1' },
 		{ questionName: '', paramName: 'exemplo1' },
 		{ questionName: '', paramName: 'melhora1' },

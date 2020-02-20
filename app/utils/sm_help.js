@@ -389,10 +389,10 @@ async function newSurveyResponse(event) {
 		await handleIndicacao(responses);
 		break;
 	case surveysInfo.avaliador360pre.id:
-		await handleAvaliador(responses, 'pre', surveysMaps.avaliacao360Pre);
+		await handleAvaliador(responses, 'pre', surveysMaps.avaliador360pre);
 		break;
 	case surveysInfo.avaliador360pos.id:
-		await handleAvaliador(responses, 'pos', surveysMaps.avaliacao360Pos);
+		await handleAvaliador(responses, 'pos', surveysMaps.avaliador360pos);
 		break;
 	default:
 		await sentryError(`Received unknown survey ID after answer! -> ${responses.survey_id}`, responses);

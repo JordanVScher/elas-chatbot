@@ -5,36 +5,6 @@ const chartsMaps = require('./charts_maps');
 const help = require('./helper');
 const db = require('./DB_helper');
 
-// async function buildAlunoChartOld(cpf) {
-// 	const aluna = await db.getAlunoRespostas(cpf);
-// 	const result = [];
-
-// 	const secondHalf = [...chartsMaps.sondagem];
-// 	const firstHalf = secondHalf.splice(0, 23);
-// 	const charts = [firstHalf, secondHalf];
-
-// 	if (aluna && aluna.pre && aluna.pos) {
-// 		for (let i = 0; i < charts.length; i++) {
-// 			const e = charts[i];
-
-// 			const data = {};
-// 			e.forEach(async (element) => { // this map contains only the necessary answers
-// 				if (aluna.pre[element.paramName] && aluna.pos[element.paramName]) { // build obj with param_name and the number variation
-// 					data[element.questionName] = help.getPercentageChange(aluna.pre[element.paramName], aluna.pos[element.paramName]);
-// 				}
-// 			});
-
-// 			if (data && Object.keys(data) && Object.keys(data).length > 0) {
-// 				const res = await chart.createChart(Object.keys(data), Object.values(data), cpf, `Resultado auto-avaliação ${aluna.nome}`);
-// 				result.push(res);
-// 			}
-// 		}
-// 		return result;
-// 	}
-
-// 	return false;
-// }
-
 async function buildTurmaChart(turmaID) {
 	const allAnswers = await db.getTurmaRespostas(turmaID);
 	const respostas = { pre: {}, pos: {} };
@@ -91,7 +61,7 @@ async function buildTurmaChart(turmaID) {
 async function separateIndicadosData(cpf) {
 	const indicado = await db.getIndicadoRespostas(cpf);
 
-	let newMap = chartsMaps.avaliacao360Pre;
+	let newMap = chartsMaps.avaliador360pre;
 	const commomKeys = ['avalias', 'exemplo', 'melhora'];
 	const size = newMap.length / commomKeys.length;
 	const data = []; // contains only the answers from pre
@@ -289,7 +259,7 @@ async function buildAlunosDocs(turmaID) {
 
 			const aux2 = await buildIndicadoChart(aluno.cpf);
 			if (aux2 && aux2.filename) {
-				result.push({ aluno: aluno.nome_completo, avaliacao360: aux2.filename });
+				result.push({ aluno: aluno.nome_completo, avaliador360: aux2.filename });
 			} else if (aux2 && aux2.error) {
 				result.push({ aluno: aluno.nome_completo, error: aux2.error });
 			} else {

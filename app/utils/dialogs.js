@@ -470,8 +470,8 @@ async function zipAllDocs(context, turmaID, turmaName) {
 			const doc = docs[i];
 			if (doc.sondagem) {
 				archive.append(fs.createReadStream(doc.sondagem), { name: `${doc.aluno}_sondagem.pdf` }); sendZip = true;
-			} else if (doc.avaliacao360) {
-				archive.append(fs.createReadStream(doc.avaliacao360), { name: `${doc.aluno}_360Results.pdf` }); sendZip = true;
+			} else if (doc.avaliador360) {
+				archive.append(fs.createReadStream(doc.avaliador360), { name: `${doc.aluno}_360Results.pdf` }); sendZip = true;
 			}
 		}
 
