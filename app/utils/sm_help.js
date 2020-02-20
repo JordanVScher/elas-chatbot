@@ -4,8 +4,8 @@ const { getIndicacaoErrorText } = require('./helper');
 const { getSameContatoEmailErrorText } = require('./helper');
 const matriculaLog = require('../server/models').matricula_mail_log;
 const notificationQueue = require('../server/models').notification_queue;
-const { questionario } = require('../server/models');
 const { getResponseWithAnswers } = require('../sm_api');
+const { getSurveyDetails } = require('../sm_api');
 const mailer = require('./mailer');
 const { eMail } = require('./flow');
 const db = require('./DB_helper');
@@ -140,7 +140,7 @@ async function replaceChoiceId(answers, map, surveyID) {
 
 	if (findDropdown) { // check if we have an answer that needs replacement (choice.id isnt the actual answer)
 		// load survey and separate the questions (load the details now because we know we will need them)
-		const { details } = await questionario.findOne({ where: { idSM: surveyID.toString() }, attributes: ['details'], raw: true }).then((r) => r).catch((err) => sentryError('Erro no questionario do model', err));
+		const details = await getSurveyDetails(surveyID);
 
 		for (let i = 0; i < details.pages.length; i++) {
 			const questionDetails = details.pages[i].questions;
@@ -170,7 +170,7 @@ async function replaceChoiceId(answers, map, surveyID) {
 }
 
 async function buildPseudoMap(surveyID) {
-	const { details } = await questionario.findOne({ where: { idSM: surveyID.toString() }, attributes: ['details'], raw: true }).then((r) => r).catch((err) => sentryError('Erro no questionario do model', err));
+	const details = await getSurveyDetails(surveyID);
 	const results = [];
 	details.pages.forEach((page) => {
 		page.questions.forEach((question) => {
@@ -271,8 +271,20 @@ async function handleIndicacao(response) {
 		const aluna = await db.getAluno(response.custom_variables.cpf);
 		aluna.turma = response.custom_variables.turma;
 
+		const full = surveysMaps.indicacao360;
+
+		const indicacao360 = [];
+		const familiar360 = [];
+		full.forEach((e) => {
+			if (e.paramName.charAt(0) !== 'F') {
+				indicacao360.push(e);
+			} else {
+				familiar360.push(e);
+			}
+		});
+
 		let indicados = {}; // could just as well be an array with the answers
-		await surveysMaps.indicacao360.forEach(async (element) => { // getting the answers for the indicados
+		await indicacao360.forEach(async (element) => { // getting the answers for the indicados
 			const aux = baseAnswers.find((x) => x.id === element.questionID);
 			indicados[element.paramName] = aux && aux.text ? aux.text : '';
 		});
@@ -296,7 +308,7 @@ async function handleIndicacao(response) {
 
 		// getting the answers for the familiares
 		indicados = {}; // cleaning up
-		await surveysMaps.indicacao360_familiares.forEach(async (element) => {
+		await familiar360.forEach(async (element) => {
 			const aux = baseAnswers.find((x) => x.id === element.questionID);
 			indicados[element.paramName] = aux && aux.text ? aux.text : '';
 		});
