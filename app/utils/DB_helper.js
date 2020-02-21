@@ -5,6 +5,7 @@ const { removeUndefined } = require('./admin_menu/CSV_format');
 const indicados = require('../server/models').indicacao_avaliadores;
 const indicadosRespostas = require('../server/models').indicados_respostas;
 const alunosRespostas = require('../server/models').alunos_respostas;
+const { respostas } = require('../server/models');
 const { alunos } = require('../server/models');
 
 if (process.env.TEST !== 'true') {
@@ -569,26 +570,12 @@ async function upsertAtividade(alunoID, column, answers) {
 		}).then((r) => r[1]).catch((err) => sentryError('Erro no update do alunosRespostas', err));
 	}
 
-	return alunosRespostas.create({ [column]: answers }).then((r) => r).catch((err) => sentryError('Erro no create do alunosRespostas', err)); // eslint-disable-line object-curly-newline
+	return alunosRespostas.create({ [column]: answers }).then((r) => r.dataValues).catch((err) => sentryError('Erro no create do alunosRespostas', err)); // eslint-disable-line object-curly-newline
 }
 
 async function upsertAlunoCadastro(aluno) {
 	const found = await alunos.findOne({ where: { cpf: aluno.cpf }, raw: true }).then((r) => r).catch((err) => sentryError('Erro no findOne do alunos', err));
-	const values = {
-		nome_completo: aluno.nome_completo,
-		cpf: aluno.cpf,
-		turma_id: aluno.turma_id,
-		email: aluno.email,
-		rg: aluno.rg,
-		telefone: aluno.telefone,
-		endereco: aluno.endereco,
-		data_nascimento: aluno.data_nascimento,
-		contato_emergencia_nome: aluno.contato_emergencia_nome,
-		contato_emergencia_fone: aluno.contato_emergencia_fone,
-		contato_emergencia_email: aluno.contato_emergencia_email,
-		contato_emergencia_relacao: aluno.contato_emergencia_relacao,
-		added_by_admin: aluno.added_by_admin,
-	};
+	const values = aluno;
 
 	if (found && found.id) {
 		return alunos.update(values, { where: { id: found.id }, raw: true, plain: true, returning: true }).then((r) => r[1]).catch((err) => sentryError('Erro no update do alunos', err)); // eslint-disable-line object-curly-newline
@@ -596,6 +583,17 @@ async function upsertAlunoCadastro(aluno) {
 
 	return alunos.create(values).then((r) => r.dataValues).catch((err) => sentryError('Erro no create do alunos', err));
 }
+
+async function upsertRespostas(answerID, data) {
+	const idSurvey = answerID.toString();
+	const found = await respostas.findOne({ where: { id_surveymonkey: idSurvey }, raw: true }).then((r) => r).catch((err) => sentryError('Erro no findOne do respostas', err));
+	if (found && found.id) {
+		return respostas.update(data, { where: { id: found.id }, raw: true, plain: true, returning: true }).then((r) => r[1]).catch((err) => sentryError('Erro no update do respostas', err)); // eslint-disable-line object-curly-newline
+	}
+
+	return respostas.create(data).then((r) => r.dataValues).catch((err) => sentryError('Erro no create do respostas', err)); // eslint-disable-line object-curly-newline
+}
+
 
 module.exports = {
 	upsertUser,
@@ -640,4 +638,5 @@ module.exports = {
 	upsertIndicadosRespostas,
 	upsertIndicado,
 	upsertAtividade,
+	upsertRespostas,
 };

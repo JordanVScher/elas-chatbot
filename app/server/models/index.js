@@ -18,6 +18,7 @@ if (process.env.TEST !== 'true') {
 		host: config.host,
 		port: config.port,
 		dialect: config.dialect,
+		// logging: false,
 	});
 
 	fs

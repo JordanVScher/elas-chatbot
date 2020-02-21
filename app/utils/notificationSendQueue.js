@@ -361,8 +361,7 @@ async function extendRecipient(recipient, moduleDates, turmaID) {
 }
 
 async function getIndicado(id, moduleDates, logID) {
-	const result = await indicadosAvaliadores.findByPk(id, { raw: true, include: ['respostas', 'aluna'] })
-		.then((res) => res).catch((err) => sentryError('Erro ao carregar indicado', err));
+	const result = await indicadosAvaliadores.findByPk(id, { raw: true, include: ['respostas', 'aluna'] }).then((res) => res).catch((err) => sentryError('Erro ao carregar indicado', err));
 
 	if (result && result.email) {
 		if (result['aluna.turma_id']) { result.turmaName = await DB.getTurmaName(result['aluna.turma_id']); }

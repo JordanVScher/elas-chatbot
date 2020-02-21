@@ -35,7 +35,7 @@ async function loadQuestionarioData() {
 async function getAllQuestionarioSyncs() {
 	try {
 		const res = [];
-		const questionarios = await model.questionario.findAll({ where: {}, attributes: ['id', 'idSM'], raw: true }).then((r) => r).catch((err) => sentryError('Erro no findAll do questionario', err));
+		const questionarios = await model.questionario.findAll({ where: {}, attributes: ['id', 'idSM', 'name'], raw: true }).then((r) => r).catch((err) => sentryError('Erro no findAll do questionario', err));
 
 		for (let i = 0; i < questionarios.length; i++) {
 			const qID = questionarios[i].id;
@@ -55,7 +55,6 @@ async function formatAnswer(answer, questionarioName) {
 		let res;
 		let currentMap = surveysMaps[questionarioName];
 		if (!currentMap) currentMap = await aux.buildPseudoMap(answer.survey_id); // build a generic map if we couldnt find a map (only works for the 3 avaliações)
-
 		if (currentMap) {
 			let respFormatado = await aux.getSpecificAnswers(currentMap, answer.pages);
 			respFormatado = await aux.replaceChoiceId(respFormatado, currentMap, answer.survey_id);
@@ -78,62 +77,69 @@ async function formatAnswer(answer, questionarioName) {
 }
 
 
-async function updateRespostas(answer, questionarioID, questionarioName) {
-	let res = null;
-	const resposta = await model.respostas.findOne({ where: { id_surveymonkey: answer.id }, raw: true }).then((r) => r).catch((err) => sentryError('Erro no findOne do respostas', err));
-	if (!resposta || !resposta.id) { // dont update if we already saved this answer
-		const data = {
-			id_surveymonkey: answer.id,
-			id_questionario: questionarioID,
-			URL: answer.href,
-		};
+async function getAnswerData(answer, questionarioID, questionarioName) {
+	let erros = null;
+	const data = {
+		id_surveymonkey: answer.id,
+		id_questionario: questionarioID,
+		URL: answer.href,
+		id_aluno: null,
+		id_indicado: null,
+	};
 
-		// check if we have any custom_variables to identify who answered this question
-		const params = answer.custom_variables;
-		if (params.cpf && params.cpf.toString()) {
-			const alunoID = await model.alunos.findOne({ where: { cpf: params.cpf.toString() }, attributes: ['id'], raw: true }).then((r) => (r ? r.id : null)).catch((err) => sentryError('Erro no findOne do alunos', err));
-			if (alunoID) {
-				data.id_aluno = alunoID;
-			} else {
-				res = `Erro ao buscar o id do aluno pelo cpf! cpf: ${params.cpf}\n`;
-			}
-		} else if (params.indicaid && params.indicaid) {
-			const indicadoID = await model.indicacao_avaliadores.findOne({ where: { id: params.indicaid }, attributes: ['id'], raw: true }).then((r) => (r ? r.id : null)).catch((err) => sentryError('Erro no findOne do indicados', err));
-			if (indicadoID) {
-				data.id_indicado = indicadoID;
-			} else {
-				res = `Erro ao salvar o id do indicado! indicado: ${params.indicaid}\n`;
-			}
+	// check if we have any custom_variables to identify who answered this question
+	const params = answer.custom_variables;
+	if (params.cpf && params.cpf.toString()) {
+		const alunoID = await model.alunos.findOne({ where: { cpf: params.cpf.toString() }, attributes: ['id'], raw: true }).then((r) => (r ? r.id : null)).catch((err) => sentryError('Erro no findOne do alunos', err));
+		if (alunoID) {
+			data.id_aluno = alunoID;
 		} else {
-			res = 'Não temos nenhum parâmetro útil.\n';
+			erros = `Erro ao buscar o id do aluno pelo cpf! cpf: ${params.cpf}\n`;
 		}
-
-		const respostasFormatadas = await formatAnswer(answer, questionarioName);
-		if (typeof respostasFormatadas === 'object') {
-			data.answer = respostasFormatadas;
-		} else if (respostasFormatadas) {
-			res += respostasFormatadas;
+	} else if (params.indicaid && params.indicaid) {
+		const indicadoID = await model.indicacao_avaliadores.findOne({ where: { id: params.indicaid }, attributes: ['id'], raw: true }).then((r) => (r ? r.id : null)).catch((err) => sentryError('Erro no findOne do indicados', err));
+		if (indicadoID) {
+			data.id_indicado = indicadoID;
 		} else {
-			res = 'Não foi possível formatar as respostas';
+			erros = `Erro ao salvar o id do indicado! indicado: ${params.indicaid}\n`;
 		}
-
-		const status = await model.respostas.create(data).then((r) => r.dataValues).catch((err) => sentryError(`Erro ao salvar resposta ${answer.id}.`, err));
-		if (!status || !status.id) res += 'Não foi salvo com sucesso no banco!';
+	} else {
+		erros = 'Não temos nenhum parâmetro útil.\n';
 	}
-	return res;
+
+	const respostasFormatadas = await formatAnswer(answer, questionarioName);
+	console.log('respostasFormatadas', respostasFormatadas);
+	if (typeof respostasFormatadas === 'object') {
+		data.answer = respostasFormatadas;
+	} else if (respostasFormatadas) {
+		erros += respostasFormatadas;
+	} else {
+		erros = 'Não foi possível formatar as respostas\n';
+	}
+
+	console.log('data', data);
+
+	return { erros, data };
 }
 
 
 async function syncRespostas() {
-	const result = [];
+	const result = {};
 	const allSyncs = await getAllQuestionarioSyncs();
 	for (let s = 0; s < allSyncs.length; s++) {
 		const currentSync = allSyncs[s];
 		const answers = await smAPI.getEveryAnswer(currentSync.id_SM, currentSync.current_page);
 		for (let i = 0; i < answers.length; i++) {
 			const answer = answers[i];
-			const res = await updateRespostas(answer, currentSync.id_questionario);
-			if (res) result.push(res);
+			let err = '';
+			const { error, data } = await getAnswerData(answer, currentSync.id_questionario, currentSync.name);
+			if (error) err = error;
+			if (data) {
+				const status = await model.respostas.create(data).then((r) => r.dataValues).catch((e) => sentryError(`Erro ao salvar resposta ${answer.id}.`, e));
+				if (!status || !status.id) err += 'Não foi salvo com sucesso no banco!';
+			}
+
+			if (err) result[answer.id] = err;
 		}
 	}
 
@@ -141,5 +147,5 @@ async function syncRespostas() {
 }
 
 module.exports = {
-	loadQuestionarioData, getAllQuestionarioSyncs, syncRespostas,
+	loadQuestionarioData, getAllQuestionarioSyncs, syncRespostas, getAnswerData,
 };
