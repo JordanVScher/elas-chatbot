@@ -7,7 +7,8 @@ const { sentryError } = require('../helper');
 const smHelp = require('../sm_help');
 
 async function answerFollowUp(data, surveyName) {
-	if (surveyName === 'atividade1') {
+	switch (surveyName) {
+	case 'atividade1': {
 		data.answer.added_by_admin = true;
 		data.answer.turma_id = await DB.getTurmaIdFromAluno(data.id_aluno);
 		const newUser = await DB.upsertAlunoCadastro(data.answer);
@@ -19,8 +20,21 @@ async function answerFollowUp(data, surveyName) {
 			await smHelp.helpAddQueue(newUser.id, newUser.turma_id);
 			await smHelp.sendAlunaToAssistente(newUser.nome_completo, newUser.email, newUser.cpf, await DB.getTurmaName(data.turma_id));
 			if (newUser.email === newUser.contato_emergencia_email) console.log(`Aluna ${newUser.id} tem o mesmo email que o contato ${newUser.email}`);
+		} else {
+			console.log('Erro ao salvar resposta');
 		}
 	}
+		break;
+	case 'sondagemPre': {
+		const a = await DB.upsertAtividade(data.id_aluno, 'pre', data.answer);
+		if (a && a.id) console.log('Salvou na antiga resposta com sucesso');
+	}
+		break;
+	default:
+		console.log('Erro ao achar surveyName', surveyName);
+		break;
+	}
+
 
 	return 'Fim';
 }
