@@ -88,7 +88,7 @@ async function broadcastPesquisa(toSend) {
 		e.error = {};
 		if (e.email && e.email.trim()) {
 			const html = baseHtml.replace('[CONTEUDO_MAIL]', e.text);
-			const mailError = await mailer.sendHTMLMail(`Pesquisa ${e.newMessage}`, e.email, html);
+			const mailError = await mailer.sendHTMLMail(`Pesquisa ${e.newMessage}`, e.email, html, null, e.text);
 			if (mailError) e.error.mail = mailError.toString();
 		} else {
 			e.error.mail = 'Aluno não tem e-mail';

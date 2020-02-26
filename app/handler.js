@@ -1,7 +1,5 @@
 const MaAPI = require('./chatbot_api');
-// const opt = require('./utils/options');
 const db = require('./utils/DB_helper');
-const { sendHTMLMail } = require('./utils/mailer');
 const { createIssue } = require('./utils/send_issue');
 const DF = require('./utils/dialogFlow');
 const { sendWarningCSV } = require('./utils/admin_menu/warn_admin');
@@ -393,7 +391,6 @@ module.exports = async (context) => {
 		await context.sendText('Ops. Tive um erro interno. Tente novamente.'); // warning user
 		const date = new Date();
 		const errorMsg = `Parece que aconteceu um erro as ${date.toLocaleTimeString('pt-BR')} de ${date.getDate()}/${date.getMonth() + 1} com ${context.session.user.name} => \n${error.stack}`;
-		if (process.env.ENV !== 'local') await sendHTMLMail(`Erro no bot do ELAS - ${process.env.ENV || ''}`, process.env.MAILDEV, errorMsg);
 		console.log('errorMsg', errorMsg);
 		await help.Sentry.configureScope(async (scope) => { // sending to sentry
 			scope.setUser({ username: context.session.user.first_name });

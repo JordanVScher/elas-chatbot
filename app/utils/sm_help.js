@@ -24,20 +24,35 @@ async function sendAlunaToAssistente(name, email, cpf, turma) {
 	await postRecipientLabelCPF(assistenteData.user_id, cpf, turma);
 }
 
+const matriculaText = `Olá
+
+Você comprou o curso Programa Elas TURMARESPOSTA. Parabéns!
+Vamos iniciar com a sua matrícula. Basta entrar no link abaixo:
+
+<link_atividade>
+
+Você comprou o curso para outra pessoa e não é a aluna? Tudo bem! Basta enviar esse e-mail para ela realizar a própria matrícula, ok?
+CASO VOCÊ JÁ TENHA RESPONDIDO O QUESTIONÁRIO DE MATRÍCULA, FAVOR DESCONSIDERAR E AGUARDAR OS PRÓXIMOS PASSOS QUE SERÃO ENVIADOS EM BREVE
+`;
+
+
 // after a payement happens we send an e-mail to the buyer with the matricula/atividade 1 form
 async function sendMatricula(turmaName, pagamentoID, buyerEmail, cpf) {
 	try {
 		let { link } = surveysInfo.atividade1;
 		if (!pagamentoID) { link = link.replace('&pgid=PSIDRESPOSTA', ''); }
 		if (cpf) { link += '&cpf=CPFRESPOSTA'; }
-
-		let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Matricula.html`, 'utf-8'); // prepare the e-mail
 		link = link.replace(/TURMARESPOSTA/g, turmaName);
 		link = link.replace(/PSIDRESPOSTA/g, pagamentoID);
 		link = link.replace(/CPFRESPOSTA/g, cpf);
+		let mailText = matriculaText;
+		mailText = mailText.replace(/<link_atividade>/g, link);
+		mailText = mailText.replace(/TURMARESPOSTA/g, turmaName);
 
+		let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Matricula.html`, 'utf-8'); // prepare the e-mail
 		html = await html.replace(/<link_atividade>/g, link); // add link to mail template
-		const e = await mailer.sendHTMLMail(eMail.atividade1.assunto, buyerEmail, html);
+		html = await html.replace(/TURMARESPOSTA/g, turmaName); // add link to mail template
+		const e = await mailer.sendHTMLMail(eMail.atividade1.assunto, buyerEmail, html, null, mailText);
 		await matriculaLog.create({
 			sentTo: buyerEmail, sentAt: new Date(), atividadeLink: link, error: e && e.stack ? e.stack : e,
 		}).then((res) => res).catch((err) => sentryError('Erro em matriculaLog.create', err));
@@ -51,6 +66,29 @@ async function sendMissingMatriculas() { // eslint-disable-line no-unused-vars
 		await sendMatricula(e.turma_nome, e.pagamento_id, e.email, e.cpf);
 	}
 }
+
+const apresentacaoText = `Olá, [nome]
+
+Recebemos sua matrícula com sucesso!
+
+Gostaríamos de te apresentar a Donna, assistente digital do Programa ELAS. Ao entrar com contato com ela via Messenger, você receberá todas as notificações importantes sobre o curso, como as atividades pré e pós módulos. Ela também te lembrará as datas, horários e local, além de enviar os links importantes das atividades. Que tal conversar com a Donna?
+printscreen do facebook
+Você só precisa ter ou criar uma conta no Messenger (Facebook) . Clique em "Começar" e em seguida clique em "Já sou aluna". A Donna irá perguntar seu CPF e pronto, você receberá todas as informações! Se você desejar bater um papo com ela, a Donna responderá o que souber, caso contrário uma representante da Escola poderá entrar em contato.
+Acesse a Donna nesse link: <link_donna>
+
+Não tem Messenger? Tudo bem, as mesmas notificações que a Donna enviar via Messenger, ela te enviará também por e-mail. Então, fique atenta ao seu endereço eletrônico, por ele você receberá informações importantes!
+`;
+
+async function sendDonnaMail(nome, email) {
+	let mailText = apresentacaoText;
+	let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Apresentar_Donna.html`, 'utf-8');
+	html = await html.replace('[nome]', nome); // add nome to mail template
+	mailText = await mailText.replace('[nome]', nome); // add nome to mail template
+	html = await html.replace(/<link_donna>/g, process.env.LINK_DONNA); // add chatbot link to mail template
+	mailText = await mailText.replace(/<link_donna>/g, process.env.LINK_DONNA); // add chatbot link to mail template
+	await mailer.sendHTMLMail(eMail.depoisMatricula.assunto, email, html, null, mailText);
+}
+
 
 async function helpAddQueue(alunoID, turmaID) {
 	const notificacoes = await notificationQueue.findAll({ where: { aluno_id: alunoID, sent_at: null, error: null }, raw: true }).then((r) => r).catch((err) => sentryError('Erro no findAll do notificationQueue', err));
@@ -226,23 +264,21 @@ async function handleAtividadeOne(response) {
 			}
 
 			/* sending "Apresentação" mail */
-			let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Apresentar_Donna.html`, 'utf-8');
-			html = await html.replace('[nome]', answers.nome_completo); // add nome to mail template
-			html = await html.replace(/<link_donna>/g, process.env.LINK_DONNA); // add chatbot link to mail template
-			await mailer.sendHTMLMail(eMail.depoisMatricula.assunto, answers.email, html);
+			sendDonnaMail(answers.nome_completo, answers.email);
 
 			if (sameContatoEmail) {
 				const eMailToSend = await getMailAdmin(answers.turma);
 				const eMailText = await getSameContatoEmailErrorText(newUser);
 				let html2 = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
 				html2 = await html2.replace('[CONTEUDO_MAIL]', eMailText);
-				await mailer.sendHTMLMail(`Alerta no cadastro da Aluna ${newUser.nome_completo}`, eMailToSend, html2);
+				await mailer.sendHTMLMail(`Alerta no cadastro da Aluna ${newUser.nome_completo}`, eMailToSend, html2, null, eMailText);
 			}
 		}
 	} catch (error) {
 		sentryError('Erro em handleAtividadeOne', error);
 	}
 }
+
 
 async function separateAnswer(respostas, elementos) {
 	// separate the array of answers into and array of objects with the desired elements
@@ -341,7 +377,7 @@ async function handleIndicacao(response) {
 			const eMailText = await getIndicacaoErrorText(errors, aluna);
 			let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
 			html = await html.replace('[CONTEUDO_MAIL]', eMailText);
-			await mailer.sendHTMLMail(`Alertas na indicação da Aluna ${aluna.nome}`, eMailToSend, html);
+			await mailer.sendHTMLMail(`Alertas na indicação da Aluna ${aluna.nome}`, eMailToSend, html, null, eMailText);
 		}
 	} catch (error) {
 		sentryError('Erro em handleIndicacao', error);
@@ -410,14 +446,6 @@ async function newSurveyResponse(event) {
 		await sentryError(`Received unknown survey ID after answer! -> ${responses.survey_id}`, responses);
 		break;
 	}
-}
-
-
-async function sendDonnaMail(nome, mail) {
-	let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Apresentar_Donna.html`, 'utf-8');
-	html = await html.replace('[nome]', nome); // add nome to mail template
-	html = await html.replace(/<link_donna>/g, process.env.LINK_DONNA); // add chatbot link to mail template
-	await mailer.sendHTMLMail(eMail.depoisMatricula.assunto, mail, html);
 }
 
 module.exports = {

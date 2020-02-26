@@ -38,9 +38,9 @@ async function sendTestMail(subject, text, to) {
 	}
 }
 
-async function sendHTMLMail(subject, to, html, anexo) {
+async function sendHTMLMail(subject, to, html, anexo, text = '') {
 	const options = {
-		from, to, subject: subject || '<Programa Elas>', html, attachments: anexo, text: 'Versão de texto da mensagem',
+		from, to, subject: subject || '<Programa Elas>', html, attachments: anexo, text,
 	};
 
 

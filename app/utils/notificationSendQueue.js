@@ -555,7 +555,7 @@ async function actuallySendMessages(types, notification, recipient, logID) {
 		if (newText.email_text && recipient.email && recipient.email.trim()) { // if there's an email to send, send it
 			let html = await readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
 			html = await html.replace('[CONTEUDO_MAIL]', newText.email_text); // add nome to mail template
-			const mailError = await mailer.sendHTMLMail(newText.email_subject, recipient.email, html, attachment.mail);
+			const mailError = await mailer.sendHTMLMail(newText.email_subject, recipient.email, html, attachment.mail, newText.email_text);
 			if (mailError) { // save the error, if it happens
 				error.mailError = mailError.toString(); error.mailError.data = new Date();
 				await notificationLog.update({ sentEmail: mailError.toString() }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog110', err));
@@ -569,10 +569,9 @@ async function actuallySendMessages(types, notification, recipient, logID) {
 			let chatbotError = await broadcast.sendBroadcastAluna(recipient['chatbot.fb_id'], newText.chatbot_text, newText.chatbot_quick_reply);
 			if (!chatbotError && newText.chatbot_cards) { chatbotError = await broadcast.sendCardAluna(recipient['chatbot.fb_id'], newText.chatbot_cards, recipient.cpf); }
 			if (!chatbotError && [attachment.chatbot.pdf || attachment.chatbot.png]) { chatbotError = await broadcast.sendFiles(recipient['chatbot.fb_id'], attachment.chatbot.pdf, attachment.chatbot.pdf2); }
-			if (chatbotError) { error.chatbotError = chatbotError.toString(); } // save the error, if it happens
 			if (chatbotError) { // save the error, if it happens
-				error.chatbotError = chatbotError.toString(); error.chatbotError.data = new Date();
-				await notificationLog.update({ sentBroadcast: chatbotError.toString() }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog112', err));
+				error.chatbotError = chatbotError; error.chatbotError.data = new Date();
+				await notificationLog.update({ sentBroadcast: chatbotError }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog112', err));
 			} else {
 				await notificationLog.update({ sentBroadcast: JSON.stringify({ status: 'Enviado', data: new Date() }, null, 2) }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog113', err));
 			}
@@ -643,7 +642,6 @@ async function sendNotificationFromQueue(alunoID = null, notificationType, test 
 
 	// console.log('logObj', logObj);
 }
-
 
 module.exports = {
 	sendNotificationFromQueue,

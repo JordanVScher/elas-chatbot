@@ -50,7 +50,7 @@ async function sendWarningAlunas(test, mod) {
 			if (e['E-mail Aluna'] && e['E-mail Aluna'].trim()) {
 				let html = await readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
 				html = await html.replace('[CONTEUDO_MAIL]', mailText);
-				await sendHTMLMail('Lembrete: Responda os questionários', e['E-mail Aluna'], html);
+				await sendHTMLMail('Lembrete: Responda os questionários', e['E-mail Aluna'], html, null, mailText);
 			}
 
 			if (e['FB da Aluna']) {

@@ -142,7 +142,7 @@ async function sendWarningCSV(test, mod) {
 		const eMailToSend = await getMailAdmin('Simulação-1'); // leave this text here for now.
 		const result = await parseAsync(content, { includeEmptyRows: true }).then((csv) => csv).catch((err) => err);
 		const csv = { content: await Buffer.from(result, 'utf8'), filename: `${await help.getTimestamp()}_FALTA_RESPONDER.csv`, contentType: 'text/csv' };
-		await sendHTMLMail(missingAnswersWarning.mailSubject, eMailToSend, missingAnswersWarning.mailText, [csv]);
+		await sendHTMLMail(missingAnswersWarning.mailSubject, eMailToSend, missingAnswersWarning.mailText, [csv], eMailToSend);
 		await sendWarning(csv);
 	}
 }

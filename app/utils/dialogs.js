@@ -105,7 +105,7 @@ async function warnAlunaTroca(alunaData) {
 	html = await html.replace('[CONTEUDO_MAIL]', mailText);
 
 	const eMailToSend = await getMailAdmin(alunaData.turma);
-	await sendHTMLMail(subject, eMailToSend, html);
+	await sendHTMLMail(subject, eMailToSend, html, null, mailText);
 }
 
 module.exports.warnAlunaTroca = warnAlunaTroca;
@@ -118,7 +118,7 @@ async function warnAlunaRemocao(alunaData) {
 	let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
 	html = await html.replace('[CONTEUDO_MAIL]', mailText);
 
-	await sendHTMLMail(subject, alunaData.email, html);
+	await sendHTMLMail(subject, alunaData.email, html, null, mailText);
 }
 
 // build e-mail to warn admins of aluna removal from turma, add the name of the admin that made the request
@@ -129,7 +129,7 @@ async function warnAdminOfAlunaRemocao(alunaData, adminNome) {
 	let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
 	html = await html.replace('[CONTEUDO_MAIL]', mailText);
 
-	await sendHTMLMail(subject, process.env.MAILELAS, html);
+	await sendHTMLMail(subject, process.env.MAILELAS, html, null, mailText);
 }
 
 module.exports.removerAluna = async (context) => {
@@ -435,9 +435,9 @@ async function sendZipMail(filename, turmaName, adminNome, docs) {
 	html = await html.replace('[CONTEUDO_MAIL]', mailText);
 
 	if (filename) {
-		return sendHTMLMail(subject, process.env.MAILELAS, html, [{ filename, path: `./${filename}` }]);
+		return sendHTMLMail(subject, process.env.MAILELAS, html, [{ filename, path: `./${filename}` }], mailText);
 	}
-	return sendHTMLMail(subject, process.env.MAILELAS, html);
+	return sendHTMLMail(subject, process.env.MAILELAS, html, null, mailText);
 }
 
 

@@ -5,7 +5,7 @@ const accents = require('remove-accents');
 const moment = require('moment');
 const pdf = require('html-pdf');
 const TinyURL = require('tinyurl');
-const { sendHTMLMail } = require('./mailer');
+// const { sendHTMLMail } = require('./mailer');
 
 const algorithm = process.env.CRYPTO_ALGORITHM;
 const password = process.env.CRYPTO_PASSWORD;
@@ -51,7 +51,7 @@ async function getJsDateFromExcel(excelDate) {
 async function sentryError(msg, erro) {
 	if (process.env.ENV !== 'local') {
 		Sentry.captureMessage(msg);
-		await sendHTMLMail(`Erro no bot do ELAS - ${process.env.ENV || ''}`, process.env.MAILDEV, `${msg || ''}\n\n${erro}\n\n${JSON.stringify(erro, null, 2)}`);
+		// await sendHTMLMail(`Erro no bot do ELAS - ${process.env.ENV || ''}`, process.env.MAILDEV, `${msg || ''}\n\n${erro}\n\n${JSON.stringify(erro, null, 2)}`);
 		console.log(`Error sent at ${new Date()}!\n `);
 	}
 	console.log(msg, erro);
