@@ -1,4 +1,5 @@
 const { questionario } = require('../../server/models');
+const { alunos } = require('../../server/models');
 const DB = require('../DB_helper');
 const { getResponseWithAnswers } = require('../../sm_api');
 const { getAnswerData } = require('./questionarios');
@@ -26,13 +27,12 @@ async function answerFollowUp(data, surveyName) {
 
 
 async function saveAnswer(questionarioID, answerID, alunoCPF) {
-	if (!alunoCPF) return 'Sem CPF!';
 	const survey = await questionario.findOne({ where: { id: questionarioID }, raw: true }).then((r) => r).catch((err) => sentryError('Erro no findOne do questionario', err));
 	const answer = await getResponseWithAnswers(survey.idSM, answerID);
 	const { error, data } = await getAnswerData(answer, questionarioID, survey.name); // eslint-disable-line no-unused-vars
 	if (error) return { error, data };
 	if (alunoCPF) { data.answer.cpf = alunoCPF.toString(); }
-
+	if (!data.id_aluno) data.id_aluno = await alunos.findOne({ where: { cpf: data.answer.cpf.toString() }, attributes: ['id'], raw: true }).then((r) => (r ? r.id : null)).catch((err) => sentryError('Erro no findOne do alunos', err));
 	const res = await DB.upsertRespostas(data.id_surveymonkey, data);
 	if (res && res.id) {
 		console.log('Salvou nova resposta com sucesso');

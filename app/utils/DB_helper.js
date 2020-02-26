@@ -570,7 +570,7 @@ async function upsertAtividade(alunoID, column, answers) {
 		}).then((r) => r[1]).catch((err) => sentryError('Erro no update do alunosRespostas', err));
 	}
 
-	return alunosRespostas.create({ [column]: answers }).then((r) => r.dataValues).catch((err) => sentryError('Erro no create do alunosRespostas', err)); // eslint-disable-line object-curly-newline
+	return alunosRespostas.create({ [column]: answers, aluno_id: alunoID }).then((r) => r.dataValues).catch((err) => sentryError('Erro no create do alunosRespostas', err)); // eslint-disable-line object-curly-newline
 }
 
 async function upsertAlunoCadastro(aluno) {
