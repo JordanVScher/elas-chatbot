@@ -305,6 +305,7 @@ async function handleIndicacao(response) {
 		const errors = [];
 		const baseAnswers = await formatAnswers(response.pages[0].questions);
 		const aluna = await db.getAluno(response.custom_variables.cpf);
+		if (!aluna.nome_completo) aluna.nome_completo = aluna.nome;
 
 		const full = surveysMaps.indicacao360;
 
@@ -376,7 +377,7 @@ async function handleIndicacao(response) {
 			const eMailText = await getIndicacaoErrorText(errors, aluna);
 			let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
 			html = await html.replace('[CONTEUDO_MAIL]', eMailText);
-			await mailer.sendHTMLMail(`Alertas na indicação da Aluna ${aluna.nome}`, eMailToSend, html, null, eMailText);
+			await mailer.sendHTMLMail(`Alertas na indicação da Aluna ${aluna.nome_completo}`, eMailToSend, html, null, eMailText);
 		}
 	} catch (error) {
 		sentryError('Erro em handleIndicacao', error);
