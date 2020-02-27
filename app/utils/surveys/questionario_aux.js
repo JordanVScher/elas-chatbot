@@ -54,7 +54,6 @@ async function formatAnswers(question) {
 		});
 	});
 
-	// console.log('result', JSON.stringify(result, null, 2));
 	return result;
 }
 
@@ -132,6 +131,28 @@ async function addCustomParametersToAnswer(answers, parameters) {
 	return result;
 }
 
+
+async function separateAnswer(respostas, elementos) {
+	// separate the array of answers into and array of objects with the desired elements
+	const result = [];
+	let index = 0;
+	let aux = {};
+	respostas.forEach(async (element) => {
+		if (index && index % elementos.length === 0) {
+			result.push(aux);
+			aux = {};
+		}
+		// use the keys of the aux obj to find the new key for the aux
+		aux[elementos[Object.keys(aux).length]] = element;
+		index += 1;
+	});
+
+	if (Object.keys(aux)) { result.push(aux); }
+
+	return result;
+}
+
+
 module.exports = {
-	getSpecificAnswers, replaceChoiceId, addCustomParametersToAnswer, buildPseudoMap,
+	getSpecificAnswers, replaceChoiceId, addCustomParametersToAnswer, buildPseudoMap, formatAnswers, getAnswer, separateAnswer,
 };

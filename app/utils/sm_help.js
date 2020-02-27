@@ -15,7 +15,7 @@ const { postRecipientLabelCPF } = require('../chatbot_api');
 const { getChatbotData } = require('../chatbot_api');
 const surveysInfo = require('./sm_surveys');
 const { surveysMaps } = require('./sm_maps');
-const { getMailAdmin } = require('./admin_menu/warn_admin');
+const { getMailAdmin } = require('./helper');
 
 // Add new aluna as new recipient in the assistente. In this case, the recipient doesn't need an fb_id, the cpf doubles as a key
 async function sendAlunaToAssistente(name, email, cpf, turma) {
@@ -267,7 +267,7 @@ async function handleAtividadeOne(response) {
 			sendDonnaMail(answers.nome_completo, answers.email);
 
 			if (sameContatoEmail) {
-				const eMailToSend = await getMailAdmin(answers.turma);
+				const eMailToSend = await getMailAdmin();
 				const eMailText = await getSameContatoEmailErrorText(newUser);
 				let html2 = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
 				html2 = await html2.replace('[CONTEUDO_MAIL]', eMailText);
@@ -305,7 +305,6 @@ async function handleIndicacao(response) {
 		const errors = [];
 		const baseAnswers = await formatAnswers(response.pages[0].questions);
 		const aluna = await db.getAluno(response.custom_variables.cpf);
-		aluna.turma = response.custom_variables.turma;
 
 		const full = surveysMaps.indicacao360;
 
@@ -373,7 +372,7 @@ async function handleIndicacao(response) {
 
 		await db.upsertAtividade(aluna.id, 'atividade_indicacao', answers);
 		if (errors && errors.length > 0) {
-			const eMailToSend = await getMailAdmin(aluna.turma);
+			const eMailToSend = await getMailAdmin();
 			const eMailText = await getIndicacaoErrorText(errors, aluna);
 			let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
 			html = await html.replace('[CONTEUDO_MAIL]', eMailText);

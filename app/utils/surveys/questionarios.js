@@ -108,7 +108,6 @@ async function getAnswerData(answer, questionarioID, questionarioName) {
 	}
 
 	const respostasFormatadas = await formatAnswer(answer, questionarioName);
-	console.log('respostasFormatadas', respostasFormatadas);
 	if (typeof respostasFormatadas === 'object') {
 		data.answer = respostasFormatadas;
 	} else if (respostasFormatadas) {
@@ -116,8 +115,6 @@ async function getAnswerData(answer, questionarioID, questionarioName) {
 	} else {
 		erros = 'Não foi possível formatar as respostas\n';
 	}
-
-	console.log('data', data);
 
 	return { erros, data };
 }

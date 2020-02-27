@@ -3,6 +3,7 @@ const { alunos } = require('../../server/models');
 const DB = require('../DB_helper');
 const { getResponseWithAnswers } = require('../../sm_api');
 const { getAnswerData } = require('./questionarios');
+const followUp = require('./questionario_followUp');
 const { sentryError } = require('../helper');
 const smHelp = require('../sm_help');
 
@@ -30,6 +31,9 @@ async function answerFollowUp(data, surveyName) {
 		if (a && a.id) console.log('Salvou na antiga resposta com sucesso');
 	}
 		break;
+	case 'indicacao360':
+		await followUp.saveIndicados(data.originalAnswer, data.id_aluno);
+		break;
 	default:
 		console.log('Erro ao achar surveyName', surveyName);
 		break;
@@ -39,12 +43,17 @@ async function answerFollowUp(data, surveyName) {
 	return 'Fim';
 }
 
+// answerFollowUp(mock, 'indicacao360');
+
 
 async function saveAnswer(questionarioID, answerID, alunoCPF) {
 	const survey = await questionario.findOne({ where: { id: questionarioID }, raw: true }).then((r) => r).catch((err) => sentryError('Erro no findOne do questionario', err));
 	const answer = await getResponseWithAnswers(survey.idSM, answerID);
+	const originalAnswer = JSON.parse(JSON.stringify(answer));
+
 	const { error, data } = await getAnswerData(answer, questionarioID, survey.name); // eslint-disable-line no-unused-vars
 	if (error) return { error, data };
+	data.originalAnswer = originalAnswer;
 	if (alunoCPF) { data.answer.cpf = alunoCPF.toString(); }
 	if (!data.id_aluno) data.id_aluno = await alunos.findOne({ where: { cpf: data.answer.cpf.toString() }, attributes: ['id'], raw: true }).then((r) => (r ? r.id : null)).catch((err) => sentryError('Erro no findOne do alunos', err));
 	const res = await DB.upsertRespostas(data.id_surveymonkey, data);

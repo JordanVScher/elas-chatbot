@@ -7,10 +7,8 @@ const pdf = require('html-pdf');
 const TinyURL = require('tinyurl');
 // const { sendHTMLMail } = require('./mailer');
 
-async function getMailAdmin(turmaNome) {
-	let mails = process.env.ENV === 'prod_final' ? process.env.EMAILMENTORIA : process.env.MAILDEV;
-	if (turmaNome === 'Simulação-1') mails += `, ${process.env.MAILELAS}`;
-	return mails;
+async function getMailAdmin() {
+	return process.env.ENV === 'prod_final' ? process.env.EMAILMENTORIA : process.env.MAILDEV;
 }
 
 const algorithm = process.env.CRYPTO_ALGORITHM;
