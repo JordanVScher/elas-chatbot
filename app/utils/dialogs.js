@@ -354,6 +354,25 @@ module.exports.adminAlunaCPF = async (context, nextDialog) => {
 	}
 };
 
+async function mudarTurmaMail(alunaNome, turmaVelha, turmaNova, alunaEmail) {
+	const velhaNome = await db.getTurmaName(turmaVelha);
+	const novaNome = await db.getTurmaName(turmaNova);
+
+	const adminText = `Olá, a aluna ${alunaNome} foi transferida da turma ${velhaNome} para a turma ${novaNome} por uma administradora.`;
+	const alunaText = `Olá, ${alunaNome}. Você foi transferida para a turma ${novaNome}.`;
+
+	let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
+	let html2 = html;
+	html2 = await html2.replace('[CONTEUDO_MAIL]', alunaText);
+	html = await html.replace('[CONTEUDO_MAIL]', adminText);
+
+	const adminMail = await help.getMailAdmin();
+
+	await sendHTMLMail('Elas - Aluna transferida', adminMail, html, null, adminText);
+	await sendHTMLMail('Elas - Você foi transferida', alunaEmail, html2, null, alunaText);
+}
+
+
 module.exports.mudarAskTurma = async (context, pageToken) => {
 	await context.setState({ desiredTurma: context.state.whatWasTyped });
 	const validTurma = await db.getTurmaID(context.state.desiredTurma); // get the id that will be user for the transfer
@@ -361,7 +380,7 @@ module.exports.mudarAskTurma = async (context, pageToken) => {
 	if (!validTurma) { // if theres no id then it's not a valid turma
 		await context.sendText(flow.adminMenu.mudarTurma.turmaInvalida);
 	} else {
-		const transferedAluna = await alunos.update({ turma_id: validTurma }, { where: { cpf: context.state.adminAlunaFound.cpf } }).then(() => true).catch((err) => sentryError('Erro em mudarAskTurma update', err));
+		const transferedAluna = await alunos.update({ turma_id: validTurma }, { where: { cpf: context.state.adminAlunaFound.cpf }, raw: true, plain: true, returning: true }).then((r) => r[1]).catch((err) => sentryError('Erro em mudarAskTurma update', err)); // eslint-disable-line object-curly-newline
 		if (transferedAluna) {
 			const turmaNome = await db.getTurmaName(validTurma);
 			await admin.NotificationChangeTurma(context.state.adminAlunaFound.id, context.state.adminAlunaFound.turma_id, validTurma);
@@ -370,6 +389,7 @@ module.exports.mudarAskTurma = async (context, pageToken) => {
 			const count = await alunos.count({ where: { turma_id: validTurma } })
 				.then((alunas) => alunas).catch((err) => sentryError('Erro em mudarAskTurma getCount', err));
 			if (count !== false) { await context.sendText(flow.adminMenu.mudarTurma.turmaCount.replace('<COUNT>', count).replace('<TURMA>', turmaNome)); }
+			await mudarTurmaMail(transferedAluna.nome_completo, context.state.adminAlunaFound.turma_id, transferedAluna.turma_id, transferedAluna.email);
 			await context.setState({
 				dialog: 'adminMenu', desiredTurma: '', adminAlunaFound: '', adminAlunaCPF: '',
 			});
