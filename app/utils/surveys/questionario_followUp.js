@@ -79,12 +79,11 @@ async function saveIndicados(response, alunaID) {
 
 		await db.upsertAtividade(aluna.id, 'atividade_indicacao', answers);
 		if (errors && errors.length > 0) {
-			console.log('errors', errors);
 			const eMailToSend = await help.getMailAdmin();
 			const eMailText = await help.getIndicacaoErrorText(errors, aluna);
 			let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
 			html = await html.replace('[CONTEUDO_MAIL]', eMailText);
-			await mailer.sendHTMLMail(`Alertas na indicação da Aluna ${aluna.nome}`, eMailToSend, html, null, eMailText);
+			await mailer.sendHTMLMail(`Alertas na indicação da Aluna ${aluna.nome_completo}`, eMailToSend, html, null, eMailText);
 		}
 	} catch (error) {
 		help.sentryError('Erro em handleIndicacao', error);

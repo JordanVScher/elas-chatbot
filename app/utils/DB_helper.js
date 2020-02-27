@@ -548,13 +548,14 @@ async function upsertIndicadosRespostas(indicadoID, column, answers) {
 }
 
 async function upsertIndicado(indicado) {
-	const found = await indicados.findOne({ where: { aluno_id: indicado.aluno_id, email: indicado.email }, raw: true }).then((r) => r).catch((err) => sentryError('Erro no findOne do indicados', err));
+	const found = await indicados.findOne({ where: { aluno_id: indicado.aluno_id, nome: indicado.nome }, raw: true }).then((r) => r).catch((err) => sentryError('Erro no findOne do indicados', err));
 	const values = {
 		nome: indicado.nome, email: indicado.email, telefone: indicado.telefone, relacao_com_aluna: indicado.relacao_com_aluna, familiar: indicado.familiar,
 	};
 
 	if (typeof values.familiar !== 'boolean') delete values.familiar;
 	if (found && found.id) {
+	// if (found && found.id && indicado.email) { // without checking if indicado.email exists this overrides every indicado withou email (we can create indicados without an email)
 		return indicados.update(values, { where: { id: found.id }, raw: true, plain: true, returning: true }).then((r) => r[1]).catch((err) => sentryError('Erro no update do indicados', err)); // eslint-disable-line object-curly-newline
 	}
 	values.aluno_id = indicado.aluno_id; // need for insertion

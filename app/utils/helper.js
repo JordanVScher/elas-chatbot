@@ -271,7 +271,7 @@ const indicacaoErro = {
 };
 
 async function getIndicacaoErrorText(errors, aluna) {
-	let text = `Novos alertas com as indicações da aluna ${aluna.nome}:`;
+	let text = `Novos alertas com as indicações da aluna ${aluna.nome_completo}:`;
 
 	errors.forEach((e, i) => {
 		text += `\n\nAlerta ${i + 1} - ${indicacaoErro[e.id]}:`;
@@ -282,7 +282,7 @@ async function getIndicacaoErrorText(errors, aluna) {
 	});
 
 	text += '\n\nDados da aluna:';
-	if (aluna.nome) text += `\nNome: ${aluna.nome}`;
+	if (aluna.nome_completo) text += `\nNome: ${aluna.nome_completo}`;
 	if (aluna.turma) text += `\nTurma: ${aluna.turma}`;
 	if (aluna.cpf) text += `\nCPF: ${aluna.cpf}`;
 	if (aluna.email) text += `\nE-mail: ${aluna.email}`;
