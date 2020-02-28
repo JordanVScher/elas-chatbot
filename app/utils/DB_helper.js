@@ -221,7 +221,7 @@ async function getIndicadoRespostasAnswerNull(alunoID, column) {
 			RESPOSTAS.pos pos
 	FROM
 			alunos ALUNOS INNER JOIN indicacao_avaliadores INDICADOS ON ALUNOS.id = INDICADOS.aluno_id
-			INNER JOIN indicados_respostas RESPOSTAS ON RESPOSTAS.indicado_id = INDICADOS.id
+			LEFT JOIN indicados_respostas RESPOSTAS ON RESPOSTAS.indicado_id = INDICADOS.id
 	WHERE ALUNOS.id = '${alunoID}' AND RESPOSTAS.${column} IS NULL;
 `).spread((results, metadata) => { // eslint-disable-line no-unused-vars
 		console.log(`Got ${alunoID}'s respostas successfully!`);
@@ -383,7 +383,7 @@ async function getAlunasRespostasReport(turma) {
         RESPOSTA.pre as "Sondagem Pré", RESPOSTA.pos as "Sondagem Pós", RESPOSTA.atividade_1 as "Cadastro",
         RESPOSTA.avaliacao_modulo1 as "Avaliação Módulo 1", RESPOSTA.avaliacao_modulo2 as "Avaliação Módulo 2", RESPOSTA.avaliacao_modulo3 as "Avaliação Módulo 3"
         FROM alunos_respostas RESPOSTA
-        LEFT JOIN alunos ALUNO ON ALUNO.id = RESPOSTA.aluno_id
+        RIGHT JOIN alunos ALUNO ON ALUNO.id = RESPOSTA.aluno_id
         WHERE ALUNO.turma_id = ?
         ORDER BY RESPOSTA.id;
         `,
@@ -641,3 +641,10 @@ module.exports = {
 	upsertAtividade,
 	upsertRespostas,
 };
+
+async function aa() {
+	const a = await getAlunasRespostasReport(15);
+	console.log('a', a);
+}
+
+aa();
