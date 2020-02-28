@@ -641,10 +641,3 @@ module.exports = {
 	upsertAtividade,
 	upsertRespostas,
 };
-
-async function aa() {
-	const a = await getAlunasRespostasReport(15);
-	console.log('a', a);
-}
-
-aa();
