@@ -1,5 +1,4 @@
 const { questionario } = require('../../server/models');
-const { alunos } = require('../../server/models');
 const DB = require('../DB_helper');
 const { getResponseWithAnswers } = require('../../sm_api');
 const { getAnswerData } = require('./questionarios');
@@ -32,8 +31,10 @@ async function answerFollowUp(data, surveyName) {
 	}
 		break;
 	case 'indicacao360':
-		await followUp.saveIndicados(data.originalAnswer, data.id_aluno);
-		break;
+		return followUp.saveIndicados(data.originalAnswer, data.id_aluno);
+	case 'avaliador360pre':
+	case 'avaliador360pos':
+		return followUp.saveAvaliacao360(surveyName, data.id_indicado, data.answer);
 	default:
 		console.log('Erro ao achar surveyName', surveyName);
 		break;
@@ -43,10 +44,7 @@ async function answerFollowUp(data, surveyName) {
 	return 'Fim';
 }
 
-// answerFollowUp(mock, 'indicacao360');
-
-
-async function saveAnswer(questionarioID, answerID, alunoCPF) {
+async function saveAnswer(questionarioID, answerID, alunoID, indicadoID) {
 	const survey = await questionario.findOne({ where: { id: questionarioID }, raw: true }).then((r) => r).catch((err) => sentryError('Erro no findOne do questionario', err));
 	const answer = await getResponseWithAnswers(survey.idSM, answerID);
 	const originalAnswer = JSON.parse(JSON.stringify(answer));
@@ -54,8 +52,9 @@ async function saveAnswer(questionarioID, answerID, alunoCPF) {
 	const { error, data } = await getAnswerData(answer, questionarioID, survey.name); // eslint-disable-line no-unused-vars
 	if (error) return { error, data };
 	data.originalAnswer = originalAnswer;
-	if (alunoCPF) { data.answer.cpf = alunoCPF.toString(); }
-	if (!data.id_aluno) data.id_aluno = await alunos.findOne({ where: { cpf: data.answer.cpf.toString() }, attributes: ['id'], raw: true }).then((r) => (r ? r.id : null)).catch((err) => sentryError('Erro no findOne do alunos', err));
+	if (alunoID) { data.id_aluno = alunoID; data.aluno_id = alunoID; }
+	if (indicadoID) { data.id_indicado = indicadoID; data.indicado_id = indicadoID; }
+
 	const res = await DB.upsertRespostas(data.id_surveymonkey, data);
 	if (res && res.id) {
 		console.log('Salvou nova resposta com sucesso');

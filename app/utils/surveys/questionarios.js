@@ -46,7 +46,8 @@ async function getAllQuestionarioSyncs() {
 
 		return res;
 	} catch (error) {
-		return sentryError('Erro em getAllQuestionarioSyncs', error);
+		sentryError('Erro em getAllQuestionarioSyncs', error);
+		return false;
 	}
 }
 
@@ -96,7 +97,7 @@ async function getAnswerData(answer, questionarioID, questionarioName) {
 		} else {
 			erros = `Erro ao buscar o id do aluno pelo cpf! cpf: ${params.cpf}\n`;
 		}
-	} else if (params.indicaid && params.indicaid) {
+	} else if (params.indicaid) {
 		const indicadoID = await model.indicacao_avaliadores.findOne({ where: { id: params.indicaid }, attributes: ['id'], raw: true }).then((r) => (r ? r.id : null)).catch((err) => sentryError('Erro no findOne do indicados', err));
 		if (indicadoID) {
 			data.id_indicado = indicadoID;

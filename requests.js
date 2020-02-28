@@ -171,10 +171,10 @@ async function saveNewAnswer(req, res) {
 		const securityToken = body.security_token;
 		if (securityToken !== process.env.SECURITY_TOKEN_MA) {
 			res.status(401); res.send('Unauthorized!');
-		} else if (!body.questionarioID || !body.answerID || !body.alunoCPF) {
-			res.status(401); res.send('body.questionarioID or body.answerIDor body.alunoCPF missing');
+		} else if (!body.questionarioID || !body.answerID || (!body.alunoID && !body.indicadoID)) {
+			res.status(401); res.send('questionarioID or answerIDor or alunoID or indicadoID missing');
 		} else {
-			const result = await saveAnswer(body.questionarioID, body.answerID, body.alunoCPF);
+			const result = await saveAnswer(body.questionarioID, body.answerID, body.alunoID, body.indicadoID);
 			res.status(200); res.send(result);
 		}
 	}

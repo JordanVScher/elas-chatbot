@@ -40,7 +40,8 @@ async function checkUserOnLabel(PSID, labelID, pageToken) {
 		if (theOneLabel) { return theOneLabel; }
 		return false;
 	} catch (error) {
-		return sentryError('Erro em checkUserOnLabel', error);
+		sentryError('Erro em checkUserOnLabel', error);
+		return false;
 	}
 }
 
@@ -54,7 +55,8 @@ async function checkUserOnLabelName(PSID, labelName, pageToken) {
 		if (theOneLabel) { return theOneLabel; }
 		return false;
 	} catch (error) {
-		return sentryError('Erro em checkUserOnLabel', error);
+		sentryError('Erro em checkUserOnLabel', error);
+		return false;
 	}
 }
 
@@ -71,7 +73,8 @@ async function getLabelID(labelName, pageToken, create = true) {
 		}
 		return undefined;
 	} catch (error) {
-		return sentryError('Erro em getLabelID', error);
+		sentryError('Erro em getLabelID', error);
+		return false;
 	}
 }
 

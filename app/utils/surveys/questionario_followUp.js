@@ -2,7 +2,7 @@ const fs = require('fs');
 const aux = require('./questionario_aux');
 const help = require('../helper');
 const mailer = require('../mailer');
-const db = require('../DB_helper');
+const DB = require('../DB_helper');
 const addQueue = require('../notificationAddQueue');
 const { surveysMaps } = require('../sm_maps');
 const { alunos } = require('../../server/models');
@@ -41,7 +41,7 @@ async function saveIndicados(response, alunaID) {
 					if (!ind.email) errors.push({ id: 1, indicado: ind });
 					if (ind.email && (ind.email === aluna.email)) errors.push({ id: 2, indicado: ind });
 					ind.aluno_id = aluna.id; ind.familiar = false;
-					await db.upsertIndicado(ind);
+					await DB.upsertIndicado(ind);
 				}
 			} catch (error) {
 				help.sentryError(`Erro ao salvar indicado ${ind.id}`, { indicado: ind, error });
@@ -64,7 +64,7 @@ async function saveIndicados(response, alunaID) {
 					if (!f.email) errors.push({ id: 3, indicado: f });
 					if (f.email && (f.email === aluna.email)) errors.push({ id: 4, indicado: f });
 					f.aluno_id = aluna.id; f.familiar = true;
-					await db.upsertIndicado(f);
+					await DB.upsertIndicado(f);
 				}
 			} catch (error) {
 				help.sentryError(`Erro ao salvar familiar ${f.id} `, { familiar: f, error });
@@ -77,7 +77,7 @@ async function saveIndicados(response, alunaID) {
 		let answers = indicacao.concat(familiar);
 		answers = await aux.addCustomParametersToAnswer(answers, response.custom_variables);
 
-		await db.upsertAtividade(aluna.id, 'atividade_indicacao', answers);
+		await DB.upsertAtividade(aluna.id, 'atividade_indicacao', answers);
 		if (errors && errors.length > 0) {
 			const eMailToSend = await help.getMailAdmin();
 			const eMailText = await help.getIndicacaoErrorText(errors, aluna);
@@ -86,11 +86,30 @@ async function saveIndicados(response, alunaID) {
 			await mailer.sendHTMLMail(`Alertas na indicação da Aluna ${aluna.nome_completo}`, eMailToSend, html, null, eMailText);
 		}
 	} catch (error) {
-		help.sentryError('Erro em handleIndicacao', error);
+		help.sentryError('Erro em saveIndicados', error);
+	}
+}
+
+/**
+ * @description Saves the answers from both the indicados_questionarios (avaliador360pre or avaliador360pos)
+ * @param {string} surveyName The name of the survey being answered (from questionario table), we use it to find the name of the column
+ * @param {integer} indicadoID ID of the indicado this answer belongs to
+ * @param {json} answer the formated answer
+ * @returns {string} description of execution result
+ */
+async function saveAvaliacao360(surveyName, indicadoID, answer) {
+	try {
+		const columnName = { avaliador360pre: 'pre', avaliador360pos: 'pos' };
+		const res = await DB.upsertIndicadosRespostas(indicadoID, columnName[surveyName], answer);
+		if (res && res.id) return `Salvou ${surveyName} com sucesso!`;
+		throw new Error({ msg: 'Erro ao salvar avaliação 360', err: res });
+	} catch (error) {
+		help.sentryError('Erro em saveIndicados', error);
+		return 'Erro em saveIndicados';
 	}
 }
 
 
 module.exports = {
-	saveIndicados,
+	saveIndicados, saveAvaliacao360,
 };

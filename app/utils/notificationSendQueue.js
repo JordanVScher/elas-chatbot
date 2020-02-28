@@ -369,8 +369,8 @@ async function getIndicado(id, moduleDates, logID) {
 	}
 
 	await notificationLog.update({ sentEmail: 'Erro: indicado não tem e-mail', recipientData: result }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog11', err));
+	// sentryError('Erro: indicado não tem e-mail', result);
 	return false;
-	// return sentryError('Erro: indicado não tem e-mail', result);
 }
 
 async function getAluna(id, moduleDates, logID) {
@@ -378,7 +378,8 @@ async function getAluna(id, moduleDates, logID) {
 	if (result && (result.email || result['chatbot.fb_id'])) return extendRecipient(result, moduleDates, result.turma_id);
 
 	await notificationLog.update({ sentEmail: 'Erro: aluna não tem e-mail nem chatbot_id', recipientData: result }, { where: { id: logID } }).then((rowsUpdated) => rowsUpdated).catch((err) => sentryError('Erro no update do notificationLog12', err));
-	return sentryError('Erro: aluno não tem e-mail', result);
+	sentryError('Erro: aluno não tem e-mail', result);
+	return false;
 }
 
 async function replaceParameters(texts, newMap, recipient) {
@@ -413,10 +414,7 @@ async function checkShouldSendNotification(notification, moduleDates, today, not
 	}
 
 	console.log('currentRule', currentRule);
-	if (!currentRule) {
-		return false;
-		// return sentryError('currentRule undefined!', JSON.stringify({ currentNotification: notification }, null, 2));
-	}
+	if (!currentRule) { return false;	}
 	const dateToSend = await rules.getSendDate(ourTurma, currentRule); // the date to send
 	const moduloDate = new Date(ourTurma[`modulo${currentRule.modulo}`]);
 

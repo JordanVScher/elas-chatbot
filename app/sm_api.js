@@ -163,7 +163,8 @@ async function saveAnswers(qID) {
 
 		return data;
 	} catch (error) {
-		return sentryError('Erro em saveAnswers', { qID, error });
+		sentryError('Erro em saveAnswers', { qID, error });
+		return false;
 	}
 }
 
