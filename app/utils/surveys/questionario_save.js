@@ -61,7 +61,7 @@ async function saveAnswer(questionarioID, answerID, alunoID, indicadoID) {
 		return answerFollowUp(data, survey.name);
 	}
 
-	return { error: 'Erro ao salvar', data };
+	return { error: 'Erro ao salvar nova resposta', data, res };
 }
 
 module.exports = { saveAnswer };
