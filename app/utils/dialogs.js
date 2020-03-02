@@ -5,7 +5,7 @@ const db = require('./DB_helper');
 const help = require('./helper');
 const { sentryError } = require('./helper');
 const { sendAlunaToAssistente } = require('./sm_help');
-const { helpAddQueue } = require('./sm_help');
+// const { helpAddQueue } = require('./sm_help');
 const { sendMatricula } = require('./sm_help');
 const attach = require('./attach');
 const flow = require('./flow');
@@ -246,7 +246,7 @@ module.exports.receiveCSVAluno = async (csvLines, chatbotUserId, pageToken) => {
 							const newAluno = await db.upsertAlunoCadastro(element);
 							if (!oldAluno) { // send matricula to new aluno and create queue
 								await sendMatricula(element.Turma.nome, false, element.email, element.cpf);
-								await helpAddQueue(newAluno.id, newAluno.turma_id);
+								// await helpAddQueue(newAluno.id, newAluno.turma_id);
 							}
 							await sendAlunaToAssistente(element.nome_completo, element.email, element.cpf, element.Turma.nome);
 							if (!newAluno || newAluno.error || !newAluno.id) { // save line where error happended
