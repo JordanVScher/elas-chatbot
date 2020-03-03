@@ -287,8 +287,8 @@ module.exports = async (context) => {
 					await context.setState({ dialog: element });
 					await dialogs.sendCSV(context, context.state.searchTurma);
 				}
-				await dialogs.sendStatus(context, context.state.searchTurma, 'status.csv');
-				await dialogs.sendStatusIndicado(context, context.state.searchTurma, 'status_indicado.csv');
+				// await dialogs.sendStatus(context, context.state.searchTurma, 'status.csv');
+				// await dialogs.sendStatusIndicado(context, context.state.searchTurma, 'status_indicado.csv');
 				await context.sendText(flow.adminMenu.verTurma.txt2, await attach.getQR(flow.adminMenu.verTurma));
 				await context.setState({ dialog: 'alunosTurmaCSV' });
 			} else {

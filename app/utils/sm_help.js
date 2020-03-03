@@ -3,6 +3,7 @@ const { sentryError } = require('./helper');
 const { getIndicacaoErrorText } = require('./helper');
 const { getSameContatoEmailErrorText } = require('./helper');
 const matriculaLog = require('../server/models').matricula_mail_log;
+const donnaLog = require('../server/models').donna_mail_log;
 const notificationQueue = require('../server/models').notification_queue;
 const { getResponseWithAnswers } = require('../sm_api');
 const { getSurveyDetails } = require('../sm_api');
@@ -56,7 +57,11 @@ async function sendMatricula(turmaName, pagamentoID, buyerEmail, cpf) {
 		await matriculaLog.create({
 			sentTo: buyerEmail, sentAt: new Date(), atividadeLink: link, error: e && e.stack ? e.stack : e,
 		}).then((res) => res).catch((err) => sentryError('Erro em matriculaLog.create', err));
-	} catch (error) { sentryError('Erro sendMatricula', error); }
+	} catch (error) {
+		sentryError('Erro sendMatricula', {
+			error, turmaName, pagamentoID, buyerEmail, cpf,
+		});
+	}
 }
 
 async function sendMissingMatriculas() { // eslint-disable-line no-unused-vars
@@ -80,15 +85,19 @@ Não tem Messenger? Tudo bem, as mesmas notificações que a Donna enviar via Me
 `;
 
 async function sendDonnaMail(nome, email) {
-	let mailText = apresentacaoText;
-	let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Apresentar_Donna.html`, 'utf-8');
-	html = await html.replace('[nome]', nome); // add nome to mail template
-	mailText = await mailText.replace('[nome]', nome); // add nome to mail template
-	html = await html.replace(/<link_donna>/g, process.env.LINK_DONNA); // add chatbot link to mail template
-	mailText = await mailText.replace(/<link_donna>/g, process.env.LINK_DONNA); // add chatbot link to mail template
-	await mailer.sendHTMLMail(eMail.depoisMatricula.assunto, email, html, null, mailText);
+	try {
+		let mailText = apresentacaoText;
+		let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Apresentar_Donna.html`, 'utf-8');
+		html = await html.replace('[nome]', nome); // add nome to mail template
+		mailText = await mailText.replace('[nome]', nome); // add nome to mail template
+		html = await html.replace(/<link_donna>/g, process.env.LINK_DONNA); // add chatbot link to mail template
+		mailText = await mailText.replace(/<link_donna>/g, process.env.LINK_DONNA); // add chatbot link to mail template
+		const e = await mailer.sendHTMLMail(eMail.depoisMatricula.assunto, email, html, null, mailText);
+		await donnaLog.create({ sentTo: email, sentAt: new Date(), error: e && e.stack ? e.stack : e }).then((res) => res).catch((err) => sentryError('Erro em donnaLog.create', err));
+	} catch (error) {
+		sentryError('Erro sendDonnaMail', { error, nome, email });
+	}
 }
-
 
 async function helpAddQueue(alunoID, turmaID) {
 	const notificacoes = await notificationQueue.findAll({ where: { aluno_id: alunoID, sent_at: null, error: null }, raw: true }).then((r) => r).catch((err) => sentryError('Erro no findAll do notificationQueue', err));
