@@ -5,7 +5,7 @@ const { createServer } = require('bottender/restify');
 const corsMiddleware = require('restify-cors-middleware');
 const restify = require('restify');
 const handler = require('./handler');
-const { newSurveyResponse } = require('./utils/sm_help');
+const { receiveAnswerEvent } = require('./utils/surveys/questionario_callback');
 const pgAPI = require('./pg_api');
 const requests = require('../requests');
 const { cronLog } = require('./utils/cronjob');
@@ -70,15 +70,22 @@ server.get('/webhook', async (req, res) => {
 // receives new event from survey monkey webhook
 server.post('/webhook', async (req, res) => {
 	console.log('No webhook das respostas');
-
-	const body = JSON.parse(req.body);
-	if (body && body.filter_type === 'survey' && body.event_type === 'response_completed') {
-		newSurveyResponse(body);
+	let event = null;
+	if (req.body && typeof req.body === 'object') {
+		event = req.body;
+	} else {
+		event = JSON.parse(req.body);
 	}
+	if (event && event.filter_type === 'survey' && event.event_type === 'response_completed') {
+		console.log('event', event);
+		const resultado = receiveAnswerEvent(event);
+		res.status(200);
+		res.send(resultado);
+	}
+
 	res.status(200);
 	res.send();
 });
-
 
 server.post('/pagamento', async (req, res) => {
 	console.log('chegou no pagamento no post');

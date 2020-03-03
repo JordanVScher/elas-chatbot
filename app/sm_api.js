@@ -151,6 +151,15 @@ async function deleteOneWebhook(id) {
 	console.log('Deleted', JSON.stringify(result, null, 2));
 	return result;
 }
+async function getOneWebhook(id) {
+	let result = {};
+	try {
+		const res = await request(`${url}/webhooks/${id}`).set(headers);
+		result = await res.json();
+	} catch (error) { console.log('Erro em getOneWebhook', JSON.stringify(result, null, 2)); Sentry.captureMessage('Erro em deleteOneWebhook'); }
+	console.log('got', JSON.stringify(result, null, 2));
+	return result;
+}
 
 async function saveAnswers(qID) {
 	try {
@@ -226,4 +235,5 @@ module.exports = {
 	createNewWebhook,
 	deleteAllWebhooks,
 	saveAnswers,
+	getOneWebhook,
 };

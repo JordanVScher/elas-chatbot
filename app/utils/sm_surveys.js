@@ -23,15 +23,15 @@ module.exports = {
 		link: process.env.AVALIADOR360POS_LINK,
 		id: process.env.AVALIADOR360POS_ID,
 	},
-	module1: {
+	modulo1: {
 		link: process.env.MODULO1_LINK,
 		id: process.env.MODULO1_ID,
 	},
-	module2: {
+	modulo2: {
 		link: process.env.MODULO2_LINK,
 		id: process.env.MODULO2_ID,
 	},
-	module3: {
+	modulo3: {
 		link: process.env.MODULO3_LINK,
 		id: process.env.MODULO3_ID,
 	},

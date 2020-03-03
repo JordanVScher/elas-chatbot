@@ -51,99 +51,30 @@ async function getAllQuestionarioSyncs() {
 	}
 }
 
-async function formatAnswer(answer, questionarioName) {
-	try {
-		let res;
-		let currentMap = surveysMaps[questionarioName];
-		if (!currentMap) currentMap = await aux.buildPseudoMap(answer.survey_id); // build a generic map if we couldnt find a map (only works for the 3 avaliações)
-		if (currentMap) {
-			let respFormatado = await aux.getSpecificAnswers(currentMap, answer.pages);
-			respFormatado = await aux.replaceChoiceId(respFormatado, currentMap, answer.survey_id);
-			respFormatado = await aux.addCustomParametersToAnswer(respFormatado, answer.custom_variables);
 
-			if (!respFormatado) {
-				res = `Não foi possível formatar a resposta ${answer.id}`;
-			} else {
-				res = respFormatado;
-			}
-		} else {
-			res = `Não foi encontrado um mapa para o questionário ${answer.survey_id}`;
-		}
+// async function syncRespostas() {
+// 	const result = {};
+// 	const allSyncs = await getAllQuestionarioSyncs();
+// 	for (let s = 0; s < allSyncs.length; s++) {
+// 		const currentSync = allSyncs[s];
+// 		const answers = await smAPI.getEveryAnswer(currentSync.id_SM, currentSync.current_page);
+// 		for (let i = 0; i < answers.length; i++) {
+// 			const answer = answers[i];
+// 			let err = '';
+// 			const { error, data } = await getAnswerData(answer, currentSync.id_questionario, currentSync.name);
+// 			if (error) err = error;
+// 			if (data) {
+// 				const status = await model.respostas.create(data).then((r) => r.dataValues).catch((e) => sentryError(`Erro ao salvar resposta ${answer.id}.`, e));
+// 				if (!status || !status.id) err += 'Não foi salvo com sucesso no banco!';
+// 			}
 
-		return res;
-	} catch (error) {
-		sentryError('erro no formatAnswer', error);
-		return 'Erro ao formatar resposta';
-	}
-}
+// 			if (err) result[answer.id] = err;
+// 		}
+// 	}
 
-
-async function getAnswerData(answer, questionarioID, questionarioName) {
-	let erros = null;
-	const data = {
-		id_surveymonkey: answer.id,
-		id_questionario: questionarioID,
-		URL: answer.href,
-		id_aluno: null,
-		id_indicado: null,
-	};
-
-	// check if we have any custom_variables to identify who answered this question
-	const params = answer.custom_variables;
-	if (params.cpf && params.cpf.toString()) {
-		const alunoID = await model.alunos.findOne({ where: { cpf: params.cpf.toString() }, attributes: ['id'], raw: true }).then((r) => (r ? r.id : null)).catch((err) => sentryError('Erro no findOne do alunos', err));
-		if (alunoID) {
-			data.id_aluno = alunoID;
-		} else {
-			erros = `Erro ao buscar o id do aluno pelo cpf! cpf: ${params.cpf}\n`;
-		}
-	} else if (params.indicaid) {
-		const indicadoID = await model.indicacao_avaliadores.findOne({ where: { id: params.indicaid }, attributes: ['id'], raw: true }).then((r) => (r ? r.id : null)).catch((err) => sentryError('Erro no findOne do indicados', err));
-		if (indicadoID) {
-			data.id_indicado = indicadoID;
-		} else {
-			erros = `Erro ao salvar o id do indicado! indicado: ${params.indicaid}\n`;
-		}
-	} else {
-		erros = 'Não temos nenhum parâmetro útil.\n';
-	}
-
-	const respostasFormatadas = await formatAnswer(answer, questionarioName);
-	if (typeof respostasFormatadas === 'object') {
-		data.answer = respostasFormatadas;
-	} else if (respostasFormatadas) {
-		erros += respostasFormatadas;
-	} else {
-		erros = 'Não foi possível formatar as respostas\n';
-	}
-
-	return { erros, data };
-}
-
-
-async function syncRespostas() {
-	const result = {};
-	const allSyncs = await getAllQuestionarioSyncs();
-	for (let s = 0; s < allSyncs.length; s++) {
-		const currentSync = allSyncs[s];
-		const answers = await smAPI.getEveryAnswer(currentSync.id_SM, currentSync.current_page);
-		for (let i = 0; i < answers.length; i++) {
-			const answer = answers[i];
-			let err = '';
-			const { error, data } = await getAnswerData(answer, currentSync.id_questionario, currentSync.name);
-			if (error) err = error;
-			if (data) {
-				const status = await model.respostas.create(data).then((r) => r.dataValues).catch((e) => sentryError(`Erro ao salvar resposta ${answer.id}.`, e));
-				if (!status || !status.id) err += 'Não foi salvo com sucesso no banco!';
-			}
-
-			if (err) result[answer.id] = err;
-		}
-	}
-
-	return result;
-}
+// 	return result;
+// }
 
 module.exports = {
-	loadQuestionarioData, getAllQuestionarioSyncs, syncRespostas, getAnswerData,
+	loadQuestionarioData, getAllQuestionarioSyncs,
 };

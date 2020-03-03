@@ -433,13 +433,13 @@ async function newSurveyResponse(event) {
 	case surveysInfo.atividade1.id:
 		await handleAtividadeOne(responses);
 		break;
-	case surveysInfo.module1.id:
+	case surveysInfo.modulo1.id:
 		await handleAvaliacao(responses, 'avaliacao_modulo1');
 		break;
-	case surveysInfo.module2.id:
+	case surveysInfo.modulo2.id:
 		await handleAvaliacao(responses, 'avaliacao_modulo2');
 		break;
-	case surveysInfo.module3.id:
+	case surveysInfo.modulo3.id:
 		await handleAvaliacao(responses, 'avaliacao_modulo3');
 		break;
 	case surveysInfo.indicacao360.id:
