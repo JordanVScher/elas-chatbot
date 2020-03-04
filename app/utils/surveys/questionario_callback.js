@@ -80,12 +80,8 @@ async function getFormatedAnswer(answer, questionarioName) {
 	}
 }
 
-async function handleResponse(surveySMID, responseID) {
+async function handleResponse(survey, responseID) {
 	try {
-		// get questionario details
-		const survey = await questionario.findOne({ where: { id_surveymonkey: surveySMID.toString() }, raw: true }).then((r) => r).catch((err) => help.sentryError('Erro no findOne do questionario', err));
-		if (!survey) { throw new Error('Erro: Não foi encontrado o questionário'); }
-
 		// load full answer
 		const fullAnswer = await getResponseWithAnswers(survey.idSM, responseID);
 		if (!fullAnswer) { throw new Error('Erro: Não foi encontrada a resposta'); }
@@ -108,7 +104,7 @@ async function handleResponse(surveySMID, responseID) {
 		if (!res || !res.id) { throw new Error('Erro: Não foi possível salvar a resposta na tabela'); }
 		return followUpResposta(survey.name, answer, surveyTaker.aluno, surveyTaker.indicado);
 	} catch (error) {
-		help.sentryError('Erro em handleResponse', { error, surveySMID, responseID });
+		help.sentryError('Erro em handleResponse', { error, survey, responseID });
 		return 'Erro em handleResponse';
 	}
 }
@@ -117,7 +113,10 @@ async function receiveAnswerEvent(event) {
 	try {
 		const { id } = await events.create({ sm_event_id: event.event_id, sm_survey_id: event.filter_id, answer_sm_id: event.object_id }).then((r) => r.dataValues).catch((err) => help.sentryError('Erro no update do events', err));
 		if (!id) throw new Error('Erro: evento não foi salvo corretamente');
-		await handleResponse(event.filter_id, event.object_id);
+		// get questionario details
+		const survey = await questionario.findOne({ where: { id_surveymonkey: event.filter_id.toString() }, raw: true }).then((r) => r).catch((err) => help.sentryError('Erro no findOne do questionario', err));
+		if (!survey) { throw new Error('Erro: Não foi encontrado o questionário'); }
+		await handleResponse(survey, event.object_id);
 	} catch (error) {
 		help.sentryError('Erro em receiveAnswerEvent', { error, events });
 	}
