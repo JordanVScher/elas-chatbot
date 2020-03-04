@@ -121,6 +121,16 @@ module.exports = {
 		},
 		depoisMatricula: {
 			assunto: 'Matrícula Confirmada. Conheça a Donna! - Programa ELAS',
+			textoBody: `Olá, [nome]
+
+Recebemos sua matrícula com sucesso!
+
+Gostaríamos de te apresentar a Donna, assistente digital do Programa ELAS.Ao entrar com contato com ela via Messenger, você receberá todas as notificações importantes sobre o curso, como as atividades pré e pós módulos.Ela também te lembrará as datas, horários e local, além de enviar os links importantes das atividades.Que tal conversar com a Donna?
+printscreen do facebook
+Você só precisa ter ou criar uma conta no Messenger(Facebook) .Clique em "Começar" e em seguida clique em "Já sou aluna".A Donna irá perguntar seu CPF e pronto, você receberá todas as informações! Se você desejar bater um papo com ela, a Donna responderá o que souber, caso contrário uma representante da Escola poderá entrar em contato.
+Acesse a Donna nesse link: <link_donna>
+
+Não tem Messenger? Tudo bem, as mesmas notificações que a Donna enviar via Messenger, ela te enviará também por e-mail. Então, fique atenta ao seu endereço eletrônico, por ele você receberá informações importantes!`,
 			texto: 'mail_template/ELAS_Apresentar_Donna.html',
 		},
 	},

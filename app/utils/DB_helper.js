@@ -5,6 +5,7 @@ const { removeUndefined } = require('./admin_menu/CSV_format');
 const indicados = require('../server/models').indicacao_avaliadores;
 const indicadosRespostas = require('../server/models').indicados_respostas;
 const alunosRespostas = require('../server/models').alunos_respostas;
+const { pagamentos } = require('../server/models');
 const { respostas } = require('../server/models');
 const { alunos } = require('../server/models');
 
@@ -301,17 +302,7 @@ async function upsertUser(FBID, userName) {
 }
 
 async function updateAlunoOnPagamento(pagamentoId, alunoId) {
-	let date = new Date();
-	date = await moment(date).format('YYYY-MM-DD HH:mm:ss');
-
-	await sequelize.query(`
-	UPDATE pagamentos
-		SET aluno_id = '${alunoId}', updated_at = '${date}'
-	WHERE
-   id = '${pagamentoId}';
-	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
-		console.log(`Updated pagamento ${pagamentoId} successfully!`);
-	}).catch((err) => { sentryError('Erro em updateAlunoOnPagamento =>', err); });
+	return pagamentos.update({ alunoID: alunoId }, { where: { id: pagamentoId }, raw: true, plain: true, returning: true }).then((r) => r[1]).catch((err) => sentryError('Erro no update do model', err)); // eslint-disable-line object-curly-newline
 }
 
 async function checkCPF(cpf) {

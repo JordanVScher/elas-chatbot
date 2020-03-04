@@ -12,10 +12,10 @@ const followUp = require('./questionario_followUp');
 async function followUpResposta(surveyName, answer, aluno, indicado) {
 	switch (surveyName) {
 	case 'atividade1':
-		await followUp.handleAtividadeOne(answer);
+		await followUp.handleAtividadeOne(answer, aluno);
 		break;
 	case 'indicacao360':
-		return followUp.saveIndicados(answer, aluno.id);
+		return followUp.saveIndicados(answer, aluno);
 	case 'avaliador360pre':
 	case 'avaliador360pos':
 		return followUp.saveAvaliacao360(surveyName, answer, indicado.id);

@@ -3,54 +3,68 @@ const aux = require('./questionario_aux');
 const help = require('../helper');
 const mailer = require('../mailer');
 const DB = require('../DB_helper');
-const addQueue = require('../notificationAddQueue');
+const { eMail } = require('../flow');
+const AddQueue = require('../notificationAddQueue');
+const { sendAlunaToAssistente } = require('../labels');
 const { surveysMaps } = require('../sm_maps');
-const { alunos } = require('../../server/models');
-
-// async function handleAtividadeOne(answer, aluno) {
-// 	try {
-// 		// let sameContatoEmail = false;
-// 		// const cadastroStatus = await DB.getAlunaRespostaCadastro(aluno.cpf); // check if aluna has answered this questionario before
-// 		// if (cadastroStatus) throw new Error('Aluna respondeu o cadastro novamente');
-
-// 		// answer.added_by_admin = false; // user wasnt added by the admins
-// 		// answer.turma_id = aluno.turma_id;
-// 		// const newAluna = await DB.upsertAlunoCadastro(answer);
-// 		// if (!newAluna || !newAluna.id) throw new Error({ msg: 'Erro ao salvar nova aluna', newAluna });
-
-// 		// await DB.upsertAtividade(newUser.id, 'atividade_1', answer);
-// 		// if (answer.pgid && Number.isInteger(answer.pgid)) await DB.updateAlunoOnPagamento(answer.pgid, newAluna.id);
-// 		// await helpAddQueue(newAluna.id, newAluna.turma_id);
-// 		// await sendAlunaToAssistente(newAluna.nome_completo, newAluna.email, newAluna.cpf, answer.turma);
-// 		// if (newAluna.email === newAluna.contato_emergencia_email) sameContatoEmail = true;
+const donnaLog = require('../../server/models').donna_mail_log;
 
 
-// 		// /* sending "Apresentação" mail */
-// 		// sendDonnaMail(answer.nome_completo, answer.email);
+async function sendDonnaMail(nome, email) {
+	try {
+		let mailText = eMail.depoisMatricula.textoBody;
+		let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Apresentar_Donna.html`, 'utf-8');
+		html = await html.replace('[nome]', nome); // add nome to mail template
+		mailText = await mailText.replace('[nome]', nome); // add nome to mail template
+		html = await html.replace(/<link_donna>/g, process.env.LINK_DONNA); // add chatbot link to mail template
+		mailText = await mailText.replace(/<link_donna>/g, process.env.LINK_DONNA); // add chatbot link to mail template
+		const e = await mailer.sendHTMLMail(eMail.depoisMatricula.assunto, email, html, null, mailText);
+		await donnaLog.create({ sentTo: email, sentAt: new Date(), error: e && e.stack ? e.stack : e }).then((res) => res).catch((err) => sentryError('Erro em donnaLog.create', err));
+	} catch (error) {
+		help.sentryError('Erro no sendDonnaMail', { error, nome, email });
+	}
+}
 
-// 		// if (sameContatoEmail) {
-// 		// 	const eMailToSend = await getMailAdmin();
-// 		// 	const eMailText = await getSameContatoEmailErrorText(newUser);
-// 		// 	let html2 = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
-// 		// 	html2 = await html2.replace('[CONTEUDO_MAIL]', eMailText);
-// 		// 	await mailer.sendHTMLMail(`Alerta no cadastro da Aluna ${newUser.nome_completo}`, eMailToSend, html2, null, eMailText);
-// 		// }
-// 	} catch (error) {
-// 		await help.sentryError('Erro emhandleAtividadeOne', { answer, newUser });
+async function handleAtividadeOne(answer, aluno) {
+	try {
+		const cadastroStatus = await DB.getAlunaRespostaCadastro(aluno.cpf); // check if aluna has answered this questionario before
+		if (cadastroStatus) throw new Error('Aluna respondeu o cadastro novamente');
 
-// 		return error;
-// 	}
-// }
+		answer.added_by_admin = false; // user wasnt added by the admins
+		answer.turma_id = aluno.turma_id;
 
-async function saveIndicados(baseAnswers, alunaID) {
+		const newAluna = await DB.upsertAlunoCadastro(answer);
+		if (!newAluna || !newAluna.id) throw new Error({ msg: 'Erro ao salvar nova aluna', newAluna });
+		const savedAtividade = await DB.upsertAtividade(newAluna.id, 'atividade_1', answer);
+		if (!savedAtividade || !savedAtividade.id) throw new Error({ msg: 'Erro ao salvar atividade_1', savedAtividade });
+
+		if (answer.pgid && Number.isInteger(answer.pgid)) { // if matricula was answered after an user bought the course
+			const savedPagamento = await DB.updateAlunoOnPagamento(answer.pgid, newAluna.id);
+			if (!savedPagamento || !savedPagamento.id) { help.sentryError('Erro ao atualizar pagamento!', { savedPagamento, newAluna, answer	}); }
+		}
+
+		await AddQueue.helpAddQueue(newAluna.id, newAluna.turma_id);
+		await sendAlunaToAssistente(newAluna.nome_completo, newAluna.email, newAluna.cpf, answer.turma);
+		// sending "Apresentação" mail
+		sendDonnaMail(answer.nome_completo, answer.email);
+
+		if (newAluna.email === newAluna.contato_emergencia_email) { // warn admins of aluna having save email as emergency contact
+			const eMailToSend = await help.getMailAdmin();
+			const eMailText = await help.getSameContatoEmailErrorText(newAluna);
+			let html2 = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
+			html2 = await html2.replace('[CONTEUDO_MAIL]', eMailText);
+			await mailer.sendHTMLMail(`Alerta no cadastro da Aluna ${newAluna.nome_completo}`, eMailToSend, html2, null, eMailText);
+		}
+		return true;
+	} catch (error) {
+		help.sentryError('Erro em handleAtividadeOne', { error, answer, aluno });
+		return false;
+	}
+}
+
+async function saveIndicados(baseAnswers, aluna) {
 	try {
 		const errors = [];
-
-		// console.log('response', response);
-
-		// const baseAnswers = await aux.formatAnswers(response.pages[0].questions);
-		const aluna = await alunos.findOne({ where: { id: alunaID }, raw: true }).then((r) => (r)).catch((err) => help.sentryError('Erro no findOne do alunos', err));
-
 		const full = surveysMaps.indicacao360;
 
 		const indicacao360 = [];
@@ -109,7 +123,7 @@ async function saveIndicados(baseAnswers, alunaID) {
 			}
 		}
 
-		await addQueue.addNewNotificationIndicados(aluna.id, aluna.turma_id, true);
+		await AddQueue.addNewNotificationIndicados(aluna.id, aluna.turma_id, true);
 
 		await DB.upsertAtividade(aluna.id, 'atividade_indicacao', baseAnswers);
 		if (errors && errors.length > 0) {
@@ -139,7 +153,7 @@ async function saveAvaliacao360(surveyName, answer, indicadoID) {
 		throw new Error({ msg: 'Erro ao salvar avaliação 360', err: res });
 	} catch (error) {
 		help.sentryError('Erro em saveAvaliacao360', error);
-		return 'Erro em saveAvaliacao360';
+		return false;
 	}
 }
 
@@ -158,7 +172,7 @@ async function saveSondagem(surveyName, answer, alunoID) {
 		throw new Error({ msg: 'Erro ao salvar sondagem', err: res });
 	} catch (error) {
 		help.sentryError('Erro em saveSondagem', error);
-		return 'Erro em saveSondagem';
+		return false;
 	}
 }
 
@@ -177,11 +191,11 @@ async function saveAvaliacaoModulo(surveyName, answer, alunoID) {
 		throw new Error({ msg: 'Erro ao salvar avaliacão', err: res });
 	} catch (error) {
 		help.sentryError('Erro em saveAvaliacaoModulo', error);
-		return 'Erro em saveAvaliacaoModulo';
+		return false;
 	}
 }
 
 
 module.exports = {
-	saveIndicados, saveAvaliacao360, saveSondagem, saveAvaliacaoModulo,
+	saveIndicados, saveAvaliacao360, saveSondagem, saveAvaliacaoModulo, handleAtividadeOne,
 };

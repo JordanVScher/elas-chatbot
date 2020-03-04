@@ -1,6 +1,7 @@
 const req = require('requisition');
 const { handleRequestAnswer } = require('./helper');
 const { sentryError } = require('./helper');
+const assistenteAPI = require('../chatbot_api');
 
 async function createNewLabel(labelName, pageToken) {
 	return handleRequestAnswer(await req.post('https://graph.facebook.com/v4.0/me/custom_labels').query({ name: labelName, access_token: pageToken }));
@@ -96,6 +97,12 @@ async function unlinkUserToLabelByName(PSID, labelName, pageToken) {
 	return false;
 }
 
+// Add new aluna as new recipient in the assistente. In this case, the recipient doesn't need an fb_id, the cpf doubles as a key
+async function sendAlunaToAssistente(name, email, cpf, turma) {
+	const assistenteData = await assistenteAPI.getChatbotData(process.env.PAGE_ID);
+	await assistenteAPI.postRecipient(assistenteData.user_id, { name, email, cpf });
+	await assistenteAPI.postRecipientLabelCPF(assistenteData.user_id, cpf, turma);
+}
 
 module.exports = {
 	createNewLabel,
@@ -110,4 +117,5 @@ module.exports = {
 	getLabelID,
 	linkUserToLabelByName,
 	unlinkUserToLabelByName,
+	sendAlunaToAssistente,
 };

@@ -180,9 +180,16 @@ async function addMissingNotificationOnQueue(turmaID) {
 	}
 }
 
+async function helpAddQueue(alunoID, turmaID) {
+	const notificacoes = await notificationQueue.findAll({ where: { aluno_id: alunoID, sent_at: null, error: null }, raw: true }).then((r) => r).catch((err) => sentryError('Erro no findAll do notificationQueue', err));
+	if (!notificacoes || notificacoes.length === 0) {
+		await addNewNotificationAlunas(alunoID, turmaID);
+	}
+}
+
 
 module.exports = {
-	addNewNotificationAlunas, addNewNotificationIndicados, addAvaliadorOnQueue, addMissingAlunoNotification, seeDataQueue, addMissingNotificationOnQueue,
+	addNewNotificationAlunas, addNewNotificationIndicados, addAvaliadorOnQueue, addMissingAlunoNotification, seeDataQueue, addMissingNotificationOnQueue, helpAddQueue,
 };
 
 // addNewNotificationAlunas(120, 15);
