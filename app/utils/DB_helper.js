@@ -324,8 +324,7 @@ async function linkUserToCPF(FBID, cpf) {
 	await sequelize.query(`
 	UPDATE chatbot_users
 		SET cpf = '${cpf}', updated_at = '${date}'
-	WHERE
-   fb_id = '${FBID}';
+	WHERE fb_id = '${FBID}';
 	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
 		console.log(`Added ${FBID}'s cpf successfully!`);
 	}).catch((err) => { sentryError('Erro em linkUserToCPF =>', err); });
@@ -475,12 +474,12 @@ async function getAllIndicadosFromAlunaID(alunoID) {
 	return result;
 }
 
-async function getAlunaRespostaCadastro(alunoCPF) {
+async function getAlunaRespostaCadastro(alunoID) {
 	const result = await sequelize.query(`
 	SELECT RESPOSTAS.atividade_1 as "cadastro"
 	FROM alunos_respostas AS RESPOSTAS
 	LEFT JOIN alunos ALUNO ON ALUNO.id = RESPOSTAS.aluno_id
-	WHERE ALUNO.cpf = '${alunoCPF}' LIMIT 1;
+	WHERE ALUNO.id = '${alunoID}' LIMIT 1;
 	`).spread((r) => r).catch((err) => { sentryError('Erro em getAlunaRespostaCadastro =>', err); });
 	if (!result || result.length === 0 || result.cadastro === null || result[0].cadastro === null) {
 		return false;
@@ -501,6 +500,7 @@ async function getDISCFromID(turmaID) {
 	`).spread((r) => (r && r[0] && r[0].disc ? r[0].disc : false)).catch((err) => { sentryError('Erro em getDISCFromID =>', err); });
 	return result;
 }
+
 async function getAlunoRespostasAll(alunoID) {
 	const result = await sequelize.query(`
 	SELECT * FROM alunos_respostas where aluno_id = ${alunoID}
@@ -586,6 +586,10 @@ async function upsertRespostas(answerID, data) {
 	return respostas.create(data).then((r) => r.dataValues).catch((err) => sentryError('Erro no create do respostas', err)); // eslint-disable-line object-curly-newline
 }
 
+async function respostaUdpdateAlunoID(respostaID, alunoID) {
+	return respostas.update({ id_aluno: alunoID }, { where: { id: respostaID }, raw: true, plain: true, returning: true }).then((r) => (r && r[1] ? r[1] : false)).catch((err) => sentryError('Erro no update do respostas', err)); // eslint-disable-line object-curly-newline
+}
+
 
 module.exports = {
 	upsertUser,
@@ -631,4 +635,5 @@ module.exports = {
 	upsertIndicado,
 	upsertAtividade,
 	upsertRespostas,
+	respostaUdpdateAlunoID,
 };

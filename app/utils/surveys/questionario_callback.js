@@ -35,7 +35,7 @@ async function findSurveyTaker(answer) {
 	try {
 		const params = answer && answer.custom_variables ? answer.custom_variables : null;
 		if (!params) { throw new Error('Erro: chegou a resposta de um questionário sem parâmetros customizados'); }
-		let aluno = null;
+		let aluno = {};
 		let indicado = null;
 
 		if (params && params.cpf && params.cpf.toString()) {
@@ -43,10 +43,15 @@ async function findSurveyTaker(answer) {
 			if (!aluno || !aluno.id) throw new Error('Erro: Um aluno de cpf inválido respondeu o questinário');
 		}
 
+		if (params && params.pgid) aluno.pgid = params.pgid;
+		if (params && params.turma) aluno.turma = params.turma;
+		if (aluno && Object.keys(aluno).length === 0) aluno = null;
+
 		if (params && params.indicaid) {
 			indicado = await indicados.findOne({ where: { id: params.indicaid }, raw: true }).then((r) => r).catch((err) => help.sentryError('Erro no findOne do indicados', err));
 			if (!indicado || !indicado.id) throw new Error('Erro: Um indicado inválido respondeu o questinário');
 		}
+
 		return { aluno, indicado };
 	} catch (error) {
 		help.sentryError('Erro em findSurveyTaker', { error, answer });
@@ -80,16 +85,8 @@ async function getFormatedAnswer(answer, questionarioName) {
 	}
 }
 
-async function handleResponse(survey, responseID) {
+async function handleResponse(survey, fullAnswer, surveyTaker) {
 	try {
-		// load full answer
-		const fullAnswer = await getResponseWithAnswers(survey.idSM, responseID);
-		if (!fullAnswer) { throw new Error('Erro: Não foi encontrada a resposta'); }
-
-		// find out who answered this survey
-		const surveyTaker = await findSurveyTaker(fullAnswer);
-		if (!surveyTaker || (!surveyTaker.aluno && !surveyTaker.indicado)) { throw new Error({ msg: 'Erro: Não foi encontrado o Survey Taker', surveyTaker }); }
-
 		// format and save answer
 		const answer = await getFormatedAnswer(fullAnswer, survey.name);
 		if (!answer) { throw new Error('Erro: Não foi possível formatar a resposta'); }
@@ -102,9 +99,11 @@ async function handleResponse(survey, responseID) {
 		if (surveyTaker.indicado) { respostaData.id_aluno = null; respostaData.id_indicado = surveyTaker.indicado.id; }
 		const res = await DB.upsertRespostas(respostaData.id_surveymonkey, respostaData);
 		if (!res || !res.id) { throw new Error('Erro: Não foi possível salvar a resposta na tabela'); }
+		if (survey.name === 'atividade1') surveyTaker.aluno.newAnswerID = res.id;
+
 		return followUpResposta(survey.name, answer, surveyTaker.aluno, surveyTaker.indicado);
 	} catch (error) {
-		help.sentryError('Erro em handleResponse', { error, survey, responseID });
+		help.sentryError('Erro em handleResponse', { error, survey, fullAnswer });
 		return 'Erro em handleResponse';
 	}
 }
@@ -113,10 +112,20 @@ async function receiveAnswerEvent(event) {
 	try {
 		const { id } = await events.create({ sm_event_id: event.event_id, sm_survey_id: event.filter_id, answer_sm_id: event.object_id }).then((r) => r.dataValues).catch((err) => help.sentryError('Erro no update do events', err));
 		if (!id) throw new Error('Erro: evento não foi salvo corretamente');
+
 		// get questionario details
 		const survey = await questionario.findOne({ where: { id_surveymonkey: event.filter_id.toString() }, raw: true }).then((r) => r).catch((err) => help.sentryError('Erro no findOne do questionario', err));
 		if (!survey) { throw new Error('Erro: Não foi encontrado o questionário'); }
-		await handleResponse(survey, event.object_id);
+
+		// load full answer
+		const fullAnswer = await getResponseWithAnswers(survey.idSM, event.object_id);
+		if (!fullAnswer) { throw new Error('Erro: Não foi encontrada a resposta'); }
+
+		// find out who answered this survey
+		const surveyTaker = await findSurveyTaker(fullAnswer, survey.name);
+		if (!surveyTaker || (!surveyTaker.aluno && !surveyTaker.indicado)) { throw new Error({ msg: 'Erro: Não foi encontrado o Survey Taker', surveyTaker }); }
+
+		await handleResponse(survey, fullAnswer, surveyTaker);
 	} catch (error) {
 		help.sentryError('Erro em receiveAnswerEvent', { error, events });
 	}

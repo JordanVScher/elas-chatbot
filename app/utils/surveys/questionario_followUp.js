@@ -19,7 +19,7 @@ async function sendDonnaMail(nome, email) {
 		html = await html.replace(/<link_donna>/g, process.env.LINK_DONNA); // add chatbot link to mail template
 		mailText = await mailText.replace(/<link_donna>/g, process.env.LINK_DONNA); // add chatbot link to mail template
 		const e = await mailer.sendHTMLMail(eMail.depoisMatricula.assunto, email, html, null, mailText);
-		await donnaLog.create({ sentTo: email, sentAt: new Date(), error: e && e.stack ? e.stack : e }).then((res) => res).catch((err) => sentryError('Erro em donnaLog.create', err));
+		await donnaLog.create({ sentTo: email, sentAt: new Date(), error: e && e.stack ? e.stack : e }).then((res) => res).catch((err) => help.sentryError('Erro em donnaLog.create', err));
 	} catch (error) {
 		help.sentryError('Erro no sendDonnaMail', { error, nome, email });
 	}
@@ -27,16 +27,24 @@ async function sendDonnaMail(nome, email) {
 
 async function handleAtividadeOne(answer, aluno) {
 	try {
-		const cadastroStatus = await DB.getAlunaRespostaCadastro(aluno.cpf); // check if aluna has answered this questionario before
-		if (cadastroStatus) throw new Error('Aluna respondeu o cadastro novamente');
+		if (aluno && aluno.id) {
+			const cadastroStatus = await DB.getAlunaRespostaCadastro(aluno.id); // check if aluna has answered this questionario before
+			if (cadastroStatus) throw new Error('Aluna respondeu o cadastro novamente');
+		}
 
 		answer.added_by_admin = false; // user wasnt added by the admins
-		answer.turma_id = aluno.turma_id;
+		if (aluno.turma_id) answer.turma_id = aluno.turma_id;
+		if (!aluno.turma_id && aluno.turma) answer.turma_id = await DB.getTurmaID(aluno.turma);
 
 		const newAluna = await DB.upsertAlunoCadastro(answer);
 		if (!newAluna || !newAluna.id) throw new Error({ msg: 'Erro ao salvar nova aluna', newAluna });
+
 		const savedAtividade = await DB.upsertAtividade(newAluna.id, 'atividade_1', answer);
 		if (!savedAtividade || !savedAtividade.id) throw new Error({ msg: 'Erro ao salvar atividade_1', savedAtividade });
+
+		const updatedResposta = await DB.respostaUdpdateAlunoID(aluno.newAnswerID, newAluna.id);
+		if (!updatedResposta || !updatedResposta.id) { help.sentryError('Erro ao atualizar resposta!', { updatedResposta, newAluna, answer }); }
+
 
 		if (answer.pgid && Number.isInteger(answer.pgid)) { // if matricula was answered after an user bought the course
 			const savedPagamento = await DB.updateAlunoOnPagamento(answer.pgid, newAluna.id);
