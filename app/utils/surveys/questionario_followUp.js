@@ -32,7 +32,7 @@ async function handleAtividadeOne(answer, aluno) {
 	try {
 		if (aluno && aluno.id) {
 			const cadastroStatus = await DB.getAlunaRespostaCadastro(aluno.id); // check if aluna has answered this questionario before
-			if (cadastroStatus) throw new help.MyError('Aluna respondeu o cadastro novamente', { aluno, cadastroStatus });
+			if (cadastroStatus) throw new help.MyError('Aluna respondeu o cadastro novamente', { aluno: aluno.id, cadastroStatus });
 		}
 
 		answer.added_by_admin = false; // user wasnt added by the admins
@@ -50,12 +50,11 @@ async function handleAtividadeOne(answer, aluno) {
 		if (!savedAtividade || !savedAtividade.id) throw new help.MyError('Erro ao salvar atividade_1', { savedAtividade, newAluna, answer });
 
 		const updatedResposta = await DB.respostaUdpdateAlunoID(aluno.newAnswerID, newAluna.id);
-		if (!updatedResposta || !updatedResposta.id) { help.sentryError('Erro ao atualizar resposta!', { updatedResposta, newAluna, answer }); }
-
+		if (!updatedResposta || !updatedResposta.id) { help.sentryError('Erro ao atualizar resposta!', { updatedResposta, newAluna, answer: answer.id }); }
 
 		if (answer.pgid && Number.isInteger(answer.pgid)) { // if matricula was answered after an user bought the course
 			const savedPagamento = await DB.updateAlunoOnPagamento(answer.pgid, newAluna.id);
-			if (!savedPagamento || !savedPagamento.id) { help.sentryError('Erro ao atualizar pagamento!', { savedPagamento, newAluna, answer	}); }
+			if (!savedPagamento || !savedPagamento.id) { help.sentryError('Erro ao atualizar pagamento!', { savedPagamento, newAluna, answer: answer.id	}); }
 		}
 
 		await AddQueue.helpAddQueue(newAluna.id, newAluna.turma_id);

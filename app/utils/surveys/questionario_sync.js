@@ -38,7 +38,7 @@ async function syncRespostas(syncID) {
 
 	if (syncID) {
 		const theOneWeWant = allSyncs.find((x) => x.id === syncID);
-		if (!theOneWeWant) throw new help.MyError(`Não encontramos o sync com o ID ${syncID}`, { allSyncs });
+		if (!theOneWeWant) throw new help.MyError('Não encontramos o sync com o ID passado', { allSyncs, syncID });
 		allSyncs = [];
 		allSyncs.push(theOneWeWant);
 	}
@@ -53,23 +53,23 @@ async function syncRespostas(syncID) {
 			const { answers, lastPage } = await smAPI.getEveryAnswer(survey.idSM, currentSync.current_page);
 
 			ultimaPagina = lastPage;
-			if (!answers || answers.length === 0) { throw new help.MyError('Erro ao carregar respostas', { currentSync, answers, moment: new Date() }); } // eslint-disable-line object-curly-newline
+			if (!answers || answers.length === 0) { throw new help.MyError('Erro ao carregar respostas', { currentSync: currentSync.id, survey: survey.id, answers, moment: new Date() }); } // eslint-disable-line object-curly-newline
 			result.answersLength = answers.length;
 			for (let j = 0; j < answers.length; j++) { // loop through each answer on that survey
 				const answer = answers[j];
 				try {
 					if (savedAnswersID.includes(answer.id)) { // dont save same answer again
-						result[answer.id] = 'já estava salvo';
+						result[`resposta_${answer.id}`] = 'já estava salvo';
 					} else {
 						const surveyTaker = await findSurveyTaker(answer, survey.name);
-						if (!surveyTaker || (!surveyTaker.aluno && !surveyTaker.indicado)) { throw new help.MyError('Erro: Não foi encontrado o Survey Taker', { surveyTaker, answer, survey, moment: new Date() }); } // eslint-disable-line object-curly-newline
+						if (!surveyTaker || (!surveyTaker.aluno && !surveyTaker.indicado)) { throw new help.MyError('Erro: Não foi encontrado o Survey Taker', { surveyTaker, answer: answer.id, survey: survey.id, moment: new Date() }); } // eslint-disable-line object-curly-newline
 
 						const res = await handleResponse(survey, answer, surveyTaker);
 						if (res && res.error) {
-							result[answer.id] = 'erro';
-							result.errors.push({ e: res.error, answer: answer.id, currentSync: currentSync.id });
+							result[`resposta_${answer.id}`] = 'erro';
+							result.errors.push({ answer: answer.id, e: res.error, currentSync: currentSync.id });
 						} else {
-							result[answer.id] = 'ok';
+							result[`resposta_${answer.id}`] = 'ok';
 						}
 					}
 				} catch (e) {
@@ -84,7 +84,7 @@ async function syncRespostas(syncID) {
 		const now = new Date();
 		await qSync.update({ last_verified: now, current_page: currentSync.current_page }, { where: { id: currentSync.id }, raw: true, plain: true, returning: true }).then((r) => r[1]).catch((err) => help.sentryError('Erro no update do model', err)); // eslint-disable-line object-curly-newline
 
-		results.push(result);
+		results.push({ [`sync_${currentSync.id}`]: result });
 	}
 
 	return results;

@@ -7,6 +7,7 @@ const { updateTurmas } = require('./turma');
 const { addAlunosPesquisa } = require('./pesquisa/add_aluno_pesquisa');
 const { sendPesquisa } = require('./pesquisa/send_pesquisa_broadcast');
 const { syncRespostas } = require('./surveys/questionario_sync');
+const { sendSyncRespostasReport } = require('./mailer');
 
 const { getChatbotData } = require('../chatbot_api');
 const { sendHTMLMail } = require('./mailer');
@@ -114,6 +115,20 @@ const checkAPICron = new CronJob(
 	true,	'America/Sao_Paulo', false, false,
 );
 
+const syncRespostasCron = new CronJob(
+	'00 30 * * * *', async () => {
+		console.log('Running syncRespostasCron');
+		try {
+			const res = await syncRespostas();
+			await sendSyncRespostasReport(res);
+		} catch (error) {
+			console.log('syncRespostasCron error', error);
+			await sentryError('Error on syncRespostasCron', error);
+		}
+	}, (() => { console.log('Crontab syncRespostasCron stopped.'); }),
+	true,	'America/Sao_Paulo', false, false,
+);
+
 async function cronLog() {
 	console.log(`Crontab sendNotificationCron is running? => ${sendNotificationCron.running}`);
 	console.log(`Crontab sendWarningAlunasCron is running? => ${sendWarningAlunasCron.running}`);
@@ -122,6 +137,7 @@ async function cronLog() {
 	console.log(`Crontab addPesquisasCron is running? => ${addPesquisasCron.running}`);
 	console.log(`Crontab sendPesquisasCron is running? => ${sendPesquisasCron.running}`);
 	console.log(`Crontab checkAPICron is running? => ${checkAPICron.running}`);
+	console.log(`Crontab syncRespostasCron is running? => ${syncRespostasCron.running}`);
 }
 
 module.exports = { cronLog };

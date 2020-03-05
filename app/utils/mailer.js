@@ -72,6 +72,31 @@ async function sendHTMLFile(subject, to, html, pdf, png) {
 	}
 }
 
+async function sendSyncRespostasReport(res) {
+	const now = new Date();
+
+	const options = {
+		from,
+		to: process.env.MAILDEV,
+		text: `Em anexo, o relatório gerado pelo sync\n${now}`,
+		subject: `Elas - report do syncRespostas - ${now.getDate()}/${now.getMonth()}`,
+		attachments: [
+			{
+				filename: `syncRespostas - ${now}.txt`,
+				content: JSON.stringify(res, null, 2),
+			},
+		],
+	};
+
+
+	try {
+		const info = await transporter.sendMail(options);
+		console.log(`'${options.subject}' para ${options.to}:`, info.messageId, `with ${options.attachments.length} attachments`);
+	} catch (error) {
+		console.log(`Could not send '${options.subject}' to `, options.to, 'Error => ', error);
+	}
+}
+
 module.exports = {
-	sendHTMLMail, sendHTMLFile,
+	sendHTMLMail, sendHTMLFile, sendSyncRespostasReport,
 };
