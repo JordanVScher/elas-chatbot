@@ -3,7 +3,7 @@ const { sentryError } = require('../helper');
 
 async function buildPseudoMap(surveyID) {
 	const { details, name } = await questionario.findOne({ where: { idSM: surveyID.toString() }, attributes: ['details', 'name'], raw: true }).then((r) => r).catch((err) => sentryError('Erro no questionario do model', err));
-	if (name && !name.includes('module')) return null; // dont let a generic ma be built if it's not one of the 3 avaliações
+	if (name && !name.includes('modulo')) return null; // dont let a generic ma be built if it's not one of the 3 avaliações
 	const results = [];
 	details.pages.forEach((page) => {
 		page.questions.forEach((question) => {

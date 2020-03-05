@@ -12,8 +12,7 @@ const followUp = require('./questionario_followUp');
 async function followUpResposta(surveyName, answer, aluno, indicado) {
 	switch (surveyName) {
 	case 'atividade1':
-		await followUp.handleAtividadeOne(answer, aluno);
-		break;
+		return followUp.handleAtividadeOne(answer, aluno);
 	case 'indicacao360':
 		return followUp.saveIndicados(answer, aluno);
 	case 'avaliador360pre':
@@ -100,7 +99,6 @@ async function handleResponse(survey, fullAnswer, surveyTaker) {
 		const res = await DB.upsertRespostas(respostaData.id_surveymonkey, respostaData);
 		if (!res || !res.id) { throw new Error('Erro: Não foi possível salvar a resposta na tabela'); }
 		if (survey.name === 'atividade1') surveyTaker.aluno.newAnswerID = res.id;
-
 		return followUpResposta(survey.name, answer, surveyTaker.aluno, surveyTaker.indicado);
 	} catch (error) {
 		help.sentryError('Erro em handleResponse', { error, survey, fullAnswer });
@@ -119,18 +117,42 @@ async function receiveAnswerEvent(event) {
 
 		// load full answer
 		const fullAnswer = await getResponseWithAnswers(survey.idSM, event.object_id);
-		if (!fullAnswer) { throw new Error('Erro: Não foi encontrada a resposta'); }
+		if (!fullAnswer || fullAnswer.error) { throw new Error('Erro: Não foi encontrada a resposta'); }
 
 		// find out who answered this survey
 		const surveyTaker = await findSurveyTaker(fullAnswer, survey.name);
 		if (!surveyTaker || (!surveyTaker.aluno && !surveyTaker.indicado)) { throw new Error({ msg: 'Erro: Não foi encontrado o Survey Taker', surveyTaker }); }
 
-		await handleResponse(survey, fullAnswer, surveyTaker);
+		return handleResponse(survey, fullAnswer, surveyTaker);
 	} catch (error) {
 		help.sentryError('Erro em receiveAnswerEvent', { error, events });
+		return error;
+	}
+}
+
+async function saveAnswer(questionarioID, answerID, alunoID, indicadoID) {
+	try {
+		// get questionario details
+		const survey = await questionario.findOne({ where: { id: questionarioID.toString() }, raw: true }).then((r) => r).catch((err) => help.sentryError('Erro no findOne do questionario', err));
+		if (!survey) { throw new Error('Erro: Não foi encontrado o questionário'); }
+
+		// load full answer
+		const fullAnswer = await getResponseWithAnswers(survey.idSM, answerID);
+		if (!fullAnswer || fullAnswer.error) { throw new Error('Erro: Não foi encontrada a resposta'); }
+
+		// find out who answered this survey
+		const surveyTaker = {};
+		if (alunoID) surveyTaker.aluno = await alunos.findOne({ where: { id: alunoID }, raw: true }).then((r) => r).catch((err) => help.sentryError('Erro no alunos do model', err));
+		if (indicadoID) surveyTaker.indicado = await indicados.findOne({ where: { id: indicadoID }, raw: true }).then((r) => r).catch((err) => help.sentryError('Erro no findOne do indicados', err));
+		if (!surveyTaker || (!surveyTaker.aluno && !surveyTaker.indicado)) throw new Error('Erro: Não foi encontrado ninguém com esse ID');
+
+		return handleResponse(survey, fullAnswer, surveyTaker);
+	} catch (error) {
+		help.sentryError('Erro em saveAnswer', error);
+		return error;
 	}
 }
 
 module.exports = {
-	receiveAnswerEvent, followUpResposta,
+	receiveAnswerEvent, followUpResposta, saveAnswer,
 };

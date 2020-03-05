@@ -4,13 +4,11 @@ const testFolder = './.sessions/';
 const fs = require('fs');
 const { linkUserToLabelByName } = require('./app/utils/labels');
 const { changeAdminStatus } = require('./app/utils/DB_helper');
-const { addNewNotificationAlunas } = require('./app/utils/notificationAddQueue');
+const addQueue = require('./app/utils/notificationAddQueue');
 const { sendNotificationFromQueue } = require('./app/utils/notificationSendQueue');
 const { seeDataQueue } = require('./app/utils/notificationAddQueue');
-const { addMissingNotificationOnQueue } = require('./app/utils/notificationAddQueue');
-const { addMissingAlunoNotification } = require('./app/utils/notificationAddQueue');
 const { sendDonnaMail } = require('./app/utils/sm_help');
-const { saveAnswer } = require('./app/utils/surveys/questionario_save');
+const { saveAnswer } = require('./app/utils/surveys//questionario_callback');
 
 async function getFBIDJson() { // eslint-disable-line
 	const result = {};
@@ -75,7 +73,7 @@ async function addMissingNotification(req, res) {
 		} else if (!body.notification_type || !body.turma_id) {
 			res.status(401); res.send('Missing aluno_id or turma_id!');
 		} else {
-			addMissingAlunoNotification(body.turma_id, body.notification_type);
+			addQueue.addMissingAlunoNotification(body.turma_id, body.notification_type);
 			res.status(200); res.send('Processando');
 		}
 	}
@@ -92,7 +90,7 @@ async function addNewQueue(req, res) {
 		} else if (!body.aluno_id || !body.turma_id) {
 			res.status(401); res.send('Missing aluno_id or turma_id!');
 		} else {
-			addNewNotificationAlunas(body.aluno_id, body.turma_id);
+			addQueue.addNewNotificationAlunas(body.aluno_id, body.turma_id);
 			res.status(200); res.send('Processando');
 		}
 	}
@@ -141,7 +139,7 @@ async function seeQueue(req, res) {
 		} else if (!body.turma_id) {
 			res.status(401); res.send('body.turma_id missing!');
 		} else {
-			const result = await addMissingNotificationOnQueue(body.turma_id);
+			const result = await addQueue.addMissingNotificationOnQueue(body.turma_id);
 			res.status(200); res.send(result);
 		}
 	}
@@ -173,6 +171,8 @@ async function saveNewAnswer(req, res) {
 			res.status(401); res.send('Unauthorized!');
 		} else if (!body.questionarioID || !body.answerID || (!body.alunoID && !body.indicadoID)) {
 			res.status(401); res.send('questionarioID or answerIDor or alunoID or indicadoID missing');
+		} else if (body.alunoID && body.indicadoID) {
+			res.status(401); res.send('Dont send both alunoID and indicadoID together');
 		} else {
 			const result = await saveAnswer(body.questionarioID, body.answerID, body.alunoID, body.indicadoID);
 			res.status(200); res.send(result);

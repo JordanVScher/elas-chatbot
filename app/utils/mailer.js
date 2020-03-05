@@ -24,33 +24,23 @@ const transporter = nodemailer.createTransport({
 	debug: true,
 });
 
-async function sendTestMail(subject, text, to) {
-	const options = {
-		from, to, subject, text,
-	};
-
-	try {
-		const info = await transporter.sendMail(options);
-		console.log(`'${subject}' para ${to}:`, info.messageId);
-	} catch (error) {
-		console.log('Could not send mail to ', to);
-		console.log('Error => ', error);
-	}
-}
-
 async function sendHTMLMail(subject, to, html, anexo, text = '') {
 	const options = {
 		from, to, subject: subject || '<Programa Elas>', html, attachments: anexo, text,
 	};
 
-
-	try {
-		const info = await transporter.sendMail(options);
-		console.log(`'${subject}' para ${to}:`, info.messageId);
+	if (process.env.ENV === 'prod_final') {
+		try {
+			const info = await transporter.sendMail(options);
+			console.log(`'${subject}' para ${to}:`, info.messageId);
+			return null;
+		} catch (error) {
+			console.log('Could not send mail to ', to, 'Error => ', error);
+			return error;
+		}
+	} else {
+		console.log(`\nDeveriamos enviar '${subject}' para ${to} as ${new Date()}\n`);
 		return null;
-	} catch (error) {
-		console.log('Could not send mail to ', to, 'Error => ', error);
-		return error;
 	}
 }
 async function sendHTMLFile(subject, to, html, pdf, png) {
@@ -83,5 +73,5 @@ async function sendHTMLFile(subject, to, html, pdf, png) {
 }
 
 module.exports = {
-	sendTestMail, sendHTMLMail, sendHTMLFile,
+	sendHTMLMail, sendHTMLFile,
 };

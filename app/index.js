@@ -77,7 +77,6 @@ server.post('/webhook', async (req, res) => {
 		event = JSON.parse(req.body);
 	}
 	if (event && event.filter_type === 'survey' && event.event_type === 'response_completed') {
-		console.log('event', event);
 		const resultado = receiveAnswerEvent(event);
 		res.status(200);
 		res.send(resultado);

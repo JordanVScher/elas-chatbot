@@ -63,10 +63,10 @@ async function handleAtividadeOne(answer, aluno) {
 			html2 = await html2.replace('[CONTEUDO_MAIL]', eMailText);
 			await mailer.sendHTMLMail(`Alerta no cadastro da Aluna ${newAluna.nome_completo}`, eMailToSend, html2, null, eMailText);
 		}
-		return true;
+		return 'Salvou matrícula com sucesso';
 	} catch (error) {
 		help.sentryError('Erro em handleAtividadeOne', { error, answer, aluno });
-		return false;
+		return error;
 	}
 }
 
@@ -141,8 +141,10 @@ async function saveIndicados(baseAnswers, aluna) {
 			html = await html.replace('[CONTEUDO_MAIL]', eMailText);
 			await mailer.sendHTMLMail(`Alertas na indicação da Aluna ${aluna.nome_completo}`, eMailToSend, html, null, eMailText);
 		}
+		return 'Salvou indicados com sucesso';
 	} catch (error) {
 		help.sentryError('Erro em saveIndicados', error);
+		return error;
 	}
 }
 
@@ -161,7 +163,7 @@ async function saveAvaliacao360(surveyName, answer, indicadoID) {
 		throw new Error({ msg: 'Erro ao salvar avaliação 360', err: res });
 	} catch (error) {
 		help.sentryError('Erro em saveAvaliacao360', error);
-		return false;
+		return error;
 	}
 }
 
@@ -180,7 +182,7 @@ async function saveSondagem(surveyName, answer, alunoID) {
 		throw new Error({ msg: 'Erro ao salvar sondagem', err: res });
 	} catch (error) {
 		help.sentryError('Erro em saveSondagem', error);
-		return false;
+		return error;
 	}
 }
 
@@ -199,7 +201,7 @@ async function saveAvaliacaoModulo(surveyName, answer, alunoID) {
 		throw new Error({ msg: 'Erro ao salvar avaliacão', err: res });
 	} catch (error) {
 		help.sentryError('Erro em saveAvaliacaoModulo', error);
-		return false;
+		return error;
 	}
 }
 
