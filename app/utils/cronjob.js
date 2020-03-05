@@ -116,7 +116,7 @@ const checkAPICron = new CronJob(
 );
 
 const syncRespostasCron = new CronJob(
-	'00 30 * * * *', async () => {
+	'00 15 7 * * *', async () => {
 		console.log('Running syncRespostasCron');
 		try {
 			const res = await syncRespostas();
