@@ -9,7 +9,6 @@ const { sendAlunaToAssistente } = require('../labels');
 const { surveysMaps } = require('../sm_maps');
 const donnaLog = require('../../server/models').donna_mail_log;
 
-
 async function sendDonnaMail(nome, email) {
 	try {
 		const hasSentAlready = await donnaLog.findOne({ where: { sentTo: email }, raw: true }).then((r) => r).catch((err) => help.sentryError('Erro no donnaLog do model', err));
@@ -28,6 +27,16 @@ async function sendDonnaMail(nome, email) {
 	}
 }
 
+/**
+ * @description Saves the matrícula answer and adds aluna data. This answer can't be saved more than once, multiple answers will be ignored.
+ * It the answer has a pgid on it's params, the corresponding pagamento will be updated to link to the aluna.
+ * If the aluna wasn't on the database before this answer, we can't properly link the resposta to the aluna on "handleResposta" so we do it here, after creating the aluna.
+ * if aluna filled the same info and her email and on contato_emergencia_email we must send an e-mail warning the admins.
+ * Aluna may also receive one e-mail presenting the chatbot to her, if it wasn't sent before already.
+ * @param {object} answer the formated answer. Besides beign saved, this will also be used to add aluna data
+ * @param {object} aluna the aluna this answer belong to
+ * @returns {object|string} description of execution result
+ */
 async function handleAtividadeOne(answer, aluno) {
 	try {
 		if (aluno && aluno.id) {
@@ -76,6 +85,12 @@ async function handleAtividadeOne(answer, aluno) {
 	}
 }
 
+/**
+ * @description Saves the avaliacao360 answer and creates the indicados
+ * @param {object} baseAnswers the formated answer. Besides beign saved, this will also be used to create the indicados
+ * @param {object} aluna the aluna this answer belong to
+ * @returns {object|string} description of execution result
+ */
 async function saveIndicados(baseAnswers, aluna) {
 	try {
 		const errors = [];
@@ -158,8 +173,8 @@ async function saveIndicados(baseAnswers, aluna) {
  * @description Saves the answers from both the indicados_questionarios (avaliador360pre or avaliador360pos)
  * @param {string} surveyName The name of the survey being answered (from questionario table), we use it to find the name of the column
  * @param {integer} indicadoID ID of the indicado this answer belongs to
- * @param {json} answer the formated answer
- * @returns {string} description of execution result
+ * @param {object} answer the formated answer
+ * @returns {object|string} description of execution result
  */
 async function saveAvaliacao360(surveyName, answer, indicadoID) {
 	try {
@@ -177,8 +192,8 @@ async function saveAvaliacao360(surveyName, answer, indicadoID) {
  * @description Saves the answers from both the alunos questionarios (sondagemPre or sondagemPos)
  * @param {string} surveyName The name of the survey being answered (from questionario table), we use it to find the name of the column
  * @param {integer} alunoID ID of the indicado this answer belongs to
- * @param {json} answer the formated answer
- * @returns {string} description of execution result
+ * @param {object} answer the formated answer
+ * @returns {object|string} description of execution result
  */
 async function saveSondagem(surveyName, answer, alunoID) {
 	try {
@@ -196,8 +211,8 @@ async function saveSondagem(surveyName, answer, alunoID) {
  * @description Saves avaliação do módulo
  * @param {string} surveyName The name of the survey being answered (from questionario table), we use it to find the name of the column
  * @param {integer} alunoID ID of the indicado this answer belongs to
- * @param {json} answer the formated answer
- * @returns {string} description of execution result
+ * @param {object} answer the formated answer
+ * @returns {object|string} description of execution result
  */
 async function saveAvaliacaoModulo(surveyName, answer, alunoID) {
 	try {
