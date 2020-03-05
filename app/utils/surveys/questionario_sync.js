@@ -81,8 +81,10 @@ async function syncRespostas(syncID) {
 		}
 
 		if (!result.errors || result.errors.length === 0) currentSync.current_page = ultimaPagina; // only update page if there were no errors
+		let errorsUpdate = null;
+		if (result.errors && result.errors.length > 0) errorsUpdate = result.errors;
 		const now = new Date();
-		await qSync.update({ last_verified: now, current_page: currentSync.current_page }, { where: { id: currentSync.id }, raw: true, plain: true, returning: true }).then((r) => r[1]).catch((err) => help.sentryError('Erro no update do model', err)); // eslint-disable-line object-curly-newline
+		await qSync.update({ last_verified: now, current_page: currentSync.current_page, error_msg: errorsUpdate }, { where: { id: currentSync.id }, raw: true, plain: true, returning: true }).then((r) => r[1]).catch((err) => help.sentryError('Erro no update do model', err)); // eslint-disable-line object-curly-newline
 
 		results.push({ [`sync_${currentSync.id}`]: result });
 	}
