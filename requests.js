@@ -189,7 +189,7 @@ async function syncAnswers(req, res) {
 		const securityToken = body.security_token;
 		if (securityToken !== process.env.SECURITY_TOKEN_MA) {
 			res.status(401); res.send('Unauthorized!');
-		} else if (!body.syncID || typeof body.syncID !== 'number') {
+		} else if (body.syncID && typeof body.syncID !== 'number') {
 			res.status(401); res.send('syncID invalid');
 		} else {
 			const result = await syncRespostas(body.syncID);
