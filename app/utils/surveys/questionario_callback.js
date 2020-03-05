@@ -33,13 +33,13 @@ async function followUpResposta(surveyName, answer, aluno, indicado) {
 async function findSurveyTaker(answer) {
 	try {
 		const params = answer && answer.custom_variables ? answer.custom_variables : null;
-		if (!params) { throw new Error('Erro: chegou a resposta de um questionário sem parâmetros customizados'); }
+		if (!params) { throw new help.MyError('Chegou a resposta de um questionário sem parâmetros customizados', { answer }); }
 		let aluno = {};
 		let indicado = null;
 
 		if (params && params.cpf && params.cpf.toString()) {
 			aluno = await alunos.findOne({ where: { cpf: params.cpf.toString() }, raw: true }).then((r) => r).catch((err) => help.sentryError('Erro no findOne do alunos', err));
-			if (!aluno || !aluno.id) throw new Error('Erro: Um aluno de cpf inválido respondeu o questinário');
+			if (!aluno || !aluno.id) throw new help.MyError('Um aluno de cpf inválido respondeu o questinário', { params });
 		}
 
 		if (params && params.pgid) aluno.pgid = params.pgid;
@@ -48,7 +48,7 @@ async function findSurveyTaker(answer) {
 
 		if (params && params.indicaid) {
 			indicado = await indicados.findOne({ where: { id: params.indicaid }, raw: true }).then((r) => r).catch((err) => help.sentryError('Erro no findOne do indicados', err));
-			if (!indicado || !indicado.id) throw new Error('Erro: Um indicado inválido respondeu o questinário');
+			if (!indicado || !indicado.id) throw new help.MyError('Um indicado inválido respondeu o questinário', { params });
 		}
 
 		return { aluno, indicado };
@@ -74,10 +74,10 @@ async function getFormatedAnswer(answer, questionarioName) {
 				respFormatada.answer_saved_at = new Date();
 				return respFormatada;
 			}
-			throw new Error({ msg: 'Erro: Não foi possível formatar as respostas', respFormatada });
+			throw new help.MyError('Não foi possível formatar as respostas', { currentMap, respFormatada, answer }); // eslint-disable-line object-curly-newline
 		}
 
-		throw new Error('Erro: Não foi possível encontrar um mapa');
+		throw new help.MyError('Não foi possível encontrar um mapa', { currentMap, questionarioName, answer });
 	} catch (error) {
 		help.sentryError('Erro no formatAnswer', error, questionarioName, answer);
 		return 'Erro no formatAnswer';
@@ -88,7 +88,7 @@ async function handleResponse(survey, fullAnswer, surveyTaker) {
 	try {
 		// format and save answer
 		const answer = await getFormatedAnswer(fullAnswer, survey.name);
-		if (!answer) { throw new Error('Erro: Não foi possível formatar a resposta'); }
+		if (!answer) { throw new help.MyError('Não foi possível formatar a resposta', { fullAnswer, survey, answer }); }
 
 		const respostaData = {
 			id_surveymonkey: fullAnswer.id, id_questionario: survey.id, URL: fullAnswer.href, answer,
@@ -97,33 +97,33 @@ async function handleResponse(survey, fullAnswer, surveyTaker) {
 		if (surveyTaker.aluno) { respostaData.id_aluno = surveyTaker.aluno.id; }
 		if (surveyTaker.indicado) { respostaData.id_aluno = null; respostaData.id_indicado = surveyTaker.indicado.id; }
 		const res = await DB.upsertRespostas(respostaData.id_surveymonkey, respostaData);
-		if (!res || !res.id) { throw new Error('Erro: Não foi possível salvar a resposta na tabela'); }
+		if (!res || !res.id) { throw new help.MyError('Não foi possível salvar a resposta na tabela', { id_surveymonkey: respostaData.id_surveymonkey, respostaData, res }); }
 		if (survey.name === 'atividade1') surveyTaker.aluno.newAnswerID = res.id;
 		return followUpResposta(survey.name, answer, surveyTaker.aluno, surveyTaker.indicado);
 	} catch (error) {
 		help.sentryError('Erro em handleResponse', { error, survey, fullAnswer });
-		return 'Erro em handleResponse';
+		return { error };
 	}
 }
 
 async function receiveAnswerEvent(event) {
 	try {
 		const { id } = await events.create({ sm_event_id: event.event_id, sm_survey_id: event.filter_id, answer_sm_id: event.object_id }).then((r) => r.dataValues).catch((err) => help.sentryError('Erro no update do events', err));
-		if (!id) throw new Error('Erro: evento não foi salvo corretamente');
+		if (!id) throw new help.MyError('Evento não foi salvo corretamente', { event });
 
 		// get questionario details
 		const survey = await questionario.findOne({ where: { id_surveymonkey: event.filter_id.toString() }, raw: true }).then((r) => r).catch((err) => help.sentryError('Erro no findOne do questionario', err));
-		if (!survey) { throw new Error('Erro: Não foi encontrado o questionário'); }
+		if (!survey) { throw new help.MyError('Não foi encontrado o questionário', { id_surveymonkey: event.filter_id, survey }); }
 
 		// load full answer
-		const fullAnswer = await getResponseWithAnswers(survey.idSM, event.object_id);
-		if (!fullAnswer || fullAnswer.error) { throw new Error('Erro: Não foi encontrada a resposta'); }
+		const answer = await getResponseWithAnswers(survey.idSM, event.object_id);
+		if (!answer || answer.error) { throw new help.MyError('Não foi encontrada a resposta', { answer, survey, responseID: event.object_id }); }
 
 		// find out who answered this survey
-		const surveyTaker = await findSurveyTaker(fullAnswer, survey.name);
-		if (!surveyTaker || (!surveyTaker.aluno && !surveyTaker.indicado)) { throw new Error({ msg: 'Erro: Não foi encontrado o Survey Taker', surveyTaker }); }
+		const surveyTaker = await findSurveyTaker(answer, survey.name);
+		if (!surveyTaker || (!surveyTaker.aluno && !surveyTaker.indicado)) { throw new help.MyError('Não foi encontrado o Survey Taker', { surveyTaker, answer, survey }); } // eslint-disable-line object-curly-newline
 
-		return handleResponse(survey, fullAnswer, surveyTaker);
+		return handleResponse(survey, answer, surveyTaker);
 	} catch (error) {
 		help.sentryError('Erro em receiveAnswerEvent', { error, events });
 		return error;
@@ -134,19 +134,19 @@ async function saveAnswer(questionarioID, answerID, alunoID, indicadoID) {
 	try {
 		// get questionario details
 		const survey = await questionario.findOne({ where: { id: questionarioID.toString() }, raw: true }).then((r) => r).catch((err) => help.sentryError('Erro no findOne do questionario', err));
-		if (!survey) { throw new Error('Erro: Não foi encontrado o questionário'); }
+		if (!survey) { throw new help.MyError('Não foi encontrado o questionario', { survey, indicadoID }); }
 
 		// load full answer
-		const fullAnswer = await getResponseWithAnswers(survey.idSM, answerID);
-		if (!fullAnswer || fullAnswer.error) { throw new Error('Erro: Não foi encontrada a resposta'); }
+		const answer = await getResponseWithAnswers(survey.idSM, answerID);
+		if (!answer || answer.error) { throw new help.MyError('Não foi encontrada a resposta', { answer, survey, answerID }); } // eslint-disable-line object-curly-newline
 
 		// find out who answered this survey
 		const surveyTaker = {};
 		if (alunoID) surveyTaker.aluno = await alunos.findOne({ where: { id: alunoID }, raw: true }).then((r) => r).catch((err) => help.sentryError('Erro no alunos do model', err));
 		if (indicadoID) surveyTaker.indicado = await indicados.findOne({ where: { id: indicadoID }, raw: true }).then((r) => r).catch((err) => help.sentryError('Erro no findOne do indicados', err));
-		if (!surveyTaker || (!surveyTaker.aluno && !surveyTaker.indicado)) throw new Error('Erro: Não foi encontrado ninguém com esse ID');
+		if (!surveyTaker || (!surveyTaker.aluno && !surveyTaker.indicado)) throw new help.MyError('Não foi encontrado ninguém com esse ID', { alunoID, indicadoID });
 
-		return handleResponse(survey, fullAnswer, surveyTaker);
+		return handleResponse(survey, answer, surveyTaker);
 	} catch (error) {
 		help.sentryError('Erro em saveAnswer', error);
 		return error;
@@ -154,5 +154,5 @@ async function saveAnswer(questionarioID, answerID, alunoID, indicadoID) {
 }
 
 module.exports = {
-	receiveAnswerEvent, followUpResposta, saveAnswer,
+	receiveAnswerEvent, saveAnswer, findSurveyTaker, handleResponse,
 };

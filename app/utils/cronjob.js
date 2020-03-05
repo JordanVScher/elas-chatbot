@@ -6,6 +6,7 @@ const { sendNotificationFromQueue } = require('./notificationSendQueue');
 const { updateTurmas } = require('./turma');
 const { addAlunosPesquisa } = require('./pesquisa/add_aluno_pesquisa');
 const { sendPesquisa } = require('./pesquisa/send_pesquisa_broadcast');
+const { syncRespostas } = require('./surveys/questionario_sync');
 
 const { getChatbotData } = require('../chatbot_api');
 const { sendHTMLMail } = require('./mailer');

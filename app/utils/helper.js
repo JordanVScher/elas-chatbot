@@ -53,12 +53,16 @@ async function getJsDateFromExcel(excelDate) {
 }
 
 async function sentryError(msg, erro) {
-	if (process.env.ENV !== 'local') {
-		Sentry.captureMessage(msg);
-		// await sendHTMLMail(`Erro no bot do ELAS - ${process.env.ENV || ''}`, process.env.MAILDEV, `${msg || ''}\n\n${erro}\n\n${JSON.stringify(erro, null, 2)}`);
-		console.log(`Error sent at ${new Date()}!\n `);
+	if (process.env.ENV !== 'local') Sentry.captureMessage(msg);
+	console.error(msg);
+	if (erro) {
+		if (typeof erro === 'string') {
+			console.error(erro);
+		} else if (typeof erro === 'object') {
+			console.error(JSON.stringify(erro, null, 2));
+		}
 	}
-	console.log(msg, erro);
+
 	return false;
 }
 
@@ -417,7 +421,18 @@ function buildModDateChange(date) {
 	return { module, days };
 }
 
+
+class MyError extends Error {
+	constructor(message, params) {
+		super(message);
+		this.name = this.constructor.name;
+		this.msg = message;
+		this.params = params;
+	}
+}
+
 module.exports = {
+	MyError,
 	Sentry,
 	separateString,
 	moment,

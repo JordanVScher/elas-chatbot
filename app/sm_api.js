@@ -101,7 +101,7 @@ async function getSurveyResponseDetails(id, responseId) {
 		const res = await request(`${url}/surveys/${id}/responses/${responseId}`).set(headers);
 		result = await res.json();
 	} catch (error) { console.log('Erro em getSurveyResponseDetails', JSON.stringify(result, null, 2)); Sentry.captureMessage('Erro em getSurveyResponseDetails'); }
-	console.log(JSON.stringify(result, null, 2));
+	// console.log(JSON.stringify(result, null, 2));
 	return result;
 }
 
@@ -117,19 +117,33 @@ async function getResponseWithAnswers(id, responseId) {
 
 async function getEveryAnswer(surveyId, pageNumber = 1) {
 	const answers = []; // result array
-	let totalOverall;
 	let answerPage;
 
 	do {
 		answerPage = await getSurveyResponseDetailsBulk(surveyId, pageNumber); // get the response details
-		totalOverall = answerPage.total; // get the total number of questions
 		pageNumber += 1; // increase the page number
 
 		answers.push(...answerPage.data);
-	} while (totalOverall > answers.length); // while theres still answers to get
+	} while (answerPage.data && answerPage.data.length > 0) ; // while theres still answers to get
 	// obs: if an error occurs, totalOverall will become undefined making the while condition false
 
-	return answers;
+	return { answers, lastPage: answerPage.page - 1 };
+}
+
+async function saveAnswers(qID) {
+	try {
+		const { answers } = await getEveryAnswer(qID);
+		if (answers) {
+			let text = `Data: ${new Date()}\nNúmero de Respostas: ${answers.length}\n\n`;
+			text += JSON.stringify(answers, null, 2);
+			await fs.writeFileSync(`${qID}_respostas.txt`, text);
+		}
+
+		return answers;
+	} catch (error) {
+		sentryError('Erro em saveAnswers', { qID, error });
+		return false;
+	}
 }
 
 async function getAvailableWebhooks() {
@@ -159,22 +173,6 @@ async function getOneWebhook(id) {
 	} catch (error) { console.log('Erro em getOneWebhook', JSON.stringify(result, null, 2)); Sentry.captureMessage('Erro em deleteOneWebhook'); }
 	console.log('got', JSON.stringify(result, null, 2));
 	return result;
-}
-
-async function saveAnswers(qID) {
-	try {
-		const data = await getEveryAnswer(qID);
-		if (data) {
-			let text = `Data: ${new Date()}\nNúmero de Respostas: ${data.length}\n\n`;
-			text += JSON.stringify(data, null, 2);
-			await fs.writeFileSync(`${qID}_respostas.txt`, text);
-		}
-
-		return data;
-	} catch (error) {
-		sentryError('Erro em saveAnswers', { qID, error });
-		return false;
-	}
 }
 
 async function postWebhook(name, event_type, object_type, object_ids, subscription_url) { // eslint-disable-line

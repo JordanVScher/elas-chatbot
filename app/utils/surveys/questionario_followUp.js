@@ -12,14 +12,17 @@ const donnaLog = require('../../server/models').donna_mail_log;
 
 async function sendDonnaMail(nome, email) {
 	try {
-		let mailText = eMail.depoisMatricula.textoBody;
-		let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Apresentar_Donna.html`, 'utf-8');
-		html = await html.replace('[nome]', nome); // add nome to mail template
-		mailText = await mailText.replace('[nome]', nome); // add nome to mail template
-		html = await html.replace(/<link_donna>/g, process.env.LINK_DONNA); // add chatbot link to mail template
-		mailText = await mailText.replace(/<link_donna>/g, process.env.LINK_DONNA); // add chatbot link to mail template
-		const e = await mailer.sendHTMLMail(eMail.depoisMatricula.assunto, email, html, null, mailText);
-		await donnaLog.create({ sentTo: email, sentAt: new Date(), error: e && e.stack ? e.stack : e }).then((res) => res).catch((err) => help.sentryError('Erro em donnaLog.create', err));
+		const hasSentAlready = await donnaLog.findOne({ where: { sentTo: email }, raw: true }).then((r) => r).catch((err) => help.sentryError('Erro no donnaLog do model', err));
+		if (hasSentAlready && hasSentAlready.id) { // if we already sent this e-mail to the user, we dont send it again
+			let mailText = eMail.depoisMatricula.textoBody;
+			let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Apresentar_Donna.html`, 'utf-8');
+			html = await html.replace('[nome]', nome); // add nome to mail template
+			mailText = await mailText.replace('[nome]', nome); // add nome to mail template
+			html = await html.replace(/<link_donna>/g, process.env.LINK_DONNA); // add chatbot link to mail template
+			mailText = await mailText.replace(/<link_donna>/g, process.env.LINK_DONNA); // add chatbot link to mail template
+			const e = await mailer.sendHTMLMail(eMail.depoisMatricula.assunto, email, html, null, mailText);
+			await donnaLog.create({ sentTo: email, sentAt: new Date(), error: e && e.stack ? e.stack : e }).then((res) => res).catch((err) => help.sentryError('Erro em donnaLog.create', err));
+		}
 	} catch (error) {
 		help.sentryError('Erro no sendDonnaMail', { error, nome, email });
 	}
@@ -29,18 +32,22 @@ async function handleAtividadeOne(answer, aluno) {
 	try {
 		if (aluno && aluno.id) {
 			const cadastroStatus = await DB.getAlunaRespostaCadastro(aluno.id); // check if aluna has answered this questionario before
-			if (cadastroStatus) throw new Error('Aluna respondeu o cadastro novamente');
+			if (cadastroStatus) throw new help.MyError('Aluna respondeu o cadastro novamente', { aluno, cadastroStatus });
 		}
 
 		answer.added_by_admin = false; // user wasnt added by the admins
 		if (aluno.turma_id) answer.turma_id = aluno.turma_id;
-		if (!aluno.turma_id && aluno.turma) answer.turma_id = await DB.getTurmaID(aluno.turma);
+		if (!aluno.turma_id && aluno.turma) {
+			const turmaID = await DB.getTurmaID(aluno.turma);
+			if (!turmaID) throw new help.MyError('Turma vazia em handleAtividadeOne', { turmaID, aluno });
+			answer.turma_id = turmaID;
+		}
 
 		const newAluna = await DB.upsertAlunoCadastro(answer);
-		if (!newAluna || !newAluna.id) throw new Error({ msg: 'Erro ao salvar nova aluna', newAluna });
+		if (!newAluna || !newAluna.id) throw new help.MyError('Erro ao salvar nova aluna', { newAluna, answer });
 
 		const savedAtividade = await DB.upsertAtividade(newAluna.id, 'atividade_1', answer);
-		if (!savedAtividade || !savedAtividade.id) throw new Error({ msg: 'Erro ao salvar atividade_1', savedAtividade });
+		if (!savedAtividade || !savedAtividade.id) throw new help.MyError('Erro ao salvar atividade_1', { savedAtividade, newAluna, answer });
 
 		const updatedResposta = await DB.respostaUdpdateAlunoID(aluno.newAnswerID, newAluna.id);
 		if (!updatedResposta || !updatedResposta.id) { help.sentryError('Erro ao atualizar resposta!', { updatedResposta, newAluna, answer }); }
@@ -160,7 +167,7 @@ async function saveAvaliacao360(surveyName, answer, indicadoID) {
 		const columnName = { avaliador360pre: 'pre', avaliador360pos: 'pos' };
 		const res = await DB.upsertIndicadosRespostas(indicadoID, columnName[surveyName], answer);
 		if (res && res.id) return `Salvou ${surveyName} com sucesso!`;
-		throw new Error({ msg: 'Erro ao salvar avaliação 360', err: res });
+		throw new help.MyError('Erro ao salvar avaliação 360', { res, indicadoID, columnName: columnName[surveyName], answer }); // eslint-disable-line object-curly-newline
 	} catch (error) {
 		help.sentryError('Erro em saveAvaliacao360', error);
 		return error;
@@ -179,7 +186,7 @@ async function saveSondagem(surveyName, answer, alunoID) {
 		const columnName = { sondagemPre: 'pre', sondagemPos: 'pos' };
 		const res = await DB.upsertAtividade(alunoID, columnName[surveyName], answer);
 		if (res && res.id) return `Salvou ${surveyName} com sucesso!`;
-		throw new Error({ msg: 'Erro ao salvar sondagem', err: res });
+		throw new help.MyError('Erro ao salvar sondagem', { res, alunoID, columnName: columnName[surveyName], answer }); // eslint-disable-line object-curly-newline
 	} catch (error) {
 		help.sentryError('Erro em saveSondagem', error);
 		return error;
@@ -198,7 +205,7 @@ async function saveAvaliacaoModulo(surveyName, answer, alunoID) {
 		const columnName = { modulo1: 'avaliacao_modulo1', modulo2: 'avaliacao_modulo2', modulo3: 'avaliacao_modulo3' };
 		const res = await DB.upsertAtividade(alunoID, columnName[surveyName], answer);
 		if (res && res.id) return `Salvou ${surveyName} com sucesso!`;
-		throw new Error({ msg: 'Erro ao salvar avaliacão', err: res });
+		throw new help.MyError('Erro ao salvar avaliacão', { res, alunoID, columnName: columnName[surveyName], answer }); // eslint-disable-line object-curly-newline
 	} catch (error) {
 		help.sentryError('Erro em saveAvaliacaoModulo', error);
 		return error;
