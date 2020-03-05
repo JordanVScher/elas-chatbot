@@ -129,6 +129,10 @@ server.post('/save-answer', async (req, res) => {
 	await requests.saveNewAnswer(req, res);
 });
 
+server.post('/sync-answers', async (req, res) => {
+	await requests.syncAnswers(req, res);
+});
+
 server.listen(process.env.API_PORT, () => {
 	console.log(`Server is running on ${process.env.API_PORT} port...`);
 	console.log(`App: ${process.env.APP} & Page: ${process.env.PAGE}`);

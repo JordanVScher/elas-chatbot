@@ -8,7 +8,8 @@ const addQueue = require('./app/utils/notificationAddQueue');
 const { sendNotificationFromQueue } = require('./app/utils/notificationSendQueue');
 const { seeDataQueue } = require('./app/utils/notificationAddQueue');
 const { sendDonnaMail } = require('./app/utils/sm_help');
-const { saveAnswer } = require('./app/utils/surveys//questionario_callback');
+const { saveAnswer } = require('./app/utils/surveys/questionario_callback');
+const { syncRespostas } = require('./app/utils/surveys/questionario_sync');
 
 async function getFBIDJson() { // eslint-disable-line
 	const result = {};
@@ -161,6 +162,7 @@ async function donnaMail(req, res) {
 		}
 	}
 }
+
 async function saveNewAnswer(req, res) {
 	const { body } = req;
 	if (!body || !body.security_token) {
@@ -179,8 +181,24 @@ async function saveNewAnswer(req, res) {
 		}
 	}
 }
+async function syncAnswers(req, res) {
+	const { body } = req;
+	if (!body || !body.security_token) {
+		res.status(400); res.send('Param security_token is required!');
+	} else {
+		const securityToken = body.security_token;
+		if (securityToken !== process.env.SECURITY_TOKEN_MA) {
+			res.status(401); res.send('Unauthorized!');
+		} else if (!body.syncID || typeof body.syncID !== 'number') {
+			res.status(401); res.send('syncID invalid');
+		} else {
+			const result = await syncRespostas(body.syncID);
+			res.status(200); res.send(result);
+		}
+	}
+}
 
 
 module.exports = {
-	getNameFBID, addLabel, addMissingNotification, sendNotificationQueue, dataQueue, seeQueue, addNewQueue, donnaMail, saveNewAnswer,
+	getNameFBID, addLabel, addMissingNotification, sendNotificationQueue, dataQueue, seeQueue, addNewQueue, donnaMail, saveNewAnswer, syncAnswers,
 };
