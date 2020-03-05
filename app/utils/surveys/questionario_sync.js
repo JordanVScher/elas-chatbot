@@ -1,10 +1,31 @@
+const { parse } = require('query-string');
 const help = require('../helper');
 const smAPI = require('../../sm_api');
+const smData = require('../sm_surveys');
 const { questionario } = require('../../server/models');
 const { respostas } = require('../../server/models');
 const qSync = require('../../server/models').questionario_sync;
 const { findSurveyTaker } = require('./questionario_callback');
 const { handleResponse } = require('./questionario_callback');
+
+async function loadQuestionarioData() {
+	const res = [];
+	const surveys = Object.keys(smData);
+
+	for (let i = 0; i < surveys.length; i++) {
+		const name = surveys[i];
+		const info = smData[name];
+		const [link, params] = info.link.split('?');
+		const parameters = JSON.stringify(parse(params));
+		const details = await smAPI.getSurveyDetails(info.id);
+
+		res.push({
+			name, id_surveymonkey: info.id, link, parameters, details: JSON.stringify(details), created_at: new Date(), updated_at: new Date(),
+		});
+	}
+
+	return res;
+}
 
 /**
  * Load entries from questionario_sync from all questionarios. If there's no entry on the table, we create and return it. Add idSM from questionarios to the sync obj.
@@ -94,5 +115,5 @@ async function syncRespostas(syncID) {
 
 
 module.exports = {
-	getAllQuestionarioSyncs, syncRespostas,
+	getAllQuestionarioSyncs, syncRespostas, loadQuestionarioData,
 };

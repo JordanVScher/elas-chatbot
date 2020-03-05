@@ -1,5 +1,4 @@
-const { loadQuestionarioData } = require('../../utils/surveys/questionarios');
-
+const { loadQuestionarioData } = require('../../utils/surveys/questionario_sync');
 
 module.exports = {
 	up: async (queryInterface) => {
