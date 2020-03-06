@@ -132,11 +132,13 @@ async function getEveryAnswer(surveyId, pageNumber = 1) {
 
 async function saveAnswers(qID) {
 	try {
+		console.log('Rodando');
 		const { answers } = await getEveryAnswer(qID);
 		if (answers) {
 			let text = `Data: ${new Date()}\nNúmero de Respostas: ${answers.length}\n\n`;
 			text += JSON.stringify(answers, null, 2);
 			await fs.writeFileSync(`${qID}_respostas.txt`, text);
+			console.log('Acabou');
 		}
 
 		return answers;
