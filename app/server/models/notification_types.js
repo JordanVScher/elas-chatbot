@@ -2,6 +2,7 @@ module.exports = (sequelize, DataTypes) => {
 	const model = sequelize.define(
 		'notification_types', {
 			id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+			name: DataTypes.STRING,
 			email_subject: DataTypes.STRING,
 			email_text: DataTypes.STRING,
 			chatbot_text: DataTypes.STRING,

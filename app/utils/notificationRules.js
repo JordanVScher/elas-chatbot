@@ -1,4 +1,5 @@
 const { reloadSpreadSheet } = require('./helper');
+const { sentryError } = require('./helper');
 
 // relation of keys from the spreadsheet and the model attributes
 const turmaMap = {
@@ -7,7 +8,7 @@ const turmaMap = {
 	dias: 'days',
 	horas: 'hours',
 	minutos: 'minutes',
-	'lembrete(dias)': 'reminderDate',
+	'reenvio(dias)': 'reminderDate',
 	indicado: 'indicado',
 	familiar: 'familiar',
 	domingo: 'sunday',
@@ -57,24 +58,29 @@ async function loadTabNotificationRules(isInCompany) {
 
 // build the regular rule set, based on the spreadsheet
 async function buildNotificationRules() {
-	const abas = ['normal', 'in_company'];
+	try {
+		const abas = ['normal', 'in_company'];
 
-	const rules = [];
-	for (let j = 0; j < abas.length; j++) {
-		const aba = abas[j];
-		rules[aba] = [];
-		const spreadsheet = await reloadSpreadSheet(j + 1);
+		const rules = [];
+		for (let j = 0; j < abas.length; j++) {
+			const aba = abas[j];
+			rules[aba] = [];
+			const spreadsheet = await reloadSpreadSheet(j + 1);
 
-		if (spreadsheet && spreadsheet.length > 0) {
-			for (let i = 0; i < spreadsheet.length; i++) {
-				const e = spreadsheet[i];
-				const query = await buildQuery(e, turmaMap);
-				if (query) rules[aba].push(query);
+			if (spreadsheet && spreadsheet.length > 0) {
+				for (let i = 0; i < spreadsheet.length; i++) {
+					const e = spreadsheet[i];
+					const query = await buildQuery(e, turmaMap);
+					if (query) rules[aba].push(query);
+				}
 			}
 		}
-	}
 
-	return rules;
+		return rules;
+	} catch (error) {
+		sentryError('Erro em buildNotificationRules', error);
+		return null;
+	}
 }
 
 // return the sum of the module date (from the turma) with the notification rule

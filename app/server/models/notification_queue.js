@@ -7,6 +7,7 @@ module.exports = (sequelize, DataTypes) => {
 			indicado_id: DataTypes.INTEGER,
 			turma_id: DataTypes.INTEGER,
 			sent_at: DataTypes.DATE,
+			sent_at_chatbot: DataTypes.DATE,
 			check_answered: DataTypes.BOOLEAN,
 			error: DataTypes.JSON,
 			createdAt: { type: DataTypes.DATE, field: 'created_at' },
