@@ -7,6 +7,7 @@ const { respostas } = require('../../server/models');
 const qSync = require('../../server/models').questionario_sync;
 const { findSurveyTaker } = require('./questionario_callback');
 const { handleResponse } = require('./questionario_callback');
+const answersToIgnore = require('./questionario_ignore');
 
 /**
  * Loads questionaria data from the envs. Used on the migration "populate_questionario_table".
@@ -71,6 +72,7 @@ async function getAllQuestionarioSyncs() {
  * 3. error: something went wrong, not necessarily on the code. Maybe the answer doens't have the params necessary to find out who's the SurveyTaker.
  * In a case like that, you have to manually save the answer to a user using the /save-answer endpoint.
  * This way, next time this procedure runs, the answer with an error will be ignored because it is saved already.
+	4. ignorada: in this case, the answer_id was added to the answersToIgnore set and will be ignored. These are answer that can't be saved, so we just ignore them.
  */
 async function syncRespostas(syncID) {
 	const results = [];
@@ -101,6 +103,8 @@ async function syncRespostas(syncID) {
 				try {
 					if (savedAnswersID.includes(answer.id)) { // dont save same answer again
 						result[`resposta_${answer.id}`] = 'já estava salvo';
+					} else if (answersToIgnore.has(answer.id)) { // check if answer should be ignored
+						result[`resposta_${answer.id}`] = 'ignorada';
 					} else {
 						const surveyTaker = await findSurveyTaker(answer, survey.name);
 						if (!surveyTaker || (!surveyTaker.aluno && !surveyTaker.indicado)) { throw new help.MyError('Erro: Não foi encontrado o Survey Taker', { surveyTaker, answer: answer.id, survey: survey.id, moment: new Date() }); } // eslint-disable-line object-curly-newline
@@ -114,7 +118,7 @@ async function syncRespostas(syncID) {
 						}
 					}
 				} catch (e) {
-					result.errors.push({ e, answer: answer.id, currentSync: currentSync.id });
+					result.errors.push({ e, answer: answer.id, id_sm: survey.idSM });
 				}
 			}
 		} catch (error) {
