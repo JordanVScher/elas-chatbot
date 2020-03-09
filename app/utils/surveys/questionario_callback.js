@@ -113,11 +113,11 @@ async function receiveAnswerEvent(event) {
 
 		// get questionario details
 		const survey = await questionario.findOne({ where: { id_surveymonkey: event.filter_id.toString() }, raw: true }).then((r) => r).catch((err) => help.sentryError('Erro no findOne do questionario', err));
-		if (!survey) { throw new help.MyError('Não foi encontrado o questionário', { id_surveymonkey: event.filter_id, survey: survey.id }); }
+		if (!survey) { throw new help.MyError('Não foi encontrado o questionário', { id_surveymonkey: event.filter_id, survey }); }
 
 		// load full answer
 		const answer = await getResponseWithAnswers(survey.idSM, event.object_id);
-		if (!answer || answer.error) { throw new help.MyError('Não foi encontrada a resposta', { answer: answer.id, survey: survey.id, responseID: event.object_id }); }
+		if (!answer || answer.error) { throw new help.MyError('Não foi encontrada a resposta', { answer, survey: survey.id, responseID: event.object_id }); }
 
 		// find out who answered this survey
 		const surveyTaker = await findSurveyTaker(answer, survey.name);

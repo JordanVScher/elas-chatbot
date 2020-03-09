@@ -9,6 +9,7 @@ const { receiveAnswerEvent } = require('./utils/surveys/questionario_callback');
 const pgAPI = require('./pg_api');
 const requests = require('../requests');
 const { cronLog } = require('./utils/cronjob');
+const { sentryError } = require('./utils/helper');
 
 const config = require('./bottender.config.js').messenger;
 
@@ -69,21 +70,21 @@ server.get('/webhook', async (req, res) => {
 
 // receives new event from survey monkey webhook
 server.post('/webhook', async (req, res) => {
-	console.log('No webhook das respostas');
 	let event = null;
-	if (req.body && typeof req.body === 'object') {
-		event = req.body;
-	} else {
+	let resultado = null;
+	try {
 		event = JSON.parse(req.body);
-	}
-	if (event && event.filter_type === 'survey' && event.event_type === 'response_completed') {
-		const resultado = receiveAnswerEvent(event);
+		if (event && event.filter_type === 'survey' && event.event_type === 'response_completed') {
+			resultado = await receiveAnswerEvent(event);
+		}
+
 		res.status(200);
 		res.send(resultado);
+	} catch (error) {
+		await sentryError('Erro no webhook das respostas', { error, body: req.body, event, resultado }); // eslint-disable-line object-curly-newline
+		res.status(500);
+		res.send();
 	}
-
-	res.status(200);
-	res.send();
 });
 
 server.post('/pagamento', async (req, res) => {
