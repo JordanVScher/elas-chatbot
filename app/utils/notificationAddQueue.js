@@ -6,6 +6,18 @@ const { sentryError } = require('./helper');
 const rules = require('./notificationRules');
 const { getTurmaInCompany } = require('./DB_helper');
 
+async function getAdditionalDetails(rule) {
+	if ([14, 15, 16, 30, 31, 32].includes(rule.notification_type)) {
+		const details = {};
+		if (rule.modulo) details.modulo = rule.modulo;
+		if (typeof rule.sunday === 'boolean') details.sunday = rule.sunday;
+
+		return details;
+	}
+
+	return null;
+}
+
 async function addNewNotificationAlunas(alunaId, turmaID) {
 	try {
 		const notificationRules = await rules.loadTabNotificationRules(await getTurmaInCompany(turmaID));
@@ -14,8 +26,9 @@ async function addNewNotificationAlunas(alunaId, turmaID) {
 		if (ourTurma) {
 			for (let i = 0; i < rulesAlunos.length; i++) { // for each kind of nofitification
 				const rule = rulesAlunos[i];
+
 				await notificationQueue.create({
-					notification_type: rule.notification_type, aluno_id: alunaId, turma_id: turmaID, modulo: rule.modulo,
+					notification_type: rule.notification_type, aluno_id: alunaId, turma_id: turmaID, additional_details: await getAdditionalDetails(rule),
 				}).then((res) => res).catch((err) => sentryError('Erro em notificationQueue.create', err));
 			}
 		} else {
@@ -30,7 +43,12 @@ async function addAvaliadorOnQueue(rule, indicado, turmaID) {
 	// indicado can only receive a notification where rule familiar = true if indicado is also familiar = true
 	if (!rule.familiar || (rule.familiar === true && indicado.familiar === true)) {
 		await notificationQueue.create({
-			notification_type: rule.notification_type, aluno_id: indicado.aluno_id, indicado_id: indicado.id, check_answered: false, turma_id: turmaID, modulo: rule.modulo,
+			notification_type: rule.notification_type,
+			aluno_id: indicado.aluno_id,
+			indicado_id: indicado.id,
+			check_answered: false,
+			turma_id: turmaID,
+			additional_details: await getAdditionalDetails(rule),
 		}).then((res) => res).catch((err) => sentryError('Erro em notificationQueue.create', err));
 
 		if (rule.reminderDate) {
@@ -39,7 +57,12 @@ async function addAvaliadorOnQueue(rule, indicado, turmaID) {
 
 			// check_answered = true, in this kind of notification we have to check if the indicado hasn't answered the form already
 			await notificationQueue.create({
-				notification_type: rule.notification_type, aluno_id: indicado.aluno_id, indicado_id: indicado.id, check_answered: true, turma_id: turmaID,
+				notification_type: rule.notification_type,
+				aluno_id: indicado.aluno_id,
+				indicado_id: indicado.id,
+				check_answered: true,
+				turma_id: turmaID,
+				additional_details: await getAdditionalDetails(rule),
 			}).then((res) => res).catch((err) => sentryError('Erro em notificationQueue.create for reminderDate', err));
 		}
 	}
@@ -101,7 +124,7 @@ async function addMissingAlunoNotification(turmaID, type) {
 			for (let j = 0; j < rulesAlunos.length; j++) {
 				const rule = rulesAlunos[j];
 				await notificationQueue.create({
-					notification_type: rule.notification_type, aluno_id: aluno.id, turma_id: turmaID, modulo: rule.modulo,
+					notification_type: rule.notification_type, aluno_id: aluno.id, turma_id: turmaID, modulo: rule.modulo, additional_details: await getAdditionalDetails(rule),
 				}).then((r) => r).catch((err) => sentryError('Erro em notificationQueue.create', err));
 			}
 		} else {
@@ -161,7 +184,7 @@ async function seeDataQueue(turmaID) {
 	return result;
 }
 
-async function addMissingNotificationOnQueue(turmaID) {
+async function seeNotifications(turmaID) {
 	const alunosTurma = await alunos.findAll({ where: { turma_id: turmaID }, raw: true }).then((r) => r).catch((err) => sentryError('Erro no findAll do alunos', err));
 	const notificationsTurma = await notificationQueue.findAll({ where: { turma_id: turmaID }, raw: true }).then((r) => r).catch((err) => sentryError('Erro no findAll do notificationQueue', err));
 
@@ -189,7 +212,7 @@ async function helpAddQueue(alunoID, turmaID) {
 
 
 module.exports = {
-	addNewNotificationAlunas, addNewNotificationIndicados, addAvaliadorOnQueue, addMissingAlunoNotification, seeDataQueue, addMissingNotificationOnQueue, helpAddQueue,
+	addNewNotificationAlunas, addNewNotificationIndicados, addAvaliadorOnQueue, addMissingAlunoNotification, seeDataQueue, seeNotifications, helpAddQueue,
 };
 
 // addNewNotificationAlunas(120, 15);

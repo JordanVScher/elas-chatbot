@@ -140,7 +140,7 @@ async function seeQueue(req, res) {
 		} else if (!body.turma_id) {
 			res.status(401); res.send('body.turma_id missing!');
 		} else {
-			const result = await addQueue.addMissingNotificationOnQueue(body.turma_id);
+			const result = await addQueue.seeNotifications(body.turma_id);
 			res.status(200); res.send(result);
 		}
 	}
