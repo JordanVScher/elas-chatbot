@@ -20,11 +20,13 @@ async function buildQuery(data, map) {
 
 	Object.keys(data).forEach(async (element) => {
 		const queryInput = map[element];
+
+
 		if (queryInput && queryInput.toString() && ((data[element] && data[element].toString()) || typeof data[element] === 'boolean')) {
 			let aux = data[element].toString().trim();
 			if (parseInt(aux, 10)) aux = parseInt(aux, 10);
-			if (aux === 'true') aux = true;
-			if (aux === 'false') aux = false;
+			if (['true', 'TRUE'].includes(aux)) aux = true;
+			if (['false', 'FALSE'].includes(aux)) aux = false;
 			result[queryInput] = aux;
 		}
 	});
@@ -82,6 +84,7 @@ async function buildNotificationRules() {
 		return null;
 	}
 }
+
 
 // return the sum of the module date (from the turma) with the notification rule
 async function getSendDate(ourTurma, currentRule) {
