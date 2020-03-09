@@ -67,12 +67,11 @@ async function checkShouldSendNotification(notification, turma, tRules, today) {
 
 async function checkShouldSendRecipient(recipient, notification, turma, today) {
 	try {
-		if (!recipient) { return false; }
 		// indicados---
 		// avaliação 360 pré - lembrete - check if pré was answered
 		if ([3, 19].includes(notification.notification_type) === true && notification.check_answered === true) {
 			const answerPre = recipient['respostas.pre'];
-			if (answerPre && Object.keys(answerPre)) return { send: false, msg: 'Indicado já respondeu avaliação 360 pré' };
+			if (answerPre && Object.keys(answerPre).length > 0) return { send: false, msg: 'Indicado já respondeu avaliação 360 pré' };
 		}
 
 		// avaliação 360 pós - check if pré was answered

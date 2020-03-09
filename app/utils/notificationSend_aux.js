@@ -461,6 +461,3 @@ async function sendChatbot(recipient, attach, newText) {
 module.exports = {
 	getRecipient, findCurrentModulo, fillMasks, replaceParameters, findAtividadesMissing, buildAttachment, buildNewText, sendMail, sendChatbot,
 };
-
-
-//

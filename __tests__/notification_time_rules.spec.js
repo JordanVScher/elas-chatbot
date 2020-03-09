@@ -248,5 +248,19 @@ describe('Add reminder date (Lembrete de reenvio).', () => {
 	});
 });
 
+describe('Error', () => {
+	const notification = JSON.parse(JSON.stringify(data.notification));
+	it('Erro - Cant find currentRule', async () => {
+		const type = 2666;
+		notification.notification_type = type;
+		const today = new Date();
+		const results = await checkShouldSendNotification(notification, turma, notificationRules, today);
+		await expect(results && results.error && results.error.params).toBeTruthy();
+		await expect(results.error.params.type).toBe(type);
+		await expect(results.error.params.currentRule).toBeFalsy();
+	});
+});
+
+
 // const { sequelize } = require('../app/server/models/index');
 // afterAll(() => { sequelize.close(); });

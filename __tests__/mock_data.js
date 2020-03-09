@@ -1,4 +1,33 @@
 module.exports = {
+	indicado: {
+		id: 1,
+		aluno_id: 1,
+		nome: 'Bar',
+		email: 'bar@foobar.com',
+		telefone: '123123',
+		familiar: true,
+		relacao_com_aluna: 'Tio',
+		'respostas.id': 1,
+		'respostas.indicado_id': 1,
+		'respostas.pre': { foobar: 'foobar' },
+		'respostas.pos': { foobar: 'foobar' },
+		'aluna.id': 1,
+		'aluna.nome_completo': 'foo',
+		'aluna.cpf': '123123123',
+		'aluna.email': 'foo@foobar.com',
+		'aluna.turma_id': 1,
+		'aluna.rg': '321321',
+		'aluna.telefone': '123123',
+		'aluna.endereco': 'foobar',
+		'aluna.data_nascimento': '12/12/1222',
+		'aluna.contato_emergencia_nome': 'a',
+		'aluna.contato_emergencia_fone': 'b',
+		'aluna.contato_emergencia_email': 'c',
+		'aluna.contato_emergencia_relacao': 'd',
+		'aluna.added_by_admin': false,
+	},
+
+
 	pesquisaAluno: {
 		id: 1,
 		alunoID: 1,

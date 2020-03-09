@@ -53,6 +53,7 @@ async function getJsDateFromExcel(excelDate) {
 }
 
 async function sentryError(msg, erro) {
+	if (process.env.ENV === 'local' && process.env.TEST) return false;
 	if (process.env.ENV !== 'local') Sentry.captureMessage(msg);
 	console.error(msg);
 	if (erro) {
