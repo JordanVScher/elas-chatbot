@@ -212,26 +212,22 @@ async function logMail(req, res) {
 			const alunoID = body.aluno_id;
 			const indicadoID = body.indicado_id;
 			const notificationType = body.notification_type;
-			const { day } = body;
-			const { month } = body;
+			const { moment } = body;
 
-			if ((day && !month) || (!day && month)) {
-				res.status(401); res.send('Adicione mês e dia juntos, ou nenhum dos dois.');
-			} else {
-				const queue = await send.getQueue(turmaID, alunoID, indicadoID, notificationType);
-				let dataComparacao = null;
-				if (day && month) {
-					dataComparacao = new Date(new Date().getFullYear(), month - 1, day);
-					if (!Object.prototype.toString.call(dataComparacao) === '[object Date]' || isNaN(dataComparacao.getTime())) { // eslint-disable-line
-						res.status(401); res.send('Data inválida, utiliza apenas números');
-					}
+			let dataComparacao = null;
+			if (moment) {
+				dataComparacao = new Date(moment);
+				if (!Object.prototype.toString.call(dataComparacao) === '[object Date]' || isNaN(dataComparacao.getTime())) { // eslint-disable-line
+					res.status(401); res.send('Data inválida, utilize uma string ISO como essa: 2020-02-15T17:30:00.000Z');
 				}
-
-				if (dataComparacao && !Object.prototype.toString.call(dataComparacao) === '[object Date]') dataComparacao = null;
-
-				const result = await send.sendNotificationFromQueue(queue, dataComparacao, true);
-				res.status(200); res.send(result);
 			}
+
+			if (dataComparacao && !Object.prototype.toString.call(dataComparacao) === '[object Date]') dataComparacao = null;
+
+			const queue = await send.getQueue(turmaID, alunoID, indicadoID, notificationType);
+
+			const result = await send.sendNotificationFromQueue(queue, dataComparacao, true);
+			res.status(200); res.send(result);
 		}
 	}
 }
