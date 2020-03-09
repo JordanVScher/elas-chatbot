@@ -18,9 +18,10 @@ async function checkShouldSendNotification(notification, turma, tRules, today) {
 		const dateToSend = await rules.getSendDate(turma, currentRule); // the date to actually send the notification
 
 		// add date for the Reenvio of the notification
-		if (notification.check_answered === true) dateToSend.setDate(dateToSend.getDate() + currentRule.reminderDate);
+		if (notification.check_answered === true && currentRule.reminderDate) { dateToSend.setDate(dateToSend.getDate() + Math.abs(currentRule.reminderDate)); }
 
-		const min = dateToSend;
+		let min;
+		min = dateToSend;
 		let max;
 		if (dateToSend < moduloDate) { // notification will be sent before the moduloDate, today needs to be between the notification date and the moduleDate
 			max = moduloDate;
@@ -32,6 +33,12 @@ async function checkShouldSendNotification(notification, turma, tRules, today) {
 				moduloDate.setDate(moduloDate.getDate() + 15);
 				max = moduloDate;
 			}
+		}
+
+		if (min > max) {
+			const change = min;
+			min = max;
+			max = change;
 		}
 
 		// ignore hours for most notifications
