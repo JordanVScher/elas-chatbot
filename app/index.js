@@ -133,8 +133,13 @@ server.post('/save-answer', async (req, res) => {
 server.post('/sync-answers', async (req, res) => {
 	await requests.syncAnswers(req, res);
 });
+
 server.post('/log-queue', async (req, res) => {
 	await requests.logMail(req, res);
+});
+
+server.post('/add-details', async (req, res) => {
+	await requests.addQueueDetails(req, res);
 });
 
 server.listen(process.env.API_PORT, () => {

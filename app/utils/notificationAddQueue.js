@@ -210,9 +210,35 @@ async function helpAddQueue(alunoID, turmaID) {
 	}
 }
 
+async function addQueueProvisorio(turmaID, type, details) {
+	const alunosTurma = await alunos.findAll({ where: { turma_id: turmaID }, attributes: ['id'], raw: true }).then((r) => r.map((x) => x.id)).catch((err) => console.log(err));
+	const res = {};
+	res.alunosTotal = alunosTurma.length;
+	for (let i = 0; i < alunosTurma.length; i++) {
+		const aID = alunosTurma[i];
+		const aux = await notificationQueue.create({
+			notification_type: type, aluno_id: aID, turma_id: turmaID, additional_details: details,
+		}).then((r) => r).catch((err) => sentryError('Erro em notificationQueue.create', err));
+
+		if (aux) {
+			res[aID] = 'ok';
+		} else {
+			res[aID] = 'erro';
+		}
+	}
+
+	return res;
+}
 
 module.exports = {
-	addNewNotificationAlunas, addNewNotificationIndicados, addAvaliadorOnQueue, addMissingAlunoNotification, seeDataQueue, seeNotifications, helpAddQueue,
+	addNewNotificationAlunas,
+	addNewNotificationIndicados,
+	addAvaliadorOnQueue,
+	addMissingAlunoNotification,
+	seeDataQueue,
+	seeNotifications,
+	helpAddQueue,
+	addQueueProvisorio,
 };
 
 // addNewNotificationAlunas(120, 15);

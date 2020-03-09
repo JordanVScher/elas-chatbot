@@ -236,6 +236,30 @@ async function logMail(req, res) {
 	}
 }
 
+async function addQueueDetails(req, res) {
+	const { body } = req;
+	if (!body || !body.security_token) {
+		res.status(400); res.send('Param security_token is required!');
+	} else {
+		const securityToken = body.security_token;
+		if (securityToken !== process.env.SECURITY_TOKEN_MA) {
+			res.status(401); res.send('Unauthorized!');
+		} else {
+			const turmaID = body.turma_id;
+			const type = body.notification_type;
+			const details = body.additional_details || null;
+
+			if (!turmaID || !type) {
+				res.status(401); res.send('Falta turma_id ou notification_type!');
+			} else {
+				const result = await addQueue.addQueueProvisorio(turmaID, type, details);
+				console.log('result', result);
+				res.status(200); res.send(result);
+			}
+		}
+	}
+}
+
 module.exports = {
 	getNameFBID,
 	addLabel,
@@ -248,4 +272,5 @@ module.exports = {
 	saveNewAnswer,
 	syncAnswers,
 	logMail,
+	addQueueDetails,
 };
