@@ -2,7 +2,7 @@ const { CronJob } = require('cron');
 const { sentryError } = require('./helper');
 const { sendWarningCSV } = require('./admin_menu/warn_admin');
 const { sendWarningAlunas } = require('./admin_menu/warn_aluna');
-const { sendNotificationFromQueue } = require('./notificationSendQueue');
+const send = require('./notificationSendQueue');
 const { updateTurmas } = require('./turma');
 const { addAlunosPesquisa } = require('./pesquisa/add_aluno_pesquisa');
 const { sendPesquisa } = require('./pesquisa/send_pesquisa_broadcast');
@@ -54,7 +54,8 @@ const sendNotificationCron = new CronJob(
 	'00 00 7-22/1 * * *', async () => {
 		console.log('Running sendNotificationCron');
 		try {
-			await sendNotificationFromQueue();
+			const queue = await send.getQueue();
+			await send.sendNotificationFromQueue(queue);
 		} catch (error) {
 			console.log('sendNotificationFromQueue error', error);
 			await sentryError('Error on sendNotificationFromQueue', error);

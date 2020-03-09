@@ -1,4 +1,4 @@
-const { Sequelize } = require('sequelize');
+const { Op } = require('sequelize').Sequelize;
 const notificationTypes = require('../server/models').notification_types;
 const notificationQueue = require('../server/models').notification_queue;
 const indicadosAvaliadores = require('../server/models').indicacao_avaliadores;
@@ -7,8 +7,6 @@ const help = require('./helper');
 const DB = require('./DB_helper');
 const rules = require('./notificationRules');
 const aux = require('./notificationSend_aux');
-
-const { Op } = Sequelize;
 
 
 async function checkShouldSendNotification(notification, turma, tRules, today) {
@@ -109,7 +107,7 @@ async function checkShouldSendRecipient(recipient, notification, turma, today) {
 	}
 }
 
-async function actuallySendMessages(currentType, notification, recipient) {
+async function actuallySendMessages(currentType, notification, recipient, logOnly) {
 	const res = {};
 	try {
 		const newText = await aux.buildNewText(currentType, recipient); res.newText = newText;
@@ -117,24 +115,33 @@ async function actuallySendMessages(currentType, notification, recipient) {
 		const attach = await aux.buildAttachment(currentType); res.attach = attach;
 		if (!attach || (!attach.mail && !attach.chatbot)) throw new help.MyError('Não foi possível montar os attachments');
 
+		if (logOnly) {
+			const data = {};
+			data.aluna.seria_enviada = true;
+			data.aluna_tem_email = !!recipient.email;
+			data.aluna_tem_chatbot = !!recipient['chatbot.fb_id'];
+			data.attach = attach;
+			data.text = newText;
+			return data;
+		}
+
 		const mailAnswer = await aux.sendMail(recipient, attach, newText); res.mailAnswer = mailAnswer;
 		if (mailAnswer.sent === true) await notificationQueue.update({ sent_at: new Date() }, { where: { id: notification.id } }).then((rowsUpdated) => rowsUpdated).catch((err) => help.sentryError('Erro no update do sendAt', err));
 
 		const chatbotAnswer = await aux.sendChatbot(recipient, attach, newText); res.chatbotAnswer = chatbotAnswer;
 		if (chatbotAnswer.sent === true) await notificationQueue.update({ sent_at_chatbot: new Date() }, { where: { id: notification.id } }).then((rowsUpdated) => rowsUpdated).catch((err) => help.sentryError('Erro no update do sendAt', err));
 
-		return chatbotAnswer;
+		return { mailAnswer, chatbotAnswer };
 	} catch (error) {
 		help.sentryError('Erro em actuallySendMessages', { currentType, notification, recipient });
 		return { error, currentType, notification, recipient }; // eslint-disable-line object-curly-newline
 	}
 }
 
-async function sendNotificationFromQueue() {
+async function sendNotificationFromQueue(queue, today, logOnly) {
 	const res = {};
 	try {
-		const queue = await notificationQueue.findAll({ where: { turma_id: { [Op.not]: null }, sent_at: null, error: null }, raw: true }).then((r) => r).catch((err) => help.sentryError('Erro ao carregar notification_queue', err));
-
+		if (!queue || queue.length === 0) return 'Não foram encontradas notificações na fila.';
 		const nTypes = await notificationTypes.findAll({ where: {}, raw: true }).then((r) => r).catch((err) => help.sentryError('Erro ao carregar notification_types', err));
 		if (!nTypes || nTypes.length === 0) throw new help.MyError('Não foram carregados os tipos de notificação', { nTypes });
 
@@ -144,10 +151,10 @@ async function sendNotificationFromQueue() {
 		const nRules = await rules.buildNotificationRules(); // get all rules from spreadsheet
 		if (!nRules || !Object.keys(nRules) || Object.keys(nRules).length === 0) throw new help.MyError('Não foram carregadas as regras da planilha', { nRules });
 
-		const today = new Date();
+		if (!today) today = new Date();
 
 		for (let i = 0; i < queue.length; i++) {
-			const notification = queue[i]; const cName = `n_${notification.id}`;
+			const notification = queue[i]; const cName = `nID_${notification.id}`;
 			try {
 				const currentTurma = await allTurmas.find((x) => x.id === notification.turma_id);
 				if (!currentTurma) { throw new help.MyError('Não foi possível encontrar a turma da notificação', { notification, allTurmas, currentTurma }); }
@@ -168,7 +175,7 @@ async function sendNotificationFromQueue() {
 					const shouldRecipient = await checkShouldSendRecipient(recipient, notification, currentTurma, today);
 					if (!shouldRecipient || shouldRecipient.error) throw new help.MyError('Não foi possível descobrir se recipiente pode receber', { shouldRecipient });
 					if (shouldRecipient.send === true) {
-						const sentRes = await actuallySendMessages(currentType, notification, recipient);
+						const sentRes = await actuallySendMessages(currentType, notification, recipient, logOnly);
 						res[cName] = sentRes;
 					} else {
 						res[cName] = { msg: `Recipient não pode receber - ${shouldRecipient.smg}` }; // eslint-disable-line object-curly-newline
@@ -177,8 +184,9 @@ async function sendNotificationFromQueue() {
 					res[cName] = { msg: 'Não é hora de mandar essa notificação', dataMin: shouldSend.min, dataMax: shouldSend.max, today: shouldSend.today }; // eslint-disable-line object-curly-newline
 				}
 			} catch (error) {
-				res[cName] = error;
+				res[cName] = { error };
 			}
+			res[cName].details = notification;
 		}
 	} catch (error) {
 		help.sentryError('Erro no sendNotificationFromQueue', error);
@@ -188,10 +196,24 @@ async function sendNotificationFromQueue() {
 	return res;
 }
 
+async function getQueue(turmaID, alunoID, indicadoID, notificationType) {
+	const query = {
+		sent_at: null, sent_at_chatbot: null, error: null, turma_id: { [Op.not]: null },
+	};
+
+	if (notificationType) query.notification_type = notificationType;
+	if (turmaID) query.turma_id = turmaID;
+	if (alunoID) query.aluno_id = alunoID;
+	if (indicadoID) query.indicado_id = indicadoID;
+
+	const queue = await notificationQueue.findAll({ where: query, raw: true }).then((r) => r).catch((err) => help.sentryError('Erro ao carregar notification_queue', err));
+	return queue || [];
+}
 
 module.exports = {
 	checkShouldSendRecipient,
 	checkShouldSendNotification,
 	actuallySendMessages,
 	sendNotificationFromQueue,
+	getQueue,
 };

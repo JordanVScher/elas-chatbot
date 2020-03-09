@@ -5,7 +5,7 @@ const fs = require('fs');
 const { linkUserToLabelByName } = require('./app/utils/labels');
 const { changeAdminStatus } = require('./app/utils/DB_helper');
 const addQueue = require('./app/utils/notificationAddQueue');
-const { sendNotificationFromQueue } = require('./app/utils/notificationSendQueue');
+const send = require('./app/utils/notificationSendQueue');
 const { seeDataQueue } = require('./app/utils/notificationAddQueue');
 const { sendDonnaMail } = require('./app/utils/sm_help');
 const { saveAnswer } = require('./app/utils/surveys/questionario_callback');
@@ -106,7 +106,7 @@ async function sendNotificationQueue(req, res) {
 		if (securityToken !== process.env.SECURITY_TOKEN_MA) {
 			res.status(401); res.send('Unauthorized!');
 		} else {
-			sendNotificationFromQueue(body.aluno_id, body.notification_type);
+			send.sendNotificationFromQueue(body.aluno_id, body.notification_type);
 			res.status(200); res.send('Processando');
 		}
 	}
@@ -181,6 +181,7 @@ async function saveNewAnswer(req, res) {
 		}
 	}
 }
+
 async function syncAnswers(req, res) {
 	const { body } = req;
 	if (!body || !body.security_token) {
@@ -198,7 +199,53 @@ async function syncAnswers(req, res) {
 	}
 }
 
+async function logMail(req, res) {
+	const { body } = req;
+	if (!body || !body.security_token) {
+		res.status(400); res.send('Param security_token is required!');
+	} else {
+		const securityToken = body.security_token;
+		if (securityToken !== process.env.SECURITY_TOKEN_MA) {
+			res.status(401); res.send('Unauthorized!');
+		} else {
+			const turmaID = body.turma_id;
+			const alunoID = body.aluno_id;
+			const indicadoID = body.indicado_id;
+			const notificationType = body.notification_type;
+			const { day } = body;
+			const { month } = body;
+
+			if ((day && !month) || (!day && month)) {
+				res.status(401); res.send('Adicione mês e dia juntos, ou nenhum dos dois.');
+			} else {
+				const queue = await send.getQueue(turmaID, alunoID, indicadoID, notificationType);
+				let dataComparacao = null;
+				if (day && month) {
+					dataComparacao = new Date(new Date().getFullYear(), month - 1, day);
+					if (!Object.prototype.toString.call(dataComparacao) === '[object Date]' || isNaN(dataComparacao.getTime())) { // eslint-disable-line
+						res.status(401); res.send('Data inválida, utiliza apenas números');
+					}
+				}
+
+				if (dataComparacao && !Object.prototype.toString.call(dataComparacao) === '[object Date]') dataComparacao = null;
+
+				const result = await send.sendNotificationFromQueue(queue, dataComparacao, true);
+				res.status(200); res.send(result);
+			}
+		}
+	}
+}
 
 module.exports = {
-	getNameFBID, addLabel, addMissingNotification, sendNotificationQueue, dataQueue, seeQueue, addNewQueue, donnaMail, saveNewAnswer, syncAnswers,
+	getNameFBID,
+	addLabel,
+	addMissingNotification,
+	sendNotificationQueue,
+	dataQueue,
+	seeQueue,
+	addNewQueue,
+	donnaMail,
+	saveNewAnswer,
+	syncAnswers,
+	logMail,
 };

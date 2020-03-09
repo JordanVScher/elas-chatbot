@@ -132,6 +132,9 @@ server.post('/save-answer', async (req, res) => {
 server.post('/sync-answers', async (req, res) => {
 	await requests.syncAnswers(req, res);
 });
+server.post('/log-queue', async (req, res) => {
+	await requests.logMail(req, res);
+});
 
 server.listen(process.env.API_PORT, () => {
 	console.log(`Server is running on ${process.env.API_PORT} port...`);
