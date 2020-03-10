@@ -85,3 +85,18 @@ google-secret-key.json
 
 # for random testing
 test.js
+test2.js
+*.svg
+
+/exemplo_de_respostas/*
+# spreadsheet api key
+private_key.json
+copy.dmp
+elas.sql
+
+google_private_key.json
+survey_ids.env
+copy.js
+*_graficos.zip
+*_respostas.txt
+mock.js
