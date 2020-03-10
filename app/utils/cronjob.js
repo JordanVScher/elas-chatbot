@@ -52,7 +52,7 @@ const sendWarningAlunasCron = new CronJob(
 
 const sendNotificationCron = new CronJob(
 	'00 00 7-22/1 * * *', async () => {
-		console.log('Running sendNotificationCron');
+		console.log(`Running sendNotificationCron - ${new Date()}`);
 		try {
 			const queue = await send.getQueue();
 			await send.sendNotificationFromQueue(queue);
