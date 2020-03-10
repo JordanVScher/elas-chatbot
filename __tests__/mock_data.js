@@ -56,8 +56,17 @@ module.exports = {
 		{ notification_type: 12, modulo: 3, timeChange: [{ qtd: -2, type: 'days' }], indicado: true, familiar: true }, // eslint-disable-line object-curly-newline
 		{ notification_type: 13, modulo: 3, timeChange: [{ qtd: 1, type: 'days' }] },
 		{ notification_type: 14, modulo: 1, timeChange: [{ qtd: -24, type: 'hours' }] },
-		{ notification_type: 15, modulo: 1, timeChange: [{ qtd: -1, type: 'hours' }] },
+		{ notification_type: 14, modulo: 2, timeChange: [{ qtd: -24, type: 'hours' }] },
+		{ notification_type: 14, modulo: 3, timeChange: [{ qtd: -24, type: 'hours' }] },
+		{ notification_type: 15, modulo: 1, timeChange: [{ qtd: -1, type: 'hours' }], sunday: false }, // eslint-disable-line object-curly-newline
+		{ notification_type: 15, modulo: 1, timeChange: [{ qtd: 23, type: 'hours' }], sunday: true }, // eslint-disable-line object-curly-newline
+		{ notification_type: 15, modulo: 2, timeChange: [{ qtd: -1, type: 'hours' }], sunday: false }, // eslint-disable-line object-curly-newline
+		{ notification_type: 15, modulo: 2, timeChange: [{ qtd: 23, type: 'hours' }], sunday: true }, // eslint-disable-line object-curly-newline
+		{ notification_type: 15, modulo: 3, timeChange: [{ qtd: -1, type: 'hours' }], sunday: false }, // eslint-disable-line object-curly-newline
+		{ notification_type: 15, modulo: 3, timeChange: [{ qtd: 23, type: 'hours' }], sunday: true }, // eslint-disable-line object-curly-newline
 		{ notification_type: 16, modulo: 1, timeChange: [{ qtd: -2, type: 'days' }] },
+		{ notification_type: 16, modulo: 2, timeChange: [{ qtd: -2, type: 'days' }] },
+		{ notification_type: 16, modulo: 3, timeChange: [{ qtd: -2, type: 'days' }] },
 		{ notification_type: 23, modulo: 1, timeChange: [{ qtd: -10, type: 'days' }], indicado: true, reminderDate: -6 }, // eslint-disable-line object-curly-newline
 		{ notification_type: 24, modulo: 1, timeChange: [{ qtd: -10, type: 'days' }], indicado: true, reminderDate: 60 }, // eslint-disable-line object-curly-newline
 		{ notification_type: 25, modulo: 1, timeChange: [{ qtd: 60, type: 'days' }] },

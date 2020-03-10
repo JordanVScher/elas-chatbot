@@ -248,19 +248,376 @@ describe('Add reminder date (Lembrete de reenvio).', () => {
 	});
 });
 
+describe('Additional Details - Um dia antes', () => {
+	const notification = JSON.parse(JSON.stringify(data.notification));
+	notification.notification_type = 14;
+
+	it('14 - Detalhe do módulo 1', async () => {
+		notification.additional_details = { modulo: 1 };
+
+		const today = new Date(turma.modulo1);
+		today.setDate(today.getDate() - 1);
+
+		const result = await checkShouldSendNotification(notification, turma, notificationRules, today);
+		await expect(result && !result.error).toBeTruthy();
+		await expect(result.sendNow).toBeTruthy();
+		await expect(result.min < turma.modulo1).toBeTruthy();
+		await expect(result.max.toString() === turma.modulo1.toString()).toBeTruthy();
+		await expect(result.min.toString() === today.toString()).toBeTruthy();
+	});
+
+	it('14 - Não envia antes de um dia', async () => {
+		notification.additional_details = { modulo: 1 };
+
+		const today = new Date(turma.modulo1);
+		today.setDate(today.getDate() - 1);
+		today.setHours(today.getHours() - 1);
+
+		const result = await checkShouldSendNotification(notification, turma, notificationRules, today);
+		await expect(result && !result.error).toBeTruthy();
+		await expect(result.sendNow).toBeFalsy();
+		await expect(result.min < turma.modulo1).toBeTruthy();
+		await expect(result.max.toString() === turma.modulo1.toString()).toBeTruthy();
+		await expect(result.min > today).toBeTruthy();
+	});
+
+	it('14 - Não envia depois do módulo', async () => {
+		notification.additional_details = { modulo: 1 };
+
+		const today = new Date(turma.modulo1);
+		today.setHours(today.getHours() + 1);
+
+		const result = await checkShouldSendNotification(notification, turma, notificationRules, today);
+		await expect(result && !result.error).toBeTruthy();
+		await expect(result.sendNow).toBeFalsy();
+		await expect(result.min < turma.modulo1).toBeTruthy();
+		await expect(result.max.toString() === turma.modulo1.toString()).toBeTruthy();
+		await expect(result.max < today).toBeTruthy();
+	});
+
+	it('14 - Detalhe do módulo 2', async () => {
+		notification.additional_details = { modulo: 2 };
+
+		const today = new Date(turma.modulo2);
+		today.setDate(today.getDate() - 1);
+
+		const result = await checkShouldSendNotification(notification, turma, notificationRules, today);
+		await expect(result && !result.error).toBeTruthy();
+		await expect(result.sendNow).toBeTruthy();
+		await expect(result.min < turma.modulo2).toBeTruthy();
+		await expect(result.max.toString() === turma.modulo2.toString()).toBeTruthy();
+		await expect(result.min.toString() === today.toString()).toBeTruthy();
+	});
+
+	it('14 - Detalhe do módulo 3', async () => {
+		notification.additional_details = { modulo: 3 };
+
+		const today = new Date(turma.modulo3);
+		today.setDate(today.getDate() - 1);
+
+		const result = await checkShouldSendNotification(notification, turma, notificationRules, today);
+		await expect(result && !result.error).toBeTruthy();
+		await expect(result.sendNow).toBeTruthy();
+		await expect(result.min < turma.modulo3).toBeTruthy();
+		await expect(result.max.toString() === turma.modulo3.toString()).toBeTruthy();
+		await expect(result.min.toString() === today.toString()).toBeTruthy();
+	});
+
+	it('14 - Erro se não existir a regra específica do módulo', async () => {
+		notification.additional_details = { modulo: 4 };
+		const today = new Date();
+
+		const result = await checkShouldSendNotification(notification, turma, notificationRules, today);
+		await expect(result && !result.error).toBeFalsy();
+		await expect(result.sendNow).toBeFalsy();
+		await expect(result.error.params.type).toBe(notification.notification_type);
+		await expect(result.error.params.currentRule).toBeFalsy();
+	});
+});
+
+describe('Additional Details - Uma hora antes', () => {
+	const notification = JSON.parse(JSON.stringify(data.notification));
+	notification.notification_type = 15;
+
+	it('15 - Módulo 1, não é domingo', async () => {
+		notification.additional_details = { modulo: 1, sunday: false };
+		const today = new Date(turma.modulo1);
+		today.setHours(today.getHours() - 1);
+
+		const result = await checkShouldSendNotification(notification, turma, notificationRules, today);
+		await expect(result && !result.error).toBeTruthy();
+		await expect(result.sendNow).toBeTruthy();
+		await expect(result.min < turma.modulo1).toBeTruthy();
+		await expect(result.max.toString() === turma.modulo1.toString()).toBeTruthy();
+		await expect(result.min.toString() === today.toString()).toBeTruthy();
+	});
+
+	it('15 - Módulo 1, não é domingo, não envia antes da regra', async () => {
+		notification.additional_details = { modulo: 1, sunday: false };
+		const today = new Date(turma.modulo1);
+		today.setHours(today.getHours() - 1);
+		today.setMinutes(today.getMinutes() - 1);
+
+		const result = await checkShouldSendNotification(notification, turma, notificationRules, today);
+		await expect(result && !result.error).toBeTruthy();
+		await expect(result.sendNow).toBeFalsy();
+		await expect(result.max.toString() === turma.modulo1.toString()).toBeTruthy();
+		await expect(result.min > today).toBeTruthy();
+	});
+
+	it('15 - Módulo 1, não é domingo, não envia depois do módulo', async () => {
+		notification.additional_details = { modulo: 1, sunday: false };
+		const today = new Date(turma.modulo1);
+		today.setMinutes(today.getMinutes() + 1);
+
+		const result = await checkShouldSendNotification(notification, turma, notificationRules, today);
+		await expect(result && !result.error).toBeTruthy();
+		await expect(result.sendNow).toBeFalsy();
+		await expect(result.max.toString() === turma.modulo1.toString()).toBeTruthy();
+		await expect(result.max < today).toBeTruthy();
+	});
+
+	it('15 - Módulo 1, é domingo', async () => {
+		notification.additional_details = { modulo: 1, sunday: true };
+
+		const today = new Date(turma.modulo1);
+		today.setDate(today.getDate() + 1);
+		today.setHours(today.getHours() - 1);
+		const max = new Date(turma.modulo1);
+		max.setDate(max.getDate() + 1);
+
+		const result = await checkShouldSendNotification(notification, turma, notificationRules, today);
+		await expect(result && !result.error).toBeTruthy();
+		await expect(result.sendNow).toBeTruthy();
+		await expect(result.max > turma.modulo1).toBeTruthy();
+		await expect(result.min > turma.modulo1).toBeTruthy();
+		await expect(result.max.toString() === max.toString()).toBeTruthy();
+		await expect(result.min.toString() === today.toString()).toBeTruthy();
+	});
+
+	it('15 - Módulo 1, é domingo, não envia antes da regra', async () => {
+		notification.additional_details = { modulo: 1, sunday: true };
+
+		const today = new Date(turma.modulo1);
+		today.setDate(today.getDate() + 1);
+		today.setHours(today.getHours() - 1);
+		today.setMinutes(today.getMinutes() - 5);
+		const max = new Date(turma.modulo1);
+		max.setDate(max.getDate() + 1);
+
+		const result = await checkShouldSendNotification(notification, turma, notificationRules, today);
+		await expect(result && !result.error).toBeTruthy();
+		await expect(result.sendNow).toBeFalsy();
+		await expect(result.max > turma.modulo1).toBeTruthy();
+		await expect(result.min > turma.modulo1).toBeTruthy();
+		await expect(result.max.toString() === max.toString()).toBeTruthy();
+		await expect(result.min > today).toBeTruthy();
+	});
+
+	it('15 - Módulo 1, é domingo, não envia depois de um dia do módulo', async () => {
+		notification.additional_details = { modulo: 1, sunday: true };
+
+		const today = new Date(turma.modulo1);
+		today.setDate(today.getDate() + 1);
+		today.setMinutes(today.getMinutes() + 5);
+		const max = new Date(turma.modulo1);
+		max.setDate(max.getDate() + 1);
+
+		const result = await checkShouldSendNotification(notification, turma, notificationRules, today);
+		await expect(result && !result.error).toBeTruthy();
+		await expect(result.sendNow).toBeFalsy();
+		await expect(result.max > turma.modulo1).toBeTruthy();
+		await expect(result.min > turma.modulo1).toBeTruthy();
+		await expect(result.max.toString() === max.toString()).toBeTruthy();
+		await expect(result.max < today).toBeTruthy();
+	});
+
+	it('15 - Módulo 2, não é domingo', async () => {
+		notification.additional_details = { modulo: 2, sunday: false };
+		const today = new Date(turma.modulo2);
+		today.setHours(today.getHours() - 1);
+
+		const result = await checkShouldSendNotification(notification, turma, notificationRules, today);
+		await expect(result && !result.error).toBeTruthy();
+		await expect(result.sendNow).toBeTruthy();
+		await expect(result.min < turma.modulo2).toBeTruthy();
+		await expect(result.max.toString() === turma.modulo2.toString()).toBeTruthy();
+		await expect(result.min.toString() === today.toString()).toBeTruthy();
+	});
+
+	it('15 - Módulo 2, é domingo', async () => {
+		notification.additional_details = { modulo: 2, sunday: true };
+
+		const today = new Date(turma.modulo2);
+		today.setDate(today.getDate() + 1);
+		today.setHours(today.getHours() - 1);
+		const max = new Date(turma.modulo2);
+		max.setDate(max.getDate() + 1);
+
+		const result = await checkShouldSendNotification(notification, turma, notificationRules, today);
+		await expect(result && !result.error).toBeTruthy();
+		await expect(result.sendNow).toBeTruthy();
+		await expect(result.max > turma.modulo2).toBeTruthy();
+		await expect(result.min > turma.modulo2).toBeTruthy();
+		await expect(result.max.toString() === max.toString()).toBeTruthy();
+		await expect(result.min.toString() === today.toString()).toBeTruthy();
+	});
+
+	it('15 - Módulo 3, não é domingo', async () => {
+		notification.additional_details = { modulo: 3, sunday: false };
+		const today = new Date(turma.modulo3);
+		today.setHours(today.getHours() - 1);
+
+		const result = await checkShouldSendNotification(notification, turma, notificationRules, today);
+		await expect(result && !result.error).toBeTruthy();
+		await expect(result.sendNow).toBeTruthy();
+		await expect(result.min < turma.modulo3).toBeTruthy();
+		await expect(result.max.toString() === turma.modulo3.toString()).toBeTruthy();
+		await expect(result.min.toString() === today.toString()).toBeTruthy();
+	});
+
+	it('15 - Módulo 3, é domingo', async () => {
+		notification.additional_details = { modulo: 3, sunday: true };
+
+		const today = new Date(turma.modulo3);
+		today.setDate(today.getDate() + 1);
+		today.setHours(today.getHours() - 1);
+		const max = new Date(turma.modulo3);
+		max.setDate(max.getDate() + 1);
+
+		const result = await checkShouldSendNotification(notification, turma, notificationRules, today);
+		await expect(result && !result.error).toBeTruthy();
+		await expect(result.sendNow).toBeTruthy();
+		await expect(result.max > turma.modulo3).toBeTruthy();
+		await expect(result.min > turma.modulo3).toBeTruthy();
+		await expect(result.max.toString() === max.toString()).toBeTruthy();
+		await expect(result.min.toString() === today.toString()).toBeTruthy();
+	});
+
+	it('15 -  se não existir a regra específica do módulo', async () => {
+		notification.notification_type = 15;
+		notification.additional_details = { modulo: 4 };
+		const today = new Date();
+
+		const result = await checkShouldSendNotification(notification, turma, notificationRules, today);
+		await expect(result && !result.error).toBeFalsy();
+		await expect(result.sendNow).toBeFalsy();
+		await expect(result.error.params.type).toBe(notification.notification_type);
+		await expect(result.error.params.currentRule).toBeFalsy();
+	});
+
+	it('15 -  valor inválido pra sunday', async () => {
+		notification.notification_type = 15;
+		notification.additional_details = { modulo: 3, sunday: 'foobar' };
+		const today = new Date();
+
+		const result = await checkShouldSendNotification(notification, turma, notificationRules, today);
+		await expect(result && !result.error).toBeFalsy();
+		await expect(result.sendNow).toBeFalsy();
+		await expect(result.error.params.type).toBe(notification.notification_type);
+		await expect(result.error.params.currentRule).toBeFalsy();
+	});
+});
+
+describe('Additional Details - dois dias antes', () => {
+	const notification = JSON.parse(JSON.stringify(data.notification));
+	notification.notification_type = 16;
+
+	it('14 - Detalhe do módulo 1', async () => {
+		notification.additional_details = { modulo: 1 };
+
+		const today = new Date(turma.modulo1);
+		today.setDate(today.getDate() - 2);
+
+		const result = await checkShouldSendNotification(notification, turma, notificationRules, today);
+		await expect(result && !result.error).toBeTruthy();
+		await expect(result.sendNow).toBeTruthy();
+		await expect(result.min < turma.modulo1).toBeTruthy();
+		await expect(result.max.toString() === turma.modulo1.toString()).toBeTruthy();
+		await expect(result.min.toString() === today.toString()).toBeTruthy();
+	});
+
+	it('14 - Não envia antes de dois dias', async () => {
+		notification.additional_details = { modulo: 1 };
+
+		const today = new Date(turma.modulo1);
+		today.setDate(today.getDate() - 2);
+		today.setHours(today.getHours() - 1);
+
+		const result = await checkShouldSendNotification(notification, turma, notificationRules, today);
+		await expect(result && !result.error).toBeTruthy();
+		await expect(result.sendNow).toBeFalsy();
+		await expect(result.min < turma.modulo1).toBeTruthy();
+		await expect(result.max.toString() === turma.modulo1.toString()).toBeTruthy();
+		await expect(result.min > today).toBeTruthy();
+	});
+
+	it('14 - Não envia depois do módulo', async () => {
+		notification.additional_details = { modulo: 1 };
+
+		const today = new Date(turma.modulo1);
+		today.setHours(today.getHours() + 1);
+
+		const result = await checkShouldSendNotification(notification, turma, notificationRules, today);
+		await expect(result && !result.error).toBeTruthy();
+		await expect(result.sendNow).toBeFalsy();
+		await expect(result.min < turma.modulo1).toBeTruthy();
+		await expect(result.max.toString() === turma.modulo1.toString()).toBeTruthy();
+		await expect(result.max < today).toBeTruthy();
+	});
+
+	it('14 - Detalhe do módulo 2', async () => {
+		notification.additional_details = { modulo: 2 };
+
+		const today = new Date(turma.modulo2);
+		today.setDate(today.getDate() - 2);
+
+		const result = await checkShouldSendNotification(notification, turma, notificationRules, today);
+		await expect(result && !result.error).toBeTruthy();
+		await expect(result.sendNow).toBeTruthy();
+		await expect(result.min < turma.modulo2).toBeTruthy();
+		await expect(result.max.toString() === turma.modulo2.toString()).toBeTruthy();
+		await expect(result.min.toString() === today.toString()).toBeTruthy();
+	});
+
+	it('14 - Detalhe do módulo 3', async () => {
+		notification.additional_details = { modulo: 3 };
+
+		const today = new Date(turma.modulo3);
+		today.setDate(today.getDate() - 2);
+
+		const result = await checkShouldSendNotification(notification, turma, notificationRules, today);
+		await expect(result && !result.error).toBeTruthy();
+		await expect(result.sendNow).toBeTruthy();
+		await expect(result.min < turma.modulo3).toBeTruthy();
+		await expect(result.max.toString() === turma.modulo3.toString()).toBeTruthy();
+		await expect(result.min.toString() === today.toString()).toBeTruthy();
+	});
+
+	it('14 - Erro se não existir a regra específica do módulo', async () => {
+		notification.additional_details = { modulo: 4 };
+		const today = new Date();
+
+		const result = await checkShouldSendNotification(notification, turma, notificationRules, today);
+		await expect(result && !result.error).toBeFalsy();
+		await expect(result.sendNow).toBeFalsy();
+		await expect(result.error.params.type).toBe(notification.notification_type);
+		await expect(result.error.params.currentRule).toBeFalsy();
+	});
+});
+
 describe('Error', () => {
 	const notification = JSON.parse(JSON.stringify(data.notification));
 	it('Erro - Cant find currentRule', async () => {
 		const type = 2666;
 		notification.notification_type = type;
 		const today = new Date();
-		const results = await checkShouldSendNotification(notification, turma, notificationRules, today);
-		await expect(results && results.error && results.error.params).toBeTruthy();
-		await expect(results.error.params.type).toBe(type);
-		await expect(results.error.params.currentRule).toBeFalsy();
+		const result = await checkShouldSendNotification(notification, turma, notificationRules, today);
+		await expect(result && result.error && result.error.params).toBeTruthy();
+		await expect(result.error.params.type).toBe(type);
+		await expect(result.error.params.currentRule).toBeFalsy();
 	});
 });
-
 
 // const { sequelize } = require('../app/server/models/index');
 // afterAll(() => { sequelize.close(); });

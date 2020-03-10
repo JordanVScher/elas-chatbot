@@ -11,7 +11,17 @@ const aux = require('./notificationSend_aux');
 
 async function checkShouldSendNotification(notification, turma, tRules, today) {
 	try {
-		const currentRule = await tRules.find((x) => x.notification_type === notification.notification_type);
+		const details = notification.additional_details;
+		let currentRule = null;
+
+		if (!details) {
+			currentRule = await tRules.find((x) => x.notification_type === notification.notification_type);
+		} else if (details.modulo && typeof details.sunday === 'undefined') {
+			currentRule = await tRules.find((x) => x.notification_type === notification.notification_type && x.modulo === details.modulo);
+		} else if (details.modulo && typeof details.sunday !== 'undefined') {
+			currentRule = await tRules.find((x) => x.notification_type === notification.notification_type && x.modulo === details.modulo && x.sunday === details.sunday);
+		}
+
 		if (!currentRule) throw new help.MyError('Não foi possível encontrar a regra para essa notificação', { currentRule, type: notification.notification_type });
 
 		const moduloDate = new Date(turma[`modulo${currentRule.modulo}`]);	// the date of the module, uses the modulo linked to the rule to find the date saved on turma
@@ -23,9 +33,14 @@ async function checkShouldSendNotification(notification, turma, tRules, today) {
 		let min;
 		min = dateToSend;
 		let max;
-		if (dateToSend < moduloDate) { // notification will be sent before the moduloDate, today needs to be between the notification date and the moduleDate
+		// notification will be sent before the moduloDate, today needs to be between the notification date and the moduleDate
+		if (dateToSend < moduloDate) {
 			max = moduloDate;
-		} else { // notification will be sent after the moduloDate
+		} else if ((details && details.sunday === true)) { // if it's sunday, the limit to send the notification is exactly one day after the modulo date
+			max = new Date(turma[`modulo${currentRule.modulo}`]);
+			max.setDate(max.getDate() + 1);
+		} else {
+			// notification will be sent after the moduloDate
 			const nextModule = currentRule.modulo + 1; // get next module, today needs to be between the notification date and the moduleDate from the next module
 			if (nextModule <= 3) {
 				max = new Date(turma[`modulo${nextModule}`]);
@@ -215,6 +230,7 @@ async function getQueue(turmaID, alunoID, indicadoID, notificationType) {
 	const queue = await notificationQueue.findAll({ where: query, raw: true }).then((r) => r).catch((err) => help.sentryError('Erro ao carregar notification_queue', err));
 	return queue || [];
 }
+
 
 module.exports = {
 	checkShouldSendRecipient,
