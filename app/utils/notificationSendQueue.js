@@ -137,8 +137,8 @@ async function actuallySendMessages(currentType, notification, recipient, logOnl
 		if (!attach || (!attach.mail && !attach.chatbot)) throw new help.MyError('Não foi possível montar os attachments');
 
 		if (logOnly) {
-			const data = {};
-			data.aluna.seria_enviada = true;
+			const data = { };
+			data.aluna_seria_enviada = true;
 			data.aluna_tem_email = !!recipient.email;
 			data.aluna_tem_chatbot = !!recipient['chatbot.fb_id'];
 			data.attach = attach;
@@ -230,7 +230,6 @@ async function getQueue(turmaID, alunoID, indicadoID, notificationType) {
 	const queue = await notificationQueue.findAll({ where: query, raw: true }).then((r) => r).catch((err) => help.sentryError('Erro ao carregar notification_queue', err));
 	return queue || [];
 }
-
 
 module.exports = {
 	checkShouldSendRecipient,
