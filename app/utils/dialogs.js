@@ -48,7 +48,7 @@ module.exports.handleCPF = async (context) => {
 	}
 };
 
-module.exports.getAgenda = async (context, userTurma) => {
+module.exports.getAgenda = async (userTurma) => {
 	const result = {};
 	if (!userTurma) return false;
 	const today = new Date();
@@ -65,7 +65,18 @@ module.exports.getAgenda = async (context, userTurma) => {
 				// getting the day the module starts
 				result.newDate = newDate;
 				result.newDateDay = help.weekDayName[result.newDate.getDay()];
-				result.horario = `${result.newDate.getHours() + 3}:${result.newDate.getMinutes()}`;
+
+				let hour = result.newDate.getHours() + 3;
+				hour = typeof hour === 'number' ? hour.toString() : hour;
+				if (hour && hour.length === 1) hour = `0${hour}`;
+
+				let minutes = result.newDate.getMinutes();
+				console.log('minutes', minutes);
+				minutes = typeof minutes === 'number' ? minutes.toString() : minutes;
+				if (minutes && minutes.length === 1) minutes = `0${minutes}`;
+
+				if (hour && minutes) result.horario = `${hour}:${minutes}`;
+
 				// getting the next day
 				result.nextDate = new Date(newDate);
 				result.nextDate.setDate(result.nextDate.getDate() + 1);
@@ -79,10 +90,11 @@ module.exports.getAgenda = async (context, userTurma) => {
 
 module.exports.buildAgendaMsg = async (data) => {
 	let msg = '';
-	if (data.turmaNome) msg = `📝 Sua Turma: ${data.turmaNome}\n`;
-	if (data.currentModule) msg += `💡 Você está no módulo ${data.currentModule} de 3\n`;
-	if (data.newDate) msg += `🗓️ Sua aula acontecerá ${data.newDateDay} dia ${await help.formatDate(data.newDate)} e ${data.nextDateDay} dia ${help.formatDate(data.nextDate)} às ${data.horario}\n`;
-	if (data.local) msg += `🏠 Local: ${await help.toTitleCase(data.local)}`;
+	if (data.turmaNome) msg = `📝 Sua Turma: ${data.turmaNome}`;
+	if (data.currentModule) msg += `\n💡 Você está no módulo ${data.currentModule} de 3`;
+	if (data.newDate) msg += `\n🗓️ Sua aula acontecerá ${data.newDateDay} dia ${await help.formatDate(data.newDate)} e ${data.nextDateDay} dia ${help.formatDate(data.nextDate)}`;
+	if (data.horario) msg += ` às ${data.horario}`;
+	if (data.local) msg += `\n🏠 Local: ${await help.toTitleCase(data.local)}`;
 
 	return msg;
 };

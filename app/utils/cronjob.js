@@ -65,8 +65,8 @@ const sendNotificationCron = new CronJob(
 );
 
 const updateTurmasCron = new CronJob(
-	'00 00 00 * * *', async () => {
-		console.log('Running updateTurmas');
+	'00 55 * * * *', async () => {
+		console.log(`Running updateTurmas - ${new Date()}`);
 		try {
 			await updateTurmas();
 		} catch (error) {

@@ -232,6 +232,15 @@ async function fillMasks(replaceMap, recipientData) {
 			case 'MOD3_PRE_2':
 				newData = await help.formatDiasMod(recipientData.mod3, -2);
 				break;
+			case 'MOD1_PRE_3':
+				newData = await help.formatDiasMod(recipientData.mod1, -3);
+				break;
+			case 'MOD2_PRE_3':
+				newData = await help.formatDiasMod(recipientData.mod2, -3);
+				break;
+			case 'MOD3_PRE_3':
+				newData = await help.formatDiasMod(recipientData.mod3, -3);
+				break;
 			case 'MOD1_PRE_5':
 				newData = await help.formatDiasMod(recipientData.mod1, -5);
 				break;
@@ -323,6 +332,15 @@ async function fillMasks(replaceMap, recipientData) {
 				newData = recipientData.moduloAvisar ? recipientData.moduloAvisar.toString() : 'novo';
 				break;
 			case 'DATAHORA':
+				newData = await help.formatModuloHora(recipientData.dataHora);
+				break;
+			case 'DATAHORA_1':
+				newData = await help.formatModuloHora(recipientData.dataHora);
+				break;
+			case 'DATAHORA_2':
+				newData = await help.formatModuloHora(recipientData.dataHora);
+				break;
+			case 'DATAHORA_3':
 				newData = await help.formatModuloHora(recipientData.dataHora);
 				break;
 			case 'ATIVIDADESCOMPLETAS':
