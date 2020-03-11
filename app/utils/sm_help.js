@@ -36,16 +36,18 @@ Você comprou o curso para outra pessoa e não é a aluna? Tudo bem! Basta envia
 CASO VOCÊ JÁ TENHA RESPONDIDO O QUESTIONÁRIO DE MATRÍCULA, FAVOR DESCONSIDERAR E AGUARDAR OS PRÓXIMOS PASSOS QUE SERÃO ENVIADOS EM BREVE
 `;
 
-
 // after a payement happens we send an e-mail to the buyer with the matricula/atividade 1 form
-async function sendMatricula(turmaName, pagamentoID, buyerEmail, cpf) {
+async function sendMatricula(turmaName, pagamentoID, buyerEmail, cpf, inCompany) {
 	try {
 		let { link } = surveysInfo.atividade1;
+		if (inCompany === true) link = surveysInfo.atividade1InCompany.link;
+
 		if (!pagamentoID) { link = link.replace('&pgid=PSIDRESPOSTA', ''); }
 		if (cpf) { link += '&cpf=CPFRESPOSTA'; }
 		link = link.replace(/TURMARESPOSTA/g, turmaName);
 		link = link.replace(/PSIDRESPOSTA/g, pagamentoID);
 		link = link.replace(/CPFRESPOSTA/g, cpf);
+
 		let mailText = matriculaText;
 		mailText = mailText.replace(/<link_atividade>/g, link);
 		mailText = mailText.replace(/TURMARESPOSTA/g, turmaName);

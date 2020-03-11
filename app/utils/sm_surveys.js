@@ -35,4 +35,8 @@ module.exports = {
 		link: process.env.MODULO3_LINK,
 		id: process.env.MODULO3_ID,
 	},
+	atividade1InCompany: {
+		link: process.env.ATIVIDADE_1_INCOMPANY_LINK,
+		id: process.env.ATIVIDADE_1_INCOMPANY_ID,
+	},
 };

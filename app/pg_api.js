@@ -86,7 +86,7 @@ async function handlePagamento(notification) {
 					// get turma that matches the product that was bought
 					const ourTurma = await turma.findOne({ where: { pagseguro_id: productID }, raw: true }).then((aluna) => aluna).catch((err) => sentryError('FindOne turma', err));
 					if (!ourTurma) sentryError(`Não foi encontrada turma para produto com id ${productID}`, response);
-					await smHelp.sendMatricula(ourTurma ? ourTurma.nome : '', newPagamento.id, process.env.ENV === 'local' ? 'jordan@appcivico.com' : answer.transaction.sender[0].email[0]); // send email
+					await smHelp.sendMatricula(ourTurma ? ourTurma.nome : '', newPagamento.id, process.env.ENV === 'local' ? 'jordan@appcivico.com' : answer.transaction.sender[0].email[0], null, ourTurma.inCompany); // send email
 				} else {
 					sentryError(`Status: ${code}.\nQuem comprou: ${answer.transaction.sender[0].email[0]}`, answer.transaction);
 				}

@@ -5,7 +5,6 @@ module.exports = (sequelize, DataTypes) => {
 			sentTo: { type: DataTypes.STRING, field: 'sent_to' },
 			sentAt: { type: DataTypes.DATE, field: 'sent_at' },
 			error: DataTypes.JSON,
-			pos: DataTypes.JSON,
 			createdAt: { type: DataTypes.DATE, field: 'created_at' },
 			updatedAt: { type: DataTypes.DATE, field: 'updated_at' },
 		},

@@ -12,7 +12,7 @@ const donnaLog = require('../../server/models').donna_mail_log;
 async function sendDonnaMail(nome, email) {
 	try {
 		const hasSentAlready = await donnaLog.findOne({ where: { sentTo: email }, raw: true }).then((r) => r).catch((err) => help.sentryError('Erro no donnaLog do model', err));
-		if (hasSentAlready && hasSentAlready.id) { // if we already sent this e-mail to the user, we dont send it again
+		if (!hasSentAlready || !hasSentAlready.id) { // if we already sent this e-mail to the user, we dont send it again
 			let mailText = eMail.depoisMatricula.textoBody;
 			let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Apresentar_Donna.html`, 'utf-8');
 			html = await html.replace('[nome]', nome); // add nome to mail template

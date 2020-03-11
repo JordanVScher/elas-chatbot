@@ -245,7 +245,7 @@ module.exports.receiveCSVAluno = async (csvLines, chatbotUserId, pageToken) => {
 							element.added_by_admin = true;
 							const newAluno = await db.upsertAlunoCadastro(element);
 							if (!oldAluno) { // send matricula to new aluno and create queue
-								await sendMatricula(element.Turma.nome, false, element.email, element.cpf);
+								await sendMatricula(element.Turma.nome, false, element.email, element.cpf, element.Turma.inCompany);
 								// await helpAddQueue(newAluno.id, newAluno.turma_id);
 							}
 							await sendAlunaToAssistente(element.nome_completo, element.email, element.cpf, element.Turma.nome);

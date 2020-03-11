@@ -12,6 +12,7 @@ const followUp = require('./questionario_followUp');
 async function followUpResposta(surveyName, answer, aluno, indicado) {
 	switch (surveyName) {
 	case 'atividade1':
+	case 'atividade1InCompany':
 		return followUp.handleAtividadeOne(answer, aluno);
 	case 'indicacao360':
 		return followUp.saveIndicados(answer, aluno);
@@ -54,7 +55,7 @@ async function findSurveyTaker(answer) {
 		return { aluno, indicado };
 	} catch (error) {
 		help.sentryError('Erro em findSurveyTaker', { error, answer });
-		return null;
+		return { msg: 'Erro em findSurveyTaker', error };
 	}
 }
 
@@ -80,7 +81,7 @@ async function getFormatedAnswer(answer, questionarioName) {
 		throw new help.MyError('Não foi possível encontrar um mapa', { currentMap, questionarioName, answer: answer.id });
 	} catch (error) {
 		help.sentryError('Erro no formatAnswer', error, questionarioName, answer);
-		return 'Erro no formatAnswer';
+		return { msg: 'Erro no formatAnswer', error };
 	}
 }
 
@@ -88,7 +89,7 @@ async function handleResponse(survey, fullAnswer, surveyTaker) {
 	try {
 		// format and save answer
 		const answer = await getFormatedAnswer(fullAnswer, survey.name);
-		if (!answer) { throw new help.MyError('Não foi possível formatar a resposta', { fullAnswer: fullAnswer.id, survey: survey.id, answer }); }
+		if (!answer || answer.error) { throw new help.MyError('Não foi possível formatar a resposta', { fullAnswer: fullAnswer.id, survey: survey.id, answer }); }
 
 		const respostaData = {
 			id_surveymonkey: fullAnswer.id, id_questionario: survey.id, URL: fullAnswer.href, answer,
@@ -96,9 +97,11 @@ async function handleResponse(survey, fullAnswer, surveyTaker) {
 
 		if (surveyTaker.aluno) { respostaData.id_aluno = surveyTaker.aluno.id; }
 		if (surveyTaker.indicado) { respostaData.id_aluno = null; respostaData.id_indicado = surveyTaker.indicado.id; }
+
 		const res = await DB.upsertRespostas(respostaData.id_surveymonkey, respostaData);
 		if (!res || !res.id) { throw new help.MyError('Não foi possível salvar a resposta na tabela', { respostaData, res }); }
-		if (survey.name === 'atividade1') surveyTaker.aluno.newAnswerID = res.id;
+
+		if (survey.name === 'atividade1' || survey.name === 'atividade1InCompany') surveyTaker.aluno.newAnswerID = res.id;
 		return followUpResposta(survey.name, answer, surveyTaker.aluno, surveyTaker.indicado);
 	} catch (error) {
 		help.sentryError('Erro em handleResponse', { error, survey: survey.id, fullAnswer: fullAnswer.id });
@@ -144,7 +147,7 @@ async function saveAnswer(questionarioID, answerID, alunoID, indicadoID) {
 		const surveyTaker = {};
 		if (alunoID) surveyTaker.aluno = await alunos.findOne({ where: { id: alunoID }, raw: true }).then((r) => r).catch((err) => help.sentryError('Erro no alunos do model', err));
 		if (indicadoID) surveyTaker.indicado = await indicados.findOne({ where: { id: indicadoID }, raw: true }).then((r) => r).catch((err) => help.sentryError('Erro no findOne do indicados', err));
-		if (!surveyTaker || (!surveyTaker.aluno && !surveyTaker.indicado)) throw new help.MyError('Não foi encontrado ninguém com esse ID', { alunoID, indicadoID });
+		if (!surveyTaker || surveyTaker.error || (!surveyTaker.aluno && !surveyTaker.indicado)) throw new help.MyError('Não foi encontrado ninguém com esse ID', { alunoID, indicadoID });
 
 		return handleResponse(survey, answer, surveyTaker);
 	} catch (error) {

@@ -107,7 +107,7 @@ async function syncRespostas(syncID) {
 						result[`resposta_${answer.id}`] = 'ignorada';
 					} else {
 						const surveyTaker = await findSurveyTaker(answer, survey.name);
-						if (!surveyTaker || (!surveyTaker.aluno && !surveyTaker.indicado)) { throw new help.MyError('Erro: Não foi encontrado o Survey Taker', { surveyTaker, answer: answer.id, survey: survey.id, moment: new Date() }); } // eslint-disable-line object-curly-newline
+						if (!surveyTaker || surveyTaker.error || (!surveyTaker.aluno && !surveyTaker.indicado)) { throw new help.MyError('Erro: Não foi encontrado o Survey Taker', { surveyTaker, answer: answer.id, survey: survey.id, moment: new Date() }); } // eslint-disable-line object-curly-newline
 
 						const res = await handleResponse(survey, answer, surveyTaker);
 						if (res && res.error) {
