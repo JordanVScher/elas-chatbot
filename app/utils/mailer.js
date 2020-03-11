@@ -30,14 +30,14 @@ async function sendHTMLMail(subject, to, html, anexo, text = '') {
 	};
 
 	if (process.env.ENV === 'prod_final') {
-		// try {
-		// 	const info = await transporter.sendMail(options);
-		// 	console.log(`'${subject}' para ${to}:`, info.messageId);
-		// 	return null;
-		// } catch (error) {
-		// 	console.log('Could not send mail to ', to, 'Error => ', error);
-		// 	return error;
-		// }
+		try {
+			const info = await transporter.sendMail(options);
+			console.log(`'${subject}' para ${to}:`, info.messageId);
+			return null;
+		} catch (error) {
+			console.log('Could not send mail to ', to, 'Error => ', error);
+			return error;
+		}
 	} else {
 		console.log(`\nDeveriamos enviar '${subject}' para ${to} as ${new Date()}\n`);
 		return null;
