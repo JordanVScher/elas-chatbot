@@ -1,4 +1,5 @@
 const fs = require('fs');
+const clone = require('lodash.clone');
 const aluno = require('../server/models').alunos;
 const indicadosAvaliadores = require('../server/models').indicacao_avaliadores;
 const help = require('./helper');
@@ -394,9 +395,11 @@ async function replaceParameters(texts, newMap, recipient) {
 
 async function buildNewText(currentType, recipient) {
 	try {
-		const parametersMap = await rules.buildParametersRules(currentType);
+		const cloneType = await clone(currentType);
+
+		const parametersMap = await rules.buildParametersRules(cloneType);
 		const masks = await fillMasks(parametersMap, recipient);
-		const res = replaceParameters(currentType, masks, recipient);
+		const res = replaceParameters(cloneType, masks, recipient);
 		return res;
 	} catch (error) {
 		help.sentryError('Erro em buildNewText', { error, currentType, recipient });
