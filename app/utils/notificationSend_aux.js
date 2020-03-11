@@ -64,13 +64,13 @@ async function getRecipient(notification, turma) {
 
 
 const atividadesRules = {
-	1: ['pre', 'atividade_indicacao'],
+	1: ['pre', 'atividade_indicacao', 'atividade_1'],
 	2: [],
 	3: ['pos'],
 };
 
-async function findAtividadesMissing(atividade = atividadesRules, currentModule, alunoID) {
-	const atividadesModulo = atividade[currentModule];
+async function findAtividadesMissing(currentModule, alunoID) {
+	const atividadesModulo = atividadesRules[currentModule];
 	const respostas = await DB.getAlunoRespostasAll(alunoID);
 	const areMissing = [];
 	atividadesModulo.forEach((e) => {
@@ -142,6 +142,7 @@ async function buildIndicadosLinks(alunaID, turmaID, column, link) {
 
 const atividadesHumanName = {
 	atividade_indicacao: 'Indicação de Avaliadores (Avaliação 360)',
+	atividade_1: 'Matrícula',
 	pre: 'Pré Sondagem de foco',
 	pos: 'Pós Sondagem de foco',
 };
@@ -149,6 +150,7 @@ const atividadesHumanName = {
 const atividadesLinks = {
 	atividade_indicacao: surveysInfo.indicacao360.link,
 	pre: surveysInfo.sondagemPre.link,
+	atividade_1: surveysInfo.atividade1.link,
 	pos: surveysInfo.sondagemPre.link,
 };
 
@@ -459,5 +461,14 @@ async function sendChatbot(recipient, attach, newText) {
 }
 
 module.exports = {
-	getRecipient, findCurrentModulo, fillMasks, replaceParameters, findAtividadesMissing, buildAttachment, buildNewText, sendMail, sendChatbot,
+	getRecipient,
+	findCurrentModulo,
+	fillMasks,
+	replaceParameters,
+	findAtividadesMissing,
+	buildAttachment,
+	buildNewText,
+	sendMail,
+	sendChatbot,
+	buildAtividadeText,
 };

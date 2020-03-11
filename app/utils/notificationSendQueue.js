@@ -115,7 +115,7 @@ async function checkShouldSendRecipient(recipient, notification, turma, today) {
 		// check if aluna is missing any questionario
 		if ([16, 32].includes(notification.notification_type)) {
 			const currentModule = await aux.findCurrentModulo(turma, today);
-			const atividadesMissing = await aux.findAtividadesMissing(null, currentModule, recipient.id);
+			const atividadesMissing = await aux.findAtividadesMissing(currentModule, recipient.id);
 			if (!atividadesMissing || atividadesMissing.length === 0) return { send: false, msg: `Aluna já respondeu todos os questionários do módulo ${currentModule}` };
 			// store all the questionarios the aluna didnt answer
 			recipient.atividadesMissing = atividadesMissing;
