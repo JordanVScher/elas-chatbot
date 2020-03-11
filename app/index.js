@@ -126,6 +126,10 @@ server.post('/donna-mail', async (req, res) => {
 	await requests.donnaMail(req, res);
 });
 
+server.post('/matricula-mail', async (req, res) => {
+	await requests.matriculaMail(req, res);
+});
+
 server.post('/save-answer', async (req, res) => {
 	await requests.saveNewAnswer(req, res);
 });

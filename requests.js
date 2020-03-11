@@ -8,6 +8,7 @@ const addQueue = require('./app/utils/notificationAddQueue');
 const send = require('./app/utils/notificationSendQueue');
 const { seeDataQueue } = require('./app/utils/notificationAddQueue');
 const { sendDonnaMail } = require('./app/utils/sm_help');
+const { sendMatricula } = require('./app/utils/sm_help');
 const { saveAnswer } = require('./app/utils/surveys/questionario_callback');
 const { syncRespostas } = require('./app/utils/surveys/questionario_sync');
 
@@ -163,6 +164,33 @@ async function donnaMail(req, res) {
 	}
 }
 
+
+async function matriculaMail(req, res) {
+	const { body } = req;
+	if (!body || !body.security_token) {
+		res.status(400); res.send('Param security_token is required!');
+	} else {
+		const securityToken = body.security_token;
+		if (securityToken !== process.env.SECURITY_TOKEN_MA) {
+			res.status(401); res.send('Unauthorized!');
+		} else {
+			const turmaName = body.turma_name;
+			const pagamentoID = body.pagamento_id;
+			const buyerEmail = body.email;
+			const { cpf } = body;
+			const inCompany = body.in_company;
+
+			if (!turmaName || !buyerEmail) {
+				res.status(200); res.send('turma_name or email missing');
+			} else {
+				const result = await sendMatricula(turmaName, pagamentoID, buyerEmail, cpf, inCompany);
+				res.status(200); res.send(result);
+			}
+		}
+	}
+}
+
+
 async function saveNewAnswer(req, res) {
 	const { body } = req;
 	if (!body || !body.security_token) {
@@ -269,4 +297,5 @@ module.exports = {
 	syncAnswers,
 	logMail,
 	addQueueDetails,
+	matriculaMail,
 };
