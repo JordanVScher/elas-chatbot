@@ -180,8 +180,9 @@ async function buildAtividadeText(recipient, atividades) {
 async function fillMasks(replaceMap, recipientData) {
 	const result = {};
 	for (let i = 0; i < replaceMap.length; i++) {
-		const currentKey = replaceMap[i];
-		if (!result[currentKey]) { // check if that key has no value already
+		let currentKey = replaceMap[i];
+		if (!result[currentKey] && currentKey) { // check if that key has no value already
+			currentKey = currentKey.toUpperCase();
 			let newData = '';
 			switch (currentKey) {
 			case 'NOMEUM':
