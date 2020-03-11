@@ -196,7 +196,7 @@ async function getFormatedSpreadsheet() {
 				const whichModule = key.replace('módulo', '');
 				if (!aux[`horárioMódulo${whichModule}`]) { aux[`horárioMódulo${whichModule}`] = obj[`horárioMódulo${whichModule}`]; } // this has to be set so we force it
 				let newDatahora = obj[key] + aux[`horárioMódulo${whichModule}`];
-				console.log('newDatahora', newDatahora);
+
 				newDatahora = await getJsDateFromExcel(newDatahora);
 				if (newDatahora.getMilliseconds() === 999) {
 					newDatahora.setMilliseconds(newDatahora.getMilliseconds() + 1);

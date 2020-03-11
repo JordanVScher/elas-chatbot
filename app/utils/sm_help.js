@@ -42,6 +42,12 @@ async function sendMatricula(turmaName, pagamentoID, buyerEmail, cpf, inCompany)
 		let { link } = surveysInfo.atividade1;
 		if (inCompany === true) link = surveysInfo.atividade1InCompany.link;
 
+		let { assunto } = eMail.atividade1;
+		if (inCompany === true) assunto = eMail.atividade1_inCompany.assunto;
+
+		let { textos } = eMail.atividade1;
+		if (inCompany === true) textos = eMail.atividade1_inCompany.textos;
+
 		if (!pagamentoID) { link = link.replace('&pgid=PSIDRESPOSTA', ''); }
 		if (cpf) { link += '&cpf=CPFRESPOSTA'; }
 		link = link.replace(/TURMARESPOSTA/g, turmaName);
@@ -53,9 +59,13 @@ async function sendMatricula(turmaName, pagamentoID, buyerEmail, cpf, inCompany)
 		mailText = mailText.replace(/TURMARESPOSTA/g, turmaName);
 
 		let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Matricula.html`, 'utf-8'); // prepare the e-mail
+		html = await html.replace('[TEXTO1]', textos[0]);
+		html = await html.replace('[TEXTO2]', textos[1]);
+		html = await html.replace('[TEXTO3]', textos[2]);
+
 		html = await html.replace(/<link_atividade>/g, link); // add link to mail template
 		html = await html.replace(/TURMARESPOSTA/g, turmaName); // add link to mail template
-		const e = await mailer.sendHTMLMail(eMail.atividade1.assunto, buyerEmail, html, null, mailText);
+		const e = await mailer.sendHTMLMail(assunto, buyerEmail, html, null, mailText);
 		await matriculaLog.create({
 			sentTo: buyerEmail, sentAt: new Date(), atividadeLink: link, error: e && e.stack ? e.stack : e,
 		}).then((res) => res).catch((err) => sentryError('Erro em matriculaLog.create', err));
