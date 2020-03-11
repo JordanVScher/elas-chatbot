@@ -53,6 +53,10 @@ async function getRecipient(notification, turma) {
 			recipient = await indicadosAvaliadores.findByPk(notification.indicado_id, { raw: true, include: ['respostas', 'aluna'] }).then((r) => r).catch((err) => help.sentryError('Erro ao carregar indicado', err));
 		}
 
+		recipient.turma_id = turma.id;
+		recipient.turmaName = turma.nome;
+		recipient.local = turma.local;
+
 		const fullRecipient = await extendRecipient(recipient, turma);
 		if (!recipient) throw new help.MyError('Erro ao carregar recipient', { fullRecipient, recipient });
 
@@ -207,6 +211,7 @@ async function fillMasks(replaceMap, recipientData) {
 				break;
 			case 'TURMA':
 				newData = recipientData.turmaName;
+				if (!newData && recipientData.turma_id) newData = await DB.getTurmaName(recipientData.turma_id);
 				break;
 			case 'MOD1_PRE_1':
 				newData = await help.formatDiasMod(recipientData.mod1, -1);
