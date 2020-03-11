@@ -121,8 +121,12 @@ async function buildParametersRules(notificationType) {
 	const regex = new RegExp(/\[.*?\]/g);
 	let keysFound = text.match(regex);
 	if (!keysFound) return [];
-	keysFound = await keysFound.map((x) => x.replace('[', '').replace(']', ''));
-	return [...new Set(keysFound)] || [];
+	keysFound = await keysFound.map((x) => { // remove brackets and turn every var name to uppercase
+		x = x.replace('[', '').replace(']', '');
+		return x ? x.toUpperCase() : x;
+	});
+
+	return [...new Set(keysFound)] || keysFound;
 }
 
 

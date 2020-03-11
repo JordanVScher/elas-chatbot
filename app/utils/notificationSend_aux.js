@@ -120,7 +120,7 @@ async function replaceDataText(original, data, recipient) {
 		const element = Object.keys(data)[i];
 		let replace = data[element];
 		if (replace && replace.length > 0) {
-			const regex = new RegExp(`\\[${element}\\]`, 'g');
+			const regex = new RegExp(`\\[${element}\\]`, 'gi'); // ignore casing, the var on the text may not be uppcase
 			if (replace.includes('surveymonkey')) {
 				replace = await replaceCustomParameters(replace, recipient);
 			}
@@ -182,7 +182,7 @@ async function fillMasks(replaceMap, recipientData) {
 	for (let i = 0; i < replaceMap.length; i++) {
 		let currentKey = replaceMap[i];
 		if (!result[currentKey] && currentKey) { // check if that key has no value already
-			currentKey = currentKey.toUpperCase();
+			currentKey = currentKey.toUpperCase(); // just to make sure, otherwise the var may not be found
 			let newData = '';
 			switch (currentKey) {
 			case 'NOMEUM':
