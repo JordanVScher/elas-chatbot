@@ -120,8 +120,10 @@ const syncRespostasCron = new CronJob(
 	'00 15 7 * * *', async () => {
 		console.log('Running syncRespostasCron');
 		try {
-			const res = await syncRespostas();
-			await sendSyncRespostasReport(res);
+			if (process.env.ENV === 'prod_final') {
+				const res = await syncRespostas();
+				await sendSyncRespostasReport(res);
+			}
 		} catch (error) {
 			console.log('syncRespostasCron error', error);
 			await sentryError('Error on syncRespostasCron', error);
