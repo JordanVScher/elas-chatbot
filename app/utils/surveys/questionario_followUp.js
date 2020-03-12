@@ -8,6 +8,61 @@ const AddQueue = require('../notificationAddQueue');
 const { sendAlunaToAssistente } = require('../labels');
 const { surveysMaps } = require('../sm_maps');
 const donnaLog = require('../../server/models').donna_mail_log;
+const matriculaLog = require('../../server/models').matricula_mail_log;
+const surveysInfo = require('../sm_surveys');
+
+// after a payement happens we send an e-mail to the buyer with the matricula/atividade 1 form
+async function sendMatricula(turmaName, pagamentoID, buyerEmail, cpf, inCompany) {
+	try {
+		// getting the texts and questionario link, based on turma in company status
+		let { link } = surveysInfo.atividade1;
+		if (inCompany === true) link = surveysInfo.atividade1InCompany.link;
+
+		let { assunto } = eMail.atividade1;
+		if (inCompany === true) assunto = eMail.atividade1_inCompany.assunto;
+
+		let { textos } = eMail.atividade1;
+		if (inCompany === true) textos = eMail.atividade1_inCompany.textos;
+
+		// format link
+		if (!pagamentoID) link = link.replace('&pgid=PSIDRESPOSTA', '');
+		if (cpf) link += '&cpf=CPFRESPOSTA';
+		link = link.replace(/TURMARESPOSTA/g, turmaName);
+		link = link.replace(/PSIDRESPOSTA/g, pagamentoID);
+		link = link.replace(/CPFRESPOSTA/g, cpf);
+
+		// build plain text version
+		let mailText = '';
+		textos.forEach((texto, i) => {
+			mailText += `${texto}\n\n`;
+			if (i === 0) mailText += '<link_atividade>\n\n';
+		});
+		mailText = mailText.replace(/<link_atividade>/g, link);
+		mailText = mailText.replace(/TURMARESPOSTA/g, turmaName);
+
+		// build HTML version
+		let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Matricula.html`, 'utf-8'); // prepare the e-mail
+		html = await html.replace('[TEXTO1]', textos[0]);
+		html = await html.replace('[TEXTO2]', textos[1]);
+		html = await html.replace('[TEXTO3]', textos[2]);
+		html = await html.replace(/<link_atividade>/g, link); // add link to mail template
+		html = await html.replace(/TURMARESPOSTA/g, turmaName); // add link to mail template
+
+		const e = await mailer.sendHTMLMail(assunto, buyerEmail, html, null, mailText);
+		await matriculaLog.create({ sentTo: buyerEmail, sentAt: new Date(), atividadeLink: link, error: e && e.stack ? e.stack : e }).then((r) => r).catch((err) => help.sentryError('Erro em matriculaLog.create', err)); // eslint-disable-line object-curly-newline
+	} catch (error) {
+		help.sentryError('Erro sendMatricula', { error, turmaName, pagamentoID, buyerEmail, cpf, inCompany }); // eslint-disable-line object-curly-newline
+	}
+}
+
+// async function sendMissingMatriculas() {
+// 	const alunas = await DB.getMissingCadastro();
+// 	for (let i = 0; i < alunas.length; i++) {
+// 		const e = alunas[i];
+// 		await sendMatricula(e.turma_nome, e.pagamento_id, e.email, e.cpf);
+// 	}
+// }
+
 
 async function sendDonnaMail(nome, email) {
 	try {
@@ -228,5 +283,5 @@ async function saveAvaliacaoModulo(surveyName, answer, alunoID) {
 
 
 module.exports = {
-	saveIndicados, saveAvaliacao360, saveSondagem, saveAvaliacaoModulo, handleAtividadeOne,
+	saveIndicados, saveAvaliacao360, saveSondagem, saveAvaliacaoModulo, handleAtividadeOne, sendMatricula, sendDonnaMail,
 };

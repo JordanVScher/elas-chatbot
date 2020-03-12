@@ -7,8 +7,8 @@ const { changeAdminStatus } = require('./app/utils/DB_helper');
 const addQueue = require('./app/utils/notificationAddQueue');
 const send = require('./app/utils/notificationSendQueue');
 const { seeDataQueue } = require('./app/utils/notificationAddQueue');
-const { sendDonnaMail } = require('./app/utils/sm_help');
-const { sendMatricula } = require('./app/utils/sm_help');
+const { sendDonnaMail } = require('./app/utils/surveys/questionario_followUp');
+const { sendMatricula } = require('./app/utils/surveys/questionario_followUp');
 const { saveAnswer } = require('./app/utils/surveys/questionario_callback');
 const { syncRespostas } = require('./app/utils/surveys/questionario_sync');
 
