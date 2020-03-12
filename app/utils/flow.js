@@ -209,8 +209,8 @@ Não tem Messenger? Tudo bem, as mesmas notificações que a Donna enviar via Me
 			menuPostback: ['adminMenu'],
 		},
 		feedback: {
-			aluna: ['Nenhuma aluna foi adicionada!', 'Uma aluna foi adicionada!', 'alunas foram adicionadas!'],
-			indicado: ['Nenhum indicado foi adicionado!', 'Um indicado foi adicionado!', 'indicados foram adicionados!'],
+			aluna: ['Nenhuma aluna foi adicionada nem atualizada!', 'Uma aluna foi adicionada/atualizada!', 'alunas foram adicionadas/atualizadas!'],
+			indicado: ['Nenhum indicado foi adicionado nem atualizado!', 'Um indicado foi adicionado/atualizado!', 'indicados foram adicionados/atualizados!'],
 		},
 		verTurma: {
 			txt1: 'Aqui você poderá baixar um CSV com os dados das alunas de uma turma. Digite a turma, exemplo: T1-SP.',
