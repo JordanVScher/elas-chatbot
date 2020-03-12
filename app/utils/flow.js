@@ -201,8 +201,9 @@ Não tem Messenger? Tudo bem, as mesmas notificações que a Donna enviar via Me
 		},
 		inserirAvaliadores: {
 			txt1: 'Envie o CSV com os dados dos novos avaliadores. As colunas devem estar formatadas como esse arquivo de exemplo:',
-			txt2: 'É necessário que cada avaliador tenha o nome completo, o e-mail, assim como o CPF de uma Aluna! Se o o mesmo e-mail já estiver cadastrado naquela aluna, os dados do avaliador serão atualizados com os valores no CSV (se houver algum).'
-			+ '\nDetalhe: Para transformar um avaliador em "Familiar", adicione a palavra "Sim" na coluna "Familiar". Para que o avaliador deixe de ser Familiar, escreva "Nao" (sem acento). Todos os outros valores serão ignorados e não mudarão o estado de familiar do Avaliador',
+			txt2: 'Para adicionar: É necessário que cada avaliador tenha o nome completo, o e-mail, assim como o CPF de uma Aluna! Um indicado com o mesmo e-mail não poderá ser inserido mais de uma vez na mesma aluna!',
+			txt3: 'Para atualizar os valores de nome, e-mail, telefone, familiar e relação com aluna, insira o ID do indicado na coluna Indicado ID. ⚠️ Cuidado: Se quiser atualizar algum valor, use o Indicado ID, sem ele o indicado será adicionado novamente (se o e-mail já não existir)',
+			txt4: 'Detalhe: Para transformar um avaliador em "Familiar", adicione a palavra "Sim" na coluna "Familiar". Para que o avaliador deixe de ser Familiar, escreva "Nao" (sem acento). Todos os outros valores serão ignorados e não mudarão o estado de familiar do Avaliador',
 			invalidFile: 'Erro! Verifique se o arquivo CSV está formatado corretamente e envie novamente!',
 			menuOptions: ['Voltar'],
 			menuPostback: ['adminMenu'],

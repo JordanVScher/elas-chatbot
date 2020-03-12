@@ -260,7 +260,9 @@ module.exports = async (context) => {
 		case 'inserirAvaliadores':
 			await context.sendText(flow.adminMenu.inserirAvaliadores.txt1);
 			await context.sendText(await help.getTinyUrl(process.env.CSV_AVALI_EXAMPLE_LINK));
-			await context.sendText(flow.adminMenu.inserirAvaliadores.txt2, await attach.getQR(flow.adminMenu.inserirAvaliadores));
+			await context.sendText(flow.adminMenu.inserirAvaliadores.txt2);
+			await context.sendText(flow.adminMenu.inserirAvaliadores.txt3);
+			await context.sendText(flow.adminMenu.inserirAvaliadores.txt4, await attach.getQR(flow.adminMenu.inserirAvaliadores));
 			break;
 		case 'createAvaliadores': {
 			const result = await dialogs.receiveCSVAvaliadores(context.state.csvLines);

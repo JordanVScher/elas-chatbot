@@ -553,6 +553,18 @@ async function upsertIndicado(indicado) {
 	return indicados.create(values).then((r) => r.dataValues).catch((err) => sentryError('Erro no create do indicados', err));
 }
 
+async function upsertIndicadoByEmail(indicado, email) {
+	const found = await indicados.findOne({ where: { aluno_id: indicado.aluno_id, email }, raw: true }).then((r) => r).catch((err) => sentryError('Erro no findOne do indicados', err));
+	const values = {
+		nome: indicado.nome, email: indicado.email, telefone: indicado.telefone, relacao_com_aluna: indicado.relacao_com_aluna, familiar: indicado.familiar,
+	};
+
+	if (typeof values.familiar !== 'boolean') delete values.familiar;
+	if (found && found.id) return { id: found.id, error: `O e-mail ${email} já está cadastrado nessa aluna` };
+
+	values.aluno_id = indicado.aluno_id; // need for insertion
+	return indicados.create(values).then((r) => r.dataValues).catch((err) => sentryError('Erro no create do indicados', err));
+}
 
 async function upsertAtividade(alunoID, column, answers) {
 	const found = await alunosRespostas.findOne({ where: { aluno_id: alunoID }, raw: true }).then((r) => r).catch((err) => sentryError('Erro no findOne do alunosRespostas', err));
@@ -636,4 +648,5 @@ module.exports = {
 	upsertAtividade,
 	upsertRespostas,
 	respostaUdpdateAlunoID,
+	upsertIndicadoByEmail,
 };

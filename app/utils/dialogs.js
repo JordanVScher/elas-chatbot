@@ -303,48 +303,43 @@ module.exports.receiveCSVAvaliadores = async (csvLines) => {
 					const indicadoFound = await indicados.findOne({ where: { id: e.id }, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em avaliadorAluno.findOne', err));
 					if (indicadoFound && indicadoFound.id && Number.isInteger(indicadoFound.id)) {
 						e = await admin.formatBooleanToDatabase(e, 'Sim', 'Nao', ['familiar']);
-						const updatedIndicado = await indicados.update(e, {
-							where: { id: indicadoFound.id }, returning: true, plain: true, raw: true,
-						}).then((r) => r[1]).catch((err) => {
-							errors.push({ line: i + 2, msg: 'Erro ao salvar no banco' });
-							help.sentryError('Erro em receiveCSV => Erro ao salvar no banco', { e, err });
-						});
+
+						const updatedIndicado = await indicados.update(e, { where: { id: indicadoFound.id }, returning: true, plain: true, raw: true }).then((r) => r[1]).catch((err) => { help.sentryError('Erro no update do Indicado', { err, indicadoFound, e }); }); // eslint-disable-line object-curly-newline
+
+						if (!updatedIndicado || !updatedIndicado.id) errors.push({ line: i + 2, msg: 'Erro ao salvar no banco' });
 						if (updatedIndicado && updatedIndicado.id) indicadosToAdd.push(updatedIndicado);
 					} else {
 						errors.push({ line: i + 2, msg: `Indicado com ID '${e.id}' não encontrado!` });
-						help.sentryError(`Indicado com ID ${e.id} não encontrado!`, { e });
 					}
 				} else if (e.nome && e.email && e.aluno_cpf) {
 					const avaliadorAluno = await alunos.findOne({ where: { cpf: e.aluno_cpf }, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em avaliadorAluno.findOne', err));
+
 					if (avaliadorAluno && avaliadorAluno.id) {
 						e.aluno_id = avaliadorAluno.id;
 						e = await admin.formatBooleanToDatabase(e, 'Sim', 'Nao', ['familiar']);
-						const newIndicado = await db.upsertIndicado(e);
-						if (!newIndicado || !newIndicado.id) { // save line if error happended
-							errors.push({ line: i + 2, msg: 'Erro ao salvar no banco' });
-							help.sentryError('Erro em receiveCSV => Erro ao salvar no banco', { e });
-						} else {
-							if (newIndicado.email === avaliadorAluno.email) {
-								errors.push({ line: i + 2, msg: `Adicionado Indicado ${newIndicado.nome} com mesmo e-mail da aluna ${avaliadorAluno.nome_completo}: ${avaliadorAluno.email}`, ignore: true });
-								help.sentryError('Erro em receiveCSVAvaliadores => Avaliador com e-mail igual aluna', { e });
-							}
+
+						const newIndicado = await db.upsertIndicadoByEmail(e, e.email);
+
+						if (!newIndicado || !newIndicado.id) errors.push({ line: i + 2, msg: 'Erro ao salvar no banco' });
+						if (newIndicado && newIndicado.error) errors.push({ line: i + 2, msg: newIndicado.error });
+
+						if (newIndicado && newIndicado.id) {
+							if (newIndicado.email === avaliadorAluno.email) errors.push({ line: i + 2, msg: `Adicionado Indicado ${newIndicado.nome} com mesmo e-mail da aluna ${avaliadorAluno.nome_completo}: ${avaliadorAluno.email}`, ignore: true });
 							indicadosToAdd.push(newIndicado);
 						}
 					} else {
-						errors.push({ line: i + 2, msg: `Nenhuma aluna com CPF ${e.aluno_cpf}` });
-						help.sentryError('Erro em receiveCSVAvaliadores => Avaliador sem nome ou e-mail ou cpf do aluno', { e });
+						errors.push({ line: i + 2, msg: `Nenhuma aluna com CPF ${e.aluno_cpf} encontrada` });
 					}
 				} else {
 					errors.push({ line: i + 2, msg: `Avaliador sem ${await admin.getMissingDataAvaliadoresCSV(e)}.` });
-					help.sentryError(`Erro em receiveCSVAvaliadores => Avaliador sem ${await admin.getMissingDataAvaliadoresCSV(e)}.`, { e });
 				}
 			} catch (error) {
 				errors.push({ line: i + 2, msg: 'Erro desconhecido' });
-				help.sentryError('Erro em receiveCSVAvaliadores ', error);
 			}
 		}
 
 		await admin.updateNotificationIndicados(indicadosToAdd);
+		if (errors && errors.length > 0) await help.sentryError('Erros receiveCSVAvaliadores', errors);
 		return { errors };
 	}
 	return help.sentryError('Erro em receiveCSVAluno => CSV inválido!', { csvLines });
