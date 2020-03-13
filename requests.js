@@ -107,8 +107,26 @@ async function sendNotificationQueue(req, res) {
 		if (securityToken !== process.env.SECURITY_TOKEN_MA) {
 			res.status(401); res.send('Unauthorized!');
 		} else {
-			send.sendNotificationFromQueue(body.aluno_id, body.notification_type);
-			res.status(200); res.send('Processando');
+			const turmaID = body.turma_id;
+			const alunoID = body.aluno_id;
+			const indicadoID = body.indicado_id;
+			const notificationType = body.notification_type;
+			const { moment } = body;
+
+			let dataComparacao = null;
+			if (moment) {
+				dataComparacao = new Date(moment);
+				if (!Object.prototype.toString.call(dataComparacao) === '[object Date]' || isNaN(dataComparacao.getTime())) { // eslint-disable-line
+					res.status(401); res.send('Data inválida, utilize uma string ISO como essa: 2020-02-15T17:30:00.000Z');
+				}
+			}
+
+			if (dataComparacao && !Object.prototype.toString.call(dataComparacao) === '[object Date]') dataComparacao = null;
+
+			const queue = await send.getQueue(turmaID, alunoID, indicadoID, notificationType);
+
+			const result = await send.sendNotificationFromQueue(queue, dataComparacao, false);
+			res.status(200); res.send(result);
 		}
 	}
 }
