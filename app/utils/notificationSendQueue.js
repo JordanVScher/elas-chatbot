@@ -70,7 +70,7 @@ async function checkShouldSendNotification(notification, turma, tRules, today) {
 		if (!min || !max) throw new help.MyError('Não foi possível encontrar todas os valores necessários', { min, max, today, moduloDate, dateToSend, currentRule }); // eslint-disable-line object-curly-newline
 
 		// add dates in which the notification should be sent
-		const result = { min, max, today, sendNow: false }; // eslint-disable-line object-curly-newline
+		const result = { min, max, today, sendNow: false, currentRule }; // eslint-disable-line object-curly-newline
 		// if today is inside the date range we can send the notification
 		if (today >= min && today <= max) result.sendNow = true;
 		return result;
