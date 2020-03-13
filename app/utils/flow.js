@@ -308,6 +308,11 @@ Não tem Messenger? Tudo bem, as mesmas notificações que a Donna enviar via Me
 			error: 'Não encontrei nenhum indicado nessa turma!',
 			filename: 'INDICADOS_TURMA_<INPUT>',
 		},
+		turmaLinksCSV: {
+			txt1: 'Links formatados da turma:',
+			error: 'Não consegui montar os links dessa turma!',
+			filename: 'LINKS_FORMATADOS_TURMA_<INPUT>',
+		},
 	},
 	missingAnswersWarning: {
 		mailSubject: 'Questionário não respondido',

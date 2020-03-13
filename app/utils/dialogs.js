@@ -176,6 +176,10 @@ module.exports.sendCSV = async (context) => { // verTurma
 	case 'indicadosCSV':
 		result = await db.getAlunasIndicadosReport(turmaID);
 		break;
+	case 'turmaLinksCSV':
+		result = await admin.getTurmaLinks(turmaID);
+		result = { content: await admin.removeUndefined(result), input: turmaID };
+		break;
 	default:
 		break;
 	}

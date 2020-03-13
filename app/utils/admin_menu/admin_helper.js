@@ -1,4 +1,3 @@
-require('dotenv').config();
 const { parseAsync } = require('json2csv');
 const request = require('request-promise');
 const { csv2json } = require('csvjson-csv2json');
@@ -14,12 +13,68 @@ const indicadosRespostas = require('../../server/models').indicados_respostas;
 const indicados = require('../../server/models').indicacao_avaliadores;
 const { turma } = require('../../server/models');
 const { alunos } = require('../../server/models');
+const survey = require('../../server/models').questionario;
 const { checkUserOnLabel } = require('../../utils/postback');
 const { adminMenu } = require('../../utils/flow');
 const rules = require('../notificationRules');
 const MaAPI = require('../../chatbot_api');
 const labels = require('../labels');
 
+async function replaceLinkParameters(link, params, answers) {
+	try {
+		let res = link;
+		if (res.charAt(res.length - 1) !== '?') res += '?';
+
+		const keys = Object.keys(params);
+		keys.forEach((key) => { if (answers[key]) res += `${params[key]}=${answers[key]}&`; });
+
+		if (res.charAt(res.length - 1) === '&') res = res.slice(0, -1);
+
+		return res;
+	} catch (error) {
+		help.sentryError('Erro em replaceLinkParameters', { error, link, params, answers }); // eslint-disable-line object-curly-newline
+		return link;
+	}
+}
+
+async function getTurmaLinks(turmaID) {
+	try {
+		const res = [];
+		const ourTurma = await turma.findOne({ where: { id: turmaID }, raw: true, attributes: ['id', 'nome', 'inCompany'] });
+		const alunas = await alunos.findAll({ where: { turma_id: ourTurma.id }, raw: true, attributes: ['id', 'nome_completo', 'cpf', 'email'] });
+		let surveys = await survey.findAll({ where: { name: { [Op.notIn]: ['avaliador360pre', 'avaliador360pos'] } }, raw: true, attributes: ['id', 'name', 'link', 'parameters'], order: [['id', 'ASC']] }); // eslint-disable-line object-curly-newline
+
+		if (ourTurma.inCompany === true) {
+			surveys = surveys.filter((x) => x.name !== 'atividade1');
+			surveys.unshift(surveys.pop());
+		} else {
+			surveys = surveys.filter((x) => x.name !== 'atividade1InCompany');
+		}
+
+		for (let i = 0; i < alunas.length; i++) {
+			let aux = {};
+			const aluna = alunas[i];
+			try {
+				aux = { 'Aluna Id': aluna.id, 'Aluna Nome': aluna.nome_completo, 'Aluna CPF': aluna.cpf, 'Aluna E-mail': aluna.email }; // eslint-disable-line object-curly-newline
+
+				for (let j = 0; j < surveys.length; j++) {
+					const currentSurvey = surveys[j];
+
+					try {
+						const resposta = await replaceLinkParameters(currentSurvey.link, currentSurvey.parameters, { cpf: aluna.cpf, turma: ourTurma.nome });
+						aux[currentSurvey.name] = resposta;
+					} catch (e) { help.sentryError('Erro em replaceLinkParameters - survey', { e, currentSurvey, aluna }); }
+				}
+			} catch (error) { help.sentryError('Erro em replaceLinkParameters - aluna', { error, aluna }); }
+
+			res.push(aux);
+		}
+		return res;
+	} catch (error) {
+		help.sentryError('Erro em getTurmaLinks', { error, turmaID });
+		return { error };
+	}
+}
 
 async function buildCSV(data, texts) {
 	if (!data || !data.content || data.content.length === 0) { return { error: texts.error }; }
@@ -321,53 +376,58 @@ async function updateNotificationTurma(turmaID) {
 
 
 async function getStatusData(turmaID) {
-	const results = [];
-	const alunosTurma = await alunos.findAll({ where: { turma_id: turmaID }, attributes: ['id', 'nome_completo', 'cpf', 'email', 'created_at'], raw: true }).then((r) => r).catch((err) => console.log(err));
-	const notifications = await notificationQueue.findAll({ where: { turma_id: turmaID, indicado_id: null }, raw: true }).then((r) => r).catch((err) => console.log(err));
-	const alunosID = alunosTurma.map((x) => x.id);
-	const respostas = await alunosRespostas.findAll({ where: { aluno_id: alunosID }, raw: true }).then((r) => r).catch((err) => console.log(err));
-	const toAnswer = ['atividade_1', 'pre', 'pos', 'atividade_indicacao', 'avaliacao_modulo1', 'avaliacao_modulo2', 'avaliacao_modulo3'];
-	const regras = await rules.loadTabNotificationRules(false);
+	try {
+		const results = [];
+		const alunosTurma = await alunos.findAll({ where: { turma_id: turmaID }, attributes: ['id', 'nome_completo', 'cpf', 'email', 'created_at'], raw: true });
+		const notifications = await notificationQueue.findAll({ where: { turma_id: turmaID, indicado_id: null }, raw: true });
+		const alunosID = alunosTurma.map((x) => x.id);
+		const respostas = await alunosRespostas.findAll({ where: { aluno_id: alunosID }, raw: true }).then((r) => r);
+		const toAnswer = ['atividade_1', 'pre', 'pos', 'atividade_indicacao', 'avaliacao_modulo1', 'avaliacao_modulo2', 'avaliacao_modulo3'];
+		const regras = await rules.loadTabNotificationRules(false);
 
-	for (let i = 0; i < alunosTurma.length; i++) {
-		const aux = alunosTurma[i];
+		for (let i = 0; i < alunosTurma.length; i++) {
+			const aux = alunosTurma[i];
 
-		const alunaResposta = respostas.find((x) => x.aluno_id === aux.id);
-		toAnswer.forEach((e) => {
-			const resp = alunaResposta && alunaResposta[e] ? alunaResposta[e] : null;
-			if (resp) {
-				aux[e] = resp.answer_date ? `Respondido em ${resp.answer_date}` : 'Respondido';
-			} else {
-				aux[e] = 'Não Respondido';
-			}
-		});
+			const alunaResposta = respostas.find((x) => x.aluno_id === aux.id);
+			toAnswer.forEach((e) => {
+				const resp = alunaResposta && alunaResposta[e] ? alunaResposta[e] : null;
+				if (resp) {
+					aux[e] = resp.answer_date ? `Respondido em ${resp.answer_date}` : 'Respondido';
+				} else {
+					aux[e] = 'Não Respondido';
+				}
+			});
 
-		const alunaQueue = notifications.filter((x) => x.aluno_id === aux.id);
-		regras.forEach((e) => {
-			if (!e.indicado) {
-				if (alunaQueue && alunaQueue.length > 0) {
-					const n = alunaQueue.find((x) => x.notification_type === e.notification_type);
-					if (n) {
-						if (n.sent_at && !n.error) {
-							aux[`notificacao${e.notification_type}`] = n.sent_at;
-						} else if (n.error) {
-							aux[`notificacao${e.notification_type}`] = JSON.stringify(n.error);
+			const alunaQueue = notifications.filter((x) => x.aluno_id === aux.id);
+			regras.forEach((e) => {
+				if (!e.indicado) {
+					if (alunaQueue && alunaQueue.length > 0) {
+						const n = alunaQueue.find((x) => x.notification_type === e.notification_type);
+						if (n) {
+							if (n.sent_at && !n.error) {
+								aux[`notificacao${e.notification_type}`] = n.sent_at;
+							} else if (n.error) {
+								aux[`notificacao${e.notification_type}`] = JSON.stringify(n.error);
+							} else {
+								aux[`notificacao${e.notification_type}`] = 'Ainda não foi enviada';
+							}
 						} else {
-							aux[`notificacao${e.notification_type}`] = 'Ainda não foi enviada';
+							aux[`notificacao${e.notification_type}`] = 'Não tem na fila';
 						}
 					} else {
 						aux[`notificacao${e.notification_type}`] = 'Não tem na fila';
 					}
-				} else {
-					aux[`notificacao${e.notification_type}`] = 'Não tem na fila';
 				}
-			}
-		});
+			});
 
-		results.push(aux);
+			results.push(aux);
+		}
+
+		return results;
+	} catch (error) {
+		help.sentryError('getStatusData', { error, turmaID });
+		return null;
 	}
-
-	return results;
 }
 
 async function getStatusDataIndicados(turmaID) {
@@ -443,4 +503,5 @@ module.exports = {
 	getStatusData,
 	getStatusDataIndicados,
 	anotherCSV,
+	getTurmaLinks,
 };
