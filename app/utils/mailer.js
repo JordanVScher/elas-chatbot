@@ -72,31 +72,32 @@ async function sendHTMLFile(subject, to, html, pdf, png) {
 	}
 }
 
-async function sendSyncRespostasReport(res) {
+async function sendReport(res, text, subject, filename) {
 	const now = new Date();
 
 	const options = {
 		from,
 		to: process.env.MAILDEV,
-		text: `Em anexo, o relatório gerado pelo sync\n${now}`,
-		subject: `Elas - report do syncRespostas - ${now.getDate()}/${now.getMonth()}`,
+		text: `${text}\n${now}`,
+		subject: `${subject} - ${now.getDate()}/${now.getMonth()} - ${now.getHours()}:${now.getMinutes()}`,
 		attachments: [
 			{
-				filename: `syncRespostas - ${now}.txt`,
+				filename: `${filename} - ${now}.txt`,
 				content: JSON.stringify(res, null, 2),
 			},
 		],
 	};
 
-
-	try {
-		const info = await transporter.sendMail(options);
-		console.log(`'${options.subject}' para ${options.to}:`, info.messageId, `with ${options.attachments.length} attachments`);
-	} catch (error) {
-		console.log(`Could not send '${options.subject}' to `, options.to, 'Error => ', error);
+	if (process.env.ENV === 'prod_final') {
+		try {
+			const info = await transporter.sendMail(options);
+			console.log(`'${options.subject}' para ${options.to}:`, info.messageId, `with ${options.attachments.length} attachments`);
+		} catch (error) {
+			console.log(`Could not send '${options.subject}' to `, options.to, 'Error => ', error);
+		}
 	}
 }
 
 module.exports = {
-	sendHTMLMail, sendHTMLFile, sendSyncRespostasReport,
+	sendHTMLMail, sendHTMLFile, sendReport,
 };

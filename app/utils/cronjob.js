@@ -7,7 +7,7 @@ const { updateTurmas } = require('./turma');
 const { addAlunosPesquisa } = require('./pesquisa/add_aluno_pesquisa');
 const { sendPesquisa } = require('./pesquisa/send_pesquisa_broadcast');
 const { syncRespostas } = require('./surveys/questionario_sync');
-const { sendSyncRespostasReport } = require('./mailer');
+const { sendReport } = require('./mailer');
 const { getChatbotData } = require('../chatbot_api');
 const { sendHTMLMail } = require('./mailer');
 const cronLogs = require('../server/models').cronjob_log;
@@ -26,7 +26,7 @@ async function checkAPI() {
 
 const sendMissingWarningCron = new CronJob(
 	'00 30 8 * * *', async () => {
-		await cronLogs.create({ runAt: new Date(), name: 'sendMissingWarningCron' }).then((r) => r).catch((err) => sentryError('Erro no update do model', err));
+		await cronLogs.create({ runAt: new Date(), name: 'sendMissingWarningCron' }).then((r) => r).catch((err) => sentryError('Erro no update do cronLogs', err));
 		console.log('Running sendMissingWarningCron');
 		try {
 			await sendWarningCSV(false);
@@ -40,7 +40,7 @@ const sendMissingWarningCron = new CronJob(
 
 const sendWarningAlunasCron = new CronJob(
 	'00 40 8 * * *', async () => {
-		await cronLogs.create({ runAt: new Date(), name: 'sendWarningAlunasCron' }).then((r) => r).catch((err) => sentryError('Erro no update do model', err));
+		await cronLogs.create({ runAt: new Date(), name: 'sendWarningAlunasCron' }).then((r) => r).catch((err) => sentryError('Erro no update do cronLogs', err));
 		console.log('Running sendWarningAlunasCron');
 		try {
 			await sendWarningAlunas(false);
@@ -54,11 +54,12 @@ const sendWarningAlunasCron = new CronJob(
 
 const sendNotificationCron = new CronJob(
 	'00 00 7-22/1 * * *', async () => {
-		await cronLogs.create({ runAt: new Date(), name: 'sendNotificationCron' }).then((r) => r).catch((err) => sentryError('Erro no update do model', err));
+		await cronLogs.create({ runAt: new Date(), name: 'sendNotificationCron' }).then((r) => r).catch((err) => sentryError('Erro no update do cronLogs', err));
 		console.log(`Running sendNotificationCron - ${new Date()}`);
 		try {
 			const queue = await send.getQueue();
-			await send.sendNotificationFromQueue(queue);
+			const res = await send.sendNotificationFromQueue(queue);
+			await sendReport(res, 'Em anexo, o relatório gerado pelo Notification Queue', 'Elas - report do Notification Queue', 'notificationQueue');
 		} catch (error) {
 			console.log('sendNotificationCron error', error);
 			await sentryError('Error on sendNotificationCron', error);
@@ -69,7 +70,7 @@ const sendNotificationCron = new CronJob(
 
 const updateTurmasCron = new CronJob(
 	'00 55 * * * *', async () => {
-		await cronLogs.create({ runAt: new Date(), name: 'updateTurmasCron' }).then((r) => r).catch((err) => sentryError('Erro no update do model', err));
+		await cronLogs.create({ runAt: new Date(), name: 'updateTurmasCron' }).then((r) => r).catch((err) => sentryError('Erro no update do cronLogs', err));
 		console.log(`Running updateTurmas - ${new Date()}`);
 		try {
 			await updateTurmas();
@@ -83,7 +84,7 @@ const updateTurmasCron = new CronJob(
 
 const addPesquisasCron = new CronJob(
 	'00 00 09 * * *', async () => {
-		await cronLogs.create({ runAt: new Date(), name: 'addPesquisasCron' }).then((r) => r).catch((err) => sentryError('Erro no update do model', err));
+		await cronLogs.create({ runAt: new Date(), name: 'addPesquisasCron' }).then((r) => r).catch((err) => sentryError('Erro no update do cronLogs', err));
 		console.log('Running addPesquisasCron');
 		try {
 			await addAlunosPesquisa();
@@ -97,7 +98,7 @@ const addPesquisasCron = new CronJob(
 
 const sendPesquisasCron = new CronJob(
 	'00 30 09 * * *', async () => {
-		await cronLogs.create({ runAt: new Date(), name: 'sendPesquisasCron' }).then((r) => r).catch((err) => sentryError('Erro no update do model', err));
+		await cronLogs.create({ runAt: new Date(), name: 'sendPesquisasCron' }).then((r) => r).catch((err) => sentryError('Erro no update do cronLogs', err));
 		console.log('Running sendPesquisasCron');
 		try {
 			await sendPesquisa();
@@ -111,7 +112,7 @@ const sendPesquisasCron = new CronJob(
 
 const checkAPICron = new CronJob(
 	'00 30 * * * *', async () => {
-		await cronLogs.create({ runAt: new Date(), name: 'checkAPICron' }).then((r) => r).catch((err) => sentryError('Erro no update do model', err));
+		await cronLogs.create({ runAt: new Date(), name: 'checkAPICron' }).then((r) => r).catch((err) => sentryError('Erro no update do cronLogs', err));
 		console.log('Running checkAPICron');
 		try {
 			await checkAPI();
@@ -125,12 +126,12 @@ const checkAPICron = new CronJob(
 
 const syncRespostasCron = new CronJob(
 	'00 15 7 * * *', async () => {
-		await cronLogs.create({ runAt: new Date(), name: 'syncRespostasCron' }).then((r) => r).catch((err) => sentryError('Erro no update do model', err));
+		await cronLogs.create({ runAt: new Date(), name: 'syncRespostasCron' }).then((r) => r).catch((err) => sentryError('Erro no update do cronLogs', err));
 		console.log('Running syncRespostasCron');
 		try {
 			if (process.env.ENV === 'prod_final') {
 				const res = await syncRespostas();
-				await sendSyncRespostasReport(res);
+				await sendReport(res, 'Em anexo, o relatório gerado pelo sync', 'Elas - report do syncRespostas', 'syncRespostas');
 			}
 		} catch (error) {
 			console.log('syncRespostasCron error', error);
