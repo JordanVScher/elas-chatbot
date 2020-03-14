@@ -405,6 +405,15 @@ function replaceVarOnCards(cards, toReplace, value) {
 	return res;
 }
 
+function dateNoTimezone(date = new Date()) {
+	const offset = date.getTimezoneOffset();
+	const hours = offset / 60;
+
+	date.setHours(date.getHours() - hours);
+
+	return date;
+}
+
 function buildModDateChange(date) {
 	const dateRegex = /MOD[123]_(PRE|POS)_\d+/;
 	if (!date || typeof date !== 'string' || dateRegex.test(date) === false) return false;
@@ -471,4 +480,5 @@ module.exports = {
 	replaceVarOnCards,
 	buildModDateChange,
 	getMailAdmin,
+	dateNoTimezone,
 };

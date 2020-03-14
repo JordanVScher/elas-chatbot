@@ -1,5 +1,6 @@
 const { CronJob } = require('cron');
 const { sentryError } = require('./helper');
+const { dateNoTimezone } = require('./helper');
 const { sendWarningCSV } = require('./admin_menu/warn_admin');
 const { sendWarningAlunas } = require('./admin_menu/warn_aluna');
 const send = require('./notificationSendQueue');
@@ -54,11 +55,12 @@ const sendWarningAlunasCron = new CronJob(
 
 const sendNotificationCron = new CronJob(
 	'00 00 7-22/1 * * *', async () => {
-		await cronLogs.create({ runAt: new Date(), name: 'sendNotificationCron' }).then((r) => r).catch((err) => sentryError('Erro no update do cronLogs', err));
+		// await cronLogs.create({ runAt: new Date(), name: 'sendNotificationCron' }).then((r) => r).catch((err) => sentryError('Erro no update do cronLogs', err));
 		console.log(`Running sendNotificationCron - ${new Date()}`);
 		try {
 			const queue = await send.getQueue();
-			const res = await send.sendNotificationFromQueue(queue);
+			const today = await dateNoTimezone();
+			const res = await send.sendNotificationFromQueue(queue, today);
 			await sendReport(res, 'Em anexo, o relatório gerado pelo Notification Queue', 'Elas - report do Notification Queue', 'notificationQueue');
 		} catch (error) {
 			console.log('sendNotificationCron error', error);
