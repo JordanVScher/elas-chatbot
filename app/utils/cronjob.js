@@ -112,20 +112,6 @@ const sendPesquisasCron = new CronJob(
 	true, 'America/Sao_Paulo', false, false,
 );
 
-const checkAPICron = new CronJob(
-	'00 30 * * * *', async () => {
-		await cronLogs.create({ runAt: new Date(), name: 'checkAPICron' }).then((r) => r).catch((err) => sentryError('Erro no update do cronLogs', err));
-		console.log('Running checkAPICron');
-		try {
-			await checkAPI();
-		} catch (error) {
-			console.log('checkAPICron error', error);
-			await sentryError('Error on checkAPICron', error);
-		}
-	}, (() => { console.log('Crontab checkAPICron stopped.'); }),
-	true,	'America/Sao_Paulo', false, false,
-);
-
 const syncRespostasCron = new CronJob(
 	'00 15 7 * * *', async () => {
 		await cronLogs.create({ runAt: new Date(), name: 'syncRespostasCron' }).then((r) => r).catch((err) => sentryError('Erro no update do cronLogs', err));
@@ -140,6 +126,20 @@ const syncRespostasCron = new CronJob(
 			await sentryError('Error on syncRespostasCron', error);
 		}
 	}, (() => { console.log('Crontab syncRespostasCron stopped.'); }),
+	true, 'America/Sao_Paulo', false, false,
+);
+
+const checkAPICron = new CronJob(
+	'00 30 * * * *', async () => {
+		await cronLogs.create({ runAt: new Date(), name: 'checkAPICron' }).then((r) => r).catch((err) => sentryError('Erro no update do cronLogs', err));
+		console.log('Running checkAPICron');
+		try {
+			await checkAPI();
+		} catch (error) {
+			console.log('checkAPICron error', error);
+			await sentryError('Error on checkAPICron', error);
+		}
+	}, (() => { console.log('Crontab checkAPICron stopped.'); }),
 	true, 'America/Sao_Paulo', false, false,
 );
 
