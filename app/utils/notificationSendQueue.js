@@ -210,6 +210,7 @@ async function sendNotificationFromQueue(queue, today, logOnly) {
 					}
 				} else { // cant send this notification now
 					res[cName] = { msg: 'Não é hora de mandar essa notificação', dataMin: shouldSend.min, dataMax: shouldSend.max, today: shouldSend.today }; // eslint-disable-line object-curly-newline
+					if (today > shouldSend.max) await notificationQueue.update({ error: { msg: 'Já passou da hora de enviar essa notificação', shouldSend } }, { where: { id: notification.id } }).catch((err) => help.sentryError('Erro no update do model', err)); // eslint-disable-line object-curly-newline
 				}
 			} catch (error) {
 				res[cName] = { error };
