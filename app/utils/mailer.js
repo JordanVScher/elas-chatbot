@@ -79,7 +79,7 @@ async function sendReport(res, text, subject, filename) {
 		from,
 		to: process.env.MAILDEV,
 		text: `${text}\n${now}`,
-		subject: `${subject} - ${now.getDate()}/${now.getMonth()} - ${now.getHours()}:${now.getMinutes()}`,
+		subject: `${subject} - ${now.getDate()}/${now.getMonth()}`,
 		attachments: [
 			{
 				filename: `${filename} - ${now}.txt`,
