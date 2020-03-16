@@ -454,16 +454,19 @@ async function sendMail(recipient, attach, newText) {
 	try {
 		if (!newText.email_text) return { sent: false, msg: 'não tem texto no e-mail para enviar nesse tipo de notificação' };
 
+		const { email } = recipient;
+		if (!email) return { sent: false, msg: 'Aluna não tem e-mail cadastrado' };
+
 		let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
 		html = await html.replace('[CONTEUDO_MAIL]', newText.email_text); // add nome to mail template
 
 		const error = await mailer.sendHTMLMail(newText.email_subject, recipient.email, html, attach.mail, newText.email_text);
-		if (error) return { error, sent: false };
+		if (error) return { sent: false, error };
 
 		return { sent: true };
 	} catch (error) {
 		help.sentryError('Erro em sendMail', { error });
-		return { error, sent: false };
+		return { sent: false, error };
 	}
 }
 
@@ -478,12 +481,12 @@ async function sendChatbot(recipient, attach, newText) {
 		let error = await broadcast.sendBroadcastAluna(recipient['chatbot.fb_id'], newText.chatbot_text, newText.chatbot_quick_reply);
 		if (!error && newText.chatbot_cards) { error = await broadcast.sendCardAluna(FBID, newText.chatbot_cards, recipient.cpf); }
 		if (!error && [attach.chatbot.pdf || attach.chatbot.png]) { error = await broadcast.sendFiles(FBID, attach.chatbot.pdf, attach.chatbot.pdf2); }
-		if (error) return { error, sent: false };
+		if (error) return { sent: false, error };
 
 		return { sent: true };
 	} catch (error) {
 		help.sentryError('Erro em sendChatbot', { error });
-		return { error, sent: false };
+		return { sent: false, error };
 	}
 }
 

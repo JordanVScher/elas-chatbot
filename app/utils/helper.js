@@ -406,6 +406,8 @@ function replaceVarOnCards(cards, toReplace, value) {
 }
 
 function dateNoTimezone(date = new Date()) {
+	if (typeof date === 'string') date = new Date(date);
+
 	const offset = date.getTimezoneOffset();
 	const hours = offset / 60;
 

@@ -146,11 +146,17 @@ async function actuallySendMessages(currentType, notification, recipient, logOnl
 			return data;
 		}
 
+		const error = {};
+
 		const mailAnswer = await aux.sendMail(recipient, attach, newText); res.mailAnswer = mailAnswer;
-		if (mailAnswer.sent === true) await notificationQueue.update({ sent_at: new Date() }, { where: { id: notification.id } }).then((rowsUpdated) => rowsUpdated).catch((err) => help.sentryError('Erro no update do sendAt', err));
+		if (mailAnswer.sent === true) await notificationQueue.update({ sent_at: new Date() }, { where: { id: notification.id } }).catch((err) => help.sentryError('Erro no update do sendAt', err));
+		if (mailAnswer.sent === false) { error.mail = mailAnswer; error.mail.moment = new Date(); }
 
 		const chatbotAnswer = await aux.sendChatbot(recipient, attach, newText); res.chatbotAnswer = chatbotAnswer;
-		if (chatbotAnswer.sent === true) await notificationQueue.update({ sent_at_chatbot: new Date() }, { where: { id: notification.id } }).then((rowsUpdated) => rowsUpdated).catch((err) => help.sentryError('Erro no update do sendAt', err));
+		if (chatbotAnswer.sent === true) await notificationQueue.update({ sent_at_chatbot: new Date() }, { where: { id: notification.id } }).catch((err) => help.sentryError('Erro no update do sendAt', err));
+		if (chatbotAnswer.sent === false) { error.chatbot = chatbotAnswer; error.chatbot.moment = new Date(); }
+
+		if (error.mail || error.chatbot) await notificationQueue.update({ error }, { where: { id: notification.id } }).catch((err) => help.sentryError('Erro no update do notificationQueue', err));
 
 		return { mailAnswer, chatbotAnswer };
 	} catch (error) {
@@ -195,13 +201,14 @@ async function sendNotificationFromQueue(queue, today, logOnly) {
 
 					const shouldRecipient = await checkShouldSendRecipient(recipient, notification, currentTurma, today);
 					if (!shouldRecipient || shouldRecipient.error) throw new help.MyError('Não foi possível descobrir se recipiente pode receber', { shouldRecipient });
+
 					if (shouldRecipient.send === true) {
 						const sentRes = await actuallySendMessages(currentType, notification, recipient, logOnly);
 						res[cName] = sentRes;
 					} else {
-						res[cName] = { msg: `Recipient não pode receber - ${shouldRecipient.smg}` }; // eslint-disable-line object-curly-newline
+						res[cName] = { msg: `Recipient não pode receber - ${shouldRecipient.msg}` }; // eslint-disable-line object-curly-newline
 					}
-				} else { // cant send this notificaition now
+				} else { // cant send this notification now
 					res[cName] = { msg: 'Não é hora de mandar essa notificação', dataMin: shouldSend.min, dataMax: shouldSend.max, today: shouldSend.today }; // eslint-disable-line object-curly-newline
 				}
 			} catch (error) {
