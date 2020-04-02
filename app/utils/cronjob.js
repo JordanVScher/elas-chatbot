@@ -30,7 +30,7 @@ const sendMissingWarningCron = new CronJob(
 		await cronLogs.create({ runAt: new Date(), name: 'sendMissingWarningCron' }).then((r) => r).catch((err) => sentryError('Erro no update do cronLogs', err));
 		console.log('Running sendMissingWarningCron');
 		try {
-			await sendWarningCSV(false);
+			// await sendWarningCSV(false);
 		} catch (error) {
 			console.log('sendMissingWarningCron error', error);
 			await sentryError('Error on sendMissingWarningCron', error);
@@ -44,7 +44,7 @@ const sendWarningAlunasCron = new CronJob(
 		await cronLogs.create({ runAt: new Date(), name: 'sendWarningAlunasCron' }).then((r) => r).catch((err) => sentryError('Erro no update do cronLogs', err));
 		console.log('Running sendWarningAlunasCron');
 		try {
-			await sendWarningAlunas(false);
+			// await sendWarningAlunas(false);
 		} catch (error) {
 			console.log('sendWarningAlunasCron error', error);
 			await sentryError('Error on sendWarningAlunasCron', error);
