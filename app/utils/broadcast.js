@@ -6,7 +6,7 @@ const { missingAnswersWarning } = require('./flow');
 const chatbotUsers = require('../server/models').chatbot_users;
 const { sentryError } = require('./helper');
 
-const config = require('../bottender.config').messenger;
+const config = require('../../bottender.config').channels.messenger;
 
 const client = MessengerClient.connect({
 	accessToken: config.accessToken,

@@ -99,7 +99,7 @@ async function unlinkUserToLabelByName(PSID, labelName, pageToken) {
 
 // Add new aluna as new recipient in the assistente. In this case, the recipient doesn't need an fb_id, the cpf doubles as a key
 async function sendAlunaToAssistente(name, email, cpf, turma) {
-	const assistenteData = await assistenteAPI.getChatbotData(process.env.PAGE_ID);
+	const assistenteData = await assistenteAPI.getChatbotData(process.env.MESSENGER_PAGE_ID);
 	await assistenteAPI.postRecipient(assistenteData.user_id, { name, email, cpf });
 	await assistenteAPI.postRecipientLabelCPF(assistenteData.user_id, cpf, turma);
 }

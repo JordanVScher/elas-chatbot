@@ -153,7 +153,7 @@ module.exports.removerAluna = async (context) => {
 		await admin.SaveTurmaChange(
 			context.state.chatbotData.user_id, context.state.chatbotData.fb_access_token, context.state.adminAlunaFound.id, context.state.adminAlunaFound.turma_id, null,
 		);
-		await warnAdminOfAlunaRemocao(context.state.adminAlunaFound, context.session.user.name);
+		await warnAdminOfAlunaRemocao(context.state.adminAlunaFound, context.state.sessionUser.name);
 		await context.sendText(flow.adminMenu.removerAlunaFim.success.replace('<NOME>', context.state.adminAlunaFound.nome_completo.trim()).replace('<TURMA>', context.state.adminAlunaFound.turma));
 		await context.sendText(flow.adminMenu.firstMenu.txt1, await attach.getQR(flow.adminMenu.firstMenu));
 	}
@@ -480,7 +480,7 @@ async function zipAllDocs(context, turmaID, turmaName) {
 		let sendZip = false; // send the zip file only if it has one file
 
 		output.on('close', async () => {
-			const error = await sendZipMail(sendZip ? fileName : false, turmaName, context.session.user.name, docs);
+			const error = await sendZipMail(sendZip ? fileName : false, turmaName, context.state.sessionUser.name, docs);
 			if (!error) {
 				await context.sendText(flow.adminMenu.sendFeedbackZip.success.replace('<TURMA>', turmaName));
 				await context.sendText(flow.adminMenu.firstMenu.txt1, await attach.getQR(flow.adminMenu.firstMenu));

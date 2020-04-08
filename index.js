@@ -1,20 +1,21 @@
-const MaAPI = require('./chatbot_api');
-const db = require('./utils/DB_helper');
-const { createIssue } = require('./utils/send_issue');
-const DF = require('./utils/dialogFlow');
-const { sendWarningCSV } = require('./utils/admin_menu/warn_admin');
-const dialogs = require('./utils/dialogs');
-const attach = require('./utils/attach');
-const flow = require('./utils/flow');
-const help = require('./utils/helper');
-const timers = require('./utils/timers');
-const { checkUserOnLabel } = require('./utils/postback');
-const { updateTurmas } = require('./utils/turma');
-const labels = require('./utils/labels');
-const { sendTestNotification } = require('./utils/notificationTest');
+const MaAPI = require('./app/chatbot_api');
+const db = require('./app/utils/DB_helper');
+const { createIssue } = require('./app/utils/send_issue');
+const DF = require('./app/utils/dialogFlow');
+const { sendWarningCSV } = require('./app/utils/admin_menu/warn_admin');
+const dialogs = require('./app/utils/dialogs');
+const attach = require('./app/utils/attach');
+const flow = require('./app/utils/flow');
+const help = require('./app/utils/helper');
+const timers = require('./app/utils/timers');
+const { checkUserOnLabel } = require('./app/utils/postback');
+const { updateTurmas } = require('./app/utils/turma');
+const labels = require('./app/utils/labels');
+const { sendTestNotification } = require('./app/utils/notificationTest');
 
-module.exports = async (context) => {
+module.exports = async function App(context) {
 	try {
+		await context.setState({ sessionUser: { ...await context.getUserProfile() } });
 		if (!context.state.dialog || context.state.dialog === '' || (context.event.postback && context.event.postback.payload === 'greetings')) { // because of the message that comes from the comment private-reply
 			await context.setState({ dialog: 'greetings' });
 		}
@@ -25,7 +26,7 @@ module.exports = async (context) => {
 		if (context.state.matricula === true) {
 			await MaAPI.postRecipient(context.state.chatbotData.user_id, await help.buildRecipientObj(context));
 		}
-		db.upsertUser(context.session.user.id, `${context.session.user.first_name} ${context.session.user.last_name}`);
+		db.upsertUser(context.session.user.id, context.state.sessionUser.name);
 		// MaAPI.getRecipient(context.state.chatbotData.user_id, context.session.user.id);
 		await timers.deleteTimers(context.session.user.id);
 
@@ -42,7 +43,7 @@ module.exports = async (context) => {
 		} else if (context.event.isQuickReply) {
 			await context.setState({ lastQRpayload: context.event.quickReply.payload });
 			if (context.state.lastQRpayload.slice(0, 4) === 'poll') { // user answered poll that came from timer
-				await context.setState({ answer: context.event.message.quick_reply.payload.replace('poll', '') });
+				await context.setState({ answer: context.state.lastQRpayload.replace('poll', '') });
 				await MaAPI.postPollAnswer(context.session.user.id, context.state.answer, 'dialog');
 				await MaAPI.logAnsweredPoll(context.session.user.id, context.state.chatbotData.user_id, context.state.answer);
 				await context.sendText('Agradecemos sua resposta.');
@@ -56,7 +57,7 @@ module.exports = async (context) => {
 			} else {
 				await context.setState({ dialog: context.state.lastQRpayload });
 				await MaAPI.logFlowChange(context.session.user.id, context.state.chatbotData.user_id,
-					context.event.message.quick_reply.payload, context.event.message.quick_reply.payload);
+					context.state.lastQRpayload, context.state.lastQRpayload);
 			}
 		} else if (context.event.isText) {
 			await context.setState({ whatWasTyped: context.event.message.text });
@@ -135,7 +136,7 @@ module.exports = async (context) => {
 			if (context.state.matricula === true) {
 				await dialogs.sendMainMenu(context);
 			} else {
-				await context.sendText(flow.greetings.text1.replace('<first_name>', context.session.user.first_name));
+				await context.sendText(flow.greetings.text1.replace('<first_name>', context.state.sessionUser.firstName));
 				await context.sendText(flow.greetings.text2);
 				await context.sendText(flow.greetings.text3, await attach.getQR(flow.greetings));
 			}
@@ -392,10 +393,10 @@ module.exports = async (context) => {
 	} catch (error) {
 		await context.sendText('Ops. Tive um erro interno. Tente novamente.'); // warning user
 		const date = new Date();
-		const errorMsg = `Parece que aconteceu um erro as ${date.toLocaleTimeString('pt-BR')} de ${date.getDate()}/${date.getMonth() + 1} com ${context.session.user.name} => \n${error.stack}`;
+		const errorMsg = `Parece que aconteceu um erro as ${date.toLocaleTimeString('pt-BR')} de ${date.getDate()}/${date.getMonth() + 1} com ${context.state.sessionUser.name} => \n${error.stack}`;
 		console.log('errorMsg', errorMsg);
 		await help.Sentry.configureScope(async (scope) => { // sending to sentry
-			scope.setUser({ username: context.session.user.first_name });
+			scope.setUser({ username: context.state.sessionUser.firstName });
 			scope.setExtra('state', context.state);
 			throw error;
 		});

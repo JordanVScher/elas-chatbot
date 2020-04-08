@@ -15,7 +15,7 @@ const cronLogs = require('../server/models').cronjob_log;
 
 async function checkAPI() {
 	try {
-		const res = await getChatbotData(process.env.PAGE_ID);
+		const res = await getChatbotData(process.env.MESSENGER_PAGE_ID);
 		if (!res || !res.id) {
 			const txt = `Chatbot: Elas\n\nAmbiente: ${process.env.ENV}\n\nErro: A api do Assistente Cívico CAIU\n\nEndereço: ${process.env.MANDATOABERTO_API_URL}`;
 			if (process.env.ENV !== 'local') await sendHTMLMail(`ERRO - API do Assistente Cívico CAIU ${process.env.ENV}`, process.env.MAILDEV, txt, null, txt);
