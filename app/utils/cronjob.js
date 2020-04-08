@@ -103,7 +103,7 @@ const sendPesquisasCron = new CronJob(
 		await cronLogs.create({ runAt: new Date(), name: 'sendPesquisasCron' }).then((r) => r).catch((err) => sentryError('Erro no update do cronLogs', err));
 		console.log('Running sendPesquisasCron');
 		try {
-			await sendPesquisa();
+			// await sendPesquisa();
 		} catch (error) {
 			console.log('sendPesquisasCron error', error);
 			await sentryError('Error on sendPesquisasCron', error);
