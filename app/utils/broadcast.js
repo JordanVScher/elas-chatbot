@@ -14,7 +14,8 @@ const client = MessengerClient.connect({
 });
 
 async function sendBroadcastAluna(USER_ID, textMsg, buttons) {
-	if (USER_ID) {
+	if (USER_ID && USER_ID.toString()) {
+		USER_ID = USER_ID.toString();
 		const newButtons	= buttons;
 		let quickReply = [];
 		if (newButtons && newButtons.length > 0) { quickReply = { quick_replies: newButtons }; }
@@ -32,7 +33,8 @@ async function sendBroadcastAluna(USER_ID, textMsg, buttons) {
 }
 
 async function sendCardAluna(USER_ID, cards, cpf) {
-	if (USER_ID) {
+	if (USER_ID && USER_ID.toString()) {
+		USER_ID = USER_ID.toString();
 		const elements = [];
 		const newCards = JSON.parse(cards);
 		newCards.forEach(async (element) => {
@@ -70,7 +72,8 @@ async function sendCardAluna(USER_ID, cards, cpf) {
 }
 
 async function sendFiles(USER_ID, pdf, pdf2) {
-	if (USER_ID) {
+	if (USER_ID && USER_ID.toString()) {
+		USER_ID = USER_ID.toString();
 		const error = {};
 		if (pdf) {
 			error.pdf = await client.sendFile(USER_ID, createReadStream(pdf.content), { filename: pdf.filename })
