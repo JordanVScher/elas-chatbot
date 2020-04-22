@@ -215,17 +215,23 @@ async function getFormatedSpreadsheet() {
 
 // separates string in the first dot on the second half of the string
 async function separateString(someString) {
+	let removeLastChar = false;
 	if (someString.trim()[someString.length - 1] !== '.') { // trying to guarantee the last char is a dot so we never use halfLength alone as the divisor
 		someString += '.'; // eslint-disable-line no-param-reassign
+		removeLastChar = true;
 	}
 	const halfLength = Math.ceil(someString.length / 2.5); // getting more than half the length (the bigger the denominator the shorter the firstString tends to be)
 	const newString = someString.substring(halfLength); // get the second half of the original string
-	const sentenceDot = new RegExp('(?<!www)\\.(?!com|br|rj|sp|mg|bh|ba|sa|bra|gov|org)', 'i');// Regex -> Don't consider dots present in e-mails and urls
+	const sentenceDot = new RegExp('(?<!www|sr|sra|mr|mrs|srta|srto)\\.(?!com|br|rj|sp|mg|bh|ba|sa|bra|gov|org)', 'i');// Regex -> Don't consider dots present in e-mails and urls
 	// getting the index (in relation to the original string -> halfLength) of the first dot on the second half of the string. +1 to get the actual dot.
 	const dotIndex = halfLength + newString.search(sentenceDot) + 1;
 
-	const firstString = someString.substring(0, dotIndex);
-	const secondString = someString.substring(dotIndex);
+	let firstString = someString.substring(0, dotIndex);
+	let secondString = someString.substring(dotIndex);
+
+	// if we added a dot on the last char, remove it
+	if (removeLastChar && !secondString) firstString = firstString.slice(0, -1);
+	if (removeLastChar && secondString) secondString = secondString.slice(0, -1);
 
 	return { firstString, secondString };
 }
