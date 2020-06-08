@@ -10,8 +10,10 @@ const data = {
 	updated_at: new Date(),
 };
 
+// why this might fail: this questionario might already be saved in the database!
 module.exports = {
 	up: async (queryInterface) => {
+		console.log('data', data);
 		data.details = await getSurveyDetails(data.id_surveymonkey);
 		data.details = JSON.stringify(data.details);
 		return queryInterface.bulkInsert('questionario', [data]);
