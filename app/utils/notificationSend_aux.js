@@ -69,7 +69,10 @@ async function getRecipient(notification, turma) {
 
 
 const atividadesRules = {
-	1: ['pre', 'atividade_indicacao', 'atividade_1'],
+	1: [
+		'pre',
+		// 'atividade_indicacao',
+		'atividade_1'],
 	2: [],
 	3: ['pos'],
 };
