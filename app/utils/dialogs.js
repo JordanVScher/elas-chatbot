@@ -116,7 +116,7 @@ async function warnAlunaTroca(alunaData) {
 	html = await html.replace('[CONTEUDO_MAIL]', mailText);
 
 	const eMailToSend = await help.getMailAdmin();
-	await sendHTMLMail(subject, eMailToSend, html, null, mailText);
+	// await sendHTMLMail(subject, eMailToSend, html, null, mailText);
 }
 
 module.exports.warnAlunaTroca = warnAlunaTroca;
@@ -129,7 +129,7 @@ async function warnAlunaRemocao(alunaData) {
 	let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
 	html = await html.replace('[CONTEUDO_MAIL]', mailText);
 
-	await sendHTMLMail(subject, alunaData.email, html, null, mailText);
+	// await sendHTMLMail(subject, alunaData.email, html, null, mailText);
 }
 
 // build e-mail to warn admins of aluna removal from turma, add the name of the admin that made the request
@@ -140,7 +140,7 @@ async function warnAdminOfAlunaRemocao(alunaData, adminNome) {
 	let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
 	html = await html.replace('[CONTEUDO_MAIL]', mailText);
 
-	await sendHTMLMail(subject, process.env.MAILELAS, html, null, mailText);
+	// await sendHTMLMail(subject, process.env.MAILELAS, html, null, mailText);
 }
 
 module.exports.removerAluna = async (context) => {
@@ -378,8 +378,8 @@ async function mudarTurmaMail(alunaNome, turmaVelha, turmaNova, alunaEmail) {
 
 	const adminMail = await help.getMailAdmin();
 
-	await sendHTMLMail('Elas - Aluna transferida', adminMail, html, null, adminText);
-	await sendHTMLMail('Elas - Você foi transferida', alunaEmail, html2, null, alunaText);
+	// await sendHTMLMail('Elas - Aluna transferida', adminMail, html, null, adminText);
+	// await sendHTMLMail('Elas - Você foi transferida', alunaEmail, html2, null, alunaText);
 }
 
 
