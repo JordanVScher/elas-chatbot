@@ -152,20 +152,20 @@ Não tem Messenger? Tudo bem, as mesmas notificações que a Donna enviar via Me
 		menuOptions: ['Ok'],
 		menuPostback: ['mainMenu'],
 		cards: [
+			// {
+			// 	title: 'ATIVIDADE 1 - RELAÇÃO DE AVALIADORES',
+			// 	subtitle: 'Como as pessoas te avaliam? Indique no mín. 4 pessoas do seu convívio.',
+			// 	image_url: 'https://gallery.mailchimp.com/926cb477483bcd8122304bc56/images/8619ef7a-f963-415b-a14d-491382fc11fc.jpg',
+			// 	url: process.env.INDICACAO360_LINK,
+			// },
 			{
-				title: 'ATIVIDADE 1 - RELAÇÃO DE AVALIADORES',
-				subtitle: 'Como as pessoas te avaliam? Indique no mín. 4 pessoas do seu convívio.',
-				image_url: 'https://gallery.mailchimp.com/926cb477483bcd8122304bc56/images/8619ef7a-f963-415b-a14d-491382fc11fc.jpg',
-				url: process.env.INDICACAO360_LINK,
-			},
-			{
-				title: 'ATIVIDADE 2 - SONDAGEM DE FOCO',
+				title: 'ATIVIDADE 1 - SONDAGEM DE FOCO',
 				subtitle: 'Sobre a sua evolução pessoal, algo que mediremos no final do programa.',
 				image_url: 'https://gallery.mailchimp.com/926cb477483bcd8122304bc56/images/c8cc8280-7c73-4caf-a07c-2a84bdd4bb93.jpg',
 				url: process.env.SONDAGEM_PRE_LINK,
 			},
 			{
-				title: 'ATIVIDADE 3 - INVENTÁRIO COMPORTAMENTAL',
+				title: 'ATIVIDADE 2 - INVENTÁRIO COMPORTAMENTAL',
 				subtitle: '"Descobrir" o seu potencial e suas habilidades.Preencha em um momento calmo.',
 				image_url: 'https://gallery.mailchimp.com/926cb477483bcd8122304bc56/images/9f6a19c4-571b-429f-b628-8ef4cedda1a9.jpg',
 				url: '[DISC_LINK]',

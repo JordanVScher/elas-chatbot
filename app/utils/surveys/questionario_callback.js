@@ -14,11 +14,11 @@ async function followUpResposta(surveyName, answer, aluno, indicado) {
 	case 'atividade1':
 	case 'atividade1InCompany':
 		return followUp.handleAtividadeOne(answer, aluno);
-	case 'indicacao360':
-		return followUp.saveIndicados(answer, aluno);
-	case 'avaliador360pre':
-	case 'avaliador360pos':
-		return followUp.saveAvaliacao360(surveyName, answer, indicado.id);
+	// case 'indicacao360':
+	// 	return followUp.saveIndicados(answer, aluno);
+	// case 'avaliador360pre':
+	// case 'avaliador360pos':
+	// 	return followUp.saveAvaliacao360(surveyName, answer, indicado.id);
 	case 'sondagemPre':
 	case 'sondagemPos':
 		return followUp.saveSondagem(surveyName, answer, aluno.id);

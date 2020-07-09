@@ -100,3 +100,6 @@ copy.js
 *_graficos.zip
 *_respostas.txt
 mock.js
+
+
+package-lock.json.*

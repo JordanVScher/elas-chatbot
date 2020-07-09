@@ -146,14 +146,14 @@ async function buildIndicadosLinks(alunaID, turmaID, column, link) {
 }
 
 const atividadesHumanName = {
-	atividade_indicacao: 'Indicação de Avaliadores (Avaliação 360)',
+	// atividade_indicacao: 'Indicação de Avaliadores (Avaliação 360)',
 	atividade_1: 'Matrícula',
 	pre: 'Pré Sondagem de foco',
 	pos: 'Pós Sondagem de foco',
 };
 
 const atividadesLinks = {
-	atividade_indicacao: surveysInfo.indicacao360.link,
+	// atividade_indicacao: surveysInfo.indicacao360.link,
 	pre: surveysInfo.sondagemPre.link,
 	atividade_1: surveysInfo.atividade1.link,
 	pos: surveysInfo.sondagemPre.link,
@@ -369,15 +369,15 @@ async function fillMasks(replaceMap, recipientData) {
 			case 'SONDAGEMPOS':
 				newData = process.env.SONDAGEM_POS_LINK;
 				break;
-			case 'INDICACAO360':
-				newData = process.env.INDICACAO360_LINK;
-				break;
-			case 'AVALIADORPRE':
-				newData = await buildIndicadosLinks(recipientData.id, recipientData.turmaName, 'pre', process.env.AVALIADOR360PRE_LINK);
-				break;
-			case 'AVALIADORPOS':
-				newData = await buildIndicadosLinks(recipientData.id, recipientData.turmaName, 'pos', process.env.AVALIADOR360POS_LINK);
-				break;
+			// case 'INDICACAO360':
+			// 	newData = process.env.INDICACAO360_LINK;
+			// 	break;
+			// case 'AVALIADORPRE':
+			// 	newData = await buildIndicadosLinks(recipientData.id, recipientData.turmaName, 'pre', process.env.AVALIADOR360PRE_LINK);
+			// 	break;
+			// case 'AVALIADORPOS':
+			// 	newData = await buildIndicadosLinks(recipientData.id, recipientData.turmaName, 'pos', process.env.AVALIADOR360POS_LINK);
+			// 	break;
 			case 'AVALIACAO1':
 				newData = process.env.MODULO1_LINK;
 				break;
