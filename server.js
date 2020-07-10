@@ -140,6 +140,10 @@ app.prepare().then(() => {
 		await requests.addQueueDetails(req, res);
 	});
 
+	server.post('/add-familiar-queue', async (req, res) => {
+		await requests.addFamiliarQueue(req, res);
+	});
+
 	server.get('*', (req, res) => handle(req, res));
 	server.post('*', (req, res) => handle(req, res));
 

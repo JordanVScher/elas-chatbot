@@ -4,6 +4,7 @@ const testFolder = './.sessions/';
 const fs = require('fs');
 const { linkUserToLabelByName } = require('./app/utils/labels');
 const { changeAdminStatus } = require('./app/utils/DB_helper');
+const { getTurmaInCompany } = require('./app/utils/DB_helper');
 const addQueue = require('./app/utils/notificationAddQueue');
 const send = require('./app/utils/notificationSendQueue');
 const { seeDataQueue } = require('./app/utils/notificationAddQueue');
@@ -11,6 +12,7 @@ const { sendDonnaMail } = require('./app/utils/surveys/questionario_followUp');
 const { sendMatricula } = require('./app/utils/surveys/questionario_followUp');
 const { saveAnswer } = require('./app/utils/surveys/questionario_callback');
 const { syncRespostas } = require('./app/utils/surveys/questionario_sync');
+const rules = require('./app/utils/notificationRules');
 
 async function getFBIDJson() { // eslint-disable-line
 	const result = {};
@@ -81,6 +83,29 @@ async function addMissingNotification(req, res) {
 	}
 }
 
+async function addFamiliarQueue(req, res) {
+	const { body } = req;
+	if (!body || !body.security_token) {
+		res.status(400); res.send('Param security_token is required!');
+	} else {
+		const securityToken = body.security_token;
+		if (securityToken !== process.env.SECURITY_TOKEN_MA) {
+			res.status(401); res.send('Unauthorized!');
+		} else if (!body.aluno_id || !body.turma_id) {
+			res.status(401); res.send('Missing aluno_id or turma_id!');
+		} else {
+			const notificationRules = await rules.loadTabNotificationRules(await getTurmaInCompany(body.turma_id));
+			console.log('notificationRules', notificationRules);
+			const response = await addQueue.addQueueForFamiliar(body.aluno_id, notificationRules);
+
+			res.status(200);
+			res.send(response);
+		}
+	}
+}
+
+//  update notification_queue set error = '{"msg": "Não deve enviar"}' where id = 6237;
+// select * from notification_queue where aluno_id = '215' and sent_at is null and error is null order by id;
 async function addNewQueue(req, res) {
 	const { body } = req;
 	if (!body || !body.security_token) {
@@ -316,4 +341,5 @@ module.exports = {
 	logMail,
 	addQueueDetails,
 	matriculaMail,
+	addFamiliarQueue,
 };

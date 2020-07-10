@@ -5,6 +5,7 @@ const { turma } = require('../server/models');
 const { sentryError } = require('./helper');
 const rules = require('./notificationRules');
 const { getTurmaInCompany } = require('./DB_helper');
+const { upsertFamiliarQueue } = require('./DB_helper');
 
 async function getAdditionalDetails(rule) {
 	if ([14, 15, 16, 30, 31, 32].includes(rule.notification_type)) {
@@ -16,6 +17,19 @@ async function getAdditionalDetails(rule) {
 	}
 
 	return null;
+}
+
+async function addQueueForFamiliar(alunaID, notificationRules) {
+	const familiarRule = notificationRules.find((x) => x.familiar === true);
+	const aluna = await alunos.findOne({ where: { id: alunaID }, raw: true }).then((r) => r).catch((err) => sentryError('Erro no findOne do alunos', err));
+	if (!aluna || !aluna.id) return `Aluna com id ${alunaID} não encontrada!`;
+
+	if (aluna && aluna.contato_emergencia_email && aluna.contato_emergencia_email.length > 0) {
+		return upsertFamiliarQueue(familiarRule.notification_type, aluna.id, aluna.turma_id);
+	}
+
+	sentryError('Email de contato inválido', { aluna });
+	return { msg: 'Email de contato inválido', aluna };
 }
 
 async function addNewNotificationAlunas(alunaId, turmaID) {
@@ -31,6 +45,8 @@ async function addNewNotificationAlunas(alunaId, turmaID) {
 					notification_type: rule.notification_type, aluno_id: alunaId, turma_id: turmaID, additional_details: await getAdditionalDetails(rule),
 				}).then((res) => res).catch((err) => sentryError('Erro em notificationQueue.create', err));
 			}
+
+			await addQueueForFamiliar(alunaId, notificationRules);
 		} else {
 			sentryError(`addNewNotificationAlunas: turma ${turmaID} not found`);
 		}
@@ -239,6 +255,7 @@ module.exports = {
 	seeNotifications,
 	helpAddQueue,
 	addQueueProvisorio,
+	addQueueForFamiliar,
 };
 
 // addNewNotificationAlunas(120, 15);

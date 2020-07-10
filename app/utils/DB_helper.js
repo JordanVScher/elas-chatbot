@@ -8,6 +8,7 @@ const alunosRespostas = require('../server/models').alunos_respostas;
 const { pagamentos } = require('../server/models');
 const { respostas } = require('../server/models');
 const { alunos } = require('../server/models');
+const notificationQueue = require('../server/models').notification_queue;
 
 if (process.env.TEST !== 'true') {
 	sequelize.authenticate().then(() => {
@@ -602,6 +603,25 @@ async function respostaUdpdateAlunoID(respostaID, alunoID) {
 	return respostas.update({ id_aluno: alunoID }, { where: { id: respostaID }, raw: true, plain: true, returning: true }).then((r) => (r && r[1] ? r[1] : false)).catch((err) => sentryError('Erro no update do respostas', err)); // eslint-disable-line object-curly-newline
 }
 
+async function upsertFamiliarQueue(rule, alunaId, turmaID) {
+	const found = await notificationQueue.findOne({
+		where: {
+			notification_type: rule,
+			aluno_id: alunaId,
+			turma_id: turmaID,
+			sent_at: null,
+			error: null,
+		},
+		raw: true,
+	}).then((r) => r).catch((err) => sentryError('Erro no findOne do notificationQueue', err));
+
+	if (found && found.id) return { Msg: 'Já existe essa notificação!', data: found };
+
+	return notificationQueue.create({
+		notification_type: rule, aluno_id: alunaId, turma_id: turmaID,
+	}).then((res) => res).catch((err) => sentryError('Erro em notificationQueue.create', err));
+}
+
 
 module.exports = {
 	upsertUser,
@@ -649,4 +669,5 @@ module.exports = {
 	upsertRespostas,
 	respostaUdpdateAlunoID,
 	upsertIndicadoByEmail,
+	upsertFamiliarQueue,
 };
