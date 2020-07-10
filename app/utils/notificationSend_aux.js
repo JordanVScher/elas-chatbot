@@ -58,11 +58,8 @@ async function getRecipient(notification, turma) {
 		recipient.local = turma.local;
 
 		const fullRecipient = await extendRecipient(recipient, turma);
-		if (!recipient) throw new help.MyError('Erro ao carregar recipient', { fullRecipient, recipient });
+		if (!fullRecipient) throw new help.MyError('Erro ao carregar recipient', { fullRecipient, recipient });
 
-		if (notification.additional_details && notification.additional_details.familiar === true) {
-			recipient.email = recipient.contato_emergencia_email;
-		}
 		return recipient;
 	} catch (error) {
 		help.sentryError('Erro em getRecipient', error);

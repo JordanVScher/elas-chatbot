@@ -23,13 +23,7 @@ async function addQueueForFamiliar(alunaID, notificationRules) {
 	const familiarRule = notificationRules.find((x) => x.familiar === true);
 	const aluna = await alunos.findOne({ where: { id: alunaID }, raw: true }).then((r) => r).catch((err) => sentryError('Erro no findOne do alunos', err));
 	if (!aluna || !aluna.id) return `Aluna com id ${alunaID} não encontrada!`;
-
-	if (aluna && aluna.contato_emergencia_email && aluna.contato_emergencia_email.length > 0) {
-		return upsertFamiliarQueue(familiarRule.notification_type, aluna.id, aluna.turma_id);
-	}
-
-	sentryError('Email de contato inválido', { aluna });
-	return { msg: 'Email de contato inválido', aluna };
+	return upsertFamiliarQueue(familiarRule.notification_type, aluna.id, aluna.turma_id);
 }
 
 async function addNewNotificationAlunas(alunaId, turmaID) {
@@ -40,13 +34,14 @@ async function addNewNotificationAlunas(alunaId, turmaID) {
 		if (ourTurma) {
 			for (let i = 0; i < rulesAlunos.length; i++) { // for each kind of nofitification
 				const rule = rulesAlunos[i];
-
-				await notificationQueue.create({
-					notification_type: rule.notification_type, aluno_id: alunaId, turma_id: turmaID, additional_details: await getAdditionalDetails(rule),
-				}).then((res) => res).catch((err) => sentryError('Erro em notificationQueue.create', err));
+				if (rule.familiar) {
+					await addQueueForFamiliar(alunaId, notificationRules);
+				} else {
+					await notificationQueue.create({
+						notification_type: rule.notification_type, aluno_id: alunaId, turma_id: turmaID, additional_details: await getAdditionalDetails(rule),
+					}).then((res) => res).catch((err) => sentryError('Erro em notificationQueue.create', err));
+				}
 			}
-
-			await addQueueForFamiliar(alunaId, notificationRules);
 		} else {
 			sentryError(`addNewNotificationAlunas: turma ${turmaID} not found`);
 		}

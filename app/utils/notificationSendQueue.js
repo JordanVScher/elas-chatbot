@@ -122,6 +122,12 @@ async function checkShouldSendRecipient(recipient, notification, turma, today) {
 			recipient.atividadesMissing = atividadesMissing;
 		}
 
+		if (notification.additional_details && notification.additional_details.familiar === true) {
+			const contatoMail = recipient.contato_emergencia_email;
+			if (!contatoMail || typeof contatoMail !== 'string') return { send: false, msg: 'E-mail do contato não é válido', recipient };
+			recipient.email = recipient.contato_emergencia_email;
+		}
+
 		return { send: true };
 	} catch (error) {
 		help.sentryError('Erro em checkShouldSendRecipient', { error, recipient, notification, turma, today }); // eslint-disable-line object-curly-newline
@@ -213,6 +219,7 @@ async function sendNotificationFromQueue(queue, today, logOnly) {
 							// res[cName] = sentRes;
 						} else {
 							res[cName] = { msg: `Recipient não pode receber - ${shouldRecipient.msg}` }; // eslint-disable-line object-curly-newline
+							await notificationQueue.update({ error: { msg: 'Recipient não pode receber', shouldRecipient } }, { where: { id: notification.id } }).catch((err) => help.sentryError('Erro no update do model', err)); // eslint-disable-line object-curly-newline
 						}
 					} else { // cant send this notification now
 						res[cName] = { msg: 'Não é hora de mandar essa notificação', dataMin: shouldSend.min, dataMax: shouldSend.max, today: shouldSend.today }; // eslint-disable-line object-curly-newline
