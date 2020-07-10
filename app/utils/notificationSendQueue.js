@@ -14,7 +14,7 @@ async function checkShouldSendNotification(notification, turma, tRules, today) {
 		const details = notification.additional_details;
 		let currentRule = null;
 
-		if (!details) {
+		if (!details || details.familiar) {
 			currentRule = await tRules.find((x) => x.notification_type === notification.notification_type);
 		} else if (details.modulo && typeof details.sunday === 'undefined') {
 			currentRule = await tRules.find((x) => x.notification_type === notification.notification_type && x.modulo === details.modulo);
@@ -75,6 +75,7 @@ async function checkShouldSendNotification(notification, turma, tRules, today) {
 		if (today >= min && today <= max) result.sendNow = true;
 		return result;
 	} catch (error) {
+		console.log('error', error);
 		help.sentryError('Erro em checkShouldSendNotification', { error, notification, turma, tRules, today }); // eslint-disable-line object-curly-newline
 		return { error };
 	}
@@ -84,33 +85,33 @@ async function checkShouldSendRecipient(recipient, notification, turma, today) {
 	try {
 		// indicados---
 		// avaliação 360 pré - lembrete - check if pré was answered
-		if ([3, 19].includes(notification.notification_type) === true && notification.check_answered === true) {
-			const answerPre = recipient['respostas.pre'];
-			if (answerPre && Object.keys(answerPre).length > 0) return { send: false, msg: 'Indicado já respondeu avaliação 360 pré' };
-		}
+		// if ([3, 19].includes(notification.notification_type) === true && notification.check_answered === true) {
+		// 	const answerPre = recipient['respostas.pre'];
+		// 	if (answerPre && Object.keys(answerPre).length > 0) return { send: false, msg: 'Indicado já respondeu avaliação 360 pré' };
+		// }
 
-		// avaliação 360 pós - check if pré was answered
-		if ([9, 25].includes(notification.notification_type) === true) {
-			const answerPre = recipient['respostas.pre'];
-			if (!answerPre || Object.entries(answerPre).length === 0) return { send: false, msg: 'Indicado não respondeu nem a avaliação 360 pré' };
+		// // avaliação 360 pós - check if pré was answered
+		// if ([9, 25].includes(notification.notification_type) === true) {
+		// 	const answerPre = recipient['respostas.pre'];
+		// 	if (!answerPre || Object.entries(answerPre).length === 0) return { send: false, msg: 'Indicado não respondeu nem a avaliação 360 pré' };
 
-			// avaliação 360 pós - lembrete - check if pós was answered
-			if (notification.check_answered === true) {
-				const answerPos = recipient['respostas.pos'];
-				if (answerPos && Object.entries(answerPos).length) return { send: false, msg: 'Indicado já respondeu pós' };
-			}
-		}
+		// 	// avaliação 360 pós - lembrete - check if pós was answered
+		// 	if (notification.check_answered === true) {
+		// 		const answerPos = recipient['respostas.pos'];
+		// 		if (answerPos && Object.entries(answerPos).length) return { send: false, msg: 'Indicado já respondeu pós' };
+		// 	}
+		// }
 
 		// alunas---
 		// check if aluna has anys indicados and if any of them didnt answer the avaliaçao
-		if ([4, 10, 20, 26].includes(notification.notification_type)) {
-			const column = [4, 20].includes(notification.notification_type) ? 'pre' : 'pos'; // select which questionario
-			const avaliadores = await indicadosAvaliadores.findAll({ where: { aluno_id: recipient.id }, raw: true }).then((r) => r).catch((err) => help.sentryError('Erro no findAll do indicadosAvaliadores', err));
-			if (!avaliadores || avaliadores.length === 0) return { send: false, msg: 'Aluna não tem nenhum indicado' };
+		// if ([4, 10, 20, 26].includes(notification.notification_type)) {
+		// 	const column = [4, 20].includes(notification.notification_type) ? 'pre' : 'pos'; // select which questionario
+		// 	const avaliadores = await indicadosAvaliadores.findAll({ where: { aluno_id: recipient.id }, raw: true }).then((r) => r).catch((err) => help.sentryError('Erro no findAll do indicadosAvaliadores', err));
+		// 	if (!avaliadores || avaliadores.length === 0) return { send: false, msg: 'Aluna não tem nenhum indicado' };
 
-			const indicados = await DB.getIndicadoRespostasAnswerNull(recipient.id, column); // get indicados that didnt answer the questionario
-			if (!indicados || indicados.length === 0) return { send: false, msg: 'Todos os indicados da aluna já responderam' };
-		}
+		// 	const indicados = await DB.getIndicadoRespostasAnswerNull(recipient.id, column); // get indicados that didnt answer the questionario
+		// 	if (!indicados || indicados.length === 0) return { send: false, msg: 'Todos os indicados da aluna já responderam' };
+		// }
 
 		// check if aluna is missing any questionario
 		if ([16, 32].includes(notification.notification_type)) {
@@ -168,7 +169,7 @@ async function actuallySendMessages(currentType, notification, recipient, logOnl
 async function sendNotificationFromQueue(queue, today, logOnly) {
 	const res = {};
 	try {
-		const dontSend = ['3', '4', '9', '10', '12', '19', '20', '25', '26', '28'];
+		const dontSend = ['3', '4', '9', '10', '19', '20', '25', '26'];
 		if (!queue || queue.length === 0) return 'Não foram encontradas notificações na fila.';
 		const nTypes = await notificationTypes.findAll({ where: {}, raw: true }).then((r) => r).catch((err) => help.sentryError('Erro ao carregar notification_types', err));
 		if (!nTypes || nTypes.length === 0) throw new help.MyError('Não foram carregados os tipos de notificação', { nTypes });
@@ -208,8 +209,8 @@ async function sendNotificationFromQueue(queue, today, logOnly) {
 						if (!shouldRecipient || shouldRecipient.error) throw new help.MyError('Não foi possível descobrir se recipiente pode receber', { shouldRecipient });
 
 						if (shouldRecipient.send === true) {
-						// const sentRes = await actuallySendMessages(currentType, notification, recipient, logOnly);
-						// res[cName] = sentRes;
+							// const sentRes = await actuallySendMessages(currentType, notification, recipient, logOnly);
+							// res[cName] = sentRes;
 						} else {
 							res[cName] = { msg: `Recipient não pode receber - ${shouldRecipient.msg}` }; // eslint-disable-line object-curly-newline
 						}

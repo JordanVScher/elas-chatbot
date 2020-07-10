@@ -609,6 +609,7 @@ async function upsertFamiliarQueue(rule, alunaId, turmaID) {
 			notification_type: rule,
 			aluno_id: alunaId,
 			turma_id: turmaID,
+			additional_details: { familiar: true },
 			sent_at: null,
 			error: null,
 		},
@@ -618,7 +619,7 @@ async function upsertFamiliarQueue(rule, alunaId, turmaID) {
 	if (found && found.id) return { Msg: 'Já existe essa notificação!', data: found };
 
 	return notificationQueue.create({
-		notification_type: rule, aluno_id: alunaId, turma_id: turmaID,
+		notification_type: rule, aluno_id: alunaId, turma_id: turmaID, additional_details: { familiar: true },
 	}).then((res) => res).catch((err) => sentryError('Erro em notificationQueue.create', err));
 }
 
