@@ -215,8 +215,8 @@ async function sendNotificationFromQueue(queue, today, logOnly) {
 						if (!shouldRecipient || shouldRecipient.error) throw new help.MyError('Não foi possível descobrir se recipiente pode receber', { shouldRecipient });
 
 						if (shouldRecipient.send === true) {
-							// const sentRes = await actuallySendMessages(currentType, notification, recipient, logOnly);
-							// res[cName] = sentRes;
+							const sentRes = await actuallySendMessages(currentType, notification, recipient, logOnly);
+							res[cName] = sentRes;
 						} else {
 							res[cName] = { msg: `Recipient não pode receber - ${shouldRecipient.msg}` }; // eslint-disable-line object-curly-newline
 							await notificationQueue.update({ error: { msg: 'Recipient não pode receber', shouldRecipient } }, { where: { id: notification.id } }).catch((err) => help.sentryError('Erro no update do model', err)); // eslint-disable-line object-curly-newline
