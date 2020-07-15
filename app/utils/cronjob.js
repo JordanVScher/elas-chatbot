@@ -67,7 +67,7 @@ const sendNotificationCron = new CronJob(
 			await sentryError('Error on sendNotificationCron', error);
 		}
 	}, (() => { console.log('Crontab sendNotificationCron stopped.'); }),
-	true, 'America/Sao_Paulo', false, false,
+	true, 'America/Sao_Paulo', false, true,
 );
 
 const updateTurmasCron = new CronJob(
