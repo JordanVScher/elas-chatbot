@@ -461,6 +461,7 @@ async function sendMail(recipient, attach, newText) {
 		html = await html.replace('[CONTEUDO_MAIL]', newText.email_text); // add nome to mail template
 
 		const error = await mailer.sendHTMLMail(newText.email_subject, recipient.email, html, attach.mail, newText.email_text);
+		console.log('error', error);
 		if (error) return { sent: false, error };
 
 		return { sent: true };

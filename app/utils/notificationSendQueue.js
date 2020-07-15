@@ -139,6 +139,7 @@ async function actuallySendMessages(currentType, notification, recipient, logOnl
 	const res = {};
 	try {
 		const newText = await aux.buildNewText(currentType, recipient); res.newText = newText;
+		console.log('newText', newText);
 		if (!newText || (!newText.email_text && !newText.chatbot_text)) throw new help.MyError('Não foi possível montar os textos');
 		const attach = await aux.buildAttachment(currentType); res.attach = attach;
 		if (!attach || (!attach.mail && !attach.chatbot)) throw new help.MyError('Não foi possível montar os attachments');
@@ -156,6 +157,7 @@ async function actuallySendMessages(currentType, notification, recipient, logOnl
 		const error = {};
 
 		const mailAnswer = await aux.sendMail(recipient, attach, newText); res.mailAnswer = mailAnswer;
+		console.log('mailAnswer', mailAnswer);
 		if (mailAnswer.sent === true) await notificationQueue.update({ sent_at: new Date() }, { where: { id: notification.id } }).catch((err) => help.sentryError('Erro no update do sendAt', err));
 		if (mailAnswer.sent === false) { error.mail = mailAnswer; error.mail.moment = new Date(); }
 
@@ -176,6 +178,7 @@ async function sendNotificationFromQueue(queue, today, logOnly) {
 	const res = {};
 	try {
 		const dontSend = ['3', '4', '9', '10', '19', '20', '25', '26'];
+		console.log('queue', queue);
 		if (!queue || queue.length === 0) return 'Não foram encontradas notificações na fila.';
 		const nTypes = await notificationTypes.findAll({ where: {}, raw: true }).then((r) => r).catch((err) => help.sentryError('Erro ao carregar notification_types', err));
 		if (!nTypes || nTypes.length === 0) throw new help.MyError('Não foram carregados os tipos de notificação', { nTypes });
@@ -190,34 +193,45 @@ async function sendNotificationFromQueue(queue, today, logOnly) {
 
 		for (let i = 0; i < queue.length; i++) {
 			const notification = queue[i]; const cName = `nID_${notification.id}`;
+			console.log('notification', notification);
 			try {
 				const currentTurma = await allTurmas.find((x) => x.id === notification.turma_id);
+				console.log('currentTurma', currentTurma);
 				if (!currentTurma) { throw new help.MyError('Não foi possível encontrar a turma da notificação', { notification, allTurmas, currentTurma }); }
 
 				const currentType = await nTypes.find((x) => x.id === notification.notification_type);
+				console.log('currentType', currentType);
+
 				if (!currentType) throw new help.MyError('Não foi possível encontrar o tipo de notificação atual', { currentType, notification });
 
 				if (dontSend.includes(currentType.id.toString())) {
+					console.log('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
 					await notificationQueue.update({ error: { msg: 'Essa notificação não deve ser enviada' } }, { where: { id: notification.id } }).catch((err) => help.sentryError('Erro no update do model', err)); // eslint-disable-line object-curly-newline
 					res[cName] = 'Essa notificação não deve ser enviada';
 				} else {
 					const currentRule = currentTurma.inCompany === true ? nRules.in_company : nRules.normal;
+					console.log('currentRule', currentRule);
 					if (!currentRule || currentRule.length === 0) throw new help.MyError('Não foram encontradas as regras para a turma');
 
 					const shouldSend = await checkShouldSendNotification(notification, currentTurma, currentRule, today);
+					console.log('shouldSend', shouldSend);
 					if (!shouldSend || shouldSend.error) throw new help.MyError('Não foi possível descobrir se é hora de mandar a notificação', { shouldSend, notification, currentTurma, currentRule }); // eslint-disable-line object-curly-newline
 
 					if (shouldSend.sendNow === true) {
 						const recipient = await aux.getRecipient(notification, currentTurma);
+						console.log('recipient', recipient);
 						if (!recipient || recipient.error) throw new help.MyError('Não foi possível carregar os dados do recipiente', { recipient, notification, currentTurma });
 
 						const shouldRecipient = await checkShouldSendRecipient(recipient, notification, currentTurma, today);
+						console.log('shouldRecipient', shouldRecipient);
 						if (!shouldRecipient || shouldRecipient.error) throw new help.MyError('Não foi possível descobrir se recipiente pode receber', { shouldRecipient });
 
 						if (shouldRecipient.send === true) {
 							const sentRes = await actuallySendMessages(currentType, notification, recipient, logOnly);
+							console.log('sentRes', sentRes);
 							res[cName] = sentRes;
 						} else {
+							console.log('BBBBBBBBBBBBBBBBBBBBBBBBBBBB');
 							res[cName] = { msg: `Recipient não pode receber - ${shouldRecipient.msg}` }; // eslint-disable-line object-curly-newline
 							await notificationQueue.update({ error: { msg: 'Recipient não pode receber', shouldRecipient } }, { where: { id: notification.id } }).catch((err) => help.sentryError('Erro no update do model', err)); // eslint-disable-line object-curly-newline
 						}
@@ -233,7 +247,6 @@ async function sendNotificationFromQueue(queue, today, logOnly) {
 			res[cName].details = notification;
 		}
 	} catch (error) {
-		console.log('error', error);
 		help.sentryError('Erro no sendNotificationFromQueue', error);
 		return error;
 	}

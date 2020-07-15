@@ -29,6 +29,7 @@ async function sendHTMLMail(subject, to, html, anexo, text = '') {
 		from, to, subject: subject || '<Programa Elas>', html, attachments: anexo, text,
 	};
 
+	console.log('process.env.ENV', process.env.ENV);
 	if (process.env.ENV === 'prod_final') {
 		try {
 			const info = await transporter.sendMail(options);
