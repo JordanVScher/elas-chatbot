@@ -61,7 +61,7 @@ const sendNotificationCron = new CronJob(
 			const queue = await send.getQueue();
 			const today = await dateNoTimezone();
 			const res = await send.sendNotificationFromQueue(queue, today);
-			await sendReport(res, 'Em anexo, o relatório gerado pelo Notification Queue', 'Elas - report do Notification Queue', 'notificationQueue');
+			// await sendReport(res, 'Em anexo, o relatório gerado pelo Notification Queue', 'Elas - report do Notification Queue', 'notificationQueue');
 		} catch (error) {
 			console.log('sendNotificationCron error', error);
 			await sentryError('Error on sendNotificationCron', error);
