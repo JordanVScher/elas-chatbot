@@ -254,7 +254,7 @@ async function sendNotificationFromQueue(queue, today, logOnly) {
 	return res;
 }
 
-async function getQueue(turmaID, alunoID, indicadoID, notificationType) {
+async function getQueue(turmaID, alunoID, notificationType) {
 	const query = {
 		sent_at: null, sent_at_chatbot: null, turma_id: { [Op.not]: null },
 		// sent_at: null, sent_at_chatbot: null, error: null, turma_id: { [Op.not]: null },
@@ -263,7 +263,6 @@ async function getQueue(turmaID, alunoID, indicadoID, notificationType) {
 	if (notificationType) query.notification_type = notificationType;
 	if (turmaID) query.turma_id = turmaID;
 	if (alunoID) query.aluno_id = alunoID;
-	if (indicadoID) query.indicado_id = indicadoID;
 
 	const queue = await notificationQueue.findAll({ where: query, raw: true }).then((r) => r).catch((err) => help.sentryError('Erro ao carregar notification_queue', err));
 	return queue || [];
