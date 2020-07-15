@@ -256,7 +256,7 @@ async function sendNotificationFromQueue(queue, today, logOnly) {
 
 async function getQueue(turmaID, alunoID, notificationType) {
 	const query = {
-		// sent_at: null, sent_at_chatbot: null, turma_id: { [Op.not]: null },
+		sent_at: null, sent_at_chatbot: null, turma_id: { [Op.not]: null },
 		// sent_at: null, sent_at_chatbot: null, error: null, turma_id: { [Op.not]: null },
 	};
 
