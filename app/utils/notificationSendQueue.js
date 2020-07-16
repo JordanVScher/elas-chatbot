@@ -189,7 +189,7 @@ async function sendNotificationFromQueue(queue, today, logOnly) {
 		const nRules = await rules.buildNotificationRules(); // get all rules from spreadsheet
 		if (!nRules || !Object.keys(nRules) || Object.keys(nRules).length === 0) throw new help.MyError('Não foram carregadas as regras da planilha', { nRules });
 
-		if (!today) today = new Date();
+		if (!today) today = await help.dateNoTimezone();
 
 		for (let i = 0; i < queue.length; i++) {
 			const notification = queue[i]; const cName = `nID_${notification.id}`;

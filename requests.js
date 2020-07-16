@@ -13,6 +13,7 @@ const { sendMatricula } = require('./app/utils/surveys/questionario_followUp');
 const { saveAnswer } = require('./app/utils/surveys/questionario_callback');
 const { syncRespostas } = require('./app/utils/surveys/questionario_sync');
 const rules = require('./app/utils/notificationRules');
+const { dateNoTimezone } = require('./app/utils/helper');
 
 async function getFBIDJson() { // eslint-disable-line
 	const result = {};
@@ -291,6 +292,8 @@ async function logMail(req, res) {
 				if (!Object.prototype.toString.call(dataComparacao) === '[object Date]' || isNaN(dataComparacao.getTime())) { // eslint-disable-line
 					res.status(401); res.send('Data inválida, utilize uma string ISO como essa: 2020-02-15T17:30:00.000Z');
 				}
+			} else {
+				dataComparacao = await dateNoTimezone();
 			}
 
 			if (dataComparacao && !Object.prototype.toString.call(dataComparacao) === '[object Date]') dataComparacao = null;
