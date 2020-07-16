@@ -282,7 +282,6 @@ async function logMail(req, res) {
 		} else {
 			const turmaID = body.turma_id;
 			const alunoID = body.aluno_id;
-			const indicadoID = body.indicado_id;
 			const notificationType = body.notification_type;
 			const { moment } = body;
 
@@ -298,7 +297,7 @@ async function logMail(req, res) {
 
 			if (dataComparacao && !Object.prototype.toString.call(dataComparacao) === '[object Date]') dataComparacao = null;
 
-			const queue = await send.getQueue(turmaID, alunoID, indicadoID, notificationType);
+			const queue = await send.getQueue(turmaID, alunoID, notificationType);
 
 			const result = await send.sendNotificationFromQueue(queue, dataComparacao, true);
 			res.status(200); res.send(result);
