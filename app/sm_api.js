@@ -158,8 +158,6 @@ async function getAvailableWebhooks() {
 	return result;
 }
 
-getAvailableWebhooks();
-
 async function deleteOneWebhook(id) {
 	let result = {};
 	try {
