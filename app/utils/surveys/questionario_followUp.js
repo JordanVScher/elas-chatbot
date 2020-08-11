@@ -45,6 +45,7 @@ async function sendMatricula(turmaName, pagamentoID, buyerEmail, cpf, inCompany)
 		html = await html.replace('[TEXTO1]', textos[0]);
 		html = await html.replace('[TEXTO2]', textos[1]);
 		html = await html.replace('[TEXTO3]', textos[2]);
+		html = await html.replace('[TEXTO4]', textos[3]);
 		html = await html.replace(/<link_atividade>/g, link); // add link to mail template
 		html = await html.replace(/TURMARESPOSTA/g, turmaName); // add link to mail template
 
