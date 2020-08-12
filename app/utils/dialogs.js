@@ -15,7 +15,7 @@ const { alunos } = require('../server/models');
 const { turma } = require('../server/models');
 const indicados = require('../server/models').indicacao_avaliadores;
 const { addNewNotificationAlunas } = require('./notificationAddQueue');
-const { addNewNotificationIndicados } = require('./notificationAddQueue');
+// const { addNewNotificationIndicados } = require('./notificationAddQueue');
 const charts = require('./charts');
 const broadcast = require('./broadcast');
 
@@ -420,7 +420,7 @@ module.exports.mailTest = async (context) => {
 		} else {
 			await context.sendText('Você não tem notificações. Vou criar novas notificações pra você e seus indicados (Se vc tiver algum)');
 			await addNewNotificationAlunas(aluna.id, aluna.turma_id);
-			await addNewNotificationIndicados(aluna.id, aluna.turma_id);
+			// await addNewNotificationIndicados(aluna.id, aluna.turma_id);
 			await context.sendText('Pronto! As notificações começarão a ser mandadas em 30 segundos. Se não começarem a chegar, mande a palavra-chave novamente.');
 		}
 	} else {

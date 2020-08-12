@@ -208,7 +208,7 @@ async function saveIndicados(baseAnswers, aluna) {
 			}
 		}
 
-		await AddQueue.addNewNotificationIndicados(aluna.id, aluna.turma_id, true);
+		// await AddQueue.addNewNotificationIndicados(aluna.id, aluna.turma_id, true);
 
 		await DB.upsertAtividade(aluna.id, 'atividade_indicacao', baseAnswers);
 		if (errors && errors.length > 0) {

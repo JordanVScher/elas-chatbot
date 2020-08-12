@@ -203,7 +203,7 @@ async function NotificationChangeTurma(alunaID, oldTurmaID, newturmaID) {
 		const userNotifications = await notificationQueue.findAll({ where: { aluno_id: alunaID, error: null, sent_at: null }, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em notificationQueue.findAll', err));
 		if ((!userNotifications || userNotifications.length === 0) && newturmaID) { // if aluna doesnt have any notifications we add them in like normal
 			await queue.addNewNotificationAlunas(alunaID, newturmaID);
-			await queue.addNewNotificationIndicados(alunaID, newturmaID);
+			// await queue.addNewNotificationIndicados(alunaID, newturmaID);
 		} else {
 			let shouldAdd = true;
 			for (let i = 0; i < userNotifications.length; i++) {
@@ -220,7 +220,7 @@ async function NotificationChangeTurma(alunaID, oldTurmaID, newturmaID) {
 			}
 			if (shouldAdd) {
 				await queue.addNewNotificationAlunas(alunaID, newturmaID);
-				await queue.addNewNotificationIndicados(alunaID, newturmaID);
+				// await queue.addNewNotificationIndicados(alunaID, newturmaID);
 			}
 		}
 	}
@@ -370,7 +370,7 @@ async function updateNotificationTurma(turmaID) {
 	for (let i = 0; i < turmaAlunos.length; i++) {
 		const a = turmaAlunos[i];
 		await queue.addNewNotificationAlunas(a.id, turmaID);
-		await queue.addNewNotificationIndicados(a.id, turmaID);
+		// await queue.addNewNotificationIndicados(a.id, turmaID);
 	}
 }
 
