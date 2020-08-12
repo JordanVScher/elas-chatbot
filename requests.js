@@ -105,8 +105,6 @@ async function addFamiliarQueue(req, res) {
 	}
 }
 
-//  update notification_queue set error = '{"msg": "Não deve enviar"}' where id = 6237;
-// select * from notification_queue where aluno_id = '215' and sent_at is null and error is null order by id;
 async function addNewQueue(req, res) {
 	const { body } = req;
 	if (!body || !body.security_token) {

@@ -187,7 +187,7 @@ async function NotificationChangeTurma(alunaID, oldTurmaID, newturmaID) {
 	if (oldInCompany === newInCompany || !newturmaID || !oldTurmaID) { // aluna didnt change turma type or aluna was removed (newturmaID || oldTurmaID = null)
 		const userNotifications = await notificationQueue.findAll({ where: { aluno_id: alunaID, error: null, sent_at: null }, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em notificationQueue.findAll', err));
 		if ((!userNotifications || userNotifications.length === 0) && newturmaID) { // if aluna doesnt have any notification to be sent we add them in like normal
-			// await queue.addNewNotificationAlunas(alunaID, newturmaID);
+			await queue.addNewNotificationAlunas(alunaID, newturmaID);
 			// await queue.addNewNotificationIndicados(alunaID, newturmaID);
 		} else {
 			userNotifications.forEach((n) => { // update notification only when it hasnt already been sent and the turma differs
