@@ -116,7 +116,7 @@ module.exports = {
 	},
 	eMail: {
 		atividade1: {
-			assunto: 'Obrigada por sua compra! - Programa ELAS',
+			assunto: 'Bem vinda à Escola ELAS!',
 			textos: [
 				'Querida Aluna! Vamos iniciar sua jornada no Programa ELAS - <strong>TURMARESPOSTA</strong>.\nO primeiro passo é realizar a sua matrícula. Basta clicar no botão abaixo:',
 				'Em breve você receberá mais dois e-mails com as informações necessárias para o módulo 1 e também com as pré atividades.\n',
