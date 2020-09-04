@@ -454,20 +454,20 @@ module.exports.graficoMediaEnd = async (context) => {
 };
 
 async function sendZipMail(filename, turmaName, adminNome, docs) {
-	const subject = flow.adminMenu.sendFeedbackZip.mailSubject.replace('<TURMA>', turmaName);
-	let mailText = flow.adminMenu.sendFeedbackZip.mailText.replace('<TURMA>', turmaName).replace('<ADMIN>', adminNome);
+	// const subject = flow.adminMenu.sendFeedbackZip.mailSubject.replace('<TURMA>', turmaName);
+	// let mailText = flow.adminMenu.sendFeedbackZip.mailText.replace('<TURMA>', turmaName).replace('<ADMIN>', adminNome);
 
-	let errorText = '';
-	docs.forEach((e) => { if (e.error) { errorText += `\n${e.aluno}: ${e.error}`; } });
-	if (errorText) { mailText += `\n\n\nErros que aconteceram durante o processo: \n${errorText}`; }
+	// let errorText = '';
+	// docs.forEach((e) => { if (e.error) { errorText += `\n${e.aluno}: ${e.error}`; } });
+	// if (errorText) { mailText += `\n\n\nErros que aconteceram durante o processo: \n${errorText}`; }
 
-	let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
-	html = await html.replace('[CONTEUDO_MAIL]', mailText);
+	// let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
+	// html = await html.replace('[CONTEUDO_MAIL]', mailText);
 
-	if (filename) {
-		return sendHTMLMail(subject, process.env.MAILELAS, html, [{ filename, path: `./${filename}` }], mailText);
-	}
-	return sendHTMLMail(subject, process.env.MAILELAS, html, null, mailText);
+	// if (filename) {
+	// 	return sendHTMLMail(subject, process.env.MAILELAS, html, [{ filename, path: `./${filename}` }], mailText);
+	// }
+	// return sendHTMLMail(subject, process.env.MAILELAS, html, null, mailText);
 }
 
 
