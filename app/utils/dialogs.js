@@ -436,6 +436,8 @@ module.exports.graficoMediaEnd = async (context) => {
 	} else {
 		const turmaPDF = { filename: `${context.state.desiredTurma}_sondagem.pdf` };
 		turmaPDF.content = await charts.buildTurmaChart(validTurma);
+
+		console.log('turmaPDF', turmaPDF);
 		if (!turmaPDF || !turmaPDF.content) {
 			await context.sendText(flow.adminMenu.graficos.failure);
 		} else {

@@ -10,6 +10,8 @@ async function buildTurmaChart(turmaID) {
 	const respostas = { pre: {}, pos: {} };
 	const result = [];
 
+	console.log('allAnswers.length', allAnswers.length);
+
 	if (!allAnswers || allAnswers.length === 0) return false;
 
 	allAnswers.forEach((answer) => { // sum all of the values in the answers
@@ -27,6 +29,11 @@ async function buildTurmaChart(turmaID) {
 	delete respostas.pre.cpf;
 	delete respostas.pos.answer_date;
 	delete respostas.pos.cpf;
+
+	console.log('respostas.pre', respostas.pre);
+	console.log('respostas.pos', respostas.pos);
+
+
 	// get the average
 	const divideBy = allAnswers.length;
 	Object.keys(respostas.pre).forEach((e) => { respostas.pre[e] /= divideBy; });
@@ -36,25 +43,35 @@ async function buildTurmaChart(turmaID) {
 	const firstHalf = secondHalf.splice(0, 23);
 	const charts = [firstHalf, secondHalf];
 
+	console.log('charts', charts);
+
 	if (respostas && respostas.pre && respostas.pos) {
 		for (let i = 0; i < charts.length; i++) {
 			const e = charts[i];
 
 			const data = {};
 			e.forEach(async (element) => { // this map contains only the necessary answers
+				console.log('element', element);
+				console.log('respostas.pre[element.paramName]', respostas.pre[element.paramName]);
+				console.log('respostas.pos[element.paramName]', respostas.pos[element.paramName]);
+
 				if (respostas.pre[element.paramName] && respostas.pos[element.paramName]) { // build obj with param_name and the number variation
 					data[element.questionName] = help.getPercentageChange(respostas.pre[element.paramName], respostas.pos[element.paramName]);
+					console.log('data[element.questionName] ', data[element.questionName]);
 				}
 			});
 
 			if (data && Object.keys(data) && Object.keys(data).length > 0) {
 				const res = await chart.createChart(Object.keys(data), Object.values(data), turmaID, `Resultado auto-avaliação da Turma ${await db.getTurmaName(turmaID)}`);
+				console.log('res', res);
 				result.push(res);
 			}
 		}
+		console.log('result', result);
 		return result;
 	}
 
+	console.log('passei aqui');
 	return false;
 }
 
