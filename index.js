@@ -9,7 +9,6 @@ const flow = require('./app/utils/flow');
 const help = require('./app/utils/helper');
 const timers = require('./app/utils/timers');
 const { checkUserOnLabel } = require('./app/utils/postback');
-const { updateTurmas } = require('./app/utils/turma');
 const labels = require('./app/utils/labels');
 const { sendTestNotification } = require('./app/utils/notificationTest');
 
@@ -70,10 +69,6 @@ module.exports = async function App(context) {
 			} else if (context.state.whatWasTyped === process.env.MAIL_TEST) {
 				if (await checkUserOnLabel(context.session.user.id, process.env.ADMIN_LABEL_ID)) {
 					await dialogs.mailTest(context);
-				}
-			} else if (context.state.whatWasTyped === process.env.RELOAD_SPREAD) {
-				if (await checkUserOnLabel(context.session.user.id, process.env.ADMIN_LABEL_ID)) {
-					await updateTurmas();
 				}
 			} else if (context.state.dialog === 'jaSouAluna') {
 				await context.sendImage(flow.jaSouAluna.gif1);
@@ -306,12 +301,12 @@ module.exports = async function App(context) {
 			if (context.state.adminAlunaFound.turma) text += flow.adminMenu.mudarTurma.txt3.replace('<NOME>', context.state.adminAlunaFound.nome_completo.trim()).replace('<TURMA>', context.state.adminAlunaFound.turma);
 			await context.sendText(text, await attach.getQR(flow.adminMenu.verTurma));
 		} break;
-		case 'updateTurma': {
-			const feedback = await updateTurmas();
-			await context.setState({ csvLines: feedback && feedback.results ? feedback.results.length : 0 });
-			if (feedback && feedback.results && feedback.results.length > 0) await context.sendText(feedback.results.join('\n'), await attach.getQR(flow.adminMenu.atualizarTurma));
-			if (feedback && feedback.errors && feedback.errors.length > 0) await dialogs.sendFeedbackMsgs(context, feedback.errors, '', flow.adminMenu.atualizarTurma);
-		} break;
+		// case 'updateTurma': {
+		// 	const feedback = await updateTurmas();
+		// 	await context.setState({ csvLines: feedback && feedback.results ? feedback.results.length : 0 });
+		// 	if (feedback && feedback.results && feedback.results.length > 0) await context.sendText(feedback.results.join('\n'), await attach.getQR(flow.adminMenu.atualizarTurma));
+		// 	if (feedback && feedback.errors && feedback.errors.length > 0) await dialogs.sendFeedbackMsgs(context, feedback.errors, '', flow.adminMenu.atualizarTurma);
+		// } break;
 		case 'removerAluna':
 			await context.sendText(flow.adminMenu.removerAluna.txt1, await attach.getQR(flow.adminMenu.removerAluna));
 			break;

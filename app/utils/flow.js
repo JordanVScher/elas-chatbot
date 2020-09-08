@@ -189,10 +189,8 @@ Não tem Messenger? Tudo bem, as mesmas notificações que a Donna enviar via Me
 	adminMenu: {
 		firstMenu: {
 			txt1: 'Esse é o menu do admin. Clique em uma opção:',
-			menuOptions: ['Inserir Alunas', 'Inserir Avaliadores', 'Ver Turma', 'Remover Aluna', 'Mudar Turma', 'Atualizar Turma', 'Aviso Respostas', 'Gerar Gráficos'],
-			// menuOptions: ['Inserir Alunas', 'Inserir Avaliadores', 'Ver Turma', 'Remover Aluna', 'Mudar Turma', 'Atualizar Turma', 'Aviso Respostas', 'Simular Notificação'],
-			menuPostback: ['inserirAlunas', 'inserirAvaliadores', 'verTurma', 'removerAluna', 'mudarTurma', 'updateTurma', 'avisoResposta', 'graficos'],
-			// menuPostback: ['inserirAlunas', 'inserirAvaliadores', 'verTurma', 'removerAluna', 'mudarTurma', 'updateTurma', 'avisoResposta', 'simularAskCPF'],
+			menuOptions: ['Inserir Alunas', 'Inserir Avaliadores', 'Ver Turma', 'Remover Aluna', 'Mudar Turma', 'Aviso Respostas', 'Gerar Gráficos'],
+			menuPostback: ['inserirAlunas', 'inserirAvaliadores', 'verTurma', 'removerAluna', 'mudarTurma', 'avisoResposta', 'graficos'],
 		},
 		inserirAlunas: {
 			txt1: 'Envie o CSV com os dados das novas alunas. As colunas devem estar formatadas como esse arquivo de exemplo:',
@@ -278,10 +276,10 @@ Não tem Messenger? Tudo bem, as mesmas notificações que a Donna enviar via Me
 			menuOptions: ['Voltar', 'Ver Turma'],
 			menuPostback: ['adminMenu', 'verTurma'],
 		},
-		atualizarTurma: {
-			menuOptions: ['Voltar', 'Atualizar Novamente'],
-			menuPostback: ['adminMenu', 'updateTurma'],
-		},
+		// atualizarTurma: {
+		// 	menuOptions: ['Voltar', 'Atualizar Novamente'],
+		// 	menuPostback: ['adminMenu', 'updateTurma'],
+		// },
 		avisoResposta: {
 			txt1: 'Aguarde, enviaremos o csv agora.',
 		},

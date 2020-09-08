@@ -4,7 +4,6 @@ const { dateNoTimezone } = require('./helper');
 const { sendWarningCSV } = require('./admin_menu/warn_admin');
 const { sendWarningAlunas } = require('./admin_menu/warn_aluna');
 const send = require('./notificationSendQueue');
-const { updateTurmas } = require('./turma');
 const { addAlunosPesquisa } = require('./pesquisa/add_aluno_pesquisa');
 const { sendPesquisa } = require('./pesquisa/send_pesquisa_broadcast');
 const { syncRespostas } = require('./surveys/questionario_sync');
@@ -70,20 +69,6 @@ const sendNotificationCron = new CronJob(
 	true, 'America/Sao_Paulo', false, false,
 );
 
-const updateTurmasCron = new CronJob(
-	'00 55 * * * *', async () => {
-		await cronLogs.create({ runAt: new Date(), name: 'updateTurmasCron' }).then((r) => r).catch((err) => sentryError('Erro no update do cronLogs', err));
-		console.log(`Running updateTurmas - ${new Date()}`);
-		try {
-			await updateTurmas();
-		} catch (error) {
-			console.log('updateTurmasCron error', error);
-			await sentryError('Error on updateTurmasCron', error);
-		}
-	}, (() => { console.log('Crontab updateTurmasCron stopped.'); }),
-	true, 'America/Sao_Paulo', false, false,
-);
-
 const addPesquisasCron = new CronJob(
 	'00 00 09 * * *', async () => {
 		await cronLogs.create({ runAt: new Date(), name: 'addPesquisasCron' }).then((r) => r).catch((err) => sentryError('Erro no update do cronLogs', err));
@@ -146,7 +131,6 @@ const checkAPICron = new CronJob(
 async function cronLog() {
 	console.log(`Crontab sendNotificationCron is running? => ${sendNotificationCron.running}`);
 	console.log(`Crontab sendWarningAlunasCron is running? => ${sendWarningAlunasCron.running}`);
-	console.log(`Crontab updateTurmasCron is running? => ${updateTurmasCron.running}`);
 	console.log(`Crontab sendMissingWarningCron is running? => ${sendMissingWarningCron.running}`);
 	console.log(`Crontab addPesquisasCron is running? => ${addPesquisasCron.running}`);
 	console.log(`Crontab sendPesquisasCron is running? => ${sendPesquisasCron.running}`);
