@@ -11,9 +11,9 @@ const data = {
 };
 
 // why this might fail: this questionario might already be saved in the database!
+// delete it from the database and try again
 module.exports = {
 	up: async (queryInterface) => {
-		console.log('data', data);
 		data.details = await getSurveyDetails(data.id_surveymonkey);
 		data.details = JSON.stringify(data.details);
 		return queryInterface.bulkInsert('questionario', [data]);
