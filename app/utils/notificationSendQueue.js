@@ -185,7 +185,7 @@ async function sendNotificationFromQueue(queue, today, logOnly) {
 		const allTurmas = await turmas.findAll({ where: {}, raw: true }).then((r) => r).catch((err) => help.sentryError('Erro ao carregar turma', err));
 		if (!allTurmas || allTurmas.length === 0) throw new help.MyError('Não foram carregadas as turmas', { allTurmas });
 
-		const nRules = await rules.buildNotificationRules(); // get all rules from spreadsheet
+		const nRules = await rules.buildNotificationRules();
 		if (!nRules || !Object.keys(nRules) || Object.keys(nRules).length === 0) throw new help.MyError('Não foram carregadas as regras da planilha', { nRules });
 
 		if (!today) today = await help.dateNoTimezone();

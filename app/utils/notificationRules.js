@@ -41,14 +41,12 @@ async function buildNotificationRules() {
 	}
 }
 
-
-// build the regular rule set, based on the spreadsheet
+// build the regular rule set, based on the database
 async function loadTabNotificationRules(isInCompany) {
 	const rules = await buildNotificationRules();
 	if (isInCompany) return rules.in_company;
 	return rules.normal;
 }
-
 
 // return the sum of the module date (from the turma) with the notification rule
 async function getSendDate(ourTurma, currentRule) {
