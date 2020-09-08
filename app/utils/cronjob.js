@@ -1,11 +1,11 @@
 const { CronJob } = require('cron');
 const { sentryError } = require('./helper');
 const { dateNoTimezone } = require('./helper');
-const { sendWarningCSV } = require('./admin_menu/warn_admin');
-const { sendWarningAlunas } = require('./admin_menu/warn_aluna');
+// const { sendWarningCSV } = require('./admin_menu/warn_admin');
+// const { sendWarningAlunas } = require('./admin_menu/warn_aluna');
 const send = require('./notificationSendQueue');
 const { addAlunosPesquisa } = require('./pesquisa/add_aluno_pesquisa');
-const { sendPesquisa } = require('./pesquisa/send_pesquisa_broadcast');
+// const { sendPesquisa } = require('./pesquisa/send_pesquisa_broadcast');
 const { syncRespostas } = require('./surveys/questionario_sync');
 const { sendReport } = require('./mailer');
 const { getChatbotData } = require('../chatbot_api');

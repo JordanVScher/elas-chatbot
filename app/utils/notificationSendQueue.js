@@ -177,7 +177,7 @@ async function sendNotificationFromQueue(queue, today, logOnly) {
 	const res = {};
 	try {
 		const dontSend = ['3', '4', '9', '10', '19', '20', '25', '26'];
-		console.log('queue', queue);
+
 		if (!queue || queue.length === 0) return 'Não foram encontradas notificações na fila.';
 		const nTypes = await notificationTypes.findAll({ where: {}, raw: true }).then((r) => r).catch((err) => help.sentryError('Erro ao carregar notification_types', err));
 		if (!nTypes || nTypes.length === 0) throw new help.MyError('Não foram carregados os tipos de notificação', { nTypes });
@@ -204,12 +204,10 @@ async function sendNotificationFromQueue(queue, today, logOnly) {
 				if (!currentType) throw new help.MyError('Não foi possível encontrar o tipo de notificação atual', { currentType, notification });
 
 				if (dontSend.includes(currentType.id.toString())) {
-					console.log('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
 					await notificationQueue.update({ error: { msg: 'Essa notificação não deve ser enviada' } }, { where: { id: notification.id } }).catch((err) => help.sentryError('Erro no update do model', err)); // eslint-disable-line object-curly-newline
 					res[cName] = 'Essa notificação não deve ser enviada';
 				} else {
 					const currentRule = currentTurma.inCompany === true ? nRules.in_company : nRules.normal;
-					console.log('currentRule', currentRule);
 					if (!currentRule || currentRule.length === 0) throw new help.MyError('Não foram encontradas as regras para a turma');
 
 					const shouldSend = await checkShouldSendNotification(notification, currentTurma, currentRule, today);
@@ -230,7 +228,6 @@ async function sendNotificationFromQueue(queue, today, logOnly) {
 							console.log('sentRes', sentRes);
 							res[cName] = sentRes;
 						} else {
-							console.log('BBBBBBBBBBBBBBBBBBBBBBBBBBBB');
 							res[cName] = { msg: `Recipient não pode receber - ${shouldRecipient.msg}` }; // eslint-disable-line object-curly-newline
 							await notificationQueue.update({ error: { msg: 'Recipient não pode receber', shouldRecipient } }, { where: { id: notification.id } }).catch((err) => help.sentryError('Erro no update do model', err)); // eslint-disable-line object-curly-newline
 						}

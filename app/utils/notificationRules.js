@@ -1,88 +1,52 @@
-const { reloadSpreadSheet } = require('./helper');
 const { sentryError } = require('./helper');
+const notificationRules = require('../server/models').notification_rules;
 
-// relation of keys from the spreadsheet and the model attributes
-const turmaMap = {
-	tipo: 'notification_type',
-	modulo: 'modulo',
-	dias: 'days',
-	horas: 'hours',
-	minutos: 'minutes',
-	'reenvio(dias)': 'reminderDate',
-	indicado: 'indicado',
-	familiar: 'familiar',
-	domingo: 'sunday',
-};
-
-// adapt the spreadsheet keys to match the model
-async function buildQuery(data, map) {
-	const result = {};
-
-	Object.keys(data).forEach(async (element) => {
-		const queryInput = map[element];
-
-
-		if (queryInput && queryInput.toString() && ((data[element] && data[element].toString()) || typeof data[element] === 'boolean')) {
-			let aux = data[element].toString().trim();
-			if (parseInt(aux, 10)) aux = parseInt(aux, 10);
-			if (['true', 'TRUE'].includes(aux)) aux = true;
-			if (['false', 'FALSE'].includes(aux)) aux = false;
-			result[queryInput] = aux;
-		}
-	});
-
-	if (result) {
-		const timeChange = [];
-		if (result.days) { timeChange.push({ qtd: result.days, type: 'days' }); delete result.days; }
-		if (result.hours) { timeChange.push({ qtd: result.hours, type: 'hours' }); delete result.hours; }
-		if (result.minutes) { timeChange.push({ qtd: result.minutes, type: 'minutes' }); delete result.minutes; }
-
-		result.timeChange = timeChange;
-	}
-	return result || false;
-}
-
-// build the regular rule set, based on the spreadsheet
-async function loadTabNotificationRules(isInCompany) {
-	let aba = 1;
-	if (isInCompany === true) { aba = 2; }
-	const spreadsheet = await reloadSpreadSheet(aba);
-	const rules = [];
-	if (spreadsheet && spreadsheet.length > 0) {
-		for (let i = 0; i < spreadsheet.length; i++) {
-			const e = spreadsheet[i];
-			const query = await buildQuery(e, turmaMap);
-			if (query) rules.push(query);
-		}
-	}
-	return rules;
-}
-
-// build the regular rule set, based on the spreadsheet
+// build the regular rule set, based on the database
 async function buildNotificationRules() {
 	try {
-		const abas = ['normal', 'in_company'];
+		const allRules = await notificationRules.findAll({ order: [['id', 'ASC']], raw: true }).then((res) => res).catch((err) => sentryError('Erro em notificationRules.findall', err));
 
 		const rules = [];
-		for (let j = 0; j < abas.length; j++) {
-			const aba = abas[j];
-			rules[aba] = [];
-			const spreadsheet = await reloadSpreadSheet(j + 1);
+		rules.normal = [];
+		rules.in_company = [];
 
-			if (spreadsheet && spreadsheet.length > 0) {
-				for (let i = 0; i < spreadsheet.length; i++) {
-					const e = spreadsheet[i];
-					const query = await buildQuery(e, turmaMap);
-					if (query) rules[aba].push(query);
-				}
-			}
-		}
+		allRules.forEach((e) => {
+			const timeChange = [];
+			if (typeof e.days === 'number') timeChange.push({ qtd: e.days, type: 'days' });
+			if (typeof e.hours === 'number') timeChange.push({ qtd: e.hours, type: 'hours' });
+			if (typeof e.minutes === 'number') timeChange.push({ qtd: e.minutes, type: 'minutes' });
+
+			delete e.days;
+			delete e.hours;
+			delete e.minutes;
+			delete e.createdAt;
+			delete e.updatedAt;
+
+			if (!e.reminderDate) delete e.reminderDate;
+			if (!e.indicado) delete e.indicado;
+			if (!e.familiar) delete e.familiar;
+			if (!e.sunday) delete e.sunday;
+
+			e.timeChange = timeChange;
+			let typeRule = 'normal';
+			if (e.notification_type > 16) typeRule = 'in_company';
+
+			rules[typeRule].push(e);
+		});
 
 		return rules;
 	} catch (error) {
 		sentryError('Erro em buildNotificationRules', error);
 		return null;
 	}
+}
+
+
+// build the regular rule set, based on the spreadsheet
+async function loadTabNotificationRules(isInCompany) {
+	const rules = await buildNotificationRules();
+	if (isInCompany) return rules.in_company;
+	return rules.normal;
 }
 
 

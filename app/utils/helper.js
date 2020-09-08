@@ -1,6 +1,6 @@
 const crypto = require('crypto');
 const Sentry = require('@sentry/node');
-const gsjson = require('google-spreadsheet-to-json');
+// const gsjson = require('google-spreadsheet-to-json');
 const accents = require('remove-accents');
 const moment = require('moment');
 const pdf = require('html-pdf');
@@ -155,63 +155,63 @@ async function formatDiasMod(date, days) {
 
 
 // # Google Spreadsheet
-const privateKey = require(`../../${process.env.GOOGLE_APPLICATION_CREDENTIALS}`); // eslint-disable-line
+// const privateKey = require(`../../${process.env.GOOGLE_APPLICATION_CREDENTIALS}`); // eslint-disable-line
 
-async function reloadSpreadSheet(worksheet, headerStart) {
-	const results = await gsjson({
-		spreadsheetId: process.env.SPREADKEY,
-		credentials: privateKey,
-		worksheet: worksheet || 0,
-		// ignoreRow: [1, 2, 3, 4, 5],
-		headerStart: headerStart || '',
-		// hash: 'id',
-	}).then((result) => result).catch((err) => {
-		console.log(err.message);
-		console.log(err.stack);
-		Sentry.captureMessage('Erro no carregamento do spreadsheet');
-		return undefined;
-	});
+// async function reloadSpreadSheet(worksheet, headerStart) {
+// 	const results = await gsjson({
+// 		spreadsheetId: process.env.SPREADKEY,
+// 		credentials: privateKey,
+// 		worksheet: worksheet || 0,
+// 		// ignoreRow: [1, 2, 3, 4, 5],
+// 		headerStart: headerStart || '',
+// 		// hash: 'id',
+// 	}).then((result) => result).catch((err) => {
+// 		console.log(err.message);
+// 		console.log(err.stack);
+// 		Sentry.captureMessage('Erro no carregamento do spreadsheet');
+// 		return undefined;
+// 	});
 
-	// console.log('reloadSpreadSheet', results);
+// 	// console.log('reloadSpreadSheet', results);
 
-	return results;
-}
+// 	return results;
+// }
 
 // format excel dates to regular dates
-async function getFormatedSpreadsheet() {
-	const result = [];
-	const spreadsheet = await reloadSpreadSheet(0, 6) || []; // console.log('spreadsheet', spreadsheet); // load spreadsheet
-	if (!spreadsheet) { sentryError('Couldnt load spreadsheet', spreadsheet); return []; }
+// async function getFormatedSpreadsheet() {
+// 	const result = [];
+// 	const spreadsheet = await reloadSpreadSheet(0, 6) || []; // console.log('spreadsheet', spreadsheet); // load spreadsheet
+// 	if (!spreadsheet) { sentryError('Couldnt load spreadsheet', spreadsheet); return []; }
 
-	for (let i = 0; i < spreadsheet.length; i++) {
-		const obj = spreadsheet[i];
-		const aux = {};
-		// eslint-disable-next-line no-loop-func
-		const lines = Object.keys(obj);
+// 	for (let i = 0; i < spreadsheet.length; i++) {
+// 		const obj = spreadsheet[i];
+// 		const aux = {};
+// 		// eslint-disable-next-line no-loop-func
+// 		const lines = Object.keys(obj);
 
-		for (let j = 0; j < lines.length; j++) {
-			const key = lines[j];
-			if (key.slice(0, 6) === 'módulo') { // date is 5 digit long, originally its not a string
-				aux[key] = await getJsDateFromExcel(obj[key]);
-				const whichModule = key.replace('módulo', '');
-				if (!aux[`horárioMódulo${whichModule}`]) { aux[`horárioMódulo${whichModule}`] = obj[`horárioMódulo${whichModule}`]; } // this has to be set so we force it
-				let newDatahora = obj[key] + aux[`horárioMódulo${whichModule}`];
+// 		for (let j = 0; j < lines.length; j++) {
+// 			const key = lines[j];
+// 			if (key.slice(0, 6) === 'módulo') { // date is 5 digit long, originally its not a string
+// 				aux[key] = await getJsDateFromExcel(obj[key]);
+// 				const whichModule = key.replace('módulo', '');
+// 				if (!aux[`horárioMódulo${whichModule}`]) { aux[`horárioMódulo${whichModule}`] = obj[`horárioMódulo${whichModule}`]; } // this has to be set so we force it
+// 				let newDatahora = obj[key] + aux[`horárioMódulo${whichModule}`];
 
-				newDatahora = await getJsDateFromExcel(newDatahora);
-				if (newDatahora.getMilliseconds() === 999) {
-					newDatahora.setMilliseconds(newDatahora.getMilliseconds() + 1);
-				}
-				aux[`datahora${whichModule}`] = newDatahora;
-			} else {
-				aux[key] = obj[key];
-			}
-		}
+// 				newDatahora = await getJsDateFromExcel(newDatahora);
+// 				if (newDatahora.getMilliseconds() === 999) {
+// 					newDatahora.setMilliseconds(newDatahora.getMilliseconds() + 1);
+// 				}
+// 				aux[`datahora${whichModule}`] = newDatahora;
+// 			} else {
+// 				aux[key] = obj[key];
+// 			}
+// 		}
 
-		result.push(aux);
-	}
+// 		result.push(aux);
+// 	}
 
-	return result;
-}
+// 	return result;
+// }
 
 // separates string in the first dot on the second half of the string
 async function separateString(someString) {
@@ -458,8 +458,6 @@ module.exports = {
 	formatDialogFlow,
 	weekDayName,
 	weekDayNameLong,
-	reloadSpreadSheet,
-	getFormatedSpreadsheet,
 	formatDate,
 	toTitleCase,
 	getPercentageChange,
