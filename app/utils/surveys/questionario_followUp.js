@@ -9,20 +9,28 @@ const { sendAlunaToAssistente } = require('../labels');
 const { surveysMaps } = require('../sm_maps');
 const donnaLog = require('../../server/models').donna_mail_log;
 const matriculaLog = require('../../server/models').matricula_mail_log;
-const surveysInfo = require('../sm_surveys');
+const { questionario } = require('../../server/models');
+const mailAtividade1 = require('../../server/models').mail_atividade1;
 
 // after a payement happens we send an e-mail to the buyer with the matricula/atividade 1 form
 async function sendMatricula(turmaName, pagamentoID, buyerEmail, cpf, inCompany) {
 	try {
+		let link = '';
+		let eMailData = {};
+
 		// getting the texts and questionario link, based on turma in company status
-		let { link } = surveysInfo.atividade1;
-		if (inCompany === true) link = surveysInfo.atividade1InCompany.link;
+		if (inCompany === true) {
+			link = await questionario.findOne({ where: { name: 'atividade1InCompany' }, attributes: ['link'], raw: true }).then((r) => r.link).catch((err) => help.sentryError('Erro no questionario do model', err));
+			eMailData = await mailAtividade1.findOne({ where: { inCompany: true }, order: [['createdAt', 'DESC']], raw: true }).then((r) => r).catch((err) => help.sentryError('Erro no questionario do model', err));
+		} else {
+			link = await questionario.findOne({ where: { name: 'atividade1' }, attributes: ['link'], raw: true }).then((r) => r.link).catch((err) => help.sentryError('Erro no questionario do model', err));
+			eMailData = await mailAtividade1.findOne({ where: { inCompany: false }, order: [['createdAt', 'DESC']], raw: true }).then((r) => r).catch((err) => help.sentryError('Erro no questionario do model', err));
+		}
 
-		let { assunto } = eMail.atividade1;
-		if (inCompany === true) assunto = eMail.atividade1_inCompany.assunto;
+		link += '?turma=TURMARESPOSTA&pgid=PSIDRESPOSTA';
 
-		let { textos } = eMail.atividade1;
-		if (inCompany === true) textos = eMail.atividade1_inCompany.textos;
+		const { assunto } = eMailData;
+		const textos = [eMailData.texto1, eMailData.texto2, eMailData.texto3, eMailData.texto4];
 
 		// format link
 		if (!pagamentoID) link = link.replace('&pgid=PSIDRESPOSTA', '');
@@ -52,6 +60,7 @@ async function sendMatricula(turmaName, pagamentoID, buyerEmail, cpf, inCompany)
 		const e = await mailer.sendHTMLMail(assunto, buyerEmail, html, null, mailText);
 		await matriculaLog.create({ sentTo: buyerEmail, sentAt: new Date(), atividadeLink: link, error: e && e.stack ? e.stack : e }).then((r) => r).catch((err) => help.sentryError('Erro em matriculaLog.create', err)); // eslint-disable-line object-curly-newline
 	} catch (error) {
+		console.log('error', error);
 		help.sentryError('Erro sendMatricula', { error, turmaName, pagamentoID, buyerEmail, cpf, inCompany }); // eslint-disable-line object-curly-newline
 	}
 }

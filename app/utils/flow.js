@@ -115,24 +115,6 @@ module.exports = {
 		failure: 'Não consegui salvar a mensagem',
 	},
 	eMail: {
-		atividade1: {
-			assunto: 'Bem vinda à Escola ELAS!',
-			textos: [
-				'Querida Aluna! Vamos iniciar sua jornada no Programa ELAS - <strong>TURMARESPOSTA</strong>.\nO primeiro passo é realizar a sua matrícula. Basta clicar no botão abaixo:',
-				'Em breve você receberá mais dois e-mails com as informações necessárias para o módulo 1 e também com as pré atividades.\n',
-				'Você comprou o curso para outra pessoa e não é a aluna? Tudo bem, basta enviar esse e-mail para ela realizar a própria matrícula, ok?',
-				'CASO VOCÊ JÁ TENHA RESPONDIDO O QUESTIONÁRIO DE MATRÍCULA, FAVOR DESCONSIDERAR E AGUARDAR OS PRÓXIMOS PASSOS QUE SERÃO ENVIADOS EM BREVE.',
-			],
-		},
-		atividade1_inCompany: {
-			assunto: 'Bem vinda ao Programa Elas',
-			textos: [
-				'Você acaba de entrar para a turma do Programa Elas <strong>TURMARESPOSTA</strong>. Parabéns!\nVamos iniciar com a sua matrícula. Basta clicar no botão abaixo:',
-				'',
-				'Agora é só aguardar os próximos passos que serão enviados em breve!',
-				'',
-			],
-		},
 		depoisMatricula: {
 			assunto: 'Matrícula Confirmada. Conheça a Donna! - Programa ELAS',
 			textoBody: `Olá, [nome]
