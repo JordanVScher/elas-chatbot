@@ -1,10 +1,8 @@
 const { Op } = require('sequelize').Sequelize;
 const notificationTypes = require('../server/models').notification_types;
 const notificationQueue = require('../server/models').notification_queue;
-const indicadosAvaliadores = require('../server/models').indicacao_avaliadores;
 const turmas = require('../server/models').turma;
 const help = require('./helper');
-const DB = require('./DB_helper');
 const rules = require('./notificationRules');
 const aux = require('./notificationSend_aux');
 
@@ -106,7 +104,8 @@ async function checkShouldSendRecipient(recipient, notification, turma, today) {
 		// check if aluna has anys indicados and if any of them didnt answer the avaliaçao
 		// if ([4, 10, 20, 26].includes(notification.notification_type)) {
 		// 	const column = [4, 20].includes(notification.notification_type) ? 'pre' : 'pos'; // select which questionario
-		// 	const avaliadores = await indicadosAvaliadores.findAll({ where: { aluno_id: recipient.id }, raw: true }).then((r) => r).catch((err) => help.sentryError('Erro no findAll do indicadosAvaliadores', err));
+		// 	const avaliadores = await indicadosAvaliadores.findAll({ where: { aluno_id: recipient.id }, raw: true }).then((r) => r)
+		// .catch((err) => help.sentryError('Erro no findAll do indicadosAvaliadores', err));
 		// 	if (!avaliadores || avaliadores.length === 0) return { send: false, msg: 'Aluna não tem nenhum indicado' };
 
 		// 	const indicados = await DB.getIndicadoRespostasAnswerNull(recipient.id, column); // get indicados that didnt answer the questionario
@@ -114,13 +113,13 @@ async function checkShouldSendRecipient(recipient, notification, turma, today) {
 		// }
 
 		// check if aluna is missing any questionario
-		if ([16, 32].includes(notification.notification_type)) {
-			const currentModule = await aux.findCurrentModulo(turma, today);
-			const atividadesMissing = await aux.findAtividadesMissing(currentModule, recipient.id);
-			if (!atividadesMissing || atividadesMissing.length === 0) return { send: false, msg: `Aluna já respondeu todos os questionários do módulo ${currentModule}` };
-			// store all the questionarios the aluna didnt answer
-			recipient.atividadesMissing = atividadesMissing;
-		}
+		// if ([16, 32].includes(notification.notification_type)) {
+		// 	const currentModule = await aux.findCurrentModulo(turma, today);
+		// 	const atividadesMissing = await aux.findAtividadesMissing(currentModule, recipient.id);
+		// 	if (!atividadesMissing || atividadesMissing.length === 0) return { send: false, msg: `Aluna já respondeu todos os questionários do módulo ${currentModule}` };
+		// 	// store all the questionarios the aluna didnt answer
+		// 	recipient.atividadesMissing = atividadesMissing;
+		// }
 
 		if (notification.additional_details && notification.additional_details.familiar === true) {
 			const contatoMail = recipient.contato_emergencia_email;
