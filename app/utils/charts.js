@@ -267,21 +267,21 @@ async function buildAlunosDocs(turmaID) {
 		if (aluno && aluno.cpf) {
 			const aux = await buildAlunoChart(aluno.cpf);
 			if (aux && aux.filename) {
-				result.push({ aluno: aluno.nome_completo, sondagem: aux.filename });
+				result.push({ aluno: `${aluno.nome_completo}_${aluno.cpf}`, sondagem: aux.filename });
 			} else if (aux && aux.error) {
-				result.push({ aluno: aluno.nome_completo, error: aux.error });
+				result.push({ aluno: `${aluno.nome_completo}_${aluno.cpf}`, error: aux.error });
 			} else {
-				result.push({ aluno: aluno.nome_completo, error: 'Erro inesperado na sondagem' });
+				result.push({ aluno: `${aluno.nome_completo}_${aluno.cpf}`, error: 'Erro inesperado na sondagem' });
 			}
 
-			const aux2 = await buildIndicadoChart(aluno.cpf);
-			if (aux2 && aux2.filename) {
-				result.push({ aluno: aluno.nome_completo, avaliador360: aux2.filename });
-			} else if (aux2 && aux2.error) {
-				result.push({ aluno: aluno.nome_completo, error: aux2.error });
-			} else {
-				result.push({ aluno: aluno.nome_completo, error: 'Erro inesperado na avaliação 360' });
-			}
+			// const aux2 = await buildIndicadoChart(aluno.cpf);
+			// if (aux2 && aux2.filename) {
+			// 	result.push({ aluno: aluno.nome_completo, avaliador360: aux2.filename });
+			// } else if (aux2 && aux2.error) {
+			// 	result.push({ aluno: aluno.nome_completo, error: aux2.error });
+			// } else {
+			// 	result.push({ aluno: aluno.nome_completo, error: 'Erro inesperado na avaliação 360' });
+			// }
 		}
 	}
 

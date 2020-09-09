@@ -1,5 +1,5 @@
 const fs = require('fs');
-const archiver = require('archiver');
+const AdmZip = require('adm-zip');
 const { sendHTMLMail } = require('./mailer');
 const db = require('./DB_helper');
 const help = require('./helper');
@@ -455,59 +455,52 @@ module.exports.graficoMediaEnd = async (context) => {
 	}
 };
 
-async function sendZipMail(filename, turmaName, adminNome, docs) {
-	// const subject = flow.adminMenu.sendFeedbackZip.mailSubject.replace('<TURMA>', turmaName);
-	// let mailText = flow.adminMenu.sendFeedbackZip.mailText.replace('<TURMA>', turmaName).replace('<ADMIN>', adminNome);
+async function sendZipMail(file, turmaName, adminNome, docs) {
+	const subject = flow.adminMenu.sendFeedbackZip.mailSubject.replace('<TURMA>', turmaName);
+	let mailText = flow.adminMenu.sendFeedbackZip.mailText.replace('<TURMA>', turmaName).replace('<ADMIN>', adminNome);
 
-	// let errorText = '';
-	// docs.forEach((e) => { if (e.error) { errorText += `\n${e.aluno}: ${e.error}`; } });
-	// if (errorText) { mailText += `\n\n\nErros que aconteceram durante o processo: \n${errorText}`; }
+	let errorText = '';
+	docs.forEach((e) => { if (e.error) { errorText += `\n${e.aluno}: ${e.error}`; } });
+	if (errorText) { mailText += `\n\n\nErros que aconteceram durante o processo: \n${errorText}`; }
 
-	// let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
-	// html = await html.replace('[CONTEUDO_MAIL]', mailText);
+	let html = await fs.readFileSync(`${process.cwd()}/mail_template/ELAS_Generic.html`, 'utf-8');
+	html = await html.replace('[CONTEUDO_MAIL]', mailText);
 
-	// if (filename) {
-	// 	return sendHTMLMail(subject, process.env.MAILELAS, html, [{ filename, path: `./${filename}` }], mailText);
-	// }
-	// return sendHTMLMail(subject, process.env.MAILELAS, html, null, mailText);
+	if (file) {
+		return sendHTMLMail(subject, process.env.MAILELAS, html, [{ filename: file.filename, content: file.content }], mailText);
+	}
+	return sendHTMLMail(subject, process.env.MAILELAS, html, null, mailText);
 }
 
 
 async function zipAllDocs(context, turmaID, turmaName) {
 	const docs = await charts.buildAlunosDocs(turmaID);
 	if (docs && docs.length > 0) {
-		const fileName = `${turmaName}_graficos.zip`;
-		const output = fs.createWriteStream(fileName);
-		const archive = archiver('zip');
 		let sendZip = false; // send the zip file only if it has one file
 
-		output.on('close', async () => {
-			const error = await sendZipMail(sendZip ? fileName : false, turmaName, context.state.sessionUser.name, docs);
-			if (!error) {
-				await context.sendText(flow.adminMenu.sendFeedbackZip.success.replace('<TURMA>', turmaName));
-				await context.sendText(flow.adminMenu.firstMenu.txt1, await attach.getQR(flow.adminMenu.firstMenu));
-			} else {
-				await context.sendText(flow.adminMenu.sendFeedbackZip.failure.replace('<TURMA>', turmaName));
-				await context.sendText(flow.adminMenu.graficos.txt3, await attach.getQR(flow.adminMenu.verTurma));
-			}
-
-			const err = fs.unlinkSync(`./${fileName}`);
-			if (err) sentryError('Erro ao deletar arquivo zip', err);
-		});
-
-		archive.on('error', (err) => { throw err; });
-		archive.pipe(output);
-
+		const zip = new AdmZip(); // load zip buffer
 		for (let i = 0; i < docs.length; i++) {
-			const doc = docs[i];
-			if (doc.sondagem) {
-				archive.append(fs.createReadStream(doc.sondagem), { name: `${doc.aluno}_sondagem.pdf` }); sendZip = true;
-			} else if (doc.avaliador360) {
-				archive.append(fs.createReadStream(doc.avaliador360), { name: `${doc.aluno}_360Results.pdf` }); sendZip = true;
-			}
+			const e = docs[i];
+			if (e.sondagem) zip.addFile(`${e.aluno}_sondagem.pdf`, await fs.readFileSync(e.sondagem)); sendZip = true;
+			if (e.avaliador360) zip.addFile(`${e.aluno}_360Results.pdf`, await fs.readFileSync(e.avaliador360)); sendZip = true;
 		}
 
-		archive.finalize();
+		const file = sendZip ? { filename: `${turmaName}_graficos.zip`, content: zip.toBuffer() } : false;
+		const error = await sendZipMail(file, turmaName, context.state.sessionUser.name, docs);
+
+		if (!error) {
+			await context.sendText(flow.adminMenu.sendFeedbackZip.success.replace('<TURMA>', turmaName));
+
+			if (context.state.sessionUser && context.state.sessionUser.name && context.state.sessionUser.name.includes('Jordan')) {
+				const chatbotError = await broadcast.sendZip(context.session.user.id, file);
+				if (chatbotError) await context.sendText(chatbotError);
+			}
+
+			await context.sendText(flow.adminMenu.firstMenu.txt1, await attach.getQR(flow.adminMenu.firstMenu));
+		} else {
+			await context.sendText(flow.adminMenu.sendFeedbackZip.failure.replace('<TURMA>', turmaName));
+			await context.sendText(flow.adminMenu.graficos.txt3, await attach.getQR(flow.adminMenu.verTurma));
+		}
 	} else {
 		await context.sendText(flow.adminMenu.sendFeedbackZip.noDocs.replace('<TURMA>', turmaName));
 		await context.sendText(flow.adminMenu.graficos.txt3, await attach.getQR(flow.adminMenu.verTurma));

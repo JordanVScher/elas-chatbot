@@ -99,6 +99,27 @@ async function sendFiles(USER_ID, pdf, pdf2) {
 	return 'error: no USER_ID';
 }
 
+async function sendZip(USER_ID, zip) {
+	if (USER_ID && USER_ID.toString()) {
+		USER_ID = USER_ID.toString();
+		const error = {};
+
+		if (zip) {
+			error.zip = await client.sendFile(USER_ID, zip.content, { filename: zip.filename.replace('zip', 'pdf') })
+				.then((resp) => false).catch((err) => { // eslint-disable-line no-unused-vars
+					if (err.stack) { console.log(err.stack); return err.stack; }
+					console.log(err); return err;
+				});
+			if (!error.zip) { console.log('sent zip'); }
+		}
+
+		if (error.zip) { return JSON.stringify(error); }
+		return false;
+	}
+
+	return 'error: no USER_ID';
+}
+
 
 // for admin only
 async function sendWarning(csv) {
@@ -124,5 +145,5 @@ async function sendWarning(csv) {
 
 
 module.exports = {
-	sendCardAluna, sendBroadcastAluna, sendFiles, sendWarning,
+	sendCardAluna, sendBroadcastAluna, sendFiles, sendWarning, sendZip,
 };
