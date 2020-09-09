@@ -26,5 +26,7 @@ USER root
 COPY services/ /etc/service/
 RUN chmod +x /etc/service/*/run
 
+RUN npx sequelize-cli db:migrate
+
 ENTRYPOINT ["runsvdir"]
 CMD ["/etc/service/"]
