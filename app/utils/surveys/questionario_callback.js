@@ -31,6 +31,15 @@ async function followUpResposta(surveyName, answer, aluno, indicado) {
 	return false;
 }
 
+// how to save an answer: (get mock from exemplo_de_respostas)
+// (async () => {
+// 	const surverName = 'sondagemPos'
+// 	const answer = await getFormatedAnswer(mock, surverName);
+// 	const a = await followUp.saveSondagem(surverName, answer, 1);
+// 	console.log('a', a);
+// })();
+
+
 async function findSurveyTaker(answer) {
 	try {
 		const params = answer && answer.custom_variables ? answer.custom_variables : null;
