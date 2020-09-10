@@ -9,10 +9,13 @@ const aux = require('./notificationSend_aux');
 
 async function checkShouldSendNotification(notification, turma, tRules, today) {
 	try {
-		const details = notification.additional_details;
+		const details = notification.additional_details || {};
 		let currentRule = null;
 
-		if (!details || details.familiar) {
+		delete details.original_type;
+		const keys = Object.keys(details);
+
+		if (!keys.length || details.familiar) {
 			currentRule = await tRules.find((x) => x.notification_type === notification.notification_type);
 		} else if (details.modulo && typeof details.sunday === 'undefined') {
 			currentRule = await tRules.find((x) => x.notification_type === notification.notification_type && x.modulo === details.modulo);

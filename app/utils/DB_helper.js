@@ -623,6 +623,31 @@ async function upsertFamiliarQueue(rule, alunaId, turmaID) {
 	}).then((res) => res).catch((err) => sentryError('Erro em notificationQueue.create', err));
 }
 
+async function addOriginalTypeToNotificationQueue() {
+	const allNotifications = await notificationQueue.findAll({ raw: true, order: [['id', 'ASC']] }).then((res) => res).catch((err) => sentryError('Erro em notificationQueue.findAll', err));
+
+	for (let i = 0; i < allNotifications.length; i++) {
+		const notification = allNotifications[i];
+		const details = notification.additional_details || {};
+		details.original_type = notification.notification_type;
+
+		await notificationQueue.update({ additional_details: details }, { where: { id: notification.id }, plain: true, raw: true }).then((r) => r).catch((err) => sentryError('Erro no update do indicados', err)); // eslint-disable-line object-curly-newline
+	}
+}
+
+
+async function removeOriginalTypeToNotificationQueue() {
+	const allNotifications = await notificationQueue.findAll({ raw: true, order: [['id', 'ASC']] }).then((res) => res).catch((err) => sentryError('Erro em notificationQueue.findAll', err));
+
+	for (let i = 0; i < allNotifications.length; i++) {
+		const notification = allNotifications[i];
+		const details = notification.additional_details || {};
+		delete details.original_type;
+
+		await notificationQueue.update({ additional_details: details }, { where: { id: notification.id }, plain: true, raw: true }).then((r) => r).catch((err) => sentryError('Erro no update do indicados', err)); // eslint-disable-line object-curly-newline
+	}
+}
+
 
 module.exports = {
 	upsertUser,
@@ -671,4 +696,6 @@ module.exports = {
 	respostaUdpdateAlunoID,
 	upsertIndicadoByEmail,
 	upsertFamiliarQueue,
+	addOriginalTypeToNotificationQueue,
+	removeOriginalTypeToNotificationQueue,
 };
