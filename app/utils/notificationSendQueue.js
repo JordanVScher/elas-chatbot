@@ -195,6 +195,7 @@ async function sendNotificationFromQueue(queue, today, logOnly) {
 
 		for (let i = 0; i < queue.length; i++) {
 			const notification = queue[i]; const cName = `nID_${notification.id}`;
+			if (notification.notification_type !== 6) throw new help.MyError('Não enviar essa');
 			console.log('notification', notification);
 			try {
 				const currentTurma = await allTurmas.find((x) => x.id === notification.turma_id);
@@ -256,7 +257,12 @@ async function sendNotificationFromQueue(queue, today, logOnly) {
 async function getQueue(turmaID, alunoID, notificationType) {
 	const query = {
 		// sent_at: null, sent_at_chatbot: null, turma_id: { [Op.not]: null },
-		sent_at: null, sent_at_chatbot: null, error: null, turma_id: { [Op.not]: null },
+		sent_at: null,
+		sent_at_chatbot: null,
+		error: null,
+		turma_id: 23,
+		notification_type: 6,
+		// turma_id: { [Op.not]: null },
 	};
 
 	if (notificationType) query.notification_type = notificationType;
