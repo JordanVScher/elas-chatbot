@@ -57,10 +57,10 @@ const sendNotificationCron = new CronJob(
 		await cronLogs.create({ runAt: new Date(), name: 'sendNotificationCron' }).then((r) => r).catch((err) => sentryError('Erro no update do cronLogs', err));
 		console.log(`Running sendNotificationCron - ${new Date()}`);
 		try {
-			const queue = await send.getQueue();
-			const today = await dateNoTimezone();
-			const res = await send.sendNotificationFromQueue(queue, today);
-			await sendReport(res, 'Em anexo, o relatório gerado pelo Notification Queue', 'Elas - report do Notification Queue', 'notificationQueue');
+			// const queue = await send.getQueue();
+			// const today = await dateNoTimezone();
+			// const res = await send.sendNotificationFromQueue(queue, today);
+			// await sendReport(res, 'Em anexo, o relatório gerado pelo Notification Queue', 'Elas - report do Notification Queue', 'notificationQueue');
 		} catch (error) {
 			console.log('sendNotificationCron error', error);
 			await sentryError('Error on sendNotificationCron', error);
