@@ -50,6 +50,8 @@ async function loadTabNotificationRules(isInCompany) {
 
 // return the sum of the module date (from the turma) with the notification rule
 async function getSendDate(ourTurma, currentRule) {
+	if (!currentRule.timeChange) return false;
+
 	const desiredDatahora = `modulo${currentRule.modulo}`;
 
 	if (ourTurma) {
