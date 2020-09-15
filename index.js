@@ -14,7 +14,22 @@ const { sendTestNotification } = require('./app/utils/notificationTest');
 
 module.exports = async function App(context) {
 	try {
-		await context.setState({ sessionUser: { ...await context.getUserProfile() } });
+		try {
+			await context.setState({ sessionUser: { ...await context.getUserProfile() } });
+		} catch (error) {
+			console.log('error', error);
+			const { id } = context.session.user;
+			await context.setState({
+				sessionUser: {
+					id,
+					name: '',
+					firstName: '',
+					lastName: '',
+					profilePic: '',
+				},
+			});
+		}
+
 		if (!context.state.dialog || context.state.dialog === '' || (context.event.postback && context.event.postback.payload === 'greetings')) { // because of the message that comes from the comment private-reply
 			await context.setState({ dialog: 'greetings' });
 		}
@@ -131,7 +146,12 @@ module.exports = async function App(context) {
 			if (context.state.matricula === true) {
 				await dialogs.sendMainMenu(context);
 			} else {
-				await context.sendText(flow.greetings.text1.replace('<first_name>', context.state.sessionUser.firstName));
+				if (context.state.sessionUser.firstName) {
+					await context.sendText(flow.greetings.text1.replace('<first_name>', context.state.sessionUser.firstName));
+				} else {
+					await context.sendText(flow.greetings.text1extra);
+				}
+
 				await context.sendText(flow.greetings.text2);
 				await context.sendText(flow.greetings.text3, await attach.getQR(flow.greetings));
 			}

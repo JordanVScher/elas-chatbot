@@ -3,6 +3,7 @@ module.exports = {
 	getStarted: 'Sou Donna, a assistente digital da ELAS (Escola de Liderança e Desenvolvimento). Converse comigo clicando em Começar!',
 	greetings: {
 		text1: 'Olá, <first_name>! Que bom te ver por aqui 🥰',
+		text1extra: 'Olá! Que bom te ver por aqui 🥰',
 		text2: 'Sou Donna, a assistente digital da ELAS (Escola de Liderança e Desenvolvimento). Estou aqui para ajudar você aluna ou futura aluna durante seu curso, '
 		+ 'te ajudando, tirando dúvidas, lembrando suas tarefas e muito mais 😉',
 		text3: 'Escolha uma das opções abaixo pra gente continuar:',
