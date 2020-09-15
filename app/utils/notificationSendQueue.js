@@ -151,7 +151,7 @@ async function actuallySendMessages(currentType, notification, recipient, logOnl
 			data.aluna_seria_enviada = true;
 			data.aluna_tem_email = !!recipient.email;
 			data.aluna_tem_chatbot = !!recipient['chatbot.fb_id'];
-			data.attach = attach;
+			data.attach = attach ? attach.length : 'Sem attachments';
 			data.text = newText;
 			return data;
 		}
