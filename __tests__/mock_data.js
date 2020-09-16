@@ -42,34 +42,68 @@ module.exports = {
 	},
 
 	notificationRules: [
-		{ notification_type: 1, modulo: 1, timeChange: [{ qtd: -11, type: 'days' }] },
-		{ notification_type: 2, modulo: 1, timeChange: [{ qtd: -10, type: 'days' }] },
-		{ notification_type: 3, modulo: 1, timeChange: [{ qtd: -10, type: 'days' }], indicado: true, reminderDate: 6 }, // eslint-disable-line object-curly-newline
-		{ notification_type: 4, modulo: 1, timeChange: [{ qtd: 5, type: 'days' }] },
-		{ notification_type: 5, modulo: 1, timeChange: [{ qtd: 1, type: 'days' }, { qtd: 20, type: 'hours' }] }, // 20 hours after the second day of class
-		{ notification_type: 6, modulo: 2, timeChange: [{ qtd: -5, type: 'days' }] },
-		{ notification_type: 7, modulo: 2, timeChange: [{ qtd: -1, type: 'days' }] }, // on the second class
-		{ notification_type: 8, modulo: 3, timeChange: [{ qtd: -9, type: 'days' }, { qtd: 20, type: 'hours' }] }, // 20 hours after the second day of class
-		{ notification_type: 9, modulo: 3, timeChange: [{ qtd: -9, type: 'days' }] },
-		{ notification_type: 10, modulo: 3, timeChange: [{ qtd: -7, type: 'days' }], indicado: true, reminderDate: 3 }, // eslint-disable-line object-curly-newline
-		{ notification_type: 11, modulo: 3, timeChange: [{ qtd: -6, type: 'days' }] },
-		{ notification_type: 12, modulo: 3, timeChange: [{ qtd: -2, type: 'days' }], indicado: true, familiar: true }, // eslint-disable-line object-curly-newline
-		{ notification_type: 13, modulo: 3, timeChange: [{ qtd: 1, type: 'days' }] },
-		{ notification_type: 14, modulo: 1, timeChange: [{ qtd: -24, type: 'hours' }] },
-		{ notification_type: 14, modulo: 2, timeChange: [{ qtd: -24, type: 'hours' }] },
-		{ notification_type: 14, modulo: 3, timeChange: [{ qtd: -24, type: 'hours' }] },
-		{ notification_type: 15, modulo: 1, timeChange: [{ qtd: -1, type: 'hours' }], sunday: false }, // eslint-disable-line object-curly-newline
-		{ notification_type: 15, modulo: 1, timeChange: [{ qtd: 23, type: 'hours' }], sunday: true }, // eslint-disable-line object-curly-newline
-		{ notification_type: 15, modulo: 2, timeChange: [{ qtd: -1, type: 'hours' }], sunday: false }, // eslint-disable-line object-curly-newline
-		{ notification_type: 15, modulo: 2, timeChange: [{ qtd: 23, type: 'hours' }], sunday: true }, // eslint-disable-line object-curly-newline
-		{ notification_type: 15, modulo: 3, timeChange: [{ qtd: -1, type: 'hours' }], sunday: false }, // eslint-disable-line object-curly-newline
-		{ notification_type: 15, modulo: 3, timeChange: [{ qtd: 23, type: 'hours' }], sunday: true }, // eslint-disable-line object-curly-newline
-		{ notification_type: 16, modulo: 1, timeChange: [{ qtd: -2, type: 'days' }] },
-		{ notification_type: 16, modulo: 2, timeChange: [{ qtd: -2, type: 'days' }] },
-		{ notification_type: 16, modulo: 3, timeChange: [{ qtd: -2, type: 'days' }] },
-		{ notification_type: 23, modulo: 1, timeChange: [{ qtd: -10, type: 'days' }], indicado: true, reminderDate: -6 }, // eslint-disable-line object-curly-newline
-		{ notification_type: 24, modulo: 1, timeChange: [{ qtd: -10, type: 'days' }], indicado: true, reminderDate: 60 }, // eslint-disable-line object-curly-newline
-		{ notification_type: 25, modulo: 1, timeChange: [{ qtd: 60, type: 'days' }] },
+		{
+			is_active: true, notification_type: 1, modulo: 1, timeChange: [{ qtd: -11, type: 'days' }],
+		},
+		{
+			is_active: true, notification_type: 2, modulo: 1, timeChange: [{ qtd: -10, type: 'days' }],
+		},
+		{ is_active: true, notification_type: 3, modulo: 1, timeChange: [{ qtd: -10, type: 'days' }], indicado: true, reminderDate: 6 }, // eslint-disable-line object-curly-newline
+		{
+			is_active: true, notification_type: 4, modulo: 1, timeChange: [{ qtd: 5, type: 'days' }],
+		},
+		{
+			is_active: true, notification_type: 5, modulo: 1, timeChange: [{ qtd: 1, type: 'days' }, { qtd: 20, type: 'hours' }],
+		}, // 20 hours after the second day of class
+		{
+			is_active: true, notification_type: 6, modulo: 2, timeChange: [{ qtd: -5, type: 'days' }],
+		},
+		{
+			is_active: true, notification_type: 7, modulo: 2, timeChange: [{ qtd: -1, type: 'days' }],
+		}, // on the second class
+		{
+			is_active: true, notification_type: 8, modulo: 3, timeChange: [{ qtd: -9, type: 'days' }, { qtd: 20, type: 'hours' }],
+		}, // 20 hours after the second day of class
+		{
+			is_active: true, notification_type: 9, modulo: 3, timeChange: [{ qtd: -9, type: 'days' }],
+		},
+		{ is_active: true, notification_type: 10, modulo: 3, timeChange: [{ qtd: -7, type: 'days' }], indicado: true, reminderDate: 3 }, // eslint-disable-line object-curly-newline
+		{
+			is_active: true, notification_type: 11, modulo: 3, timeChange: [{ qtd: -6, type: 'days' }],
+		},
+		{ is_active: true, notification_type: 12, modulo: 3, timeChange: [{ qtd: -2, type: 'days' }], indicado: true, familiar: true }, // eslint-disable-line object-curly-newline
+		{
+			is_active: true, notification_type: 13, modulo: 3, timeChange: [{ qtd: 1, type: 'days' }],
+		},
+		{
+			is_active: true, notification_type: 14, modulo: 1, timeChange: [{ qtd: -24, type: 'hours' }],
+		},
+		{
+			is_active: true, notification_type: 14, modulo: 2, timeChange: [{ qtd: -24, type: 'hours' }],
+		},
+		{
+			is_active: true, notification_type: 14, modulo: 3, timeChange: [{ qtd: -24, type: 'hours' }],
+		},
+		{ is_active: true, notification_type: 15, modulo: 1, timeChange: [{ qtd: -1, type: 'hours' }], sunday: false }, // eslint-disable-line object-curly-newline
+		{ is_active: true, notification_type: 15, modulo: 1, timeChange: [{ qtd: 23, type: 'hours' }], sunday: true }, // eslint-disable-line object-curly-newline
+		{ is_active: true, notification_type: 15, modulo: 2, timeChange: [{ qtd: -1, type: 'hours' }], sunday: false }, // eslint-disable-line object-curly-newline
+		{ is_active: true, notification_type: 15, modulo: 2, timeChange: [{ qtd: 23, type: 'hours' }], sunday: true }, // eslint-disable-line object-curly-newline
+		{ is_active: true, notification_type: 15, modulo: 3, timeChange: [{ qtd: -1, type: 'hours' }], sunday: false }, // eslint-disable-line object-curly-newline
+		{ is_active: true, notification_type: 15, modulo: 3, timeChange: [{ qtd: 23, type: 'hours' }], sunday: true }, // eslint-disable-line object-curly-newline
+		{
+			is_active: true, notification_type: 16, modulo: 1, timeChange: [{ qtd: -2, type: 'days' }],
+		},
+		{
+			is_active: true, notification_type: 16, modulo: 2, timeChange: [{ qtd: -2, type: 'days' }],
+		},
+		{
+			is_active: true, notification_type: 16, modulo: 3, timeChange: [{ qtd: -2, type: 'days' }],
+		},
+		{ is_active: true, notification_type: 23, modulo: 1, timeChange: [{ qtd: -10, type: 'days' }], indicado: true, reminderDate: -6 }, // eslint-disable-line object-curly-newline
+		{ is_active: true, notification_type: 24, modulo: 1, timeChange: [{ qtd: -10, type: 'days' }], indicado: true, reminderDate: 60 }, // eslint-disable-line object-curly-newline
+		{
+			is_active: true, notification_type: 25, modulo: 1, timeChange: [{ qtd: 60, type: 'days' }],
+		},
 
 	],
 

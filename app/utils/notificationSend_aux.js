@@ -131,19 +131,19 @@ async function replaceDataText(original, data, recipient) {
 	return text;
 }
 
-async function buildIndicadosLinks(alunaID, turmaID, column, link) {
-	const indicados = await DB.getIndicadoRespostasAnswerNull(alunaID, column);
-	if (!indicados || indicados.length === 0) return link;
-	let result = '';
-	for (let i = 0; i < indicados.length; i++) {
-		const e = indicados[i];
-		let aux = `${e.nome}:\n${link}`;
-		aux = aux.replace('IDRESPOSTA', e.id);
-		aux = aux.replace('TURMARESPOSTA', turmaID);
-		result += `\n${aux}\n`;
-	}
-	return result;
-}
+// async function buildIndicadosLinks(alunaID, turmaID, column, link) {
+// 	const indicados = await DB.getIndicadoRespostasAnswerNull(alunaID, column);
+// 	if (!indicados || indicados.length === 0) return link;
+// 	let result = '';
+// 	for (let i = 0; i < indicados.length; i++) {
+// 		const e = indicados[i];
+// 		let aux = `${e.nome}:\n${link}`;
+// 		aux = aux.replace('IDRESPOSTA', e.id);
+// 		aux = aux.replace('TURMARESPOSTA', turmaID);
+// 		result += `\n${aux}\n`;
+// 	}
+// 	return result;
+// }
 
 const atividadesHumanName = {
 	// atividade_indicacao: 'Indicação de Avaliadores (Avaliação 360)',

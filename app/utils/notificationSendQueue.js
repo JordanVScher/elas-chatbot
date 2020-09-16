@@ -25,8 +25,11 @@ async function checkShouldSendNotification(notification, turma, tRules, today) {
 
 		if (!currentRule) throw new help.MyError('Não foi possível encontrar a regra para essa notificação', { currentRule, type: notification.notification_type });
 
+		if (currentRule.is_active !== true) return { sendNow: false, currentRule, notActive: true };
+
 		const moduloDate = new Date(turma[`modulo${currentRule.modulo}`]);	// the date of the module, uses the modulo linked to the rule to find the date saved on turma
 		const dateToSend = await rules.getSendDate(turma, currentRule); // the date to actually send the notification
+		if (!dateToSend) return { sendNow: false, currentRule, noTimeSet: true };
 
 		// add date for the Reenvio of the notification
 		if (notification.check_answered === true && currentRule.reminderDate) { dateToSend.setDate(dateToSend.getDate() + Math.abs(currentRule.reminderDate)); }
@@ -76,7 +79,6 @@ async function checkShouldSendNotification(notification, turma, tRules, today) {
 		if (today >= min && today <= max) result.sendNow = true;
 		return result;
 	} catch (error) {
-		console.log('error', error);
 		help.sentryError('Erro em checkShouldSendNotification', { error, notification, turma, tRules, today }); // eslint-disable-line object-curly-newline
 		return { error };
 	}
@@ -195,16 +197,12 @@ async function sendNotificationFromQueue(queue, today, logOnly) {
 
 		for (let i = 0; i < queue.length; i++) {
 			const notification = queue[i]; const cName = `nID_${notification.id}`;
-			if (notification.notification_type !== 6) throw new help.MyError('Não enviar essa');
 			console.log('notification', notification);
 			try {
 				const currentTurma = await allTurmas.find((x) => x.id === notification.turma_id);
-				console.log('currentTurma', currentTurma);
 				if (!currentTurma) { throw new help.MyError('Não foi possível encontrar a turma da notificação', { notification, allTurmas, currentTurma }); }
 
 				const currentType = await nTypes.find((x) => x.id === notification.notification_type);
-				console.log('currentType', currentType);
-
 				if (!currentType) throw new help.MyError('Não foi possível encontrar o tipo de notificação atual', { currentType, notification });
 
 				if (dontSend.includes(currentType.id.toString())) {
@@ -215,10 +213,10 @@ async function sendNotificationFromQueue(queue, today, logOnly) {
 					if (!currentRule || currentRule.length === 0) throw new help.MyError('Não foram encontradas as regras para a turma');
 
 					const shouldSend = await checkShouldSendNotification(notification, currentTurma, currentRule, today);
-					console.log('shouldSend', shouldSend);
-					if (!shouldSend || shouldSend.error) throw new help.MyError('Não foi possível descobrir se é hora de mandar a notificação', { shouldSend, notification, currentTurma, currentRule }); // eslint-disable-line object-curly-newline
 
+					if (!shouldSend || shouldSend.error) throw new help.MyError('Não foi possível descobrir se é hora de mandar a notificação', { shouldSend, notification, currentTurma, currentRule }); // eslint-disable-line object-curly-newline
 					if (shouldSend.sendNow === true) {
+						console.log('Deve enviar');
 						const recipient = await aux.getRecipient(notification, currentTurma);
 						console.log('recipient', recipient);
 						if (!recipient || recipient.error) throw new help.MyError('Não foi possível carregar os dados do recipiente', { recipient, notification, currentTurma });
@@ -229,19 +227,23 @@ async function sendNotificationFromQueue(queue, today, logOnly) {
 
 						if (shouldRecipient.send === true) {
 							const sentRes = await actuallySendMessages(currentType, notification, recipient, logOnly);
-							console.log('sentRes', sentRes);
 							res[cName] = sentRes;
 						} else {
 							res[cName] = { msg: `Recipient não pode receber - ${shouldRecipient.msg}` }; // eslint-disable-line object-curly-newline
 							await notificationQueue.update({ error: { msg: 'Recipient não pode receber', shouldRecipient } }, { where: { id: notification.id } }).catch((err) => help.sentryError('Erro no update do model', err)); // eslint-disable-line object-curly-newline
 						}
+					} else if (shouldSend.noTimeSet) {
+						await notificationQueue.update({ error: { msg: 'Regra não tem horário marcado, não enviar', shouldSend } }, { where: { id: notification.id } }).catch((err) => help.sentryError('Erro no update do model', err));
+					} else if (shouldSend.notActive) {
+						await notificationQueue.update({ error: { msg: 'Regra desativada, não enviar', shouldSend } }, { where: { id: notification.id } }).catch((err) => help.sentryError('Erro no update do model', err));
 					} else { // cant send this notification now
+						console.log('Não vai enviar');
 						res[cName] = { msg: 'Não é hora de mandar essa notificação', dataMin: shouldSend.min, dataMax: shouldSend.max, today: shouldSend.today }; // eslint-disable-line object-curly-newline
 						if (today > shouldSend.max) await notificationQueue.update({ error: { msg: 'Já passou da hora de enviar essa notificação', shouldSend } }, { where: { id: notification.id } }).catch((err) => help.sentryError('Erro no update do model', err)); // eslint-disable-line object-curly-newline
 					}
 				}
 			} catch (error) {
-				console.log('error', error);
+				// console.log('error', error);
 				res[cName] = { error };
 			}
 			res[cName].details = notification;
@@ -260,9 +262,7 @@ async function getQueue(turmaID, alunoID, notificationType) {
 		sent_at: null,
 		sent_at_chatbot: null,
 		error: null,
-		turma_id: 23,
-		notification_type: 6,
-		// turma_id: { [Op.not]: null },
+		turma_id: { [Op.not]: null },
 	};
 
 	if (notificationType) query.notification_type = notificationType;

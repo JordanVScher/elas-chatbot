@@ -7,6 +7,38 @@ const { turma } = data;
 describe('Notification before modulo, no hour. Min before mod1, max is mod1', () => {
 	const notification = JSON.parse(JSON.stringify(data.notification));
 
+	it('Dont send if notification is not active', async () => {
+		const today = new Date('2019-12-30T17:29:59.999Z');
+		const rules = [{
+			is_active: false,
+			notification_type: 1,
+			modulo: 1,
+			timeChange: [{ days: 4 }],
+		}];
+
+
+		const result = await checkShouldSendNotification(notification, turma, rules, today);
+		await expect(result && !result.error).toBeTruthy();
+		await expect(result.sendNow).toBeFalsy();
+		await expect(result.notActive).toBeTruthy();
+	});
+
+	it('Dont send if notification doesnt have data rules', async () => {
+		const today = new Date('2019-12-30T17:29:59.999Z');
+		const rules = [{
+			is_active: true,
+			notification_type: 1,
+			modulo: 1,
+			timeChange: [],
+		}];
+
+
+		const result = await checkShouldSendNotification(notification, turma, rules, today);
+		await expect(result && !result.error).toBeTruthy();
+		await expect(result.sendNow).toBeFalsy();
+		await expect(result.noTimeSet).toBeTruthy();
+	});
+
 	it('Dont send before min date', async () => {
 		const today = new Date('2019-12-30T17:29:59.999Z');
 
