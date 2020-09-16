@@ -8,7 +8,6 @@ const attach = require('./app/utils/attach');
 const flow = require('./app/utils/flow');
 const help = require('./app/utils/helper');
 const timers = require('./app/utils/timers');
-const { checkUserOnLabel } = require('./app/utils/postback');
 const labels = require('./app/utils/labels');
 const { sendTestNotification } = require('./app/utils/notificationTest');
 
@@ -63,7 +62,7 @@ module.exports = async function App(context) {
 				await context.sendText('Agradecemos sua resposta.');
 				await context.setState({ answer: '', dialog: 'mainMenu' });
 			} else if (context.state.lastQRpayload === 'adminMenu') {
-				if (await checkUserOnLabel(context.session.user.id, process.env.ADMIN_LABEL_ID)) {
+				if (await db.checkUserAdmin(context.session.user.id)) {
 					await context.setState({ dialog: 'adminMenu' });
 				} else {
 					await context.sendText(flow.adminMenu.notAdmin); await context.setState({ dialog: 'greetings' });
@@ -79,20 +78,20 @@ module.exports = async function App(context) {
 			console.log('context.event.message.text', context.event.message.text);
 			console.log('process.env.ADMIN_KEYWORD', process.env.ADMIN_KEYWORD);
 			if (context.state.whatWasTyped === process.env.ADMIN_KEYWORD) {
-				if (await checkUserOnLabel(context.session.user.id, process.env.ADMIN_LABEL_ID)) {
+				if (await db.checkUserAdmin(context.session.user.id)) {
 					await context.setState({ dialog: 'adminMenu' });
 				} else {
 					await context.sendText(flow.adminMenu.notAdmin); await context.setState({ dialog: 'greetings' });
 				}
 			} else if (context.state.whatWasTyped === process.env.MAIL_TEST) {
-				if (await checkUserOnLabel(context.session.user.id, process.env.ADMIN_LABEL_ID)) {
+				if (await db.checkUserAdmin(context.session.user.id)) {
 					await dialogs.mailTest(context);
 				}
 			} else if (context.state.dialog === 'jaSouAluna') {
 				await context.sendImage(flow.jaSouAluna.gif1);
 				await dialogs.handleCPF(context);
 			} else if (context.state.dialog === 'verTurma' || context.state.dialog === 'alunosTurmaCSV') {
-				if (await checkUserOnLabel(context.session.user.id, process.env.ADMIN_LABEL_ID)) {
+				if (await db.checkUserAdmin(context.session.user.id)) {
 					await context.setState({ searchTurma: await db.getTurmaID(context.state.whatWasTyped), dialog: 'alunosTurmaCSV' });
 				} else {
 					await context.sendText(flow.adminMenu.notAdmin); await context.setState({ dialog: 'greetings' });

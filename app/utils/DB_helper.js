@@ -8,6 +8,7 @@ const alunosRespostas = require('../server/models').alunos_respostas;
 const { pagamentos } = require('../server/models');
 const { respostas } = require('../server/models');
 const { alunos } = require('../server/models');
+const chatbotUser = require('../server/models').chatbot_users;
 const notificationQueue = require('../server/models').notification_queue;
 
 if (process.env.TEST !== 'true') {
@@ -28,6 +29,12 @@ async function changeAdminStatus(fbID, status) {
 		UPDATE chatbot_users SET is_admin = '${status}' WHERE fb_id = '${fbID}' RETURNING *;
 		`).spread((results) => results).catch((err) => { sentryError('Erro em update changeAdminStatus =>', err); });
 	return updatedUser;
+}
+
+async function checkUserAdmin(fbID) {
+	const userFound = await chatbotUser.findOne({ where: { fb_id: fbID }, raw: true }).then((r) => r).catch((err) => sentryError('Erro no findOne do checkUserAdmin', err));
+	if (userFound.is_admin === true) return true;
+	return false;
 }
 
 async function getTurmaFromID(turmaID) {
@@ -650,6 +657,7 @@ async function removeOriginalTypeToNotificationQueue() {
 
 
 module.exports = {
+	checkUserAdmin,
 	upsertUser,
 	getAlunaFromCPF,
 	upsertAlunoCadastro,
