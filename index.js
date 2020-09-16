@@ -75,6 +75,9 @@ module.exports = async function App(context) {
 			}
 		} else if (context.event.isText) {
 			await context.setState({ whatWasTyped: context.event.message.text });
+
+			console.log('context.event.message.text', context.event.message.text);
+			console.log('process.env.ADMIN_KEYWORD', process.env.ADMIN_KEYWORD);
 			if (context.state.whatWasTyped === process.env.ADMIN_KEYWORD) {
 				if (await checkUserOnLabel(context.session.user.id, process.env.ADMIN_LABEL_ID)) {
 					await context.setState({ dialog: 'adminMenu' });

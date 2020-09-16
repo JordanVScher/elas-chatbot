@@ -9,13 +9,18 @@ const client = MessengerClient.connect({
 });
 
 async function checkUserOnLabel(UserID, labelID) { // checks if user is on the label
-	const userLabels = await client.getAssociatedLabels(UserID);
-	const theOneLabel = await userLabels.data.find((x) => x.id === `${labelID}`); // find the one label with the same ID
+	try {
+		const userLabels = await client.getAssociatedLabels(UserID);
+		const theOneLabel = await userLabels.data.find((x) => x.id === `${labelID}`); // find the one label with the same ID
 
-	if (theOneLabel) { // if we found the label on the user
-		return true;
+		if (theOneLabel) { // if we found the label on the user
+			return true;
+		}
+		return false;
+	} catch (error) {
+		console.log('error checkUserOnLabel', error);
+		return false;
 	}
-	return false;
 }
 
 async function getLabelID(labelName) {
