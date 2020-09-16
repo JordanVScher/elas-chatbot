@@ -303,7 +303,7 @@ async function upsertUser(FBID, userName) {
   VALUES ('${FBID}', '${userName}', '${date}', '${date}')
   ON CONFLICT (fb_id)
   DO UPDATE
-    SET user_name = '${userName}', updated_at = '${date}';
+    SET updated_at = '${date}';
 	`).spread((results, metadata) => { // eslint-disable-line no-unused-vars
 		console.log(`Added ${userName} successfully!`);
 	}).catch((err) => { sentryError('Erro em upsertUser =>', err); });
