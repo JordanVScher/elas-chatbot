@@ -257,8 +257,10 @@ module.exports.receiveCSVAluno = async (csvLines, chatbotUserId, pageToken) => {
 						} else {
 							const oldAluno = await alunos.findOne({ where: { cpf: element.cpf }, raw: true }).then((res) => res).catch((err) => help.sentryError('Erro em alunos.findOne', err));
 							// if aluno existed before we save the turma and label change
-							if (oldAluno && oldAluno.turma_id) { await admin.SaveTurmaChange(chatbotUserId, pageToken, oldAluno.id, oldAluno.turma_id, element.turma_id); }
-							element.added_by_admin = true;
+							if (oldAluno && oldAluno.turma_id) {
+								await admin.SaveTurmaChange(chatbotUserId, pageToken, oldAluno.id, oldAluno.turma_id, element.turma_id);
+								element.added_by_admin = true;
+							}
 							const newAluno = await db.upsertAlunoCadastro(element);
 							if (!oldAluno) { // send matricula to new aluno and create queue
 								await sendMatricula(element.Turma.nome, false, element.email, element.cpf, element.Turma.inCompany);
@@ -467,9 +469,11 @@ async function sendZipMail(file, turmaName, adminNome, docs) {
 	html = await html.replace('[CONTEUDO_MAIL]', mailText);
 
 	if (file) {
-		return sendHTMLMail(subject, process.env.MAILELAS, html, [{ filename: file.filename, content: file.content }], mailText);
+		return sendHTMLMail(subject, process.env.MAILDEV, html, [{ filename: file.filename, content: file.content }], mailText);
+		// return sendHTMLMail(subject, process.env.MAILELAS, html, [{ filename: file.filename, content: file.content }], mailText);
 	}
-	return sendHTMLMail(subject, process.env.MAILELAS, html, null, mailText);
+	return sendHTMLMail(subject, process.env.MAILDEV, html, null, mailText);
+	// return sendHTMLMail(subject, process.env.MAILELAS, html, null, mailText);
 }
 
 

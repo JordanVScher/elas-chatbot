@@ -99,6 +99,7 @@ async function sendFiles(USER_ID, pdf, pdf2) {
 	return 'error: no USER_ID';
 }
 
+// não funciona na realidade, o facebook não deixa enviar zip, rar, tar etc via broadcast. O que eu faço aqui é transformar o zip em pdf, baixo e transformo em zip de novo já baixado.
 async function sendZip(USER_ID, zip) {
 	if (USER_ID && USER_ID.toString()) {
 		USER_ID = USER_ID.toString();
