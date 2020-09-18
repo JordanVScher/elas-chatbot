@@ -262,6 +262,8 @@ async function buildAlunosDocs(turmaID) {
 	const alunos = await db.getAlunasFromTurma(turmaID);
 	const result = [];
 
+	console.log('alunos', alunos);
+
 	for (let i = 0; i < alunos.length; i++) {
 		const aluno = alunos[i];
 		if (aluno && aluno.cpf) {
@@ -273,6 +275,8 @@ async function buildAlunosDocs(turmaID) {
 			} else {
 				result.push({ aluno: `${aluno.nome_completo}_${aluno.cpf}`, error: 'Erro inesperado na sondagem' });
 			}
+
+			console.log('aux', aux);
 
 			// const aux2 = await buildIndicadoChart(aluno.cpf);
 			// if (aux2 && aux2.filename) {
