@@ -478,9 +478,7 @@ async function sendZipMail(file, turmaName, adminNome, docs) {
 
 
 async function zipAllDocs(context, turmaID, turmaName) {
-	console.log('turmaID', turmaID);
 	const docs = await charts.buildAlunosDocs(turmaID);
-	console.log('docs', docs);
 	if (docs && docs.length > 0) {
 		let sendZip = false; // send the zip file only if it has one file
 
