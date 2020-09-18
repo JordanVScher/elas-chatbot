@@ -109,7 +109,6 @@ async function handleAtividadeOne(answer, aluno) {
 			if (cadastroStatus) throw new help.MyError('Aluna respondeu o cadastro novamente', { aluno: aluno.id, cadastroStatus });
 		}
 
-		answer.added_by_admin = false; // user wasnt added by the admins
 		if (aluno.turma_id) answer.turma_id = aluno.turma_id;
 		if (!aluno.turma_id && aluno.turma) {
 			const turmaID = await DB.getTurmaID(aluno.turma);
