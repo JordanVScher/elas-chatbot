@@ -235,7 +235,7 @@ async function sendNotificationFromQueue(queue, today, logOnly) {
 					} else { // cant send this notification now
 						console.log('Não vai enviar');
 						res[cName] = { dataMin: shouldSend.min, dataMax: shouldSend.max, today: shouldSend.today, msg: shouldSend.msg || 'Não é hora de mandar essa notificação' }; // eslint-disable-line object-curly-newline
-						if (today > shouldSend.max) await notificationQueue.update({ error: { msg: 'Já passou da hora de enviar essa notificação', shouldSend } }, { where: { id: notification.id } }).catch((err) => help.sentryError('Erro no update do model', err)); // eslint-disable-line object-curly-newline
+						if (!logOnly && today > shouldSend.max) await notificationQueue.update({ error: { msg: 'Já passou da hora de enviar essa notificação', shouldSend } }, { where: { id: notification.id } }).catch((err) => help.sentryError('Erro no update do model', err)); // eslint-disable-line object-curly-newline
 					}
 				}
 			} catch (error) {
