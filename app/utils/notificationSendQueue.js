@@ -212,7 +212,11 @@ async function sendNotificationFromQueue(queue, today, logOnly) {
 					const currentRule = currentTurma.inCompany === true ? nRules.in_company : nRules.normal;
 					if (!currentRule || currentRule.length === 0) throw new help.MyError('Não foram encontradas as regras para a turma');
 
-					const shouldSend = await checkShouldSendNotification(notification, currentTurma, currentRule, today);
+                    const shouldSend = await checkShouldSendNotification(notification, currentTurma, currentRule, today);
+
+                    console.log('==================DEBUG==================');
+                    console.log(shouldSend);
+                    console.log('==================DEBUG==================');
 
 					if (!shouldSend || shouldSend.error) throw new help.MyError('Não foi possível descobrir se é hora de mandar a notificação', { shouldSend, notification, currentTurma, currentRule }); // eslint-disable-line object-curly-newline
 					if (shouldSend.sendNow === true) {
