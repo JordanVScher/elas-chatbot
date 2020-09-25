@@ -11,7 +11,8 @@ module.exports = (sequelize, DataTypes) => {
 			familiar: { type: DataTypes.BOOLEAN, allowNull: false, field: 'familiar' },
 			sunday: { type: DataTypes.BOOLEAN, allowNull: false, field: 'domingo' },
 			createdAt: { type: DataTypes.DATE, field: 'created_at' },
-			updatedAt: { type: DataTypes.DATE, field: 'updated_at' },
+            updatedAt: { type: DataTypes.DATE, field: 'updated_at' },
+            isActive: { type: DataTypes.BOOLEAN, allowNull: false, field: 'is_active' },
 		},
 		{
 			freezeTableName: true,

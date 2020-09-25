@@ -25,7 +25,7 @@ async function checkShouldSendNotification(notification, turma, tRules, today) {
 
 		if (!currentRule) throw new help.MyError('Não foi possível encontrar a regra para essa notificação', { currentRule, type: notification.notification_type });
 
-		if (currentRule.is_active !== true) return { sendNow: false, currentRule, notActive: true };
+		if (currentRule.isActive !== true) return { sendNow: false, currentRule, notActive: true };
 
 		const moduloDate = new Date(turma[`modulo${currentRule.modulo}`]);	// the date of the module, uses the modulo linked to the rule to find the date saved on turma
 		const dateToSend = await rules.getSendDate(turma, currentRule); // the date to actually send the notification
