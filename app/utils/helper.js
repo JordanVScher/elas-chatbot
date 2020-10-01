@@ -130,7 +130,9 @@ async function formatModuloHora(date) {
 	+ `${moment(date).utcOffset('+0000').format('HH:mm')}`;
 }
 async function formatSondagem(date) {
+	console.log('date_pre_ternary: ' + date);
 	const d = typeof date === 'string' ? new Date(date) : date;
+	console.log('d: ' + d);
 	return `${moment(d).utcOffset('-3').format('MMMM').slice(0, 3).toLowerCase()}./${moment(d).utcOffset('-3').format('DD')}`; // eslint-disable-line
 }
 
