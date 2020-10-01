@@ -131,7 +131,7 @@ async function formatModuloHora(date) {
 }
 async function formatSondagem(date) {
 	const d = typeof date === 'string' ? new Date(date) : date;
-	return `${moment(d).utcOffset('+0000').format('MMMM').slice(0, 3).toLowerCase()}./${moment(d).utcOffset('+0000').format('DD')}`; // eslint-disable-line
+	return `${moment(d).utcOffset('-3').format('MMMM').slice(0, 3).toLowerCase()}./${moment(d).utcOffset('-3').format('DD')}`; // eslint-disable-line
 }
 
 async function formatFdsMod(date) {
