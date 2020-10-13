@@ -53,7 +53,8 @@ const sendWarningAlunasCron = new CronJob(
 );
 
 const sendNotificationCron = new CronJob(
-	'00 00 7-22/1 * * *', async () => {
+	// '00 00 7-22/1 * * *', async () => {
+	'*/10 * * * *', async () => {
 		await cronLogs.create({ runAt: new Date(), name: 'sendNotificationCron' }).then((r) => r).catch((err) => sentryError('Erro no update do cronLogs', err));
 		console.log(`Running sendNotificationCron - ${new Date()}`);
 		try {
