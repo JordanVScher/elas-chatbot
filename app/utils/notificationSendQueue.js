@@ -262,7 +262,7 @@ async function getQueue(turmaID, alunoID, notificationType) {
 		sent_at: null,
 		sent_at_chatbot: null,
 		error: null,
-        turma_id: 26,
+        turma_id: 28,
         // notification_type: { [Op.or]: [1, 2, 3] }
 	};
 
