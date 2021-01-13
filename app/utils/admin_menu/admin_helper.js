@@ -100,16 +100,16 @@ async function getJsonFromURL(url) {
 
 async function checkReceivedFile(context) {
 	// for safety reasons we check if the user is an admin again
-	if (await checkUserOnLabel(context.session.user.id, process.env.ADMIN_LABEL_ID)) {
+	// if (await checkUserOnLabel(context.session.user.id, process.env.ADMIN_LABEL_ID)) {
 		await context.setState({ fileURL: context.event.file.url.replace('https', 'http') });
 		await context.setState({ csvLines: await getJsonFromURL(context.state.fileURL) });
 
 		if (context.state.dialog === 'inserirAlunas' || context.state.dialog === 'createAlunos') await context.setState({ dialog: 'createAlunos' });
 		if (context.state.dialog === 'inserirAvaliadores' || context.state.dialog === 'createAvaliadores') await context.setState({ dialog: 'createAvaliadores' });
-	} else {
-		await context.sendText(adminMenu.notAdmin);
-		await context.setState({ dialog: 'greetings' });
-	}
+	// } else {
+		// await context.sendText(adminMenu.notAdmin);
+		// await context.setState({ dialog: 'greetings' });
+	// }
 }
 
 async function getFeedbackMsgs(addedALunos, errors, msgs) {
